@@ -23,6 +23,7 @@
 #include <locale.h>
 #include <mach/kern_return.h>
 #include <mach/thread_info.h>
+#include <malloc/malloc.h>
 #include <math.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -890,6 +891,43 @@ int test_sscanf() {
   matched = sscanf("-12345", "%3hhd", &sc);
   if (!(matched == 1 && sc == -12))
     return -91;
+  // max_width for %s specifier
+  // width truncates a longer token
+  matched = sscanf("abcdef", "%3s", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -92;
+  // width larger than the token reads the whole token
+  matched = sscanf("ab", "%5s", str);
+  if (!(matched == 1 && strcmp(str, "ab") == 0))
+    return -93;
+  // width of 1
+  matched = sscanf("abc", "%1s", str);
+  if (!(matched == 1 && strcmp(str, "a") == 0))
+    return -94;
+  // input length exactly equals width
+  matched = sscanf("abc", "%3s", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -95;
+  // %s stopped by whitespace before width is reached
+  matched = sscanf("ab cd", "%5s", str);
+  if (!(matched == 1 && strcmp(str, "ab") == 0))
+    return -96;
+  // leading whitespace is skipped and does not count towards width
+  matched = sscanf("   abcdef", "%3s", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -97;
+  // width limits %s leaving remainder for next conversion
+  matched = sscanf("abcdef", "%3s%s", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "def") == 0))
+    return -98;
+  // two width-limited %s split a single token
+  matched = sscanf("abcdefgh", "%3s%3s", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "def") == 0))
+    return -99;
+  // width-truncated %s leaves the remainder for a following %d
+  matched = sscanf("abc123", "%3s%d", str, &a);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && a == 123))
+    return -100;
   return 0;
 }
 
@@ -911,6 +949,21 @@ int test_realloc() {
   int res = memcmp(ptr, "abcd", 4);
   free(ptr);
   return res == 0 ? 0 : -1;
+}
+
+int test_valloc() {
+  void *ptr = valloc(1);
+  // Assume at least 4Kb page size alignment
+  if (((uintptr_t)ptr & 0xFFF) != 0) {
+    return -1;
+  }
+  if (ptr == NULL)
+    return -2;
+  ptr = realloc(ptr, 16);
+  if (ptr == NULL)
+    return -3;
+  free(ptr);
+  return 0;
 }
 
 int test_atof() {
@@ -1888,6 +1941,173 @@ int test_pthread_mutex_recursive_trylock() {
   return 0;
 }
 
+// === NSConditionLock tests ===
+
+// Condition values used by the producer/consumer test below.
+#define NSCL_NO_DATA 0
+#define NSCL_HAS_DATA 1
+#define NSCL_PC_ITERATIONS 5
+
+// init defaults the condition to 0, while initWithCondition: sets it.
+int test_NSConditionLock_init() {
+  NSConditionLock *lock = [[NSConditionLock alloc] init];
+  if (lock == nil)
+    return -1;
+  if ([lock condition] != 0)
+    return -2;
+  [lock release];
+
+  NSConditionLock *lock_with_condition =
+      [[NSConditionLock alloc] initWithCondition:42];
+  if (lock_with_condition == nil)
+    return -3;
+  if ([lock_with_condition condition] != 42)
+    return -4;
+  [lock_with_condition release];
+  return 0;
+}
+
+// Plain lock/unlock ignores the condition, while unlockWithCondition: sets it.
+int test_NSConditionLock_lock_unlock() {
+  NSConditionLock *lock = [[NSConditionLock alloc] initWithCondition:1];
+
+  [lock lock];
+  if ([lock condition] != 1)
+    return -1;
+  [lock unlock];
+  if ([lock condition] != 1)
+    return -2;
+
+  [lock lock];
+  [lock unlockWithCondition:7];
+  if ([lock condition] != 7)
+    return -3;
+
+  [lock release];
+  return 0;
+}
+
+// tryLockWhenCondition: only succeeds when the condition matches, and never
+// blocks.
+int test_NSConditionLock_tryLockWhenCondition() {
+  NSConditionLock *lock = [[NSConditionLock alloc] initWithCondition:1];
+
+  if ([lock tryLockWhenCondition:2])
+    return -1;
+  if (![lock tryLockWhenCondition:1])
+    return -2;
+  [lock unlockWithCondition:2];
+
+  if (![lock tryLockWhenCondition:2])
+    return -3;
+  [lock unlockWithCondition:2];
+
+  [lock release];
+  return 0;
+}
+
+NSConditionLock *nscl_trylock_lock;
+sem_t *nscl_trylock_acquired;
+sem_t *nscl_trylock_release;
+
+void *nsconditionlock_holder(void *arg) {
+  (void)arg;
+  [nscl_trylock_lock lock];
+  sem_post(nscl_trylock_acquired);
+  sem_wait(nscl_trylock_release);
+  [nscl_trylock_lock unlock];
+  return NULL;
+}
+
+// tryLock succeeds when the lock is free and fails when another thread holds
+// it, without blocking.
+int test_NSConditionLock_tryLock_contended() {
+  nscl_trylock_lock = [[NSConditionLock alloc] init];
+
+  if (![nscl_trylock_lock tryLock])
+    return -1;
+  [nscl_trylock_lock unlock];
+
+  nscl_trylock_acquired = sem_open("nscl_trylock_acquired", O_CREAT, 0644, 0);
+  if (nscl_trylock_acquired == SEM_FAILED)
+    return -2;
+  nscl_trylock_release = sem_open("nscl_trylock_release", O_CREAT, 0644, 0);
+  if (nscl_trylock_release == SEM_FAILED)
+    return -3;
+
+  pthread_t p;
+  if (pthread_create(&p, NULL, nsconditionlock_holder, NULL) != 0)
+    return -4;
+
+  // Wait until the other thread holds the lock.
+  sem_wait(nscl_trylock_acquired);
+
+  // tryLock must fail because the lock is held by another thread.
+  if ([nscl_trylock_lock tryLock])
+    return -5;
+
+  // Let the holder release the lock and finish.
+  sem_post(nscl_trylock_release);
+  if (pthread_join(p, NULL) != 0)
+    return -6;
+
+  if (![nscl_trylock_lock tryLock])
+    return -7;
+  [nscl_trylock_lock unlock];
+
+  sem_close(nscl_trylock_acquired);
+  sem_unlink("nscl_trylock_acquired");
+  sem_close(nscl_trylock_release);
+  sem_unlink("nscl_trylock_release");
+  [nscl_trylock_lock release];
+  return 0;
+}
+
+NSConditionLock *nscl_pc_lock;
+int nscl_pc_buffer;
+int nscl_pc_consumed_sum;
+
+void *nsconditionlock_producer(void *arg) {
+  (void)arg;
+  for (int i = 0; i < NSCL_PC_ITERATIONS; i++) {
+    [nscl_pc_lock lockWhenCondition:NSCL_NO_DATA];
+    nscl_pc_buffer = i;
+    [nscl_pc_lock unlockWithCondition:NSCL_HAS_DATA];
+  }
+  return NULL;
+}
+
+// lockWhenCondition:/unlockWithCondition: hand off a single-slot buffer between
+// a producer thread and the consuming main thread, blocking until the awaited
+// condition is set.
+int test_NSConditionLock_producer_consumer() {
+  nscl_pc_lock = [[NSConditionLock alloc] initWithCondition:NSCL_NO_DATA];
+  nscl_pc_consumed_sum = 0;
+
+  pthread_t producer;
+  if (pthread_create(&producer, NULL, nsconditionlock_producer, NULL) != 0)
+    return -1;
+
+  for (int i = 0; i < NSCL_PC_ITERATIONS; i++) {
+    // Blocks until the producer makes data available.
+    [nscl_pc_lock lockWhenCondition:NSCL_HAS_DATA];
+    nscl_pc_consumed_sum += nscl_pc_buffer;
+    [nscl_pc_lock unlockWithCondition:NSCL_NO_DATA];
+  }
+
+  if (pthread_join(producer, NULL) != 0)
+    return -2;
+
+  int expected = 0;
+  for (int i = 0; i < NSCL_PC_ITERATIONS; i++)
+    expected += i;
+  if (nscl_pc_consumed_sum != expected)
+    return -3;
+
+  [nscl_pc_lock release];
+  return 0;
+}
+
 int second_thread_thread_size_res = -1;
 
 void *second_thread(void *arg) {
@@ -2751,6 +2971,61 @@ int test_fscanf_new() {
   matched = fscanf(file, "%3hhd", &sc);
   if (!(matched == 1 && sc == -12))
     return -80;
+  SKIP_LINE(file);
+
+  // max_width for %s specifier
+  // width truncates a longer token
+  matched = fscanf(file, "%3s", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -81;
+  SKIP_LINE(file);
+
+  // width larger than the token reads the whole token
+  matched = fscanf(file, "%5s", str);
+  if (!(matched == 1 && strcmp(str, "ab") == 0))
+    return -82;
+  SKIP_LINE(file);
+
+  // width of 1
+  matched = fscanf(file, "%1s", str);
+  if (!(matched == 1 && strcmp(str, "a") == 0))
+    return -83;
+  SKIP_LINE(file);
+
+  // input length exactly equals width
+  matched = fscanf(file, "%3s", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -84;
+  SKIP_LINE(file);
+
+  // %s stopped by whitespace before width is reached
+  matched = fscanf(file, "%5s", str);
+  if (!(matched == 1 && strcmp(str, "ab") == 0))
+    return -85;
+  SKIP_LINE(file);
+
+  // leading whitespace is skipped and does not count towards width
+  matched = fscanf(file, "%3s", str);
+  if (!(matched == 1 && strcmp(str, "abc") == 0))
+    return -86;
+  SKIP_LINE(file);
+
+  // width limits %s leaving remainder for next conversion
+  matched = fscanf(file, "%3s%s", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "def") == 0))
+    return -87;
+  SKIP_LINE(file);
+
+  // two width-limited %s split a single token
+  matched = fscanf(file, "%3s%3s", str, str1);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && strcmp(str1, "def") == 0))
+    return -88;
+  SKIP_LINE(file);
+
+  // width-truncated %s leaves the remainder for a following %d
+  matched = fscanf(file, "%3s%d", str, &a);
+  if (!(matched == 2 && strcmp(str, "abc") == 0 && a == 123))
+    return -89;
   SKIP_LINE(file);
 
   fclose(file);
@@ -6045,6 +6320,48 @@ int test_NSNotificationCenter_addObserver_nilName_removeObserver() {
   return 0;
 }
 
+int test_malloc_zone_basic() {
+  malloc_zone_t *zone = malloc_create_zone(0, 0);
+  unsigned char *p = malloc_zone_malloc(zone, 128);
+  if (zone->size(zone, p) != 128) {
+    return -1;
+  }
+
+  memset(p, 0xAB, 128);
+  for (int i = 0; i < 128; i++) {
+    if (p[i] != 0xAB) {
+      malloc_zone_free(zone, p);
+      malloc_destroy_zone(zone);
+      return -2;
+    }
+  }
+  malloc_zone_free(zone, p);
+  malloc_destroy_zone(zone);
+
+  return 0;
+}
+
+int test_malloc_zone_struct_dispatch() {
+  malloc_zone_t *zone = malloc_default_zone();
+  if (!zone)
+    return -1;
+
+  void *p = zone->malloc(zone, 128);
+  if (!p)
+    return -2;
+
+  // malloc_size() uses the default zone. If the allocation did not work
+  // this should cause a panic and thus fail the test.
+  size_t sz = malloc_size(p);
+  if (sz != 128) {
+    zone->free(zone, p);
+    return -3;
+  }
+
+  zone->free(zone, p);
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -6066,6 +6383,7 @@ struct {
     FUNC_DEF(test_sscanf),
     FUNC_DEF(test_swscanf),
     FUNC_DEF(test_realloc),
+    FUNC_DEF(test_valloc),
     FUNC_DEF(test_atof),
     FUNC_DEF(test_strtof),
     FUNC_DEF(test_sem),
@@ -6110,6 +6428,11 @@ struct {
     FUNC_DEF(test_cond_timedwait_sibling_not_dropped),
     FUNC_DEF(test_pthread_mutex_normal),
     FUNC_DEF(test_pthread_mutex_recursive_trylock),
+    FUNC_DEF(test_NSConditionLock_init),
+    FUNC_DEF(test_NSConditionLock_lock_unlock),
+    FUNC_DEF(test_NSConditionLock_tryLockWhenCondition),
+    FUNC_DEF(test_NSConditionLock_tryLock_contended),
+    FUNC_DEF(test_NSConditionLock_producer_consumer),
     FUNC_DEF(test_CFMutableDictionary_NullCallbacks),
     FUNC_DEF(test_CFMutableDictionary_CustomCallbacks_PrimitiveTypes),
     FUNC_DEF(test_CFMutableDictionary_CustomCallbacks_CFTypes),
@@ -6151,6 +6474,8 @@ struct {
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName),
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_withObject),
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_removeObserver),
+    FUNC_DEF(test_malloc_zone_basic),
+    FUNC_DEF(test_malloc_zone_struct_dispatch),
 };
 // clang-format on
 

@@ -6,6 +6,7 @@
 //! `sys/mount.h`, file system statistics
 
 use crate::dyld::{export_c_func, FunctionExports};
+use crate::fs::GuestPath;
 use crate::libc::dirent::MAXPATHLEN;
 use crate::libc::errno::{set_errno, EBADF, ENOENT};
 use crate::libc::posix_io::stat::uid_t;
@@ -45,9 +46,8 @@ pub struct statfs {
 }
 unsafe impl SafeRead for statfs {}
 
-/// A plausible `statfs` for the (single, fake) filesystem we present to apps.
-/// Values are taken from a test run of iOS 4.3 Simulator.
 fn fake_statfs() -> statfs {
+    // Values are taken from a test run of iOS 4.3 Simulator
     let mut statfs = statfs {
         f_bsize: 4096,
         f_iosize: 1048576,
@@ -74,40 +74,52 @@ fn fake_statfs() -> statfs {
     statfs
 }
 
-pub fn statfs_inner(env: &mut Environment, path: ConstPtr<u8>) -> (i32, statfs) {
-    let Ok(path_str) = env.mem.cstr_at_utf8(path) else {
-        set_errno(env, ENOENT);
-        return (-1, fake_statfs());
-    };
+/// Internal helper for `statfs`, not a part of the API.
+pub fn statfs_inner(env: &mut Environment, path: ConstPtr<u8>) -> Result<statfs, i32> {
+    // FIXME does directory matter?
+    assert!(env
+        .mem
+        .cstr_at_utf8(path)
+        .is_ok_and(|path| path.starts_with(env.fs.home_directory().join("Documents").as_str())));
 
-    if path_str.is_empty() {
-        set_errno(env, ENOENT);
-        return (-1, fake_statfs());
+    // TODO: Handle additional errors
+    let path = env.mem.cstr_at_utf8(path).unwrap();
+    if !env.fs.exists(GuestPath::new(path)) {
+        return Err(ENOENT);
     }
 
-    // Apple documents `statfs(2)` as returning information about the mounted
-    // filesystem containing the supplied path. touchHLE exposes a single
-    // filesystem, so any valid guest path should report the same mount.
-    // Returning the fake filesystem for every valid path is therefore the
-    // closest match and avoids crashing on apps that probe arbitrary paths.
-    (0, fake_statfs())
+    Ok(fake_statfs())
 }
 
 fn statfs(env: &mut Environment, path: ConstPtr<u8>, buf: MutPtr<statfs>) -> i32 {
-    let (ret, statfs) = statfs_inner(env, path);
-    if ret == 0 {
-        env.mem.write(buf, statfs);
-    }
-    ret
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    let result = match statfs_inner(env, path) {
+        Ok(statfs) => {
+            env.mem.write(buf, statfs);
+            0
+        }
+        Err(error) => {
+            set_errno(env, error);
+            -1
+        }
+    };
+
+    log!(
+        "TODO: statfs({:?}, {buf:?}) -> {result}",
+        env.mem.cstr_at_utf8(path)
+    );
+    result
 }
 
 fn fstatfs(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<statfs>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
-    let valid = matches!(fd, STDIN_FILENO | STDOUT_FILENO | STDERR_FILENO)
-        || env.libc_state.posix_io.is_fd_open(fd);
-    let result = if !valid {
+    let result = if !matches!(fd, STDIN_FILENO | STDOUT_FILENO | STDERR_FILENO)
+        && !env.libc_state.posix_io.is_fd_open(fd)
+    {
         set_errno(env, EBADF);
         -1
     } else {
@@ -115,7 +127,7 @@ fn fstatfs(env: &mut Environment, fd: FileDescriptor, buf: MutPtr<statfs>) -> i3
         0
     };
 
-    log_dbg!("fstatfs({fd}, {buf:?}) -> {result}");
+    log!("TODO: fstatfs({fd}, {buf:?}) -> {result}");
     result
 }
 

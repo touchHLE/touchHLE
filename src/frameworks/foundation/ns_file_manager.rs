@@ -833,6 +833,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                         let domain = get_static_str(env, NSCocoaErrorDomain);
                         let error = msg_class![env; NSError alloc];
                         let error = msg![env; error initWithDomain:domain code:NSFileReadNoSuchFileError userInfo:nil];
+                        autorelease(env, error);
                         env.mem.write(out_error, error);
                     }
                     _ => {
@@ -873,7 +874,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         GuestPath::new(dst_str.as_ref()),
     ) {
         Ok(()) => true,
-        Err(()) => {
+        Err(_) => {
             if !error.is_null() {
                 let domain = get_static_str(env, NSCocoaErrorDomain);
                 let ns_error = msg_class![env; NSError alloc];

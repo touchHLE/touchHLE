@@ -72,18 +72,11 @@ impl Bundle {
     }
 
     pub fn bundle_identifier(&self) -> &str {
-        self.plist
-            .get("CFBundleIdentifier")
-            .and_then(|v| v.as_string())
-            .unwrap_or("org.touchhle.app-picker")
+        self.plist["CFBundleIdentifier"].as_string().unwrap()
     }
 
     pub fn bundle_version(&self) -> &str {
-        self.plist
-            .get("CFBundleVersion")
-            .or_else(|| self.plist.get("CFBundleShortVersionString"))
-            .and_then(|v| v.as_string())
-            .unwrap_or("0")
+        self.plist["CFBundleVersion"].as_string().unwrap()
     }
 
     pub fn bundle_localizations(&self) -> &[Value] {
@@ -115,32 +108,10 @@ impl Bundle {
         }
     }
 
-    pub fn minimum_os_version(&self) -> Option<String> {
-        // `MinimumOSVersion` is documented as a string (e.g. "3.0"), but some
-        // bundles — particularly 64-bit App Store builds — encode it as a
-        // real number (3.0) or integer (3) in their binary Info.plist.
-        // `as_string().unwrap()` panicked on those, taking down the whole
-        // emulator. Accept any of those encodings and normalise to a string.
-        self.plist.get("MinimumOSVersion").and_then(|v| {
-            if let Some(s) = v.as_string() {
-                Some(s.to_string())
-            } else if let Some(i) = v.as_signed_integer() {
-                Some(i.to_string())
-            } else if let Some(u) = v.as_unsigned_integer() {
-                Some(u.to_string())
-            } else {
-                v.as_real().map(|r| {
-                    // Format e.g. 3.0 as "3", 6.1 as "6.1" — the consumer in
-                    // lib.rs parses major/minor numerically and tolerates a
-                    // missing minor component.
-                    if r.fract() == 0.0 {
-                        format!("{}", r as i64)
-                    } else {
-                        format!("{}", r)
-                    }
-                })
-            }
-        })
+    pub fn minimum_os_version(&self) -> Option<&str> {
+        self.plist
+            .get("MinimumOSVersion")
+            .map(|v| v.as_string().unwrap())
     }
 
     pub fn required_device_capabilities(&self) -> Vec<&str> {
@@ -168,60 +139,13 @@ impl Bundle {
             .join(self.plist["CFBundleExecutable"].as_string().unwrap())
     }
 
-    pub fn launch_image_path(&self, fs: &Fs, device_family: DeviceFamily) -> GuestPathBuf {
-        // Check if there's a custom base name in plist
-        let base_name = self
-            .plist
-            .get("UILaunchImageFile")
-            .map(|v| v.as_string().unwrap())
-            .unwrap_or("Default");
-
-        // Try device-specific variants first, then fallback to base name
-        let candidates = if device_family.is_ipad() {
-            if device_family.is_retina() {
-                vec![
-                    format!("{}@2x~ipad.png", base_name), // iPad Retina
-                    format!("{}~ipad.png", base_name),    // iPad non-Retina
-                    format!("{}@2x.png", base_name),      // Fallback Retina
-                    format!("{}.png", base_name),         // Fallback
-                ]
-            } else {
-                vec![
-                    format!("{}~ipad.png", base_name),    // iPad non-Retina
-                    format!("{}@2x~ipad.png", base_name), // iPad Retina
-                    format!("{}.png", base_name),         // Fallback
-                ]
-            }
-        } else if device_family.is_phone_568() {
-            vec![
-                format!("{}-568h@2x.png", base_name), // iPhone 5 (4-inch)
-                format!("{}@2x.png", base_name),      // iPhone Retina
-                format!("{}.png", base_name),         // iPhone non-Retina
-            ]
-        } else if device_family.is_retina() {
-            vec![
-                format!("{}@2x.png", base_name), // iPhone Retina
-                format!("{}.png", base_name),    // iPhone non-Retina
-            ]
+    pub fn launch_image_path(&self) -> GuestPathBuf {
+        if let Some(base_name) = self.plist.get("UILaunchImageFile") {
+            self.path
+                .join(format!("{}.png", base_name.as_string().unwrap()))
         } else {
-            vec![
-                format!("{}@2x.png", base_name), // iPhone Retina (fallback)
-                format!("{}.png", base_name),    // iPhone non-Retina
-            ]
-        };
-
-        // Find the first existing file
-        for candidate in &candidates {
-            let path = self.path.join(candidate);
-            if fs.read(&path).is_ok() {
-                log!("Using launch image: {}", candidate);
-                return path;
-            }
+            self.path.join("Default.png") // not guaranteed to exist!
         }
-
-        // Final fallback
-        log!("Warning: No launch image found, using Default.png");
-        self.path.join("Default.png")
     }
 
     pub fn status_bar_hidden(&self) -> bool {
@@ -231,143 +155,56 @@ impl Bundle {
             .unwrap_or(false)
     }
 
-    /// Resolve all candidate icon files declared by the bundle's
-    /// Info.plist, in priority order. Returns paths from most-specific
-    /// to least-specific so callers can fall back when a file is
-    /// missing on disk.
-    ///
-    /// Apple's documented lookup order (see "App Icons on iPhone, iPod
-    /// touch, and iPad", `CFBundleIcons` reference, and historical
-    /// `CFBundleIconFile`):
-    ///
-    /// 1. `CFBundleIcons` (iOS 5+) → `CFBundlePrimaryIcon` →
-    ///    `CFBundleIconFiles[]` (an array of stem names; iOS picks the
-    ///    one whose suffix matches the device class — `@2x.png`,
-    ///    `@2x~ipad.png`, …; we just try the literal name and the
-    ///    explicit "@2x.png"/".png" decorations).
-    /// 2. `CFBundleIconFile` (legacy single-string key, iOS 2/3/4).
-    /// 3. Hard-coded defaults: `Icon.png`, `icon.png`,
-    ///    `Icon@2x.png`.
-    fn icon_path_candidates(&self) -> Vec<GuestPathBuf> {
-        let mut candidates: Vec<String> = Vec::new();
-
-        let push = |candidates: &mut Vec<String>, name: &str| {
-            let lower = name.to_lowercase();
-            if lower.ends_with(".png") || lower.ends_with(".jpg") || lower.ends_with(".jpeg") {
-                candidates.push(name.to_string());
-            } else {
-                candidates.push(format!("{name}.png"));
-                candidates.push(format!("{name}@2x.png"));
-                candidates.push(format!("{name}.jpg"));
-            }
-        };
-
-        // 1. CFBundleIcons → CFBundlePrimaryIcon → CFBundleIconFiles (iOS 5+).
-        if let Some(icons) = self.plist.get("CFBundleIcons") {
-            if let Some(dict) = icons.as_dictionary() {
-                if let Some(primary) = dict.get("CFBundlePrimaryIcon") {
-                    if let Some(primary_dict) = primary.as_dictionary() {
-                        if let Some(files) = primary_dict.get("CFBundleIconFiles") {
-                            if let Some(arr) = files.as_array() {
-                                for entry in arr {
-                                    if let Some(s) = entry.as_string() {
-                                        push(&mut candidates, s);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        // The iPad-specific variant (`CFBundleIcons~ipad`) lives at the
-        // top level too.
-        if let Some(icons) = self.plist.get("CFBundleIcons~ipad") {
-            if let Some(dict) = icons.as_dictionary() {
-                if let Some(primary) = dict.get("CFBundlePrimaryIcon") {
-                    if let Some(primary_dict) = primary.as_dictionary() {
-                        if let Some(files) = primary_dict.get("CFBundleIconFiles") {
-                            if let Some(arr) = files.as_array() {
-                                for entry in arr {
-                                    if let Some(s) = entry.as_string() {
-                                        push(&mut candidates, s);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 2. CFBundleIconFiles[] at the top level (rare; iOS 3.2+ aux key).
-        if let Some(files) = self.plist.get("CFBundleIconFiles") {
-            if let Some(arr) = files.as_array() {
-                for entry in arr {
-                    if let Some(s) = entry.as_string() {
-                        push(&mut candidates, s);
-                    }
-                }
-            }
-        }
-
-        // 3. Legacy CFBundleIconFile (iOS 2/3/4).
-        if let Some(filename) = self.plist.get("CFBundleIconFile") {
-            if let Some(s) = filename.as_string() {
-                push(&mut candidates, s);
-            }
-        }
-
-        // 4. Hard-coded defaults documented in
-        //    "Icon Files" of the iPhone Application Programming Guide.
-        for default in [
-            "Icon.png",
-            "icon.png",
-            "Icon@2x.png",
-            "Icon-72.png",
-            "Icon-Small.png",
-        ] {
-            candidates.push(default.to_string());
-        }
-
-        // Deduplicate while preserving order.
-        let mut seen = std::collections::HashSet::new();
-        candidates.retain(|c| seen.insert(c.clone()));
-
-        candidates
-            .into_iter()
-            .map(|name| self.path.join(name))
-            .collect()
+    fn find_icon(icon_files: &[plist::Value]) -> Option<&plist::Value> {
+        ["Icon", "Icon-72"]
+            .iter()
+            .find_map(|icon| {
+                icon_files.iter().find(|found_icon| {
+                    found_icon
+                        .as_string()
+                        .is_some_and(|s| s.trim_end_matches(".png") == *icon)
+                })
+            })
+            .or_else(|| icon_files.first())
     }
 
     fn icon_path(&self) -> GuestPathBuf {
-        // Backwards-compatible single-path accessor: return the first
-        // candidate produced by the full lookup. The new `load_icon`
-        // path tries all of them in order before giving up.
-        self.icon_path_candidates()
-            .into_iter()
-            .next()
-            .unwrap_or_else(|| self.path.join("Icon.png"))
+        // TODO: Fix this to what an actual iOS device does,
+        // including Retina icons and such when we get there.
+        // Reference: https://developer.apple.com/library/archive/qa/qa1686/_index.html
+        // We check for the icon in the following order:
+        // 1. CFBundleIconFile,
+        // 2. CFBundleIconFiles for Icon, Icon-72,
+        // 3. First in CFBundleIconFiles,
+        // 4. Failsafe Icon.png
+        if let Some(filename) = self.plist.get("CFBundleIconFile").or_else(|| {
+            self.plist
+                .get("CFBundleIconFiles")
+                .and_then(|v| v.as_array())
+                .and_then(|a| Self::find_icon(a))
+        }) {
+            if filename
+                .as_string()
+                .unwrap()
+                .to_lowercase()
+                .ends_with(".png")
+            {
+                self.path.join(filename.as_string().unwrap())
+            } else {
+                let filename_with_extension = format!("{}.png", filename.as_string().unwrap());
+                self.path.join(filename_with_extension)
+            }
+        } else {
+            self.path.join("Icon.png")
+        }
     }
 
     /// Load icon and round off its corners (and add sheen if needed) for
     /// display.
     pub fn load_icon(&self, fs: &Fs) -> Result<Image, String> {
-        let candidates = self.icon_path_candidates();
-        let mut last_err: Option<String> = None;
-        let bytes = candidates.iter().find_map(|path| match fs.read(path) {
-            Ok(bytes) => Some(bytes),
-            Err(_) => {
-                last_err = Some(format!("missing: {}", path.as_str()));
-                None
-            }
-        });
-        let bytes = bytes.ok_or_else(|| {
-            // Mirror the historical phrasing so any tooling that scrapes
-            // the warning still recognises it.
-            "Could not read icon file".to_string()
-        })?;
-        let _ = last_err;
+        let bytes = fs
+            .read(self.icon_path())
+            .map_err(|_| "Could not read icon file".to_string())?;
         let mut image =
             Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {e}"))?;
         // UIPrerenderedIcon is used to avoid iOS applying a sheen effect,
@@ -391,7 +228,7 @@ impl Bundle {
     pub fn main_nib_filename(&self, device_family: Option<DeviceFamily>) -> Option<&str> {
         // TODO: extend this logic for all device-specific keys
         if let Some(device_family) = device_family {
-            if device_family.is_ipad() && self.plist.get("NSMainNibFile~ipad").is_some()
+            if device_family == DeviceFamily::iPad && self.plist.get("NSMainNibFile~ipad").is_some()
             {
                 return self
                     .plist
@@ -404,117 +241,52 @@ impl Bundle {
             .map(|v| v.as_string().unwrap())
     }
 
-    /// The value of `UIMainStoryboardFile` (or its `~ipad` device-specific
-    /// variant) from `Info.plist`, if any. This is the modern (iOS 5+)
-    /// replacement for `NSMainNibFile`: the value is the base name (without
-    /// extension) of a compiled storyboard found in the bundle resources
-    /// (e.g. `Main` resolves to `Base.lproj/Main~iphone.storyboardc/` on
-    /// iPhone).
-    pub fn main_storyboard_filename(
-        &self,
-        device_family: Option<DeviceFamily>,
-    ) -> Option<&str> {
-        if let Some(device_family) = device_family {
-            if device_family.is_ipad()
-                && self.plist.get("UIMainStoryboardFile~ipad").is_some()
-            {
-                return self
-                    .plist
-                    .get("UIMainStoryboardFile~ipad")
-                    .map(|v| v.as_string().unwrap());
-            }
-        }
-        self.plist
-            .get("UIMainStoryboardFile")
-            .map(|v| v.as_string().unwrap())
-    }
-
     pub fn supported_interface_orientations(&self) -> Vec<&str> {
-        // Apple's Bundle Resources documentation
-        // (https://developer.apple.com/documentation/bundleresources/information-property-list/uisupportedinterfaceorientations)
-        // says UISupportedInterfaceOrientations (iOS 3.2+) is an Array of
-        // Strings, and UIInterfaceOrientation (iPhone OS 2.0+) is a single
-        // String. UISupportedInterfaceOrientations takes precedence.
-        //
-        // In practice some pre-3.2 apps (e.g. Tiny Zoo Friends, plist
-        // observed in the wild) store UISupportedInterfaceOrientations as
-        // a single String — sometimes even a comma-separated list — which
-        // is technically malformed but iOS accepts it. We mirror that
-        // tolerance instead of crashing the host emulator.
-        if let Some(v) = self.plist.get("UISupportedInterfaceOrientations") {
-            if let Some(arr) = v.as_array() {
-                return arr
+        // UIInterfaceOrientation (iPhone OS 2.0) is a single string
+        // (or a comma separated list of strings).
+        // UISupportedInterfaceOrientations (iOS 3.2) is an array of strings and
+        // takes precedence.
+        self.plist
+            .get("UISupportedInterfaceOrientations")
+            .map(|v| {
+                v.as_array()
+                    .unwrap()
                     .iter()
-                    .filter_map(|o| o.as_string())
-                    .collect();
-            }
-            if let Some(s) = v.as_string() {
-                if s.contains(',') {
-                    log!(
-                        "UISupportedInterfaceOrientations is a comma-separated string ({}); splitting.",
-                        s
-                    );
+                    .map(|o| o.as_string().unwrap())
+                    .collect()
+            })
+            .unwrap_or_else(|| {
+                if let Some(v) = self
+                    .plist
+                    .get("UIInterfaceOrientation") {
+                    let str = v.as_string().unwrap();
+                    if str.contains(',') {
+                        log!("UIInterfaceOrientation is a comma separated list of strings ({}), splitting!", str);
+                    }
+                    str.split(',').collect()
+                } else {
+                    vec!["UIInterfaceOrientationPortrait"]
                 }
-                return s.split(',').map(|p| p.trim()).filter(|p| !p.is_empty()).collect();
-            }
-            log!(
-                "UISupportedInterfaceOrientations has unexpected plist type {:?}; ignoring.",
-                v
-            );
-        }
-
-        if let Some(v) = self.plist.get("UIInterfaceOrientation") {
-            let str = v.as_string().unwrap_or("UIInterfaceOrientationPortrait");
-            if str.contains(',') {
-                log!("UIInterfaceOrientation is a comma separated list of strings ({}), splitting!", str);
-            }
-            return str.split(',').map(|p| p.trim()).filter(|p| !p.is_empty()).collect();
-        }
-
-        vec!["UIInterfaceOrientationPortrait"]
+            })
     }
 
     pub fn device_family_array(&self) -> Vec<DeviceFamily> {
-        // Apple docs: UIDeviceFamily is an Array of Numbers (1=iPhone, 2=iPad).
-        // https://developer.apple.com/documentation/bundleresources/information-property-list/uidevicefamily
-        // We additionally accept strings ("1", "2", "iphone", "ipad") because
-        // a few real-world plists serialise the values that way; ignore
-        // unknown entries instead of panicking the emulator.
-        let Some(v) = self.plist.get("UIDeviceFamily") else {
-            return vec![DeviceFamily::iPhone];
-        };
-        let Some(arr) = v.as_array() else {
-            log!(
-                "UIDeviceFamily has unexpected plist type {:?}; defaulting to iPhone.",
-                v
-            );
-            return vec![DeviceFamily::iPhone];
-        };
-        let mut families = Vec::new();
-        for o in arr {
-            let parsed = match o {
-                Value::Integer(i) => i.as_unsigned().and_then(|n| DeviceFamily::try_from(n).ok()),
-                Value::String(s) => {
-                    // First try numeric; fall back to symbolic name.
-                    s.parse::<u64>()
-                        .ok()
-                        .and_then(|n| DeviceFamily::try_from(n).ok())
-                        .or_else(|| DeviceFamily::try_from(s.as_str()).ok())
-                }
-                _ => None,
-            };
-            match parsed {
-                Some(family) => families.push(family),
-                None => log!(
-                    "UIDeviceFamily entry {:?} is not a recognised device family; ignoring.",
-                    o
-                ),
-            }
-        }
-        if families.is_empty() {
-            vec![DeviceFamily::iPhone]
-        } else {
-            families
-        }
+        self.plist
+            .get("UIDeviceFamily")
+            .map(|v| {
+                v.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|o| {
+                        DeviceFamily::try_from(match o {
+                            Value::Integer(i) => i.as_unsigned().unwrap(),
+                            Value::String(s) => s.parse().unwrap(),
+                            _ => unreachable!(),
+                        })
+                        .unwrap()
+                    })
+                    .collect()
+            })
+            .unwrap_or_else(|| vec![DeviceFamily::iPhone])
     }
 }

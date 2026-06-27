@@ -12,15 +12,19 @@ use super::{ns_string, ns_timer, NSTimeInterval};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::environment::ThreadId;
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
-use crate::frameworks::audio_toolbox::audio_services::tick_system_sound_completions;
 use crate::frameworks::audio_toolbox::audio_unit::{render_audio_unit, AudioUnit};
 use crate::frameworks::core_animation::ca_transaction;
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
 use crate::frameworks::{core_animation, media_player, uikit};
-use crate::objc::{id, msg, nil, objc_classes, release, retain, Class, ClassExports, HostObject};
+use crate::libc::semaphore::{host_create_semaphore, sem_post, sem_t};
+use crate::mem::MutPtr;
+use crate::objc::{
+    id, msg, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, SEL,
+};
 use crate::Environment;
+use std::collections::VecDeque;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// `NSString*`
@@ -45,23 +49,28 @@ pub struct ThreadLocalState {
     run_loop: id,
 }
 
-#[derive(Default)]
-pub(crate) struct NSRunLoopHostObject {
+struct NSRunLoopHostObject {
     audio_units: Vec<AudioUnit>,
     /// Weak reference. Audio queue must remove itself when destroyed (TODO).
     /// They are in no particular order.
     audio_queues: Vec<AudioQueueRef>,
+    /// Objects to run for performSelector:onThread:(afterDelay:/waitUntilDone:)
+    selector_objects: VecDeque<ObjectSelectorSource>,
     /// Strong references to `NSTimer*` in no particular order. Timers are owned
     /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
-    /// Strong references to `CFRunLoopSourceRef` objects (toll-free bridged
-    /// via `_touchHLE_CFRunLoopSource`) currently registered in this run
-    /// loop, per Apple's CFRunLoopAddSource semantics.
-    pub(crate) sources: Vec<id>,
-    /// Set by CFRunLoopStop; cleared at the start of the next run.
-    pub(crate) stopped: bool,
 }
 impl HostObject for NSRunLoopHostObject {}
+
+#[derive(Clone, Debug)]
+struct ObjectSelectorSource {
+    target: id,
+    selector: SEL,
+    argument: id,
+    due_by: Option<Instant>,
+    // Used for waitUntilDone:, (uses NULL if not waiting)
+    semaphore: MutPtr<sem_t>,
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -83,38 +92,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (()) release {}
 - (id) autorelease { this }
 
-- (bool)runMode:(id)_mode beforeDate:(id)limit_date {
-    // Run the run loop for one iteration, honouring the caller's time limit.
-    // Apps frequently call this in a synchronous spin like:
-    //
-    //     while (!flag) {
-    //         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-    //                                  beforeDate:[NSDate distantFuture]];
-    //     }
-    //
-    // expecting each pass to drain timers/sources (in particular the
-    // `performSelectorOnMainThread:withObject:waitUntilDone:` timers we
-    // queue with `afterDelay:0.0`). A no-op stub here causes any such app
-    // to spin forever in the guest, never letting the scheduled selectors
-    // fire (e.g. Angry Birds 1.0 hangs after preloading INGAME_*.pvr
-    // because the asset-load completion handler never gets a chance to
-    // run). Returning `true` matches the docs ("the input source was
-    // processed").
-    let time_limit: Option<NSTimeInterval> = if limit_date == nil {
-        None
-    } else {
-        Some(msg![env; limit_date timeIntervalSince1970])
-    };
-    log_dbg!(
-        "[(NSRunLoop*){:?} runMode:_ beforeDate:{:?}] limit={:?}",
-        this,
-        limit_date,
-        time_limit
-    );
-    run_run_loop(env, this, /* single_iteration: */ true, time_limit);
-    true
-}
-
 - (CFRunLoopRef)getCFRunLoop {
     // In our implementation these are the same type (they aren't in Apple's).
     this
@@ -122,11 +99,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())addTimer:(id)timer // NSTimer*
        forMode:(NSRunLoopMode)mode {
-    let _default_mode = ns_string::get_static_str(env, NSDefaultRunLoopMode);
-    let _common_modes = ns_string::get_static_str(env, NSRunLoopCommonModes);
+    let default_mode = ns_string::get_static_str(env, NSDefaultRunLoopMode);
+    let common_modes = ns_string::get_static_str(env, NSRunLoopCommonModes);
     // TODO: handle other modes
-    // assert!(msg![env; mode isEqualToString:default_mode] || msg![env; mode
-    // isEqualToString:common_modes]);
+    assert!(msg![env; mode isEqualToString:default_mode] || msg![env; mode isEqualToString:common_modes]);
 
     log_dbg!(
         "Adding timer {:?} to run loop {:?} with mode {:?}",
@@ -135,51 +111,12 @@ pub const CLASSES: ClassExports = objc_classes! {
         ns_string::to_rust_string(env, mode),
     );
 
-    // FIX: Check if the timer is already in the list. If it is, exit early to
-    // prevent duplicate entries and subsequent assertion panics on removal.
-    if env.objc.borrow::<NSRunLoopHostObject>(this).timers.contains(&timer) {
-        log_dbg!("Timer {:?} is already in run loop {:?}, ignoring duplicate addition.", timer, this);
-        return;
-    }
-
     retain(env, timer);
 
     let host_object = env.objc.borrow_mut::<NSRunLoopHostObject>(this);
+    assert!(!host_object.timers.contains(&timer)); // TODO: what do we do here?
     host_object.timers.push(timer);
     ns_timer::set_run_loop(env, timer, this);
-}
-
-- (())cancelPerformSelectorsWithTarget:(id)target {
-        if target == nil {
-            return;
-        }
-
-        log_dbg!("NSRunLoop: cancelPerformSelectorsWithTarget: {:?}", target);
-
-        // Клонируем список таймеров, так как вызов invalidate приведет к
-        // удалению таймера из списка (через remove_timer), что изменит массив.
-        let timers = env.objc.borrow::<NSRunLoopHostObject>(this).timers.clone();
-
-        // Делаем локальный retain всех таймеров, чтобы избежать use-after-free,
-        // аналогично тому, как это сделано ниже в функции `run_run_loop`.
-        for &timer in &timers {
-            retain(env, timer);
-        }
-
-        for &timer in &timers {
-            // Запрашиваем целевой объект у таймера напрямую через сообщение.
-            let timer_target: id = msg![env; timer target];
-
-            // Если цель совпадает, инвалидируем таймер (он сам удалится из run
-            // loop)
-            if timer_target == target {
-                log_dbg!("NSRunLoop: invalidating timer {:?} for target {:?}", timer, target);
-                let _: () = msg![env; timer invalidate];
-            }
-
-            // Отпускаем локальный retain
-            release(env, timer);
-        }
 }
 
 - (())run {
@@ -242,14 +179,7 @@ pub fn remove_audio_queue(env: &mut Environment, run_loop: id, queue: AudioQueue
 
 /// For use by NSTimer so it can remove itself once it's invalidated.
 pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
-    log_dbg!("Removing timer {:?} from run loop {:?}", timer, run_loop);
-
-    // Честная логика Objective-C: если run_loop равен nil, нам не откуда
-    // удалять таймер.
-    if run_loop == nil {
-        return;
-    }
-
+    log_dbg!("Removing timer {:?} from run loop {:?}", timer, run_loop,);
     let NSRunLoopHostObject { timers, .. } = env.objc.borrow_mut(run_loop);
 
     let mut i = 0;
@@ -262,17 +192,111 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
             i += 1;
         }
     }
-
-    // Убираем жесткий assert!(release_count == 1);
-    // В iOS таймер мог быть отменен до добавления в цикл или отменен дважды.
-    // Мы просто делаем release столько раз, сколько реально удалили из массива.
+    assert!(release_count == 1); // TODO?
     for _ in 0..release_count {
         release(env, timer);
     }
 }
 
-/// Run the run loop for just a single iteration. Used by the app picker and
-/// by `-[NSRunLoop runMode:beforeDate:]`.
+/// Adds a selector to perform on the target run loop from
+/// performSelector:withObject:onThread:(afterDelay:/waitUntilDone:). The delay
+/// arg corrseponds to the afterDelay: arg and should_sync corresponds to
+/// waitUntilDone: arg.
+///
+/// If should_sync is set to true, a semaphore that should
+/// be waited on by the calling thread is returned. Otherwise, a null value is
+/// returned.
+pub(super) fn add_perform_request(
+    env: &mut Environment,
+    run_loop: id,
+    target: id,
+    selector: SEL,
+    argument: id,
+    delay: Option<f64>,
+    should_sync: bool,
+) -> MutPtr<sem_t> {
+    log_dbg!(
+        "Adding object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}",
+        selector.as_str(env.mem.as_mut())
+    );
+    let semaphore = if should_sync {
+        host_create_semaphore(env, 0)
+    } else {
+        MutPtr::null()
+    };
+    retain(env, target);
+    retain(env, argument);
+
+    let NSRunLoopHostObject {
+        selector_objects, ..
+    } = &mut env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop);
+    let due_by = delay.map(|dur| {
+        Instant::now()
+            .checked_add(Duration::from_secs_f64(dur))
+            .unwrap()
+    });
+    selector_objects.push_back(ObjectSelectorSource {
+        target,
+        selector,
+        argument,
+        due_by,
+        semaphore,
+    });
+    semaphore
+}
+
+/// Cancels a selector that was previously requested by [add_perform_request].
+/// The argument arg is compared via isEqual, [as documented by Apple]
+/// (<https://developer.apple.com/documentation/objectivec/nsobject/1410849-cancelpreviousperformrequestswit?language=objc>)
+pub(super) fn cancel_perform_requests(
+    env: &mut Environment,
+    run_loop: id,
+    target: id,
+    selector: SEL,
+    argument: id,
+) {
+    log_dbg!(
+        "Removing object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}",
+        selector.as_str(env.mem.as_mut())
+    );
+    let mut new_selector_objects = VecDeque::new();
+    let host_object = env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop);
+    let mut selector_objects = std::mem::take(&mut host_object.selector_objects);
+    while let Some(obj) = selector_objects.pop_front() {
+        if obj.target != target || obj.selector != selector {
+            new_selector_objects.push_back(obj);
+            continue;
+        }
+        let curr_arg = obj.argument;
+        let arg_equal = if curr_arg.is_null() {
+            argument.is_null()
+        } else {
+            msg![env; curr_arg isEqual:argument]
+        };
+        if arg_equal {
+            let ObjectSelectorSource {
+                target,
+                argument,
+                semaphore,
+                ..
+            } = obj;
+            release(env, target);
+            release(env, argument);
+            if !semaphore.is_null() {
+                sem_post(env, semaphore);
+            }
+        } else {
+            new_selector_objects.push_back(obj);
+        }
+    }
+    env.objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .selector_objects = new_selector_objects;
+}
+
+/// Run the run loop for just a single iteration. This is a special mode just
+/// for the app picker, since we don't have `runMode:beforeDate:` yet.
+/// (TODO: implement those to replace this.)
 pub fn run_run_loop_single_iteration(env: &mut Environment, run_loop: id) {
     run_run_loop(env, run_loop, /* single_iteration: */ true, None)
 }
@@ -311,14 +335,6 @@ pub fn run_run_loop(
 
     let is_main_run_loop = env.current_thread == 0;
 
-    if is_main_run_loop {
-        // Important breadcrumb for diagnosing "app freezes after splash"
-        // reports: this only fires once, when the main run loop actually
-        // starts iterating, which means UIApplicationMain has finished
-        // applicationDidFinishLaunching: + applicationDidBecomeActive:.
-        log_once!("Main NSRunLoop reached its first iteration (app finished launching)");
-    }
-
     loop {
         let mut sleep_until = None;
 
@@ -327,7 +343,7 @@ pub fn run_run_loop(
         //  "Implicit transactions are created automatically when the layer
         //  tree is modified by a thread without an active transaction and are
         //  committed automatically when the thread’s runloop next iterates."
-        ca_transaction::State::commit_implicit_transaction(env);
+        ca_transaction::ThreadLocalState::commit_implicit_transaction(env);
 
         // We want to process those only on the main run loop
         if is_main_run_loop {
@@ -376,12 +392,51 @@ pub fn run_run_loop(
             render_audio_unit(env, audio_unit);
         }
 
-        // Process Audio Services completion callbacks. Apple's
-        // `AudioServicesAddSystemSoundCompletion` fires its registered
-        // routine on the run loop that owned it; touchHLE only models a
-        // single run loop, so we poll OpenAL source state once per tick
-        // and dispatch finished completions here.
-        tick_system_sound_completions(env);
+        loop {
+            let selector_objects = &mut env
+                .objc
+                .borrow_mut::<NSRunLoopHostObject>(run_loop)
+                .selector_objects;
+            let to_run = selector_objects
+                .iter()
+                .enumerate()
+                .find(|(_, oss)| oss.due_by.is_none_or(|due_by| Instant::now() >= due_by))
+                .map(|(index, _)| index);
+
+            match to_run {
+                Some(index) => {
+                    // TODO: remove() is linear here
+                    let ObjectSelectorSource {
+                        target,
+                        selector,
+                        argument,
+                        due_by: _,
+                        semaphore,
+                    } = selector_objects.remove(index).unwrap();
+                    log_dbg!("Running object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}", selector.as_str(env.mem.as_mut()));
+
+                    if selector.as_str(&env.mem).ends_with(':') {
+                        () = msg_send(env, (target, selector, argument));
+                    } else {
+                        assert!(argument.is_null());
+                        () = msg_send(env, (target, selector));
+                    }
+
+                    release(env, target);
+                    release(env, argument);
+
+                    if !semaphore.is_null() {
+                        sem_post(env, semaphore);
+                    }
+                }
+                None => {
+                    for oss in selector_objects {
+                        limit_sleep_time(&mut sleep_until, oss.due_by);
+                    }
+                    break;
+                }
+            }
+        }
 
         if is_main_run_loop {
             media_player::handle_players(env);
@@ -408,12 +463,6 @@ pub fn run_run_loop(
             break;
         }
 
-        // CFRunLoopStop sets this flag to break out of the loop.
-        if env.objc.borrow::<NSRunLoopHostObject>(run_loop).stopped {
-            env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop).stopped = false;
-            break;
-        }
-
         if let Some(limit) = unix_time_limit {
             // We use Unix epoch as a convenience reference date.
             // (Apple's epoch is less convenient in Rust. And "pure"
@@ -434,7 +483,7 @@ pub fn run_run_loop(
 /// Helper method for `mainRunLoop` and `currentRunLoop` NSThread class methods
 fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) -> id {
     if env.threads[thread_id]
-        .thread_local_framework_state
+        .framework_state
         .foundation
         .ns_run_loop
         .run_loop
@@ -443,9 +492,8 @@ fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) 
         let host_object = Box::new(NSRunLoopHostObject {
             audio_units: Vec::new(),
             audio_queues: Vec::new(),
+            selector_objects: VecDeque::new(),
             timers: Vec::new(),
-            sources: Vec::new(),
-            stopped: false,
         });
         // TODO: is it OK to allocate static object for all threads,
         // not only main one?
@@ -453,13 +501,13 @@ fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) 
             .objc
             .alloc_static_object(this, host_object, &mut env.mem);
         env.threads[thread_id]
-            .thread_local_framework_state
+            .framework_state
             .foundation
             .ns_run_loop
             .run_loop = new;
     }
     env.threads[thread_id]
-        .thread_local_framework_state
+        .framework_state
         .foundation
         .ns_run_loop
         .run_loop

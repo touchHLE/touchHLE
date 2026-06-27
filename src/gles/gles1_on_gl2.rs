@@ -23,8 +23,8 @@ use super::gl21compat_raw::types::*;
 use super::gles11_raw as gles11; // constants only
 use super::gles_generic::GLES;
 use super::util::{
-    fixed_to_float, float_to_fixed, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat,
-    ParamTable, ParamType,
+    fixed_to_float, matrix_fixed_to_float, try_decode_pvrtc, PalettedTextureFormat, ParamTable,
+    ParamType,
 };
 use super::GLESContext;
 use crate::window::{GLContext, GLVersion, Window};
@@ -79,18 +79,6 @@ pub const CAPABILITIES: &[GLenum] = &[
 pub const UNSUPPORTED_CAPABILITIES: &[GLenum] = &[
     0x8620, // GL_VERTEX_PROGRAM_NV
     gl21::TEXTURE,
-];
-
-/// Subset of [CAPABILITIES] that is part of desktop OpenGL 2.1 but NOT part of
-/// the OpenGL ES 1.1 spec. A strict native ES 1.1 driver (e.g. ARM Mali on
-/// Android) will return `GL_INVALID_ENUM` from `glEnable`, `glDisable` and
-/// `glGetBooleanv` when handed any of these enums. The GL 2.1 emulation
-/// backend [`super::gles1_on_gl2::GLES1OnGL2`] accepts them all because it
-/// runs on a desktop GL 2.1 driver. Use [`super::GLES::is_native_es1`] to
-/// decide whether to skip these in present-time state save/restore loops.
-pub const CAPABILITIES_GL21_ONLY: &[GLenum] = &[
-    // ES 1.1 has no logical-op stage; this enum is desktop-only.
-    gl21::COLOR_LOGIC_OP,
 ];
 
 pub struct ArrayInfo {
@@ -156,7 +144,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::ALPHA_BITS, ParamType::Int, 1),
     (gl21::ALPHA_TEST, ParamType::Boolean, 1),
     (gl21::ALPHA_TEST_FUNC, ParamType::Int, 1),
-    // TODO: ALPHA_TEST_REF (has special type conversion behavior)
+    (gl21::ALPHA_TEST_REF, ParamType::FloatSpecial, 1), // TODO correct type
     (gl21::ARRAY_BUFFER_BINDING, ParamType::Int, 1),
     (gl21::BLEND, ParamType::Boolean, 1),
     (gl21::BLEND_DST, ParamType::Int, 1),
@@ -305,16 +293,6 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::MAX_PALETTE_MATRICES_ARB, ParamType::Int, 1),
     // OES_matrix_palette -> ARB_vertex_blend
     (gl21::MAX_VERTEX_UNITS_ARB, ParamType::Int, 1),
-    // OpenGL ES 2.0 / GL 2.0
-    (gl21::CURRENT_PROGRAM, ParamType::Int, 1),
-    (gl21::MAX_VERTEX_ATTRIBS, ParamType::Int, 1),
-    (gl21::MAX_VERTEX_UNIFORM_COMPONENTS, ParamType::Int, 1),
-    (gl21::MAX_FRAGMENT_UNIFORM_COMPONENTS, ParamType::Int, 1),
-    (gl21::MAX_VARYING_FLOATS, ParamType::Int, 1),
-    (gl21::MAX_TEXTURE_IMAGE_UNITS, ParamType::Int, 1),
-    (gl21::MAX_VERTEX_TEXTURE_IMAGE_UNITS, ParamType::Int, 1),
-    (gl21::MAX_COMBINED_TEXTURE_IMAGE_UNITS, ParamType::Int, 1),
-    (gl21::MAX_RENDERBUFFER_SIZE_EXT, ParamType::Int, 1),
 ]);
 
 const UNSUPPORTED_GET_PARAMS: ParamTable = ParamTable(&[
@@ -413,12 +391,6 @@ pub struct GLES1OnGL2State {
     pointer_is_fixed_point: [bool; ARRAYS.len()],
     fixed_point_texture_units: HashSet<GLenum>,
     fixed_point_translation_buffers: [Vec<GLfloat>; ARRAYS.len()],
-    /// Set while the guest has selected a matrix mode we don't emulate, such
-    /// as `GL_MATRIX_PALETTE_OES` (0x8840) from `OES_matrix_palette`. Desktop
-    /// GL 2.1 has no fixed-function palette skinning, so we drop matrix-stack
-    /// writes while this is set rather than corrupting the real
-    /// MODELVIEW/PROJECTION/TEXTURE matrices (or panicking).
-    unsupported_matrix_mode: bool,
 }
 
 pub struct GLES1OnGL2Context {
@@ -438,7 +410,6 @@ impl GLESContext for GLES1OnGL2Context {
                 pointer_is_fixed_point: [false; ARRAYS.len()],
                 fixed_point_texture_units: HashSet::new(),
                 fixed_point_translation_buffers: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
-                unsupported_matrix_mode: false,
             },
             is_loaded: false,
         })
@@ -717,36 +688,22 @@ impl GLES for GLES1OnGL2<'_> {
             log_dbg!("Tolerating glEnable({:#x}) of client state", cap);
         } else if cap == gl21::PERSPECTIVE_CORRECTION_HINT
             || cap == gl21::SMOOTH
-            || cap == gl21::FLAT
             || cap == gl21::BLEND_EQUATION
             || cap == gl21::TEXTURE
         {
             log_dbg!("Tolerating glEnable({:#x})", cap);
-            // Don't forward shading-model / hint enums to gl21::Enable —
-            // they're not valid capabilities and would set GL_INVALID_ENUM.
-            return;
-        } else if !CAPABILITIES.contains(&cap) {
-            // Per the GLES 1.1 spec, invalid caps set GL_INVALID_ENUM but
-            // must not crash. Apple's driver silently ignores unknown caps,
-            // and at least Farm Frenzy passes GL_FLAT (0x1D00) here.
-            log!(
-                "Warning: Tolerating glEnable({:#x}) of unrecognized capability",
-                cap
+        } else {
+            assert!(
+                CAPABILITIES.contains(&cap),
+                "Unexpected capability for glEnable({cap:#x})"
             );
-            return;
         }
         gl21::Enable(cap);
     }
     unsafe fn IsEnabled(&mut self, cap: GLenum) -> GLboolean {
-        if !(CAPABILITIES.contains(&cap)
-            || ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap))
-        {
-            log!(
-                "Warning: glIsEnabled({:#x}) of unrecognized capability, returning false",
-                cap
-            );
-            return gl21::FALSE;
-        }
+        assert!(
+            CAPABILITIES.contains(&cap) || ARRAYS.iter().any(|&ArrayInfo { name, .. }| name == cap)
+        );
         gl21::IsEnabled(cap)
     }
     unsafe fn Disable(&mut self, cap: GLenum) {
@@ -759,11 +716,7 @@ impl GLES for GLES1OnGL2<'_> {
         } else if GET_PARAMS.contains(cap) || UNSUPPORTED_GET_PARAMS.contains(cap) {
             log_dbg!("Tolerating glDisable({:#x}) of parameter", cap);
         } else {
-            log!(
-                "Warning: Tolerating glDisable({:#x}) of unrecognized capability",
-                cap
-            );
-            return;
+            panic!("Unexpected glDisable({cap:#x})");
         }
         gl21::Disable(cap);
     }
@@ -794,160 +747,41 @@ impl GLES for GLES1OnGL2<'_> {
     }
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
         let (type_, count) = GET_PARAMS.get_type_info(pname);
-        let count = usize::from(count.max(1));
         match type_ {
             ParamType::Boolean => {
                 gl21::GetBooleanv(pname, params);
             }
+            ParamType::Float => {
+                assert_eq!(count, 1); // TODO
+                let mut f: GLfloat = 0.0;
+                gl21::GetFloatv(pname, &mut f);
+                *params = if f == 0.0 { gl21::FALSE } else { gl21::TRUE };
+            }
             ParamType::Int => {
-                // Per the GLES 1.1 spec, any non-zero integer maps to TRUE.
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetIntegerv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = if v != 0 { gl21::TRUE } else { gl21::FALSE };
-                }
+                assert_eq!(count, 1); // TODO
+                let mut i: GLint = 0;
+                gl21::GetIntegerv(pname, &mut i);
+                *params = if i == 0 { gl21::FALSE } else { gl21::TRUE };
             }
-            ParamType::Float | ParamType::FloatSpecial => {
-                // Any non-zero float maps to TRUE.
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetFloatv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = if v != 0.0 { gl21::TRUE } else { gl21::FALSE };
-                }
-            }
-            _ => gl21::GetBooleanv(pname, params),
+            _ => unimplemented!("TODO: type conversion for {:?}", type_),
         }
     }
+    // TODO: GetFixedv
     unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
-        let (type_, count) = GET_PARAMS.get_type_info(pname);
-        let count = usize::from(count.max(1));
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
         match type_ {
             ParamType::Float | ParamType::FloatSpecial => {
                 gl21::GetFloatv(pname, params);
             }
-            ParamType::Int => {
-                // Integer state is widened to float verbatim.
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetIntegerv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = v as GLfloat;
-                }
-            }
-            ParamType::Boolean => {
-                let mut tmp = [0u8; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetBooleanv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = if v != 0 { 1.0 } else { 0.0 };
-                }
-            }
-            _ => gl21::GetFloatv(pname, params),
+            _ => unimplemented!("TODO: type conversion for {:?}", type_),
         }
     }
-    /// OpenGL ES 1.1 `glGetFixedv`. Desktop GL 2.1 does not have this entry
-    /// point, so we route the query to `GetFloatv` / `GetIntegerv` /
-    /// `GetBooleanv` based on the underlying parameter type and then convert
-    /// each component to the 16.16 fixed-point representation the guest
-    /// expects.
-    unsafe fn GetFixedv(&mut self, pname: GLenum, params: *mut GLfixed) {
-        let (type_, count) = GET_PARAMS.get_type_info(pname);
-        let count = usize::from(count.max(1));
-        match type_ {
-            ParamType::Float | ParamType::FloatSpecial => {
-                // OpenGL specifies float-to-fixed conversion as multiplication
-                // by 2^16; see the GLES 1.1 spec, "Data Conversions".
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetFloatv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = float_to_fixed(v);
-                }
-            }
-            ParamType::Boolean => {
-                // GL_TRUE / GL_FALSE map to 1 / 0 (no 16.16 scaling).
-                let mut tmp = [0u8; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetBooleanv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = if v != 0 { 1 } else { 0 };
-                }
-            }
-            _ => {
-                // Integer parameters are copied through verbatim: the GLES 1.1
-                // spec says fixed-point queries against integer state must
-                // not scale.
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetIntegerv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = v as GLfixed;
-                }
-            }
-        }
-    }
-    /// OpenGL ES 1.1 `glGetIntegerv`. Desktop GL implements this entry point,
-    /// but only routes integer-typed state through it natively. For
-    /// floating-point or boolean state, the GLES 1.1 spec (section 6.1.2,
-    /// "Data Conversions") requires that the value be converted to an integer
-    /// before being returned. Without explicit conversion, calling the host
-    /// `glGetIntegerv` against e.g. a clamp-range float state can return
-    /// undefined or always-zero values (and historically this code asserted,
-    /// crashing the emulator). We mirror the conversion fan-out used by
-    /// `GetFixedv` above: query the underlying state at its native type and
-    /// convert each component per the spec.
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
-        let (type_, count) = GET_PARAMS.get_type_info(pname);
-        let count = usize::from(count.max(1));
-        match type_ {
-            ParamType::Int => {
-                gl21::GetIntegerv(pname, params);
-            }
-            ParamType::Boolean => {
-                // GL_TRUE / GL_FALSE map to 1 / 0.
-                let mut tmp = [0u8; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetBooleanv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = if v != 0 { 1 } else { 0 };
-                }
-            }
-            ParamType::Float => {
-                // Round to the nearest integer, clamped to the GLint range.
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetFloatv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    let rounded = (v as f64).round();
-                    let clamped = rounded.clamp(GLint::MIN as f64, GLint::MAX as f64);
-                    *params.add(i) = clamped as GLint;
-                }
-            }
-            ParamType::FloatSpecial => {
-                // Normalized floating-point components (colors, clear values,
-                // etc.) are scaled to the full GLint range per the GLES 1.1
-                // spec table 6.1. We approximate the spec formula
-                // c_i = round((2^32 - 1) * c_f - 1) / 2 by scaling by
-                // GLint::MAX, which is well within float precision and
-                // matches what real iPhone OS drivers return in practice.
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count];
-                gl21::GetFloatv(pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    let scaled = (v as f64) * (GLint::MAX as f64);
-                    let clamped = scaled.clamp(GLint::MIN as f64, GLint::MAX as f64);
-                    *params.add(i) = clamped.round() as GLint;
-                }
-            }
-            _ => {
-                // Fallback for unknown/future param types: pass through to
-                // the host driver and hope for the best, rather than
-                // crashing the whole emulator.
-                gl21::GetIntegerv(pname, params);
-            }
-        }
+        let (type_, _count) = GET_PARAMS.get_type_info(pname);
+        // TODO: type conversion
+        let allowed_float = type_ == ParamType::Float && pname == gl21::POINT_SIZE_MAX;
+        assert!(type_ == ParamType::Int || allowed_float);
+        gl21::GetIntegerv(pname, params);
     }
     unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
         let (type_, _count) = TEX_ENV_PARAMS.get_type_info(pname);
@@ -960,126 +794,6 @@ impl GLES for GLES1OnGL2<'_> {
         assert!(type_ == ParamType::Float);
         assert_eq!(target, gl21::TEXTURE_ENV);
         gl21::GetTexEnvfv(target, pname, params);
-    }
-    unsafe fn GetTexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *mut GLfixed) {
-        let (type_, count) = TEX_ENV_PARAMS.get_type_info(pname);
-        assert_eq!(target, gl21::TEXTURE_ENV);
-        // Desktop GL 2.1 doesn't have an `x`-typed `glGetTexEnv` entry point
-        // (fixed-point is ES-only), so query through the float/int path and
-        // convert per the ES 1.1 conversion rules.
-        match type_ {
-            ParamType::Float | ParamType::FloatSpecial => {
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetTexEnvfv(target, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = float_to_fixed(v);
-                }
-            }
-            ParamType::Boolean => {
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetTexEnviv(target, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = if v != 0 { 1 } else { 0 };
-                }
-            }
-            _ => {
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetTexEnviv(target, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = v as GLfixed;
-                }
-            }
-        }
-    }
-    unsafe fn GetTexParameteriv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
-        assert!(target == gl21::TEXTURE_2D);
-        TEX_PARAMS.assert_known_param(pname);
-        gl21::GetTexParameteriv(target, pname, params);
-    }
-    unsafe fn GetTexParameterfv(&mut self, target: GLenum, pname: GLenum, params: *mut GLfloat) {
-        assert!(target == gl21::TEXTURE_2D);
-        TEX_PARAMS.assert_known_param(pname);
-        gl21::GetTexParameterfv(target, pname, params);
-    }
-    unsafe fn GetTexParameterxv(&mut self, target: GLenum, pname: GLenum, params: *mut GLfixed) {
-        assert!(target == gl21::TEXTURE_2D);
-        let (type_, count) = TEX_PARAMS.get_type_info(pname);
-        match type_ {
-            ParamType::Float | ParamType::FloatSpecial => {
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetTexParameterfv(target, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = float_to_fixed(v);
-                }
-            }
-            _ => {
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetTexParameteriv(target, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = v as GLfixed;
-                }
-            }
-        }
-    }
-    unsafe fn GetClipPlanef(&mut self, plane: GLenum, equation: *mut GLfloat) {
-        // Desktop GL 2.1 only has the double-precision entry point.
-        let mut tmp = [0f64; 4];
-        gl21::GetClipPlane(plane, tmp.as_mut_ptr());
-        for (i, &v) in tmp.iter().enumerate() {
-            *equation.add(i) = v as GLfloat;
-        }
-    }
-    unsafe fn GetClipPlanex(&mut self, plane: GLenum, equation: *mut GLfixed) {
-        let mut tmp = [0f64; 4];
-        gl21::GetClipPlane(plane, tmp.as_mut_ptr());
-        for (i, &v) in tmp.iter().enumerate() {
-            *equation.add(i) = float_to_fixed(v as GLfloat);
-        }
-    }
-    unsafe fn GetLightfv(&mut self, light: GLenum, pname: GLenum, params: *mut GLfloat) {
-        LIGHT_PARAMS.assert_known_param(pname);
-        gl21::GetLightfv(light, pname, params)
-    }
-    unsafe fn GetLightxv(&mut self, light: GLenum, pname: GLenum, params: *mut GLfixed) {
-        let (type_, count) = LIGHT_PARAMS.get_type_info(pname);
-        match type_ {
-            ParamType::Float | ParamType::FloatSpecial => {
-                let mut tmp = [0f32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetLightfv(light, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = float_to_fixed(v);
-                }
-            }
-            _ => {
-                let mut tmp = [0i32; 16];
-                let slice = &mut tmp[..count as usize];
-                gl21::GetLightiv(light, pname, slice.as_mut_ptr());
-                for (i, &v) in slice.iter().enumerate() {
-                    *params.add(i) = v as GLfixed;
-                }
-            }
-        }
-    }
-    unsafe fn GetMaterialfv(&mut self, face: GLenum, pname: GLenum, params: *mut GLfloat) {
-        assert!(face == gl21::FRONT || face == gl21::BACK);
-        MATERIAL_PARAMS.assert_known_param(pname);
-        gl21::GetMaterialfv(face, pname, params)
-    }
-    unsafe fn GetMaterialxv(&mut self, face: GLenum, pname: GLenum, params: *mut GLfixed) {
-        assert!(face == gl21::FRONT || face == gl21::BACK);
-        let (_type, count) = MATERIAL_PARAMS.get_type_info(pname);
-        let mut tmp = [0f32; 16];
-        let slice = &mut tmp[..count as usize];
-        gl21::GetMaterialfv(face, pname, slice.as_mut_ptr());
-        for (i, &v) in slice.iter().enumerate() {
-            *params.add(i) = float_to_fixed(v);
-        }
     }
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid) {
         assert!(ARRAYS
@@ -2014,76 +1728,8 @@ impl GLES for GLES1OnGL2<'_> {
                 decoded.as_ptr() as *const _,
             )
         } else {
-            log!(
-                "Warning: CompressedTexImage2D: unsupported internalformat {:#x}; skipping upload.",
-                internalformat
-            );
+            unimplemented!("CompressedTexImage2D internalformat: {:#x}", internalformat);
         }
-    }
-    unsafe fn CompressedTexSubImage2D(
-        &mut self,
-        target: GLenum,
-        level: GLint,
-        xoffset: GLint,
-        yoffset: GLint,
-        width: GLsizei,
-        height: GLsizei,
-        format: GLenum,
-        image_size: GLsizei,
-        data: *const GLvoid,
-    ) {
-        assert!(target == gl21::TEXTURE_2D);
-        assert!(level >= 0);
-        // PVRTC sub-image updates are very rare (Apple's OpenGL ES 1.1
-        // surface rejects them too), but if we ever see one we
-        // software-decode the entire sub-region to RGBA and use the
-        // uncompressed sub-image path. Paletted formats are not legal here
-        // per the OES_compressed_paletted_texture spec.
-        let data_slice = if data.is_null() {
-            &[][..]
-        } else {
-            std::slice::from_raw_parts(data.cast::<u8>(), image_size as usize)
-        };
-        let is_pvrtc_2bit = matches!(
-            format,
-            gles11::COMPRESSED_RGB_PVRTC_2BPPV1_IMG | gles11::COMPRESSED_RGBA_PVRTC_2BPPV1_IMG
-        );
-        let is_pvrtc_4bit = matches!(
-            format,
-            gles11::COMPRESSED_RGB_PVRTC_4BPPV1_IMG | gles11::COMPRESSED_RGBA_PVRTC_4BPPV1_IMG
-        );
-        if is_pvrtc_2bit || is_pvrtc_4bit {
-            let Ok(width_u) = u32::try_from(width) else {
-                log!(
-                    "Warning: CompressedTexSubImage2D: invalid width {width}; skipping."
-                );
-                return;
-            };
-            let Ok(height_u) = u32::try_from(height) else {
-                log!(
-                    "Warning: CompressedTexSubImage2D: invalid height {height}; skipping."
-                );
-                return;
-            };
-            let pixels =
-                crate::image::decode_pvrtc(data_slice, is_pvrtc_2bit, width_u, height_u);
-            gl21::TexSubImage2D(
-                target,
-                level,
-                xoffset,
-                yoffset,
-                width,
-                height,
-                gl21::RGBA,
-                gl21::UNSIGNED_BYTE,
-                pixels.as_ptr() as *const _,
-            );
-            return;
-        }
-        // Forward any format the desktop driver natively understands.
-        gl21::CompressedTexSubImage2D(
-            target, level, xoffset, yoffset, width, height, format, image_size, data,
-        )
     }
     unsafe fn CopyTexImage2D(
         &mut self,
@@ -2147,12 +1793,7 @@ impl GLES for GLES1OnGL2<'_> {
                 );
                 gl21::TexEnvf(target, pname, param)
             }
-            _ => {
-                log!(
-                    "Warning: TexEnvf: unsupported target {:#x}; ignoring call.",
-                    target
-                );
-            }
+            _ => unimplemented!("TexEnvf target {}", target.to_string()),
         }
     }
     unsafe fn TexEnvx(&mut self, target: GLenum, pname: GLenum, param: GLfixed) {
@@ -2171,12 +1812,7 @@ impl GLES for GLES1OnGL2<'_> {
                 assert!(pname == gl21::COORD_REPLACE);
                 gl21::TexEnvf(target, pname, fixed_to_float(param))
             }
-            _ => {
-                log!(
-                    "Warning: TexEnvx: unsupported target {:#x}; ignoring call.",
-                    target
-                );
-            }
+            _ => unimplemented!(),
         }
     }
     unsafe fn TexEnvi(&mut self, target: GLenum, pname: GLenum, param: GLint) {
@@ -2203,13 +1839,7 @@ impl GLES for GLES1OnGL2<'_> {
                 );
                 gl21::TexEnvi(target, pname, param)
             }
-            _ => {
-                log!(
-                    "Warning: TexEnvi: unsupported target 0x{:X}, pname 0x{:X}; ignoring call.",
-                    target,
-                    pname
-                );
-            }
+            _ => unimplemented!("target 0x{:X}, pname 0x{:X}", target, pname),
         }
     }
     unsafe fn TexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *const GLfloat) {
@@ -2239,12 +1869,7 @@ impl GLES for GLES1OnGL2<'_> {
                 assert!(pname == gl21::COORD_REPLACE);
                 gl21::TexEnvfv(target, pname, params)
             }
-            _ => {
-                log!(
-                    "Warning: TexEnvfv: unsupported target {:#x}; ignoring call.",
-                    target
-                );
-            }
+            _ => unimplemented!(),
         }
     }
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed) {
@@ -2265,12 +1890,7 @@ impl GLES for GLES1OnGL2<'_> {
                 let param = fixed_to_float(params.read());
                 gl21::TexEnvfv(target, pname, &param)
             }
-            _ => {
-                log!(
-                    "Warning: TexEnvxv: unsupported target {:#x}; ignoring call.",
-                    target
-                );
-            }
+            _ => unimplemented!(),
         }
     }
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint) {
@@ -2287,12 +1907,7 @@ impl GLES for GLES1OnGL2<'_> {
                 assert!(pname == gl21::COORD_REPLACE);
                 gl21::TexEnviv(target, pname, params)
             }
-            _ => {
-                log!(
-                    "Warning: TexEnviv: unsupported target {:#x}; ignoring call.",
-                    target
-                );
-            }
+            _ => unimplemented!(),
         }
     }
 
@@ -2325,69 +1940,34 @@ impl GLES for GLES1OnGL2<'_> {
 
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum) {
-        if mode != gl21::MODELVIEW && mode != gl21::PROJECTION && mode != gl21::TEXTURE {
-            // Modes such as GL_MATRIX_PALETTE_OES (0x8840) come from
-            // OES_matrix_palette, which desktop GL 2.1 can't emulate via the
-            // fixed-function pipeline. Apps that use it normally check for the
-            // extension first and fall back to CPU skinning (we no longer
-            // advertise it), but tolerate a stray call here instead of
-            // panicking, and suppress matrix writes until a supported mode is
-            // selected again so we don't clobber the real matrices.
-            if !self.state.unsupported_matrix_mode {
-                log!(
-                    "Warning: glMatrixMode({:#x}) selected an unsupported matrix mode; \
-                     ignoring matrix-stack writes until a supported mode is selected",
-                    mode
-                );
-            }
-            self.state.unsupported_matrix_mode = true;
-            return;
+        if mode == gl21::MODELVIEW_MATRIX {
+            log_dbg!("Tolerating glMatrixMode({:#x}) of unsupported mode", mode);
+        } else {
+            assert!(mode == gl21::MODELVIEW || mode == gl21::PROJECTION || mode == gl21::TEXTURE);
         }
-        self.state.unsupported_matrix_mode = false;
         gl21::MatrixMode(mode);
     }
     unsafe fn LoadIdentity(&mut self) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         gl21::LoadIdentity();
     }
     unsafe fn LoadMatrixf(&mut self, m: *const GLfloat) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         gl21::LoadMatrixf(m);
     }
     unsafe fn LoadMatrixx(&mut self, m: *const GLfixed) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         let matrix = matrix_fixed_to_float(m);
         gl21::LoadMatrixf(matrix.as_ptr());
     }
     unsafe fn MultMatrixf(&mut self, m: *const GLfloat) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         gl21::MultMatrixf(m);
     }
     unsafe fn MultMatrixx(&mut self, m: *const GLfixed) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         let matrix = matrix_fixed_to_float(m);
         gl21::MultMatrixf(matrix.as_ptr());
     }
     unsafe fn PushMatrix(&mut self) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         gl21::PushMatrix();
     }
     unsafe fn PopMatrix(&mut self) {
-        if self.state.unsupported_matrix_mode {
-            return;
-        }
         gl21::PopMatrix();
     }
     unsafe fn Orthof(
@@ -2562,154 +2142,6 @@ impl GLES for GLES1OnGL2<'_> {
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum) {
         gl21::GenerateMipmapEXT(target)
     }
-
-    // GL_APPLE_framebuffer_multisample → GL_EXT_framebuffer_multisample +
-    // GL_EXT_framebuffer_blit, which are baseline on every desktop GL that
-    // can host this layer.
-    unsafe fn RenderbufferStorageMultisampleAPPLE(
-        &mut self,
-        target: GLenum,
-        samples: GLsizei,
-        internalformat: GLenum,
-        width: GLsizei,
-        height: GLsizei,
-    ) {
-        gl21::RenderbufferStorageMultisampleEXT(
-            target,
-            samples,
-            internalformat,
-            width,
-            height,
-        )
-    }
-    unsafe fn ResolveMultisampleFramebufferAPPLE(&mut self) {
-        // Apple's GL_APPLE_framebuffer_multisample doesn't take any arguments:
-        // the source is whatever is currently bound to GL_READ_FRAMEBUFFER_APPLE
-        // and the destination is whatever is currently bound to
-        // GL_DRAW_FRAMEBUFFER_APPLE. Their numeric values are identical to
-        // GL_READ_FRAMEBUFFER_EXT / GL_DRAW_FRAMEBUFFER_EXT, so we can hand
-        // them straight to glBlitFramebufferEXT.
-        //
-        // Figure out the rectangle to blit from the READ framebuffer's color
-        // attachment so that the blit covers exactly the rendered area.
-        let mut color_rb: GLint = 0;
-        gl21::GetFramebufferAttachmentParameterivEXT(
-            gl21::READ_FRAMEBUFFER_EXT,
-            gl21::COLOR_ATTACHMENT0_EXT,
-            gl21::FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
-            &mut color_rb,
-        );
-        // Remember and restore the renderbuffer binding so we don't perturb
-        // whatever the guest expects to be current.
-        let mut old_rb: GLint = 0;
-        gl21::GetIntegerv(gl21::RENDERBUFFER_BINDING_EXT, &mut old_rb);
-        gl21::BindRenderbufferEXT(gl21::RENDERBUFFER_EXT, color_rb as GLuint);
-        let mut width: GLint = 0;
-        let mut height: GLint = 0;
-        gl21::GetRenderbufferParameterivEXT(
-            gl21::RENDERBUFFER_EXT,
-            gl21::RENDERBUFFER_WIDTH_EXT,
-            &mut width,
-        );
-        gl21::GetRenderbufferParameterivEXT(
-            gl21::RENDERBUFFER_EXT,
-            gl21::RENDERBUFFER_HEIGHT_EXT,
-            &mut height,
-        );
-        gl21::BindRenderbufferEXT(gl21::RENDERBUFFER_EXT, old_rb as GLuint);
-
-        gl21::BlitFramebufferEXT(
-            0,
-            0,
-            width,
-            height,
-            0,
-            0,
-            width,
-            height,
-            gl21::COLOR_BUFFER_BIT,
-            gl21::NEAREST,
-        );
-    }
-
-    // Non-OES aliases for OES_framebuffer_object functions.
-    // Some GLES1 apps call the suffix-free ES2-style names directly.
-    unsafe fn GenFramebuffers(&mut self, n: GLsizei, framebuffers: *mut GLuint) {
-        self.GenFramebuffersOES(n, framebuffers)
-    }
-    unsafe fn GenRenderbuffers(&mut self, n: GLsizei, renderbuffers: *mut GLuint) {
-        self.GenRenderbuffersOES(n, renderbuffers)
-    }
-    unsafe fn IsFramebuffer(&mut self, framebuffer: GLuint) -> GLboolean {
-        self.IsFramebufferOES(framebuffer)
-    }
-    unsafe fn IsRenderbuffer(&mut self, renderbuffer: GLuint) -> GLboolean {
-        self.IsRenderbufferOES(renderbuffer)
-    }
-    unsafe fn BindFramebuffer(&mut self, target: GLenum, framebuffer: GLuint) {
-        self.BindFramebufferOES(target, framebuffer)
-    }
-    unsafe fn BindRenderbuffer(&mut self, target: GLenum, renderbuffer: GLuint) {
-        self.BindRenderbufferOES(target, renderbuffer)
-    }
-    unsafe fn RenderbufferStorage(
-        &mut self,
-        target: GLenum,
-        internalformat: GLenum,
-        width: GLsizei,
-        height: GLsizei,
-    ) {
-        self.RenderbufferStorageOES(target, internalformat, width, height)
-    }
-    unsafe fn FramebufferRenderbuffer(
-        &mut self,
-        target: GLenum,
-        attachment: GLenum,
-        renderbuffertarget: GLenum,
-        renderbuffer: GLuint,
-    ) {
-        self.FramebufferRenderbufferOES(target, attachment, renderbuffertarget, renderbuffer)
-    }
-    unsafe fn FramebufferTexture2D(
-        &mut self,
-        target: GLenum,
-        attachment: GLenum,
-        textarget: GLenum,
-        texture: GLuint,
-        level: i32,
-    ) {
-        self.FramebufferTexture2DOES(target, attachment, textarget, texture, level)
-    }
-    unsafe fn CheckFramebufferStatus(&mut self, target: GLenum) -> GLenum {
-        self.CheckFramebufferStatusOES(target)
-    }
-    unsafe fn DeleteFramebuffers(&mut self, n: GLsizei, framebuffers: *const GLuint) {
-        self.DeleteFramebuffersOES(n, framebuffers)
-    }
-    unsafe fn DeleteRenderbuffers(&mut self, n: GLsizei, renderbuffers: *const GLuint) {
-        self.DeleteRenderbuffersOES(n, renderbuffers)
-    }
-    unsafe fn GenerateMipmap(&mut self, target: GLenum) {
-        self.GenerateMipmapOES(target)
-    }
-    unsafe fn GetFramebufferAttachmentParameteriv(
-        &mut self,
-        target: GLenum,
-        attachment: GLenum,
-        pname: GLenum,
-        params: *mut GLint,
-    ) {
-        self.GetFramebufferAttachmentParameterivOES(target, attachment, pname, params)
-    }
-    unsafe fn GetRenderbufferParameteriv(
-        &mut self,
-        target: GLenum,
-        pname: GLenum,
-        params: *mut GLint,
-    ) {
-        self.GetRenderbufferParameterivOES(target, pname, params)
-    }
-
     unsafe fn GetBufferParameteriv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint) {
         gl21::GetBufferParameteriv(target, pname, params)
     }
@@ -2718,399 +2150,5 @@ impl GLES for GLES1OnGL2<'_> {
     }
     unsafe fn UnmapBufferOES(&mut self, target: GLenum) -> GLboolean {
         gl21::UnmapBuffer(target)
-    }
-
-    // OpenGL ES 2.0 entry points implemented on top of OpenGL 2.1's shader
-    // pipeline. ES 2.0's GLSL 1.00 source is translated to desktop GLSL 1.20
-    // by [super::gles2_glsl] before being passed to the driver.
-    unsafe fn CreateShader(&mut self, type_: GLenum) -> GLuint {
-        gl21::CreateShader(type_)
-    }
-    unsafe fn DeleteShader(&mut self, shader: GLuint) {
-        gl21::DeleteShader(shader)
-    }
-    unsafe fn ShaderSource(
-        &mut self,
-        shader: GLuint,
-        count: GLsizei,
-        string: *const *const super::gles_generic::GLchar,
-        length: *const GLint,
-    ) {
-        // Concatenate the GLSL ES source into one string, translate it to
-        // desktop GLSL 1.20, and submit it as a single source string.
-        let mut combined = String::new();
-        for i in 0..count as usize {
-            let str_ptr = *string.add(i);
-            if str_ptr.is_null() {
-                continue;
-            }
-            let bytes: &[u8] = if !length.is_null() && *length.add(i) >= 0 {
-                let len = *length.add(i) as usize;
-                std::slice::from_raw_parts(str_ptr as *const u8, len)
-            } else {
-                std::ffi::CStr::from_ptr(str_ptr).to_bytes()
-            };
-            combined.push_str(&String::from_utf8_lossy(bytes));
-        }
-        let translated = super::gles2_glsl::translate_glsl_es_to_120(&combined);
-        let cstr = std::ffi::CString::new(translated).unwrap_or_default();
-        let ptr = cstr.as_ptr();
-        let len = cstr.as_bytes().len() as GLint;
-        gl21::ShaderSource(shader, 1, &ptr, &len);
-    }
-    unsafe fn CompileShader(&mut self, shader: GLuint) {
-        gl21::CompileShader(shader);
-    }
-    unsafe fn GetShaderiv(&mut self, shader: GLuint, pname: GLenum, params: *mut GLint) {
-        gl21::GetShaderiv(shader, pname, params);
-    }
-    unsafe fn GetShaderInfoLog(
-        &mut self,
-        shader: GLuint,
-        maxLength: GLsizei,
-        length: *mut GLsizei,
-        infoLog: *mut super::gles_generic::GLchar,
-    ) {
-        gl21::GetShaderInfoLog(shader, maxLength, length, infoLog);
-    }
-    unsafe fn IsShader(&mut self, shader: GLuint) -> GLboolean {
-        gl21::IsShader(shader)
-    }
-    unsafe fn CreateProgram(&mut self) -> GLuint {
-        gl21::CreateProgram()
-    }
-    unsafe fn DeleteProgram(&mut self, program: GLuint) {
-        gl21::DeleteProgram(program);
-    }
-    unsafe fn AttachShader(&mut self, program: GLuint, shader: GLuint) {
-        gl21::AttachShader(program, shader);
-    }
-    unsafe fn DetachShader(&mut self, program: GLuint, shader: GLuint) {
-        gl21::DetachShader(program, shader);
-    }
-    unsafe fn LinkProgram(&mut self, program: GLuint) {
-        gl21::LinkProgram(program);
-    }
-    unsafe fn UseProgram(&mut self, program: GLuint) {
-        gl21::UseProgram(program);
-    }
-    unsafe fn GetProgramiv(&mut self, program: GLuint, pname: GLenum, params: *mut GLint) {
-        gl21::GetProgramiv(program, pname, params);
-    }
-    unsafe fn GetProgramInfoLog(
-        &mut self,
-        program: GLuint,
-        maxLength: GLsizei,
-        length: *mut GLsizei,
-        infoLog: *mut super::gles_generic::GLchar,
-    ) {
-        gl21::GetProgramInfoLog(program, maxLength, length, infoLog);
-    }
-    unsafe fn IsProgram(&mut self, program: GLuint) -> GLboolean {
-        gl21::IsProgram(program)
-    }
-    unsafe fn ValidateProgram(&mut self, program: GLuint) {
-        gl21::ValidateProgram(program);
-    }
-    unsafe fn BindAttribLocation(
-        &mut self,
-        program: GLuint,
-        index: GLuint,
-        name: *const super::gles_generic::GLchar,
-    ) {
-        gl21::BindAttribLocation(program, index, name);
-    }
-    unsafe fn GetAttribLocation(
-        &mut self,
-        program: GLuint,
-        name: *const super::gles_generic::GLchar,
-    ) -> GLint {
-        gl21::GetAttribLocation(program, name)
-    }
-    unsafe fn GetUniformLocation(
-        &mut self,
-        program: GLuint,
-        name: *const super::gles_generic::GLchar,
-    ) -> GLint {
-        gl21::GetUniformLocation(program, name)
-    }
-    unsafe fn GetActiveAttrib(
-        &mut self,
-        program: GLuint,
-        index: GLuint,
-        bufSize: GLsizei,
-        length: *mut GLsizei,
-        size: *mut GLint,
-        type_: *mut GLenum,
-        name: *mut super::gles_generic::GLchar,
-    ) {
-        gl21::GetActiveAttrib(program, index, bufSize, length, size, type_, name);
-    }
-    unsafe fn GetActiveUniform(
-        &mut self,
-        program: GLuint,
-        index: GLuint,
-        bufSize: GLsizei,
-        length: *mut GLsizei,
-        size: *mut GLint,
-        type_: *mut GLenum,
-        name: *mut super::gles_generic::GLchar,
-    ) {
-        gl21::GetActiveUniform(program, index, bufSize, length, size, type_, name);
-    }
-    unsafe fn EnableVertexAttribArray(&mut self, index: GLuint) {
-        gl21::EnableVertexAttribArray(index);
-    }
-    unsafe fn DisableVertexAttribArray(&mut self, index: GLuint) {
-        gl21::DisableVertexAttribArray(index);
-    }
-    unsafe fn VertexAttribPointer(
-        &mut self,
-        index: GLuint,
-        size: GLint,
-        type_: GLenum,
-        normalized: GLboolean,
-        stride: GLsizei,
-        pointer: *const GLvoid,
-    ) {
-        gl21::VertexAttribPointer(index, size, type_, normalized, stride, pointer);
-    }
-    unsafe fn VertexAttrib1f(&mut self, index: GLuint, x: GLfloat) {
-        gl21::VertexAttrib1f(index, x);
-    }
-    unsafe fn VertexAttrib2f(&mut self, index: GLuint, x: GLfloat, y: GLfloat) {
-        gl21::VertexAttrib2f(index, x, y);
-    }
-    unsafe fn VertexAttrib3f(&mut self, index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat) {
-        gl21::VertexAttrib3f(index, x, y, z);
-    }
-    unsafe fn VertexAttrib4f(
-        &mut self,
-        index: GLuint,
-        x: GLfloat,
-        y: GLfloat,
-        z: GLfloat,
-        w: GLfloat,
-    ) {
-        gl21::VertexAttrib4f(index, x, y, z, w);
-    }
-    unsafe fn VertexAttrib1fv(&mut self, index: GLuint, v: *const GLfloat) {
-        gl21::VertexAttrib1fv(index, v);
-    }
-    unsafe fn VertexAttrib2fv(&mut self, index: GLuint, v: *const GLfloat) {
-        gl21::VertexAttrib2fv(index, v);
-    }
-    unsafe fn VertexAttrib3fv(&mut self, index: GLuint, v: *const GLfloat) {
-        gl21::VertexAttrib3fv(index, v);
-    }
-    unsafe fn VertexAttrib4fv(&mut self, index: GLuint, v: *const GLfloat) {
-        gl21::VertexAttrib4fv(index, v);
-    }
-    unsafe fn Uniform1f(&mut self, location: GLint, v0: GLfloat) {
-        gl21::Uniform1f(location, v0);
-    }
-    unsafe fn Uniform2f(&mut self, location: GLint, v0: GLfloat, v1: GLfloat) {
-        gl21::Uniform2f(location, v0, v1);
-    }
-    unsafe fn Uniform3f(&mut self, location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat) {
-        gl21::Uniform3f(location, v0, v1, v2);
-    }
-    unsafe fn Uniform4f(
-        &mut self,
-        location: GLint,
-        v0: GLfloat,
-        v1: GLfloat,
-        v2: GLfloat,
-        v3: GLfloat,
-    ) {
-        gl21::Uniform4f(location, v0, v1, v2, v3);
-    }
-    unsafe fn Uniform1i(&mut self, location: GLint, v0: GLint) {
-        gl21::Uniform1i(location, v0);
-    }
-    unsafe fn Uniform2i(&mut self, location: GLint, v0: GLint, v1: GLint) {
-        gl21::Uniform2i(location, v0, v1);
-    }
-    unsafe fn Uniform3i(&mut self, location: GLint, v0: GLint, v1: GLint, v2: GLint) {
-        gl21::Uniform3i(location, v0, v1, v2);
-    }
-    unsafe fn Uniform4i(&mut self, location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint) {
-        gl21::Uniform4i(location, v0, v1, v2, v3);
-    }
-    unsafe fn Uniform1fv(&mut self, location: GLint, count: GLsizei, value: *const GLfloat) {
-        gl21::Uniform1fv(location, count, value);
-    }
-    unsafe fn Uniform2fv(&mut self, location: GLint, count: GLsizei, value: *const GLfloat) {
-        gl21::Uniform2fv(location, count, value);
-    }
-    unsafe fn Uniform3fv(&mut self, location: GLint, count: GLsizei, value: *const GLfloat) {
-        gl21::Uniform3fv(location, count, value);
-    }
-    unsafe fn Uniform4fv(&mut self, location: GLint, count: GLsizei, value: *const GLfloat) {
-        gl21::Uniform4fv(location, count, value);
-    }
-    unsafe fn Uniform1iv(&mut self, location: GLint, count: GLsizei, value: *const GLint) {
-        gl21::Uniform1iv(location, count, value);
-    }
-    unsafe fn Uniform2iv(&mut self, location: GLint, count: GLsizei, value: *const GLint) {
-        gl21::Uniform2iv(location, count, value);
-    }
-    unsafe fn Uniform3iv(&mut self, location: GLint, count: GLsizei, value: *const GLint) {
-        gl21::Uniform3iv(location, count, value);
-    }
-    unsafe fn Uniform4iv(&mut self, location: GLint, count: GLsizei, value: *const GLint) {
-        gl21::Uniform4iv(location, count, value);
-    }
-    unsafe fn UniformMatrix2fv(
-        &mut self,
-        location: GLint,
-        count: GLsizei,
-        transpose: GLboolean,
-        value: *const GLfloat,
-    ) {
-        gl21::UniformMatrix2fv(location, count, transpose, value);
-    }
-    unsafe fn UniformMatrix3fv(
-        &mut self,
-        location: GLint,
-        count: GLsizei,
-        transpose: GLboolean,
-        value: *const GLfloat,
-    ) {
-        gl21::UniformMatrix3fv(location, count, transpose, value);
-    }
-    unsafe fn UniformMatrix4fv(
-        &mut self,
-        location: GLint,
-        count: GLsizei,
-        transpose: GLboolean,
-        value: *const GLfloat,
-    ) {
-        gl21::UniformMatrix4fv(location, count, transpose, value);
-    }
-    unsafe fn BlendColor(&mut self, r: GLclampf, g: GLclampf, b: GLclampf, a: GLclampf) {
-        gl21::BlendColor(r, g, b, a);
-    }
-    unsafe fn BlendEquation(&mut self, mode: GLenum) {
-        gl21::BlendEquation(mode);
-    }
-    unsafe fn BlendEquationSeparate(&mut self, modeRGB: GLenum, modeAlpha: GLenum) {
-        gl21::BlendEquationSeparate(modeRGB, modeAlpha);
-    }
-    unsafe fn BlendFuncSeparate(
-        &mut self,
-        srcRGB: GLenum,
-        dstRGB: GLenum,
-        srcAlpha: GLenum,
-        dstAlpha: GLenum,
-    ) {
-        gl21::BlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
-    }
-    unsafe fn StencilFuncSeparate(
-        &mut self,
-        face: GLenum,
-        func: GLenum,
-        ref_: GLint,
-        mask: GLuint,
-    ) {
-        gl21::StencilFuncSeparate(face, func, ref_, mask);
-    }
-    unsafe fn StencilOpSeparate(
-        &mut self,
-        face: GLenum,
-        sfail: GLenum,
-        dpfail: GLenum,
-        dppass: GLenum,
-    ) {
-        gl21::StencilOpSeparate(face, sfail, dpfail, dppass);
-    }
-    unsafe fn StencilMaskSeparate(&mut self, face: GLenum, mask: GLuint) {
-        gl21::StencilMaskSeparate(face, mask);
-    }
-    unsafe fn GetVertexAttribiv(&mut self, index: GLuint, pname: GLenum, params: *mut GLint) {
-        gl21::GetVertexAttribiv(index, pname, params);
-    }
-    unsafe fn GetVertexAttribfv(&mut self, index: GLuint, pname: GLenum, params: *mut GLfloat) {
-        gl21::GetVertexAttribfv(index, pname, params);
-    }
-    unsafe fn GetVertexAttribPointerv(
-        &mut self,
-        index: GLuint,
-        pname: GLenum,
-        pointer: *mut *mut GLvoid,
-    ) {
-        gl21::GetVertexAttribPointerv(index, pname, pointer);
-    }
-    unsafe fn GetUniformiv(&mut self, program: GLuint, location: GLint, params: *mut GLint) {
-        gl21::GetUniformiv(program, location, params);
-    }
-    unsafe fn GetUniformfv(&mut self, program: GLuint, location: GLint, params: *mut GLfloat) {
-        gl21::GetUniformfv(program, location, params);
-    }
-    unsafe fn GetAttachedShaders(
-        &mut self,
-        program: GLuint,
-        maxCount: GLsizei,
-        count: *mut GLsizei,
-        shaders: *mut GLuint,
-    ) {
-        gl21::GetAttachedShaders(program, maxCount, count, shaders);
-    }
-    unsafe fn GetShaderSource(
-        &mut self,
-        shader: GLuint,
-        bufSize: GLsizei,
-        length: *mut GLsizei,
-        source: *mut super::gles_generic::GLchar,
-    ) {
-        gl21::GetShaderSource(shader, bufSize, length, source);
-    }
-    unsafe fn ReleaseShaderCompiler(&mut self) {
-        // Desktop GL doesn't have ReleaseShaderCompiler; this is a hint and
-        // safe to ignore.
-    }
-    unsafe fn GetShaderPrecisionFormat(
-        &mut self,
-        _shadertype: GLenum,
-        precisiontype: GLenum,
-        range: *mut GLint,
-        precision: *mut GLint,
-    ) {
-        // Desktop GL 2.1 lacks this entry point. Report IEEE-754 single
-        // precision floating point ranges and full integer ranges, which
-        // matches the behaviour of typical desktop drivers.
-        if !range.is_null() {
-            let (rmin, rmax) = match precisiontype {
-                gl21::INT_VEC2 // sentinel; we use the actual GL_LOW_INT etc.
-                | 0x8DF3 /* GL_LOW_INT */ | 0x8DF4 /* GL_MEDIUM_INT */
-                | 0x8DF5 /* GL_HIGH_INT */ => (31, 30),
-                _ => (127, 127), // float types
-            };
-            *range.add(0) = rmin;
-            *range.add(1) = rmax;
-        }
-        if !precision.is_null() {
-            *precision = match precisiontype {
-                0x8DF3..=0x8DF5 /* GL_HIGH_INT */ => 0,
-                _ => 23, // mantissa bits
-            };
-        }
-    }
-    unsafe fn ShaderBinary(
-        &mut self,
-        _count: GLsizei,
-        _shaders: *const GLuint,
-        _binaryformat: GLenum,
-        _binary: *const GLvoid,
-        _length: GLsizei,
-    ) {
-        // Desktop GL 2.1 has no shader binary format we can pass through;
-        // signal failure via GL_INVALID_ENUM.
-        gl21::GetError(); // discard prior error
-                          // GL has no direct way to set INVALID_ENUM, but
-                          // issuing an invalid
-                          // call achieves it. Easiest: call Enable with an
-                          // invalid cap.
-        gl21::Enable(0);
     }
 }

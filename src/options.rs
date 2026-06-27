@@ -36,12 +36,6 @@ pub enum Button {
 pub struct Options {
     pub fullscreen: bool,
     pub device_family: Option<DeviceFamily>,
-    pub auto_device_family: bool,
-    /// When set, the guest sees a screen of exactly this size (in points) and
-    /// scale 1.0, instead of one of the fixed device profiles. Populated by
-    /// `--device-family=auto` (from the host display) or via the explicit
-    /// `--screen-size=WxH` override below.
-    pub host_screen_size: Option<(u32, u32)>,
     pub initial_orientation: DeviceOrientation,
     pub scale_hack: NonZeroU32,
     pub deadzone: f32,
@@ -62,51 +56,11 @@ pub struct Options {
     pub print_fps: bool,
     pub fps_limit: Option<f64>,
     pub force_composition: bool,
-    /// Force EAGL `initWithAPI:` to create an OpenGL ES 2.0 context even when
-    /// the app requested an OpenGL ES 1.1 context.
-    ///
-    /// This unblocks apps that ask EAGL for an ES 1.1 context but actually
-    /// drive rendering with shader entry points (`glUseProgram`,
-    /// `glCreateShader`, …). Without this flag those calls fall through to
-    /// the GLES 1.1-only backend on Android, get silently stubbed, and the
-    /// resulting frames are empty (black screen). Enable it per app via the
-    /// per-app default options file or with `--prefer-gles2-context` on the
-    /// command line. Apps that legitimately rely on the ES 1.1 fixed-function
-    /// pipeline should NOT enable this flag.
-    pub prefer_gles2_context: bool,
     pub network_access: bool,
     pub popup_errors: bool,
     pub dumping_options: DumpingOptions,
     pub dumping_file: PathBuf,
     pub ignore_gl_errors: bool,
-    /// Wrap every guest GL entry point with a `glGetError()` check after the
-    /// call and log the source location (in `gles_guest.rs`) of any non-zero
-    /// error. Useful when an app silently misrenders (e.g. a black screen
-    /// despite an alive render loop) because earlier calls are emitting
-    /// `GL_INVALID_ENUM` / `GL_INVALID_VALUE` etc. that the app never polls
-    /// for.
-    ///
-    /// Note: enabling this changes guest-visible state because the host
-    /// `glGetError()` clears the error queue, so guest `glGetError()` calls
-    /// will see 0 instead of the real error. Diagnostic only.
-    pub trace_gl_errors: bool,
-    /// After a `glTexImage2D(level=0, …)` upload, if the bound texture's
-    /// `GL_TEXTURE_MIN_FILTER` is still the ES 1.1 default
-    /// `GL_NEAREST_MIPMAP_LINEAR` (which makes the texture incomplete
-    /// because no mipmaps have been uploaded), force it to
-    /// `GL_LINEAR`. This mirrors the behaviour of lenient drivers like
-    /// Mesa and Apple's PowerVR ES 1.1 driver — strict drivers like
-    /// Qualcomm Adreno's native ES 1.1 driver instead sample
-    /// incomplete textures as opaque black, which produces a black
-    /// screen for games that never bother to set
-    /// `GL_TEXTURE_MIN_FILTER` themselves. The fix-up only fires for
-    /// `level == 0` uploads that find the default mipmap filter still
-    /// active; once the guest sets any non-default filter (mipmap or not)
-    /// we leave it alone, and any subsequent `glTexParameteri(GL_TEXTURE_MIN_FILTER, …)`
-    /// from the guest will override our `GL_LINEAR` write. Multi-level uploads
-    /// (`level > 0`) do not trigger the fix-up so games that actually use
-    /// mipmaps are unaffected.
-    pub fix_texture_min_filter: bool,
     pub zero_stack_after_guest_to_host_call: Option<u32>,
 }
 
@@ -115,8 +69,6 @@ impl Default for Options {
         Options {
             fullscreen: false,
             device_family: None,
-            auto_device_family: false,
-            host_screen_size: None,
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
             analog_stick_tilt_controls: true,
@@ -137,14 +89,11 @@ impl Default for Options {
             print_fps: false,
             fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync,
             force_composition: false,
-            prefer_gles2_context: false,
             network_access: false,
             popup_errors: true,
             dumping_options: Default::default(),
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
             ignore_gl_errors: false,
-            trace_gl_errors: false,
-            fix_texture_min_filter: false,
             zero_stack_after_guest_to_host_call: None,
         }
     }
@@ -167,38 +116,16 @@ impl Options {
 
         if arg == "--fullscreen" {
             self.fullscreen = true;
+        } else if arg == "--upside-down" {
+            self.initial_orientation = DeviceOrientation::PortraitUpsideDown;
         } else if arg == "--landscape-left" {
             self.initial_orientation = DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
             self.initial_orientation = DeviceOrientation::LandscapeRight;
-        } else if arg == "--upside-down" {
-            self.initial_orientation = DeviceOrientation::PortraitUpsideDown;
         } else if let Some(value) = arg.strip_prefix("--device-family=") {
-            if value == "auto" {
-                self.auto_device_family = true;
-                self.device_family = None;
-            } else {
-                let parsed =
-                    DeviceFamily::try_from(value).map_err(|_| "Invalid device family".to_string())?;
-                self.auto_device_family = false;
-                self.device_family = Some(parsed);
-            }
-        } else if let Some(value) = arg.strip_prefix("--screen-size=") {
-            let (w, h) = value
-                .split_once(|c| c == 'x' || c == 'X' || c == ',')
-                .ok_or_else(|| "--screen-size= requires WIDTHxHEIGHT".to_string())?;
-            let w: u32 = w
-                .trim()
-                .parse()
-                .map_err(|_| "Invalid width for --screen-size=".to_string())?;
-            let h: u32 = h
-                .trim()
-                .parse()
-                .map_err(|_| "Invalid height for --screen-size=".to_string())?;
-            if w == 0 || h == 0 {
-                return Err("--screen-size= dimensions must be non-zero".to_string());
-            }
-            self.host_screen_size = Some((w, h));
+            let parsed =
+                DeviceFamily::try_from(value).map_err(|_| "Invalid device family".to_string())?;
+            self.device_family = Some(parsed);
         } else if let Some(value) = arg.strip_prefix("--scale-hack=") {
             self.scale_hack = value
                 .parse()
@@ -315,8 +242,6 @@ impl Options {
             }
         } else if arg == "--force-composition" {
             self.force_composition = true;
-        } else if arg == "--prefer-gles2-context" {
-            self.prefer_gles2_context = true;
         } else if arg == "--allow-network-access" {
             self.network_access = true;
         } else if arg == "--no-error-popup" {
@@ -327,10 +252,6 @@ impl Options {
             self.dumping_file = crate::paths::user_data_base_path().join(path);
         } else if arg == "--ignore-gl-errors" {
             self.ignore_gl_errors = true;
-        } else if arg == "--trace-gl-errors" {
-            self.trace_gl_errors = true;
-        } else if arg == "--fix-texture-min-filter" {
-            self.fix_texture_min_filter = true;
         } else if let Some(value) = arg.strip_prefix("--zero-stack-after-guest-to-host-call=") {
             self.zero_stack_after_guest_to_host_call = Some(value.parse().map_err(|_| {
                 "Invalid value for --zero-stack-after-guest-to-host-call=".to_string()

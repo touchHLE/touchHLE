@@ -10,10 +10,13 @@ use super::ns_property_list_serialization::{
     deserialize_plist_from_file, NSPropertyListBinaryFormat_v1_0,
 };
 use super::{
-    _nib_archive_decoder, ns_keyed_archiver, ns_keyed_unarchiver, ns_string, ns_url,
-    NSComparisonResult, NSNotFound, NSRange, NSUInteger,
+    _nib_archive_decoder, ns_keyed_unarchiver, ns_string, ns_url, NSComparisonResult, NSNotFound,
+    NSRange, NSUInteger,
 };
 use crate::abi::{CallFromHost, GuestFunction};
+use crate::frameworks::foundation::ns_keyed_archiver::{
+    encode_object, get_value_to_encode_for_current_key,
+};
 use crate::fs::GuestPath;
 use crate::libc::stdlib::qsort::qsort_generic;
 use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, Ptr};
@@ -23,7 +26,6 @@ use crate::objc::{
 };
 use crate::Environment;
 
-#[derive(Default)]
 struct ObjectEnumeratorHostObject {
     /// the enumerated collection, NSArray *
     array: id,
@@ -52,16 +54,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)zone {
     // NSArray might be subclassed by something which needs allocWithZone:
-    // to have the normal behaviour. We don't currently support that; warn and
-    // fall back to the bridged subclass instead of crashing the host.
-    let ns_array_class = env.objc.get_known_class("NSArray", &mut env.mem);
-    if this != ns_array_class {
-        log!(
-            "Warning: +[NSArray allocWithZone:] called on subclass {:?}; \
-             treating as NSArray.",
-            this
-        );
-    }
+    // to have the normal behaviour. Unimplemented: call superclass alloc then.
+    assert!(this == env.objc.get_known_class("NSArray", &mut env.mem));
     msg_class![env; _touchHLE_NSArray allocWithZone:zone]
 }
 
@@ -220,306 +214,38 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, array_imm)
 }
 
-- (id)sortedArrayUsingDescriptors:(id)descriptors { // NSArray* of NSSortDescriptor*
-    let array = msg![env; this mutableCopy];
-    () = msg![env; array sortUsingDescriptors:descriptors];
-    let array_imm = msg![env; array copy];
-    release(env, array);
-    autorelease(env, array_imm)
+- (NSUInteger)hash {
+    // TODO: define better hash
+    msg![env; this count]
 }
-
-// `- (NSArray *)sortedArrayUsingSelector:` — defined here on the abstract
-// NSArray class (not just on a private concrete subclass) so that every
-// member of the class cluster, including NSMutableArray, responds to it.
-- (id)sortedArrayUsingSelector:(SEL)comparator {
-    let array = msg![env; this mutableCopy];
-    () = msg![env; array sortUsingSelector:comparator];
-    let array_imm = msg![env; array copy];
-    release(env, array);
-    autorelease(env, array_imm)
-}
-
-// `- (NSArray *)sortedArrayUsingComparator:(NSComparator)cmptr` —
-// per Apple's NSArray documentation: "Returns an array that lists the
-// receiving array's elements in ascending order, as determined by the
-// comparator block." Defined on the abstract NSArray class so that
-// NSMutableArray (a different branch of the class cluster) inherits it
-// too — previously it lived only on _touchHLE_NSArray, so calling it on
-// a mutable array hit the unrecognized-selector path (GeometryDash logs).
-- (id)sortedArrayUsingComparator:(id)comparator {
-    let array = msg![env; this mutableCopy];
-    () = msg![env; array sortUsingComparator:comparator];
-    let array_imm = msg![env; array copy];
-    release(env, array);
-    autorelease(env, array_imm)
-}
-
-// Add to NSArray @implementation:
-
-- (id)objectsAtIndexes:(id)index_set { // NSIndexSet*
-    let count: NSUInteger = msg![env; index_set count];
-    let mut result = Vec::with_capacity(count as usize);
-    let total: NSUInteger = msg![env; this count];
-    for i in 0..total {
-        let contains: bool = msg![env; index_set containsIndex:i];
-        if contains {
-            let obj: id = msg![env; this objectAtIndex:i];
-            retain(env, obj);
-            result.push(obj);
-        }
-    }
-    let arr = from_vec(env, result);
-    autorelease(env, arr)
-}
-
-- (id)firstObjectCommonWithArray:(id)other { // NSArray*
-    let count: NSUInteger = msg![env; this count];
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        let contains: bool = msg![env; other containsObject:obj];
-        if contains {
-            return obj;
-        }
-    }
-    nil
-}
-
 - (bool)isEqual:(id)other {
     if this == other {
         return true;
     }
-    // Per Apple's docs, `-[NSArray isEqual:]` returns YES when `other` is an
-    // NSArray with equal contents. Without this override the NSObject default
-    // (pointer identity) is used, so two distinct-but-equal arrays — e.g. an
-    // array and its unarchived copy — compare unequal, which breaks
-    // `NSDictionary`/`NSArray` equality after a round-trip.
     let class: Class = msg_class![env; NSArray class];
     if !msg![env; other isKindOfClass:class] {
         return false;
     }
     msg![env; this isEqualToArray:other]
 }
-
-- (bool)isEqualToArray:(id)other { // NSArray*
+- (bool)isEqualToArray:(id)other { // NSArray *
+    if other == nil {
+        return false;
+    }
     let count: NSUInteger = msg![env; this count];
     let other_count: NSUInteger = msg![env; other count];
     if count != other_count {
         return false;
     }
     for i in 0..count {
-        let a: id = msg![env; this objectAtIndex:i];
-        let b: id = msg![env; other objectAtIndex:i];
-        let equal: bool = msg![env; a isEqual:b];
+        let curr_object: id = msg![env; this objectAtIndex:i];
+        let curr_other_object: id = msg![env; other objectAtIndex:i];
+        let equal: bool = msg![env; curr_object isEqual:curr_other_object];
         if !equal {
             return false;
         }
     }
     true
-}
-
-- (NSUInteger)indexOfObject:(id)object inRange:(NSRange)range {
-    for i in range.location..(range.location + range.length) {
-        let curr: id = msg![env; this objectAtIndex:i];
-        let equal: bool = msg![env; object isEqual:curr];
-        if equal {
-            return i;
-        }
-    }
-    NSNotFound as NSUInteger
-}
-
-- (NSUInteger)indexOfObjectIdenticalTo:(id)object {
-    let count: NSUInteger = msg![env; this count];
-    for i in 0..count {
-        let curr: id = msg![env; this objectAtIndex:i];
-        if curr == object {
-            return i;
-        }
-    }
-    NSNotFound as NSUInteger
-}
-
-- (NSUInteger)indexOfObjectIdenticalTo:(id)object inRange:(NSRange)range {
-    for i in range.location..(range.location + range.length) {
-        let curr: id = msg![env; this objectAtIndex:i];
-        if curr == object {
-            return i;
-        }
-    }
-    NSNotFound as NSUInteger
-}
-
-- (id)arrayByAddingObject:(id)object {
-    let count: NSUInteger = msg![env; this count];
-    let mut objects = Vec::with_capacity(count as usize + 1);
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        retain(env, obj);
-        objects.push(obj);
-    }
-    retain(env, object);
-    objects.push(object);
-    let arr = from_vec(env, objects);
-    autorelease(env, arr)
-}
-
-- (id)arrayByAddingObjectsFromArray:(id)other { // NSArray*
-    let count: NSUInteger = msg![env; this count];
-    let other_count: NSUInteger = msg![env; other count];
-    let mut objects = Vec::with_capacity((count + other_count) as usize);
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        retain(env, obj);
-        objects.push(obj);
-    }
-    for i in 0..other_count {
-        let obj: id = msg![env; other objectAtIndex:i];
-        retain(env, obj);
-        objects.push(obj);
-    }
-    let arr = from_vec(env, objects);
-    autorelease(env, arr)
-}
-
-- (id)subarrayWithRange:(NSRange)range {
-    let mut objects = Vec::with_capacity(range.length as usize);
-    for i in range.location..(range.location + range.length) {
-        let obj: id = msg![env; this objectAtIndex:i];
-        retain(env, obj);
-        objects.push(obj);
-    }
-    let arr = from_vec(env, objects);
-    autorelease(env, arr)
-}
-
-- (id)filteredArrayUsingPredicate:(id)predicate { // NSPredicate*
-    let count: NSUInteger = msg![env; this count];
-    let mut result = Vec::new();
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        let matches: bool = msg![env; predicate evaluateWithObject:obj];
-        if matches {
-            retain(env, obj);
-            result.push(obj);
-        }
-    }
-    let arr = from_vec(env, result);
-    autorelease(env, arr)
-}
-
-- (())makeObjectsPerformSelector:(SEL)sel {
-    let count: NSUInteger = msg![env; this count];
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        let _: id = msg![env; obj performSelector:sel];
-    }
-}
-
-- (())encodeWithCoder:(id)coder {
-    let class: Class = msg![env; coder class];
-    let keyed_arch_class: Class = msg_class![env; NSKeyedArchiver class];
-
-    if env.objc.class_is_subclass_of(class, keyed_arch_class) {
-        let array = env.objc.borrow::<ArrayHostObject>(this).array.clone();
-        // NSKeyedArchiver stores an array's contents as an inline array of UID
-        // references under "NS.objects" (Apple's format, which is what our
-        // decoder reads back). See `encode_objects_as_uid_array`.
-        ns_keyed_archiver::encode_objects_as_uid_array(env, coder, "NS.objects", &array);
-    } else {
-        log!(
-            "Warning: NSArray encodeWithCoder: unsupported coder class, skipping"
-        );
-    }
-}
-
-- (())makeObjectsPerformSelector:(SEL)sel withObject:(id)arg {
-    let count: NSUInteger = msg![env; this count];
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        let _: id = msg![env; obj performSelector:sel withObject:arg];
-    }
-}
-
-// Apple's
-// <https://developer.apple.com/documentation/foundation/nsarray/1415846-enumerateobjectsusingblock>:
-// iterates the receiver and, for each element, calls the supplied
-// `void (^)(id obj, NSUInteger idx, BOOL *stop)` block in order. The
-// block can write `*stop = YES;` to break out of the enumeration. The
-// `BOOL *stop` argument is *always* a pointer to a freshly-zeroed
-// `BOOL` provided by the caller — never a re-used storage location.
-- (())enumerateObjectsUsingBlock:(MutVoidPtr)block {
-    let opts: NSUInteger = 0;
-    () = msg![env; this enumerateObjectsWithOptions:opts usingBlock:block];
-}
-
-// Apple's
-// <https://developer.apple.com/documentation/foundation/nsarray/1415349-enumerateobjectswithoptions>.
-// `NSEnumerationOptions` is a bitmask:
-//   NSEnumerationConcurrent = 1 << 0
-//   NSEnumerationReverse    = 1 << 1
-// We deliberately ignore `NSEnumerationConcurrent` (we always enumerate
-// serially, which is allowed: the docs say concurrent enumeration is
-// merely *available* on platforms that support it).
-- (())enumerateObjectsWithOptions:(NSUInteger)opts usingBlock:(MutVoidPtr)block {
-    const NS_ENUMERATION_REVERSE: NSUInteger = 1 << 1;
-    if block.is_null() {
-        return;
-    }
-    let invoke_ptr_addr: MutPtr<u32> =
-        Ptr::from_bits(block.to_bits() + 12);
-    let invoke_addr: u32 = env.mem.read(invoke_ptr_addr);
-    if invoke_addr == 0 {
-        log!(
-            "Warning: enumerateObjectsWithOptions:usingBlock: block at {:?} \
-             has NULL invoke pointer; skipping.",
-            block
-        );
-        return;
-    }
-    let invoke = GuestFunction::from_addr_with_thumb_bit(invoke_addr);
-    let block_arg: crate::mem::ConstVoidPtr = block.cast_const();
-    // `BOOL` on iOS is one byte. We allocate a 4-byte slot because the
-    // ARMv7 ABI passes / returns small values widened to a word, and
-    // returning the unused tail to the heap costs nothing.
-    let stop_ptr: MutPtr<u8> = env.mem.alloc(4).cast();
-    env.mem.write(stop_ptr, 0u8);
-
-    let count: NSUInteger = msg![env; this count];
-    let reverse = (opts & NS_ENUMERATION_REVERSE) != 0;
-    let mut i: NSUInteger = 0;
-    while i < count {
-        let idx: NSUInteger = if reverse { count - 1 - i } else { i };
-        let obj: id = msg![env; this objectAtIndex:idx];
-        <GuestFunction as CallFromHost<(), (crate::mem::ConstVoidPtr, id, NSUInteger, MutPtr<u8>)>>::call_from_host(
-            &invoke, env, (block_arg, obj, idx, stop_ptr),
-        );
-        if env.mem.read(stop_ptr) != 0 {
-            break;
-        }
-        i += 1;
-    }
-    env.mem.free(stop_ptr.cast());
-}
-
-- (id)valueForKey:(id)key { // NSString*
-    let count: NSUInteger = msg![env; this count];
-    let mut result = Vec::with_capacity(count as usize);
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        let val: id = msg![env; obj valueForKey:key];
-        retain(env, val);
-        result.push(val);
-    }
-    let arr = from_vec(env, result);
-    autorelease(env, arr)
-}
-
-- (())setValue:(id)value forKey:(id)key {
-    let count: NSUInteger = msg![env; this count];
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        () = msg![env; obj setValue:value forKey:key];
-    }
 }
 
 @end
@@ -536,17 +262,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation NSMutableArray: NSArray
 
 + (id)allocWithZone:(NSZonePtr)zone {
-    // NSMutableArray might be subclassed by something which needs
-    // allocWithZone: to have the normal behaviour. Warn and fall back to the
-    // bridged subclass instead of panicking.
-    let mutable_class = env.objc.get_known_class("NSMutableArray", &mut env.mem);
-    if this != mutable_class {
-        log!(
-            "Warning: +[NSMutableArray allocWithZone:] called on subclass {:?}; \
-             treating as NSMutableArray.",
-            this
-        );
-    }
+    // NSArray might be subclassed by something which needs allocWithZone:
+    // to have the normal behaviour. Unimplemented: call superclass alloc then.
+    assert!(this == env.objc.get_known_class("NSMutableArray", &mut env.mem));
     msg_class![env; _touchHLE_NSMutableArray allocWithZone:zone]
 }
 
@@ -562,23 +280,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
-+ (id)arrayWithObjects:(id)first_obj, ...args {
-    let objects = if first_obj == nil {
-        vec![]
-    } else {
-        retain(env, first_obj);
-        let mut objects = vec![first_obj];
-        let mut varargs = args.start();
-        loop {
-            let next_arg: id = varargs.next(env);
-            if next_arg.is_null() {
-                break;
-            }
-            retain(env, next_arg);
-            objects.push(next_arg);
++ (id)arrayWithObjects:(id)firstObj, ...args {
+    retain(env, firstObj);
+    let mut objects = vec![firstObj];
+    let mut varargs = args.start();
+    loop {
+        let next_arg: id = varargs.next(env);
+        if next_arg.is_null() {
+            break;
         }
-        objects
-    };
+        retain(env, next_arg);
+        objects.push(next_arg);
+    }
     let array = mutable_from_vec(env, objects);
     autorelease(env, array)
 }
@@ -633,90 +346,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     other
 }
 
-- (())removeObjectsInArray:(id)other { // NSArray*
-    let count: NSUInteger = msg![env; other count];
-    for i in 0..count {
-        let obj: id = msg![env; other objectAtIndex:i];
-        () = msg![env; this removeObject:obj];
-    }
-}
-
-- (())removeObjectsInRange:(NSRange)range {
-    // Remove in reverse order to preserve indices.
-    let end = range.location + range.length;
-    let mut i = end;
-    while i > range.location {
-        i -= 1;
-        () = msg![env; this removeObjectAtIndex:i];
-    }
-}
-
-- (())removeObjectIdenticalTo:(id)object {
-    let count: NSUInteger = msg![env; this count];
-    let mut indices = Vec::new();
-    for i in 0..count {
-        let curr: id = msg![env; this objectAtIndex:i];
-        if curr == object {
-            indices.push(i);
-        }
-    }
-    for i in indices.into_iter().rev() {
-        () = msg![env; this removeObjectAtIndex:i];
-    }
-}
-
-- (())exchangeObjectAtIndex:(NSUInteger)idx1 withObjectAtIndex:(NSUInteger)idx2 {
-    env.objc
-        .borrow_mut::<ArrayHostObject>(this)
-        .array
-        .swap(idx1 as usize, idx2 as usize);
-}
-
-- (())setArray:(id)other { // NSArray*
-    () = msg![env; this removeAllObjects];
-    () = msg![env; this addObjectsFromArray:other];
-}
-
-- (())filterUsingPredicate:(id)predicate { // NSPredicate*
-    let count: NSUInteger = msg![env; this count];
-    let mut to_remove = Vec::new();
-    for i in 0..count {
-        let obj: id = msg![env; this objectAtIndex:i];
-        let matches: bool = msg![env; predicate evaluateWithObject:obj];
-        if !matches {
-            to_remove.push(i);
-        }
-    }
-    for i in to_remove.into_iter().rev() {
-        () = msg![env; this removeObjectAtIndex:i];
-    }
-}
-
-- (())insertObjects:(id)objects atIndexes:(id)indexes { // NSArray*, NSIndexSet*
-    let count: NSUInteger = msg![env; objects count];
-    let total_idx: NSUInteger = msg![env; indexes count];
-    if count != total_idx {
-        log!("Warning: insertObjects:atIndexes: count mismatch, ignoring");
-        return;
-    }
-    // Collect sorted indices and insert in ascending order.
-    let arr_count: NSUInteger = msg![env; this count];
-    let mut pairs: Vec<(NSUInteger, id)> = Vec::new();
-    let mut obj_i: NSUInteger = 0;
-    for idx in 0..arr_count + count {
-        let contains: bool = msg![env; indexes containsIndex:idx];
-        if contains {
-            let obj: id = msg![env; objects objectAtIndex:obj_i];
-            pairs.push((idx, obj));
-            obj_i += 1;
-        }
-    }
-    // Insert in reverse so earlier insertions don't shift later indices.
-    for (idx, obj) in pairs.into_iter().rev() {
-        () = msg![env; this insertObject:obj atIndex:idx];
-    }
-}
-
 @end
 
 // Our private subclass that is the single implementation of NSArray for the
@@ -732,47 +361,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let class: Class = msg![env; coder class];
-    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
-    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
-    let objects = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
-    // It seems that every NSArray item in an NSKeyedArchiver plist looks like:
-    // {
-    //   "$class" => (uid of NSArray class goes here),
-    //   "NS.objects" => [
-    //     // objects here
-    //   ]
-    // }
-    // Presumably we need to call a `decodeFooBarForKey:` method on the NSCoder
-    // here, passing in an NSString for "NS.objects". There is no method for
-    // arrays though (maybe it's `decodeObjectForKey:`), and in any case
-    // allocating an NSString here would be inconvenient, so let's just take a
-    // shortcut.
-    ns_keyed_unarchiver::decode_current_array(env, coder)
-    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
-        _nib_archive_decoder::decode_current_array(env, coder)
-    } else {
-        log!(
-            "Warning: -[_touchHLE_NSArray initWithCoder:] unsupported coder class {:?}; \
-             returning empty array.",
-            class
-        );
-        Vec::new()
-    };
-    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
-    if !host_object.array.is_empty() {
-        log!(
-            "Warning: -[_touchHLE_NSArray initWithCoder:] called on an already-populated array; \
-             releasing existing contents first."
-        );
-        let prev = std::mem::take(&mut host_object.array);
-        for obj in prev {
-            release(env, obj);
-        }
-    }
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
-    // objects are already retained
-    this
+    init_with_coder_inner(env, this, coder)
+}
+- (())encodeWithCoder:(id)coder {
+    encode_with_coder_inner(env, this, coder)
 }
 
 - (id)initWithArray:(id)array { // NSArray*
@@ -820,6 +412,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dealloc {
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let array = std::mem::take(&mut host_object.array);
+
     for object in array {
         release(env, object);
     }
@@ -859,31 +452,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
 }
 - (id)objectAtIndex:(NSUInteger)index {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len();
-    if index as usize >= len {
-        log!("Warning: NSArray objectAtIndex: index out of bounds (index {}, len {})", index, len);
-        return nil;
-    }
+    // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
-}
-// Modern Objective-C subscripting bridge:
-//   id obj = array[idx];   // compiled to objectAtIndexedSubscript:
-// Defined on NSArray (iOS 6+ ObjC literals); semantics are identical to
-// `objectAtIndex:`, including out-of-bounds behaviour. We delegate via
-// `msg![]` rather than reaching into the host object so that subclasses
-// (e.g. CFArray, KVO-aware mutable subclasses) get the right behaviour.
-// <https://developer.apple.com/documentation/foundation/nsarray/1410519-objectatindexedsubscript>
-- (id)objectAtIndexedSubscript:(NSUInteger)index {
-    msg![env; this objectAtIndex:index]
 }
 
 - (id)description {
     build_description(env, this)
-}
-
-- (())addObject:(id)object {
-    retain(env, object);
-    env.objc.borrow_mut::<ArrayHostObject>(this).array.push(object);
 }
 
 - (id)subarrayWithRange:(NSRange)range {
@@ -896,6 +470,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     let res = from_vec(env, tmp);
     autorelease(env, res)
+}
+
+- (id)sortedArrayUsingSelector:(SEL)comparator {
+    let new = msg![env; this mutableCopy];
+    () = msg![env; new sortUsingSelector:comparator];
+    autorelease(env, new)
 }
 
 @end
@@ -956,65 +536,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (id)initWithObjects:(id)firstObj, ...args {
-    retain(env, firstObj);
-    let mut objects = vec![firstObj];
-    let mut varargs = args.start();
-    loop {
-        let next_arg: id = varargs.next(env);
-        if next_arg.is_null() {
-            break;
-        }
-        retain(env, next_arg);
-        objects.push(next_arg);
-    }
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
-    this
-}
-
-- (id)initWithObjects:(ConstPtr<id>)objects_ptr count:(NSUInteger)count {
-    let mut objects = Vec::with_capacity(count as usize);
-    for i in 0..count {
-        let obj: id = env.mem.read(objects_ptr + i);
-        retain(env, obj);
-        objects.push(obj);
-    }
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
-    this
-}
-
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
-    let class: Class = msg![env; coder class];
-    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
-    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
-
-    let objects = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
-        ns_keyed_unarchiver::decode_current_array(env, coder)
-    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
-        _nib_archive_decoder::decode_current_array(env, coder)
-    } else {
-        log!(
-            "Warning: -[_touchHLE_NSMutableArray initWithCoder:] unsupported coder class {:?}; \
-             returning empty array.",
-            class
-        );
-        Vec::new()
-    };
-    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
-    if !host_object.array.is_empty() {
-        log!(
-            "Warning: -[_touchHLE_NSMutableArray initWithCoder:] called on an already-populated array; \
-             releasing existing contents first."
-        );
-        let prev = std::mem::take(&mut host_object.array);
-        for obj in prev {
-            release(env, obj);
-        }
-    }
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
-    // objects are already retained
-    this
+    init_with_coder_inner(env, this, coder)
+}
+- (())encodeWithCoder:(id)coder {
+    encode_with_coder_inner(env, this, coder)
 }
 
 // NSCopying implementation
@@ -1099,63 +626,9 @@ pub const CLASSES: ClassExports = objc_classes! {
             array.swap(l, r);
         },
     );
+
     let (env, _) = user_data;
     env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
-}
-
-// `- (void)sortUsingComparator:(NSComparator)cmptr` —
-// per Apple's [NSMutableArray Reference](https://developer.apple.com/documentation/foundation/nsmutablearray/1413612-sortusingcomparator):
-// sorts the receiver in place using the supplied NSComparator block.
-// `NSComparator` is `^NSComparisonResult(id obj1, id obj2)`. An ObjC
-// block on 32-bit iOS is laid out as:
-//     struct Block_layout {
-//         void *isa;            // word 0
-//         int flags;            // word 1
-//         int reserved;         // word 2
-//         void (*invoke)(...);  // word 3  <-- the function pointer
-//         struct Block_descriptor_1 *descriptor; // word 4
-//         /* captured variables follow */
-//     };
-// We therefore invoke the block by calling `block->invoke(block, obj1,
-// obj2)` with the standard ARM AAPCS calling convention. A nil block is
-// treated as "leave the array in its current order", mirroring how
-// Apple's runtime aborts with a NULL block call — touchHLE just logs
-// and returns to keep the guest alive.
-- (())sortUsingComparator:(id)block {
-    if block == nil {
-        log!("Warning: -[NSMutableArray sortUsingComparator:] called with nil block; leaving array unsorted");
-        return;
-    }
-    let invoke_ptr: u32 = env.mem.read(block.cast::<u32>() + 3u32);
-    if invoke_ptr == 0 {
-        log!("Warning: -[NSMutableArray sortUsingComparator:] block {:?} has NULL invoke pointer; leaving array unsorted", block);
-        return;
-    }
-    let invoke = GuestFunction::from_addr_with_thumb_bit(invoke_ptr);
-
-    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
-    let mut array = std::mem::take(&mut host_object.array);
-    let len = array.len().try_into().unwrap();
-    let mut user_data = (env, &mut array);
-    qsort_generic(
-        &mut user_data,
-        len,
-        &mut |(env, array), l, r| {
-            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
-            let res: NSComparisonResult = invoke.call_from_host(env, (block, array[l], array[r]));
-            res
-        },
-        &mut |(_, array), l, r| {
-            let (l, r): (usize, usize) = (l.try_into().unwrap(), r.try_into().unwrap());
-            array.swap(l, r);
-        },
-    );
-    let (env, _) = user_data;
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = array;
-}
-
-- (())sortUsingDescriptors:(id)descriptors { // NSArray* of NSSortDescriptor*
-    super::ns_sort_descriptor::sort_with_descriptors(env, this, descriptors);
 }
 
 // NSFastEnumeration implementation
@@ -1176,13 +649,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (NSUInteger)count {
     env.objc.borrow::<ArrayHostObject>(this).array.len().try_into().unwrap()
 }
-
 - (id)objectAtIndex:(NSUInteger)index {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len();
-    if index as usize >= len {
-        log!("Warning: NSMutableArray objectAtIndex: index out of bounds (index {}, len {})", index, len);
-        return nil;
-    }
+    // TODO: throw real exception rather than panic if out-of-bounds?
     env.objc.borrow::<ArrayHostObject>(this).array[index as usize]
 }
 
@@ -1194,11 +662,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())insertObject:(id)object
            atIndex:(NSUInteger)index {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len();
-    if index as usize > len {
-        log!("Warning: NSMutableArray insertObject:atIndex: index out of bounds");
-        return;
-    }
     retain(env, object);
     env.objc.borrow_mut::<ArrayHostObject>(this).array.insert(index as usize, object);
 }
@@ -1225,66 +688,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())removeObjectAtIndex:(NSUInteger)index {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len();
-    if index as usize >= len {
-        log!("Warning: NSMutableArray removeObjectAtIndex: index out of bounds");
-        return;
-    }
     let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.remove(index as usize);
     release(env, object)
 }
 
 - (())replaceObjectAtIndex:(NSUInteger)index withObject:(id)obj {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len();
-    if index as usize >= len {
-        log!("Warning: NSMutableArray replaceObjectAtIndex:withObject: index out of bounds");
-        return;
-    }
     retain(env, obj);
     let object = std::mem::replace(&mut env.objc.borrow_mut::<ArrayHostObject>(this).array[index as usize], obj);
     release(env, object);
 }
 
-// Modern Objective-C subscripting bridge for mutable arrays:
-//   array[idx] = obj;     // compiled to setObject:atIndexedSubscript:
-// `index` may equal `count`, in which case the object is appended (matches
-// Apple's documented behaviour). Out-of-range indices fall back to a
-// warning rather than panicking the host so that broken guests don't crash
-// the whole emulator. Setting `nil` is treated like
-// `removeObjectAtIndex:`, mirroring real NSMutableArray semantics.
-// <https://developer.apple.com/documentation/foundation/nsmutablearray/1416687-setobject>
-- (())setObject:(id)obj atIndexedSubscript:(NSUInteger)index {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len() as NSUInteger;
-    if obj == nil {
-        if (index as usize) < len as usize {
-            () = msg![env; this removeObjectAtIndex:index];
-        } else {
-            log!(
-                "Warning: NSMutableArray setObject:atIndexedSubscript: nil at out-of-range index {}",
-                index
-            );
-        }
-        return;
-    }
-    if index == len {
-        () = msg![env; this addObject:obj];
-    } else if index < len {
-        () = msg![env; this replaceObjectAtIndex:index withObject:obj];
-    } else {
-        log!(
-            "Warning: NSMutableArray setObject:atIndexedSubscript: index {} > count {}",
-            index, len
-        );
-    }
-}
-
 - (())removeLastObject {
-    let object_opt = env.objc.borrow_mut::<ArrayHostObject>(this).array.pop();
-    if let Some(object) = object_opt {
-        release(env, object)
-    } else {
-        log!("Warning: NSMutableArray removeLastObject: array is empty");
-    }
+    let object = env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
+    release(env, object)
 }
 
 - (())removeAllObjects {
@@ -1295,25 +711,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     env.objc.borrow_mut::<ArrayHostObject>(this).array = Vec::new()
-}
-
-// Apple docs: Returns an array that lists the receiving array's elements in
-// ascending order, as determined by the comparison method specified by a given
-// selector. The new array contains references to the receiving array's
-// elements, not copies of them.
-- (id)sortedArrayUsingSelector:(SEL)comparator {
-    let new = msg![env; this mutableCopy];
-    () = msg![env; new sortUsingSelector:comparator];
-    autorelease(env, new)
-}
-
-// Apple docs: Returns an array that lists the receiving array's elements in
-// ascending order as defined by the comparison function comparator.
-- (id)sortedArrayUsingFunction:(GuestFunction)comparator
-                       context:(MutVoidPtr)context {
-    let new = msg![env; this mutableCopy];
-    () = msg![env; new sortUsingFunction:comparator context:context];
-    autorelease(env, new)
 }
 
 @end
@@ -1331,24 +728,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())removeObjectAtIndex:(NSUInteger)index {
-    let len = env.objc.borrow::<ArrayHostObject>(this).array.len();
-    if index as usize >= len {
-        log!("Warning: NSMutableArray_non_retaining removeObjectAtIndex: index out of bounds");
-        return;
-    }
     env.objc.borrow_mut::<ArrayHostObject>(this).array.remove(index as usize);
 }
 
 - (())removeLastObject {
-    let popped = env.objc.borrow_mut::<ArrayHostObject>(this).array.pop();
-    if popped.is_none() {
-        log!("Warning: NSMutableArray_non_retaining removeLastObject: array is empty");
-    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array.pop().unwrap();
 }
 
 @end
 
 };
+
 /// Shortcut for host code, roughly equivalent to
 /// `[[NSArray alloc] initWithObjects:count]` but without copying.
 /// The elements should already be "retained by" the `Vec`.
@@ -1434,4 +824,48 @@ fn mutable_copy_inner(env: &mut Environment, arr: id) -> id {
     }
     env.objc.borrow_mut::<ArrayHostObject>(mut_arr).array = array;
     mut_arr
+}
+
+fn init_with_coder_inner(env: &mut Environment, arr: id, coder: id) -> id {
+    let class: Class = msg![env; coder class];
+    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
+    let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
+    // It seems that every NSArray item in an NSKeyedArchiver plist looks like:
+    // {
+    //   "$class" => (uid of NSArray class goes here),
+    //   "NS.objects" => [
+    //     // objects here
+    //   ]
+    // }
+    // Presumably we need to call a `decodeFooBarForKey:` method on the NSCoder
+    // here, passing in an NSString for "NS.objects". There is no method for
+    // arrays though (maybe it's `decodeObjectForKey:`), and in any case
+    // allocating an NSString here would be inconvenient, so let's just take a
+    // shortcut.
+    let objects = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
+        ns_keyed_unarchiver::decode_current_array(env, coder)
+    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
+        _nib_archive_decoder::decode_current_array(env, coder)
+    } else {
+        unimplemented!()
+    };
+
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(arr);
+    assert!(host_object.array.is_empty());
+    host_object.array = objects; // objects are already retained
+    arr
+}
+
+fn encode_with_coder_inner(env: &mut Environment, arr: id, coder: id) {
+    let host_obj: ArrayHostObject = std::mem::take(env.objc.borrow_mut(arr));
+    let mut encoded_vals = vec![];
+    for v in &host_obj.array {
+        // TODO: support other type of coders, not only NSKeyedArchiver
+        let vv = encode_object(env, coder, *v);
+        encoded_vals.push(plist::Value::Uid(vv));
+    }
+    *env.objc.borrow_mut(arr) = host_obj;
+
+    let scope = get_value_to_encode_for_current_key(env, coder);
+    scope.insert("NS.objects".to_string(), plist::Value::Array(encoded_vals));
 }

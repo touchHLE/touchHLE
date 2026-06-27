@@ -24,7 +24,7 @@ pub fn debug_fourcc(fourcc: u32) -> String {
     }
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct AudioStreamBasicDescription {
     // Hz
@@ -38,6 +38,22 @@ pub struct AudioStreamBasicDescription {
     pub bits_per_channel: u32,
     pub _reserved: u32,
 }
+
+impl PartialEq<AudioStreamBasicDescription> for AudioStreamBasicDescription {
+    fn eq(&self, other: &AudioStreamBasicDescription) -> bool {
+        // Comparasion for float sample rate has to allow some error
+        (self.sample_rate - other.sample_rate).abs() < 0.01
+            && self.format_id == other.format_id
+            && self.format_flags == other.format_flags
+            && self.bytes_per_packet == other.bytes_per_packet
+            && self.frames_per_packet == other.frames_per_packet
+            && self.bytes_per_frame == other.bytes_per_frame
+            && self.channels_per_frame == other.channels_per_frame
+            && self.bits_per_channel == other.bits_per_channel
+        // Don't care about reserved
+    }
+}
+
 unsafe impl SafeRead for AudioStreamBasicDescription {}
 impl std::fmt::Debug for AudioStreamBasicDescription {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -114,20 +130,6 @@ impl AudioStreamBasicDescription {
                     _reserved: 0,
                 }
             }
-            AudioFormat::Mpeg4Aac => {
-                // AAC: сжатый формат, bytes_per_frame не имеет смысла
-                AudioStreamBasicDescription {
-                    sample_rate,
-                    format_id: kAudioFormatMPEG4AAC,
-                    format_flags: 0,
-                    bytes_per_packet,
-                    frames_per_packet,
-                    bytes_per_frame: 0,
-                    channels_per_frame,
-                    bits_per_channel,
-                    _reserved: 0,
-                }
-            }
         }
     }
 }
@@ -162,12 +164,6 @@ unsafe impl SafeRead for AudioTimeStamp {}
 pub type AudioFormatID = u32;
 pub const kAudioFormatLinearPCM: AudioFormatID = fourcc(b"lpcm");
 pub const kAudioFormatAppleIMA4: AudioFormatID = fourcc(b"ima4");
-/// MPEG-4 AAC: FourCC `'aac '` (0x61616320)
-pub const kAudioFormatMPEG4AAC: AudioFormatID = fourcc(b"aac ");
-/// MPEG-1 / MPEG-2 Layer III audio. Apple's `<CoreAudio/CoreAudioTypes.h>`
-/// defines `kAudioFormatMPEGLayer3` as FourCC `'.mp3'`
-/// (<https://developer.apple.com/documentation/coreaudiotypes/kaudioformatmpeglayer3>).
-pub const kAudioFormatMPEGLayer3: AudioFormatID = fourcc(b".mp3");
 
 pub type AudioFormatFlags = u32;
 pub const kAudioFormatFlagIsFloat: AudioFormatFlags = 1 << 0;

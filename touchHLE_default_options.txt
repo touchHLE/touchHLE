@@ -109,11 +109,6 @@ com.ea.candcra.row: --landscape-left
 # (force composition fixes black boxes on Android Adreno GPUs)
 com.chillingo.defenderchronicles: --landscape-left --force-composition
 
-# SimCity
-# (we neeed to force language to avoid a crash)
-com.ea.simcitybv: --preferred-languages=en
-com.ea.simcityinc: --preferred-languages=en
-
 # Tom Clancy's Splinter Cell: Conviction
 # Note: "Force composition" flag is needed to fix broken render after the first level.
 com.gameloft.SplinterCell: --force-composition
@@ -189,9 +184,9 @@ com.mastertronic.casper: --force-composition
 4rv4l3j0ur: --landscape-left
 
 # Brothers In Arms: Hour Of Heroes
-# 52 bytes corresponds to the size of PVRTC texture header stored on the stack.
+# 25 bytes is the minimum amount of bytes needed to clear the PVR flag stored on the stack.
 # This prevents "Game Card has been removed" issue.
-com.gameloft.BIA: --landscape-left --zero-stack-after-guest-to-host-call=52
+com.gameloft.BIA: --landscape-left --zero-stack-after-guest-to-host-call=25
 
 # Hero of Sparta II
 # Stick = Move, A = Jump, B = Quick attack, X = Block, Y = Weapon select, LeftShoulder = Focus kill
@@ -200,72 +195,21 @@ com.gameloft.HOS2: --stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 -
 # Unity's 3D World demo
 com.unity3d.3Dworld: --landscape-left --force-composition
 
-# Doom
-com.idsoftware.Doom: --force-composition
+# Zombieville
+com.KelliNoda.Zombieville: --landscape-left --force-composition
 
-# Edge
-net.mobigame.Edge: --force-composition
+# Ace Combat Xi
+# Start: Pause, DPad: Pitch/Yaw, Left stick: Pitch/Roll, Left shoulder button: Throttle, X: Brake, Y: Objective, B: Missile, A: Gun
+com.namconetworks.AceCombatXi: --landscape-left --y-tilt-offset=45 --button-to-touch=Start,195,310 --dpad-to-touch=15,150,75,75 --button-to-touch=LeftShoulder,33,263 --button-to-touch=X,115,295  --button-to-touch=Y,355,230 --button-to-touch=B,440,260 --button-to-touch=A,355,300
 
-# Radiant 
-net.hexage.radiant: --force-composition
+# Tiki Towers
+com.mrgoodliving.TikiTowers: --landscape-left
 
-# BBR3D
-com.digitalchocolate.iwall: --force-composition
-
-# NFSU
-com.ea.nfsucinc: --force-composition
-
-# BOF
-com.gameloft.BladesOfFury: --force-composition
-
-# MCPE LITE
-com.mojang.minecraftpe-demo: --force-composition
-
-# Bruce Lee
-com.indiagames.brucelee:  --force-composition --ignore-gl-errors
-
-# Red Ball 3
-com.chillingo.redball3hd: --landscape-left
-
-# LEGO Ninjago: Spinjitzu Scavenger Hunt
-# This is a pure ES 1.1 fixed-function game (uses only glColor4f, glMatrixMode,
-# glVertexPointer, glLoadMatrixf etc., no shaders). The game uploads a
-# 512x512 RGB texture via glTexImage2D(level=0) and only ever sets
-# GL_TEXTURE_WRAP_T (= GL_REPEAT) on it — it never sets
-# GL_TEXTURE_MIN_FILTER, so the texture stays at the ES 1.1 default
-# GL_NEAREST_MIPMAP_LINEAR even though no mipmaps were uploaded. Lenient
-# drivers (Mesa, Apple PowerVR) still sample it; strict drivers
-# (Qualcomm Adreno native ES 1.1 path) treat the texture as incomplete
-# and sample (0, 0, 0, 1), producing a fully black screen with an alive
-# render loop. --fix-texture-min-filter inserts an extra
-# glTexParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR) after each level-0
-# upload so the texture is complete on all drivers; the guest can
-# override it later if it ever wants to.
-#
-# The earlier black-screen symptom on Adreno (before the texture-filter
-# fix) was caused by HyperHLE's internal present path trying to clear a
-# non-zero GL_CURRENT_PROGRAM via glUseProgram(0), which was a no-op
-# stub on GLES1Native. That dance has been removed from the ES 1.1
-# present path, so this app no longer needs --prefer-gles2-context.
-# --trace-gl-errors stays so any remaining 0x500 noise is logged with a
-# pointer to the calling host site.
-com.lego.NinjagoSpinjitzuScavengerHunt: --landscape-left --fix-texture-min-filter --trace-gl-errors
-
-# Resident Evil Degeneration (jp.co.capcom.residentevil.en)
-# Ported from touchHLE upstream commit 1bd22431 ("Default options for
-# Resident Evil Degeneration"). The game runs in landscape but its
-# UIWindow does not request landscape orientation, so without
-# --landscape-left the window stays portrait and the game's rendering
-# ends up rotated relative to it (the visible result is a black
-# screen). The game-controller mappings below mirror the on-screen
-# controls so the game is playable with a controller.
+# Resident Evil Degeneration
 jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100
 
-# Call of Duty: Zombies (com.activision.callofduty)
-# Ported from touchHLE upstream's default options for Call of Duty:
-# Zombies. The game is landscape and uses an accelerometer-based aim
-# offset; --x-tilt-offset and the controller mapping below make it
-# playable with a game controller (matches upstream).
+# COD Zombies
+# DPad/Stick = Move, Left shoulder = Knife, A = Shoot, B = Aim, X = Reload, Y = Grenade, Start = Pause
 com.activision.callofduty: --x-tilt-offset=-10 --dpad-to-touch=30,215,80,80 --stick-to-touch=30,215,80,80 --button-to-touch=A,387,210 --button-to-touch=B,455,185 --button-to-touch=X,455,25 --button-to-touch=Y,440,95 --button-to-touch=LeftShoulder,240,310 --button-to-touch=Start,20,25
 
 # Pandemonium
@@ -274,14 +218,9 @@ com.ea.pandyinc: --landscape-left --button-to-touch=DPadLeft,50,230 --button-to-
 
 # Samurai: Way of the warrior
 com.madfingergames.Samurai: --force-composition
-com.madfingergames.SamuraiHD: --force-composition
 
 # NEX
 com.StarByte.NEX: --landscape-left --force-composition
-
-# BioShock (requires a newer device model; the game refuses to start its
-# engine if it detects an unsupported device like the original iPhone)
-com.2k.bioshock: --landscape-right --device-family=iphone5
 
 # Galaxy on Fire
 # In Game controls A = Weapon Select, X = Boost, B = Fire, Y = Missle, Start = Pause
@@ -289,16 +228,3 @@ www.fishlabs.net.GalaxyOnFire: --landscape-right --button-to-touch=A,427,274 --b
 
 # Palm Heroes
 com.palmheroes.PalmHeroes: --landscape-right
-
-# Mutant Fridge Mayhem (issue #220)
-# App requests LandscapeRight; use landscape-right so the orientation matches.
-com.turner.mfm: --landscape-right
-
-# Minion Jump / Kingdom Prince
-com.apprisetec9.minionjump: --device-family=ipad --landscape-right --force-composition
-com.risinghighapps.kingdomprincepro: --device-family=ipad --landscape-right --force-composition
-at.source.veggie1: --device-family=iphone --landscape-right --force-composition
-at.source.tomzom: --device-family=iphone --force-composition
-at.source.potpan: --device-family=iphone --landscape-right --force-composition
-at.source.potato3D: --device-family=iphone --landscape-right --force-composition
-com.tayasui.mrpoofree: --device-family=iphone --landscape-right --fullscreen --force-composition

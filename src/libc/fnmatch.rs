@@ -3,150 +3,106 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `fnmatch.h` — filename pattern matching.
+//! `fnmatch.h`
+//! Match a filename or pathname against a shell-style pattern.
 
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::mem::ConstPtr;
 use crate::Environment;
+use std::collections::HashMap;
 
-// fnmatch() return value on no match
 const FNM_NOMATCH: i32 = 1;
 
-// fnmatch() flags
-#[allow(dead_code)]
-const FNM_PATHNAME: i32 = 1 << 1; // slash must be matched by slash
-#[allow(dead_code)]
-const FNM_NOESCAPE: i32 = 1 << 2; // disable backslash escaping
-#[allow(dead_code)]
-const FNM_PERIOD: i32 = 1 << 3; // leading dot must be matched explicitly
-const FNM_CASEFOLD: i32 = 1 << 4; // case-insensitive matching (GNU extension)
-
-/// Pure-Rust fnmatch implementation.
-/// Supports `*`, `?`, `[...]`, `[!...]`, `[a-z]` ranges, and FNM_CASEFOLD.
-fn fnmatch_impl(pattern: &[u8], string: &[u8], flags: i32) -> bool {
-    let casefold = (flags & FNM_CASEFOLD) != 0;
-    let norm = |b: u8| if casefold { b.to_ascii_lowercase() } else { b };
-
-    let mut pi = 0usize;
-    let mut si = 0usize;
-    // backtracking state after a '*'
-    let mut star_pi: Option<usize> = None;
-    let mut star_si: Option<usize> = None;
-
-    loop {
-        if pi < pattern.len() {
-            match pattern[pi] {
-                b'*' => {
-                    pi += 1;
-                    // collapse consecutive stars
-                    while pi < pattern.len() && pattern[pi] == b'*' {
-                        pi += 1;
-                    }
-                    if pi == pattern.len() {
-                        return true; // trailing '*' matches everything
-                    }
-                    star_pi = Some(pi);
-                    star_si = Some(si);
-                }
-                b'?' => {
-                    if si >= string.len() {
-                        return false;
-                    }
-                    pi += 1;
-                    si += 1;
-                }
-                b'[' => {
-                    if si >= string.len() {
-                        return false;
-                    }
-                    pi += 1;
-                    let negate = pi < pattern.len() && pattern[pi] == b'!';
-                    if negate {
-                        pi += 1;
-                    }
-                    let sc = norm(string[si]);
-                    let mut matched = false;
-                    while pi < pattern.len() && pattern[pi] != b']' {
-                        if pi + 2 < pattern.len()
-                            && pattern[pi + 1] == b'-'
-                            && pattern[pi + 2] != b']'
-                        {
-                            if sc >= norm(pattern[pi]) && sc <= norm(pattern[pi + 2]) {
-                                matched = true;
-                            }
-                            pi += 3;
-                        } else {
-                            if norm(pattern[pi]) == sc {
-                                matched = true;
-                            }
-                            pi += 1;
-                        }
-                    }
-                    if pi < pattern.len() {
-                        pi += 1; // skip ']'
-                    }
-                    if matched == negate {
-                        return false;
-                    }
-                    si += 1;
-                }
-                pc => {
-                    if si >= string.len() || norm(pc) != norm(string[si]) {
-                        // mismatch — backtrack to last '*'
-                        match (star_pi, star_si) {
-                            (Some(spi), Some(ssi)) => {
-                                let new_ssi = ssi + 1;
-                                if new_ssi > string.len() {
-                                    return false;
-                                }
-                                pi = spi;
-                                star_si = Some(new_ssi);
-                                si = new_ssi;
-                            }
-                            _ => return false,
-                        }
-                    } else {
-                        pi += 1;
-                        si += 1;
-                    }
-                }
-            }
-        } else {
-            // pattern exhausted
-            if si == string.len() {
-                return true;
-            }
-            // string has remaining chars — backtrack if we have a '*'
-            match (star_pi, star_si) {
-                (Some(spi), Some(ssi)) => {
-                    let new_ssi = ssi + 1;
-                    if new_ssi > string.len() {
-                        return false;
-                    }
-                    pi = spi;
-                    star_si = Some(new_ssi);
-                    si = new_ssi;
-                }
-                _ => return false,
-            }
-        }
+/// Inner helper function to match string `a` against pattern `b`.
+/// `a_end` and `b_end` are suffixes length of the string and pattern
+/// respectively. `mem` is used for memoization.
+/// Only '*' wildcard is supported for the moment.
+/// TODO: extend matching logic and generalize for non-ASCII cases
+fn fnmatch_inner(
+    a: &[u8],
+    a_end: usize,
+    b: &[u8],
+    b_end: usize,
+    mem: &mut HashMap<(usize, usize), bool>,
+) -> bool {
+    // TODO: if you feel extra fancy, try to rewrite using arrays (or vectors)
+    // instead of memoizing with a map (iterative DP).
+    if let Some(&val) = mem.get(&(a_end, b_end)) {
+        return val;
     }
+    let res = if b_end == 0 {
+        // Empty pattern matches empty string only.
+        // Note: it isn't true other way around! Think empty string and
+        // "*" pattern
+        a_end == 0
+    } else if b[b_end - 1] == b'*' {
+        // Iterate over all possible matches;
+        // If we found at least one match, we don't need to continue
+        (0..=a_end).any(|i| fnmatch_inner(a, i, b, b_end - 1, mem))
+    } else if a_end == 0 {
+        false
+    } else {
+        a[a_end - 1] == b[b_end - 1] && fnmatch_inner(a, a_end - 1, b, b_end - 1, mem)
+    };
+    log_dbg!("fnmatch_inner({a_end},{b_end}) -> {res}");
+    mem.insert((a_end, b_end), res);
+    res
 }
 
-pub(super) fn fnmatch(env: &mut Environment, pattern: ConstPtr<u8>, string: ConstPtr<u8>, flags: i32) -> i32 {
-    let pat = env.mem.cstr_at(pattern);
-    let s = env.mem.cstr_at(string);
+pub(super) fn fnmatch(
+    env: &mut Environment,
+    pattern: ConstPtr<u8>,
+    string: ConstPtr<u8>,
+    flags: i32,
+) -> i32 {
+    let pattern_str = env.mem.cstr_at_utf8(pattern).unwrap();
     log_dbg!(
-        "fnmatch({:?}, {:?}, {:#x})",
-        std::str::from_utf8(pat),
-        std::str::from_utf8(s),
+        "fnmatch({}, {:?}, {})",
+        pattern_str,
+        env.mem.cstr_at_utf8(string),
         flags
     );
-    if fnmatch_impl(pat, s, flags) {
-        0
+
+    assert!(!pattern_str.contains('\\')); // TODO
+    assert!(!pattern_str.contains('?') && !pattern_str.contains('[')); // TODO
+
+    assert_eq!(flags, 0); // TODO
+    let a = env.mem.cstr_at(string);
+    let b = env.mem.cstr_at(pattern);
+
+    let mut mem = HashMap::new();
+    if fnmatch_inner(a, a.len(), b, b.len(), &mut mem) {
+        0 // there is a match
     } else {
         FNM_NOMATCH
     }
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(fnmatch(_, _, _))];
+
+#[cfg(test)]
+mod fnmatch_tests {
+    use super::*;
+
+    #[test]
+    fn fnmatch_inner_tests() {
+        fn test_helper(a: &str, b: &str) -> bool {
+            let mut mem = HashMap::new();
+            fnmatch_inner(a.as_bytes(), a.len(), b.as_bytes(), b.len(), &mut mem)
+        }
+
+        assert!(test_helper("", ""));
+        assert!(test_helper("", "*"));
+        assert!(!test_helper("ab", ""));
+        assert!(test_helper("ab", "ab"));
+        assert!(!test_helper("ab", "ad"));
+        assert!(test_helper("ab", "*"));
+        assert!(test_helper("abc", "*c"));
+        assert!(!test_helper("abc", "c*"));
+        assert!(!test_helper("abc", "*a"));
+        assert!(test_helper("abc", "a*"));
+        assert!(test_helper("abcdkj", "a*d*"));
+        assert!(!test_helper("abcdkj", "d*j"));
+        assert!(test_helper("abcdkj", "ab***cdk****j"));
+    }
+}

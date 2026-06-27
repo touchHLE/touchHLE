@@ -11,41 +11,39 @@ use crate::frameworks::core_animation::ca_media_timing_function::kCAMediaTimingF
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{id, nil, objc_classes, release, retain, ClassExports};
+use crate::Environment;
 use crate::{msg, msg_class};
-use crate::{Environment, ThreadId};
 
 #[derive(Default)]
-pub struct State {
-    // TODO: Clean up state from threads that finish
-    transactions: HashMap<ThreadId, ThreadState>,
+pub struct ThreadLocalState {
+    implicit_transaction: Option<Transaction>,
+    explicit_transactions: Vec<Transaction>,
 }
-impl State {
-    pub fn get(env: &mut Environment) -> &State {
-        &env.framework_state.core_animation.ca_transaction
+impl ThreadLocalState {
+    pub fn get(env: &mut Environment) -> &ThreadLocalState {
+        &env.get_tl_framework_state().core_animation.ca_transaction
     }
 
-    pub fn get_mut(env: &mut Environment) -> &mut State {
-        &mut env.framework_state.core_animation.ca_transaction
+    pub fn get_mut(env: &mut Environment) -> &mut ThreadLocalState {
+        &mut env.get_tl_framework_state().core_animation.ca_transaction
     }
 
     pub fn get_current_transaction(env: &mut Environment) -> Option<&Transaction> {
-        let current_thread = env.current_thread;
-        State::get(env)
-            .transactions
-            .get(&current_thread)
-            .and_then(|t| t.get_current_transaction())
+        let thread_state = ThreadLocalState::get(env);
+        thread_state
+            .explicit_transactions
+            .last()
+            .or(thread_state.implicit_transaction.as_ref())
     }
 
-    fn get_current_transaction_mut(env: &mut Environment) -> Option<&mut Transaction> {
-        let current_thread = env.current_thread;
-        State::get_mut(env)
-            .transactions
-            .get_mut(&current_thread)
-            .and_then(|t| t.get_current_transaction_mut())
+    pub fn get_current_transaction_mut(env: &mut Environment) -> Option<&mut Transaction> {
+        let thread_state = ThreadLocalState::get_mut(env);
+        thread_state
+            .explicit_transactions
+            .last_mut()
+            .or(thread_state.implicit_transaction.as_mut())
     }
 
-    // Used by CALayer implicit animations (see ca_layer.rs
-    // add_default_implied_basic_animation).
     pub fn add_animation(env: &mut Environment, layer: id, animation: id) {
         let layer_class = msg![env; layer class];
         let ca_layer = env.objc.get_known_class("CALayer", &mut env.mem);
@@ -55,65 +53,37 @@ impl State {
         retain(env, layer);
         retain(env, animation);
         assert!(env.objc.class_is_subclass_of(anim_class, ca_animation));
-        if let Some(transaction) = State::get_current_transaction_mut(env) {
+        if let Some(transaction) = ThreadLocalState::get_current_transaction_mut(env) {
             transaction.add_animation(layer, animation);
         } else {
             let mut transaction = Transaction::new(env);
             transaction.add_animation(layer, animation);
-            let thread_state = State::get_current_thread_state_mut(env);
+            let thread_state = ThreadLocalState::get_mut(env);
             assert!(thread_state.implicit_transaction.is_none());
             thread_state.implicit_transaction = Some(transaction);
         };
     }
 
     pub fn commit_implicit_transaction(env: &mut Environment) {
-        let state = State::get_current_thread_state_mut(env);
+        let state = ThreadLocalState::get_mut(env);
         assert!(state.explicit_transactions.is_empty()); // TODO: Verify what should happen
         if let Some(transaction) = std::mem::take(&mut state.implicit_transaction) {
             transaction.commit(env);
         }
     }
 
-    fn get_current_thread_state_mut(env: &mut Environment) -> &mut ThreadState {
-        let current_thread = env.current_thread;
-        State::get_mut(env)
-            .transactions
-            .entry(current_thread)
-            .or_default()
-    }
-
     fn push_explicit_transaction(env: &mut Environment) {
         let transaction = Transaction::new(env);
-        State::get_current_thread_state_mut(env)
+        ThreadLocalState::get_mut(env)
             .explicit_transactions
             .push(transaction);
     }
 
-    fn pop_explicit_transaction(env: &mut Environment) -> Option<Transaction> {
-        let current_thread = env.current_thread;
-        State::get_mut(env)
-            .transactions
-            .get_mut(&current_thread)
-            .and_then(|thread_state| thread_state.explicit_transactions.pop())
-    }
-}
-
-#[derive(Default)]
-struct ThreadState {
-    implicit_transaction: Option<Transaction>,
-    explicit_transactions: Vec<Transaction>,
-}
-impl ThreadState {
-    fn get_current_transaction(&self) -> Option<&Transaction> {
-        self.explicit_transactions
-            .last()
-            .or(self.implicit_transaction.as_ref())
-    }
-
-    fn get_current_transaction_mut(&mut self) -> Option<&mut Transaction> {
-        self.explicit_transactions
-            .last_mut()
-            .or(self.implicit_transaction.as_mut())
+    fn pop_explicit_transaction(env: &mut Environment) -> Transaction {
+        ThreadLocalState::get_mut(env)
+            .explicit_transactions
+            .pop()
+            .unwrap()
     }
 }
 
@@ -138,8 +108,6 @@ impl Transaction {
         }
     }
 
-    // Unused until support for UIView animations is implemented.
-    #[allow(unused)]
     pub fn get_animations(&self) -> Vec<(id, id)> {
         self.animations.clone()
     }
@@ -201,51 +169,26 @@ pub const CLASSES: ClassExports = objc_classes! {
     match &*key_string  {
         kCATransactionAnimationDuration => {
             let value: CFTimeInterval = msg![env; value doubleValue];
-            if let Some(transaction) = State::get_current_transaction_mut(env) {
-                transaction.animation_duration = value;
-            } else {
-                log!("Warning: [CATransaction setValue:forKey:kCATransactionAnimationDuration] called outside a transaction; ignoring.");
-            }
+            ThreadLocalState::get_current_transaction_mut(env).unwrap().animation_duration = value;
         },
         kCATransactionDisableActions => {
             let value: bool = msg![env; value boolValue];
-            if let Some(transaction) = State::get_current_transaction_mut(env) {
-                transaction.disable_actions = value;
-            } else {
-                log!("Warning: [CATransaction setValue:forKey:kCATransactionDisableActions] called outside a transaction; ignoring.");
-            }
+            ThreadLocalState::get_current_transaction_mut(env).unwrap().disable_actions = value;
         },
         kCATransactionAnimationTimingFunction => {
-            if let Some(transaction) = State::get_current_transaction_mut(env) {
-                let old_value = std::mem::replace(&mut transaction.animation_timing_function, value);
-                retain(env, value);
-                release(env, old_value);
-            } else {
-                log!("Warning: [CATransaction setValue:forKey:kCATransactionAnimationTimingFunction] called outside a transaction; ignoring.");
-            }
+            let transaction = ThreadLocalState::get_current_transaction_mut(env).unwrap();
+            let old_value = std::mem::replace(&mut transaction.animation_timing_function, value);
+            retain(env, value);
+            release(env, old_value);
         },
         kCATransactionCompletionBlock => {
-            // We do not implement ObjC blocks (^{ ... }) yet so we cannot
-            // invoke a completion block; storing it as plain data is the
-            // closest safe behaviour for guests that simply set it as a
-            // side-effect of using +setValue:forKey: with their own keys.
-            log!(
-                "Warning: [CATransaction setValue:forKey:kCATransactionCompletionBlock] is not supported; ignoring block {:?}.",
-                value
-            );
+            unimplemented!();
         },
         _ => {
-            if let Some(transaction) = State::get_current_transaction_mut(env) {
-                let old_value = transaction.data.insert(key_string.to_string(), value).unwrap_or(nil);
-                retain(env, value);
-                release(env, old_value);
-            } else {
-                log!(
-                    "Warning: [CATransaction setValue:{:?} forKey:{:?}] called outside a transaction; ignoring.",
-                    value,
-                    key_string
-                );
-            }
+            let transaction = ThreadLocalState::get_current_transaction_mut(env).unwrap();
+            let old_value = transaction.data.insert(key_string.to_string(), value).unwrap_or(nil);
+            retain(env, value);
+            release(env, old_value);
         }
     };
 }
@@ -253,33 +196,21 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_string = to_rust_string(env, key);
     let value = match &*key_string {
         kCATransactionAnimationDuration => {
-            let animation_duration = State::get_current_transaction(env)
-                .map(|t| t.animation_duration)
-                .unwrap_or(0.25);
+            let animation_duration = ThreadLocalState::get_current_transaction(env).unwrap().animation_duration;
             msg_class![env; NSNumber numberWithDouble:animation_duration]
         },
         kCATransactionDisableActions => {
-            let disable_actions = State::get_current_transaction(env)
-                .map(|t| t.disable_actions)
-                .unwrap_or(false);
+            let disable_actions = ThreadLocalState::get_current_transaction(env).unwrap().disable_actions;
             msg_class![env; NSNumber numberWithBool:disable_actions]
         },
         kCATransactionAnimationTimingFunction => {
-            State::get_current_transaction(env)
-                .map(|t| t.animation_timing_function)
-                .unwrap_or_else(|| {
-                    let animation_timing_function_name = get_static_str(env, kCAMediaTimingFunctionDefault);
-                    msg_class![env; CAMediaTimingFunction functionWithName:animation_timing_function_name]
-                })
+            ThreadLocalState::get_current_transaction(env).unwrap().animation_timing_function
         },
         kCATransactionCompletionBlock => {
-            log!("Warning: [CATransaction valueForKey:kCATransactionCompletionBlock] not supported; returning nil.");
-            nil
+            unimplemented!()
         },
         _ => {
-            State::get_current_transaction(env)
-                .and_then(|t| t.data.get(&*key_string).cloned())
-                .unwrap_or(nil)
+            ThreadLocalState::get_current_transaction(env).unwrap().data.get(&*key_string).cloned().unwrap_or(nil)
         }
     };
     log_dbg!("[CATransaction valueForKey:{:?} ({})] => {:?}", key, key_string, value);
@@ -288,16 +219,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (())begin {
     log_dbg!("[CATransaction begin]");
-    State::push_explicit_transaction(env);
+    ThreadLocalState::push_explicit_transaction(env);
 }
 
 + (())commit {
     log_dbg!("[CATransaction commit]");
-    if let Some(transaction) = State::pop_explicit_transaction(env) {
-        transaction.commit(env);
-    } else {
-        log!("Warning: [CATransaction commit] called without a matching begin; ignoring.");
-    }
+    ThreadLocalState::pop_explicit_transaction(env).commit(env);
 }
 
 + (bool)disableActions {

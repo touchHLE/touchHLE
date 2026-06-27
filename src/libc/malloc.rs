@@ -3,24 +3,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! `malloc/malloc.h` memory zones.
-//!
-//! Unlike Apple's libmalloc, this fork backs every zone with the single
-//! global guest heap (see [crate::mem]). Apps that go through the zone API
-//! (e.g. `malloc_create_zone` + `malloc_zone_malloc`) get correct behaviour;
-//! the per-zone heap isolation that the real allocator provides is purely an
-//! optimisation and is not relied upon by guest code we target.
+//! `malloc.h` memory management zones
 
-use crate::abi::GuestFunction;
+use std::collections::HashMap;
+
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::libc::string::strdup;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{
+    ConstPtr, ConstVoidPtr, GuestUSize, HeapAllocator, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead,
+};
 
 #[derive(Default)]
 pub struct State {
     default_zone: Option<MutPtr<malloc_zone_t>>,
+    zone_to_heap: HashMap<MutPtr<malloc_zone_t>, HeapAllocator>,
 }
 
 #[repr(C, packed)]
@@ -45,24 +43,32 @@ pub struct malloc_zone_t {
 unsafe impl SafeRead for malloc_zone_t {}
 
 impl malloc_zone_t {
-    fn new(env: &mut Environment) -> malloc_zone_t {
-        let fn_ptr = |env: &mut Environment, symbol: &str| -> MutVoidPtr {
-            let f: GuestFunction = env
-                .dyld
-                .create_proc_address(&mut env.mem, &mut env.cpu, symbol)
-                .unwrap_or_else(|_| panic!("Failed to create function pointer for {symbol}"));
-            f.to_ptr().cast_mut()
-        };
+    pub fn new(env: &mut Environment) -> malloc_zone_t {
         malloc_zone_t {
             reserved1: Ptr::null(),
             reserved2: Ptr::null(),
-            size: fn_ptr(env, "_malloc_zone_size"),
-            malloc: fn_ptr(env, "_malloc_zone_malloc"),
+            size: env
+                .dyld
+                .create_function_address(&mut env.mem, &mut env.cpu, "malloc_zone_size")
+                .unwrap(),
+            malloc: env
+                .dyld
+                .create_function_address(&mut env.mem, &mut env.cpu, "malloc_zone_malloc")
+                .unwrap(),
             calloc: Ptr::null(),
             valloc: Ptr::null(),
-            free: fn_ptr(env, "_malloc_zone_free"),
-            realloc: fn_ptr(env, "_malloc_zone_realloc"),
-            destroy: fn_ptr(env, "_malloc_destroy_zone"),
+            free: env
+                .dyld
+                .create_function_address(&mut env.mem, &mut env.cpu, "malloc_zone_free")
+                .unwrap(),
+            realloc: env
+                .dyld
+                .create_function_address(&mut env.mem, &mut env.cpu, "malloc_zone_realloc")
+                .unwrap(),
+            destroy: env
+                .dyld
+                .create_function_address(&mut env.mem, &mut env.cpu, "malloc_destroy_zone")
+                .unwrap(),
             zone_name: Ptr::null(),
             batch_malloc: Ptr::null(),
             batch_free: Ptr::null(),
@@ -85,57 +91,68 @@ fn malloc_default_zone(env: &mut Environment) -> MutPtr<malloc_zone_t> {
 
 fn malloc_create_zone(
     env: &mut Environment,
-    _start_size: GuestUSize,
+    start_size: GuestUSize,
     flags: u32,
 ) -> MutPtr<malloc_zone_t> {
     assert_eq!(flags, 0);
-    // All zones are backed by the single global heap, so a created zone is
-    // just another `malloc_zone_t` struct.
     let zone_data = malloc_zone_t::new(env);
-    env.mem.alloc_and_write(zone_data)
+    let zone = env.mem.alloc_and_write(zone_data);
+    let heap = env.mem.create_heap(start_size);
+    assert!(env
+        .libc_state
+        .malloc
+        .zone_to_heap
+        .insert(zone, heap)
+        .is_none());
+    zone
 }
 
 fn malloc_destroy_zone(env: &mut Environment, zone: MutPtr<malloc_zone_t>) {
     if zone == malloc_default_zone(env) {
         panic!("Attempted to destroy default zone");
+    } else {
+        let heap = env
+            .libc_state
+            .malloc
+            .zone_to_heap
+            .remove(&zone)
+            .unwrap_or_else(|| panic!("Zone {zone:?} does not map to an allocator"));
+        env.mem.destroy_heap(heap);
+        let zone_name = env.mem.read(zone).zone_name;
+        if !zone_name.is_null() {
+            env.mem.free(zone_name.cast_mut().cast());
+        }
+        env.mem.free(zone.cast());
     }
-    let zone_name = env.mem.read(zone).zone_name;
-    if !zone_name.is_null() {
-        env.mem.free(zone_name.cast_mut().cast());
-    }
-    env.mem.free(zone.cast());
 }
 
-fn malloc_zone_free(env: &mut Environment, _zone: MutPtr<malloc_zone_t>, ptr: MutVoidPtr) {
-    env.mem.free(ptr)
+fn malloc_zone_free(env: &mut Environment, zone: MutPtr<malloc_zone_t>, ptr: MutVoidPtr) {
+    with_zone(env, zone, |mem, heap| mem.free_in_heap(heap, ptr))
 }
 
 fn malloc_zone_malloc(
     env: &mut Environment,
-    _zone: MutPtr<malloc_zone_t>,
+    zone: MutPtr<malloc_zone_t>,
     size: GuestUSize,
 ) -> MutVoidPtr {
-    env.mem.alloc(size)
+    with_zone(env, zone, |mem, heap| mem.alloc_in_heap(heap, size))
 }
 
 fn malloc_zone_realloc(
     env: &mut Environment,
-    _zone: MutPtr<malloc_zone_t>,
+    zone: MutPtr<malloc_zone_t>,
     ptr: MutVoidPtr,
     size: GuestUSize,
 ) -> MutVoidPtr {
-    env.mem.realloc(ptr, size)
+    with_zone(env, zone, |mem, heap| mem.realloc_in_heap(heap, ptr, size))
 }
 
 fn malloc_zone_size(
     env: &mut Environment,
-    _zone: MutPtr<malloc_zone_t>,
+    zone: MutPtr<malloc_zone_t>,
     ptr: ConstVoidPtr,
 ) -> GuestUSize {
-    if ptr.is_null() {
-        return 0;
-    }
-    env.mem.malloc_size(ptr)
+    with_zone(env, zone, |mem, heap| mem.malloc_size_in_heap(heap, ptr))
 }
 
 /// Not a part of the API. However as such a function needs to be accessible in
@@ -145,6 +162,28 @@ fn malloc_set_zone_name(env: &mut Environment, zone: MutPtr<malloc_zone_t>, name
     let mut zone_data = env.mem.read(zone);
     zone_data.zone_name = name;
     env.mem.write(zone, zone_data);
+}
+
+/// Call a function using the heap corresponding to `zone`. Zone helper
+/// not a part of the API.
+fn with_zone<R>(
+    env: &mut Environment,
+    zone: MutPtr<malloc_zone_t>,
+    f: impl FnOnce(&mut Mem, Option<&mut HeapAllocator>) -> R,
+) -> R {
+    let default = malloc_default_zone(env);
+    let heap = if zone == default {
+        None
+    } else {
+        Some(
+            env.libc_state
+                .malloc
+                .zone_to_heap
+                .get_mut(&zone)
+                .unwrap_or_else(|| panic!("Zone {zone:?} does not map to an allocator")),
+        )
+    };
+    f(&mut env.mem, heap)
 }
 
 pub const FUNCTIONS: FunctionExports = &[

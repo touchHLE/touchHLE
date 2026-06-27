@@ -4,96 +4,166 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-// Exercises the Objective-C runtime's `+initialize` semantics, which Apple
-// documents at:
-//   https://developer.apple.com/documentation/objectivec/nsobject/1418639-initialize
-//
-// Specifically:
-//   * `+initialize` is invoked exactly once per class, lazily, before the
-//     first message is sent to the class or any of its instances.
-//   * It is inherited by subclasses, so messaging a subclass that doesn't
-//     itself implement `+initialize` calls the parent's implementation a
-//     second time, with `self` set to the subclass.
-//   * Sending an unrelated class message such as `+class` is enough to
-//     trigger initialization on demand.
-
 #include "system_headers.h"
+#include <pthread.h>
+#include <unistd.h>
 
-static int InitializeRoot_initialize_calls = 0;
-static int InitializeChild_initialize_calls = 0;
-
-@interface InitializeRoot : NSObject
-@end
-
-@implementation InitializeRoot
+@implementation Initalize : NSObject
+static bool did_init = false;
 + (void)initialize {
-  InitializeRoot_initialize_calls++;
+  [self another];
+}
++ (bool)checkInitialize {
+  return did_init;
+}
+
+// Make sure that we can call other messages inside initialize
++ (void)another {
+  did_init = true;
 }
 @end
 
-@interface InitializeChild : InitializeRoot
-@end
-
-@implementation InitializeChild
-// Intentionally no +initialize so we exercise inherited dispatch.
-@end
-
-@interface InitializeSibling : InitializeRoot
-@end
-
-@implementation InitializeSibling
+@implementation MultiThreadInitalize : NSObject
+static bool mt_did_init = false;
 + (void)initialize {
-  // Different class: this should be counted by InitializeRoot's hook (via
-  // inheritance) *and* run its own override. The runtime first sends the
-  // parent's +initialize with `self = InitializeSibling`, then ours.
-  InitializeRoot_initialize_calls++;
-  InitializeChild_initialize_calls++;
+  usleep(500);
+  mt_did_init = true;
+}
+
++ (bool)checkInitialize {
+  return mt_did_init;
+}
+
+@end
+
+@implementation SuperInitialize : NSObject
+static bool super_did_init = false;
++ initialize {
+  super_did_init = true;
+}
++ (bool)checkInitialize {
+  return super_did_init;
 }
 @end
 
-int test_Initialize(void) {
-  // Sanity: nothing should have run yet.
-  if (InitializeRoot_initialize_calls != 0 ||
-      InitializeChild_initialize_calls != 0) {
-    return -1;
+@implementation Sub1Initialize : SuperInitialize
+static bool sub1_did_init = false;
++ initialize {
+  sub1_did_init = true;
+}
++ (bool)checkInitialize {
+  return [super checkInitialize] && sub1_did_init;
+}
+@end
+
+@implementation Sub2Initialize : SuperInitialize
+static bool sub2_did_init = false;
++ initialize {
+  sub2_did_init = true;
+}
++ (bool)checkInitialize {
+  return [super checkInitialize] && sub2_did_init;
+}
+@end
+
+// The behaviour for this is kinda unintuitive: (From
+// https://developer.apple.com/documentation/objectivec/nsobject-swift.class/initialize()?language=objc)
+// "The superclass implementation may be called multiple times if subclasses do
+// not implement initialize—the runtime will call the inherited
+// implementation—or if subclasses explicitly call [super initialize]. If you
+// want to protect yourself from being run multiple times, you can structure
+// your implementation along these lines (guard implementation)"
+@implementation GuardInitialize : NSObject
+static int init_count = 0;
+static int guarded_init_count = 0;
++ initialize {
+  init_count++;
+  if (self == [GuardInitialize class]) {
+    guarded_init_count++;
+  }
+}
++ (bool)checkInitialize:(int)count {
+  return init_count == count && guarded_init_count == 1;
+}
+@end
+
+@implementation Sub1GuardInitialize : GuardInitialize
+// This one does not have a +initialize, so it should bump init_count but not
+// guarded_init_count
+@end
+
+@implementation Sub2GuardInitialize : GuardInitialize
+// This one does have a +initialize, so it should not bump init_count nor
+// guarded_init_count
++ initialize {
+}
+@end
+
+void mt_intialize(bool *rval) {
+  *rval = [MultiThreadInitalize checkInitialize];
+}
+
+int test_Initialize() {
+  // Regular +initialize test
+  if (did_init) {
+    return -20;
+  }
+  if (![Initalize checkInitialize]) {
+    return -21;
   }
 
-  // Touch the root class. +initialize must fire exactly once.
-  (void)[InitializeRoot class];
-  if (InitializeRoot_initialize_calls != 1) {
-    return -2;
+  // Multithreaded +initialize test
+  if (mt_did_init) {
+    return -22;
+  }
+  pthread_t threads[10];
+  bool rvals[10];
+  for (int i = 0; i < 10; i++) {
+    pthread_create(threads + i, NULL, (void *(*)(void *)) & mt_intialize,
+                   rvals + i);
   }
 
-  // Touching it again must NOT re-run +initialize.
-  (void)[InitializeRoot class];
-  (void)[[InitializeRoot new] release];
-  if (InitializeRoot_initialize_calls != 1) {
-    return -3;
+  if (![MultiThreadInitalize checkInitialize]) {
+    return -30;
   }
 
-  // Touching the subclass that does NOT override +initialize must call the
-  // parent's implementation once more (with self = InitializeChild).
-  (void)[InitializeChild class];
-  if (InitializeRoot_initialize_calls != 2) {
-    return -4;
+  bool is_ok = true;
+  for (int i = 0; i < 10; i++) {
+    if (pthread_join(threads[i], NULL)) {
+      return -1;
+    }
+    is_ok &= rvals[i];
   }
-  (void)[InitializeChild class];
-  if (InitializeRoot_initialize_calls != 2) {
-    return -5;
+  if (!is_ok) {
+    return -31;
   }
 
-  // Touching a sibling that DOES override +initialize: the runtime calls the
-  // parent's hook first (with self = InitializeSibling), then runs the
-  // sibling's own override.
-  (void)[InitializeSibling class];
-  if (InitializeRoot_initialize_calls != 3 ||
-      InitializeChild_initialize_calls != 1) {
-    return -6;
+  // Superclass initialize test
+  if (super_did_init || sub1_did_init || sub1_did_init) {
+    return -40;
   }
-  (void)[InitializeSibling class];
-  if (InitializeRoot_initialize_calls != 3 ||
-      InitializeChild_initialize_calls != 1) {
-    return -7;
+  if (![Sub1Initialize checkInitialize]) {
+    return -41;
+  }
+  if (sub2_did_init) {
+    return -42;
+  }
+  if (![Sub2Initialize checkInitialize]) {
+    return -43;
+  }
+
+  // Guard initialize test
+  if (init_count != 0 && guarded_init_count != 0) {
+    return -50;
+  }
+  if (![GuardInitialize checkInitialize:1]) {
+    return -51;
+  }
+  if (![Sub1GuardInitialize checkInitialize:2]) {
+    return -52;
+  }
+  if (![Sub2GuardInitialize checkInitialize:2]) {
+    return -53;
   }
 
   return 0;

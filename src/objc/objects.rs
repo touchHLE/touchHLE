@@ -4,107 +4,106 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Handling of Objective-C objects.
+//!
+//! Note that classes and metaclasses are objects too!
+//!
+//! Resources:
+//! - [Apple's documentation of `id`](https://developer.apple.com/documentation/objectivec/id)
+//!   (which for some reason omits that `id` is a pointer type)
+//!
+//! To make things easier for the host code, our implementation will maintain
+//! two linked representations of an object: an [objc_object] struct allocated
+//! in guest memory, which needs to maintain the same ABI that Apple's runtime
+//! does, and a [HostObject] trait object allocated in host memory, which can be
+//! used for any data that only our host code needs to access. As a bonus we get
+//! some resilience against guest memory corruption.
+//!
+//! See also: [crate::frameworks::foundation::ns_object].
 
 use super::{Class, ClassHostObject};
 use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
-use std::any::{Any, TypeId};
-use std::collections::HashMap;
+use crate::Environment;
+use std::any::Any;
 use std::num::NonZeroU32;
-use std::sync::Mutex;
 
-/// Per-(id, TypeId) cache of phantom host-object buffers used when a
-/// `borrow`/`borrow_mut` call hits an object that has no real host-side
-/// record. Each entry is a zero-initialised, leaked buffer large enough to
-/// hold `T`; callers get a stable reference that isn't aliased with buffers
-/// for other objects/types.
+/// Memory layout of a minimal Objective-C object. See [id].
 ///
-/// The cache is behind a single process-wide `Mutex` because touchHLE keeps
-/// a single `ObjC` instance but this function is used from both immutable
-/// (`&self`) and mutable (`&mut self`) receivers, and from many framework
-/// modules. Contention here is only hit on the error path, so a plain
-/// `Mutex` is fine.
-static PHANTOM_STORE: Mutex<Option<HashMap<(TypeId, usize), usize>>> = Mutex::new(None);
-
-fn phantom_buffer_for<T: 'static>(object: id, init: impl FnOnce() -> T) -> *mut u8 {
-    let key = (TypeId::of::<T>(), object.to_bits() as usize);
-    let mut guard = PHANTOM_STORE.lock().unwrap();
-    let map = guard.get_or_insert_with(HashMap::new);
-    if let Some(&ptr) = map.get(&key) {
-        return ptr as *mut u8;
-    }
-    // Leak a buffer sized and aligned for T, then write a real `T` value
-    // into it. Using raw `alloc_zeroed` plus `transmute` (the previous
-    // behaviour) was unsound for types whose zero bit-pattern is not a
-    // valid instance — most notably anything containing a `HashMap`, whose
-    // internal `ctrl` pointer must point at hashbrown's static empty
-    // sentinel rather than null. Performing a proper `T::default()`
-    // (passed in by the caller) ensures the buffer holds a usable
-    // instance even on this error path.
-    let layout = std::alloc::Layout::new::<T>();
-    // SAFETY: `layout.size()` is non-zero for any real host object, and
-    // the allocator returns a pointer with `layout.align()` alignment.
-    // Writing `init()` (a `T` value) into freshly allocated, uninitialised
-    // memory of exactly that layout is well-defined.
-    let ptr = unsafe { std::alloc::alloc(layout) };
-    assert!(!ptr.is_null(), "phantom host object allocation failed");
-    unsafe { std::ptr::write(ptr as *mut T, init()) };
-    map.insert(key, ptr as usize);
-    ptr
-}
-
-/// Return a `&T` pointing at a stable backing buffer for the given
-/// missing-object id, initialised on first access via [`Default::default`].
-/// Repeated calls with the same `object` and `T` return the same buffer
-/// (which may have been mutated through [`phantom_host_object_mut`] in the
-/// meantime).
-fn phantom_host_object<T: Default + 'static>(object: id) -> &'static T {
-    let ptr = phantom_buffer_for::<T>(object, T::default) as *const T;
-    // SAFETY: `phantom_buffer_for` returns a stable allocation of
-    // `size_of::<T>()` bytes with the required alignment, initialised on
-    // first call via `T::default()`. Subsequent calls return the same
-    // region, giving a stable `'static` reference to a valid `T`.
-    unsafe { &*ptr }
-}
-
-/// Return a `&mut T` pointing at a stable backing buffer for the given
-/// missing-object id, initialised on first access via [`Default::default`].
-/// Repeated calls with the same `object` and `T` return a reference to the
-/// same buffer.
-fn phantom_host_object_mut<T: Default + 'static>(object: id) -> &'static mut T {
-    let ptr = phantom_buffer_for::<T>(object, T::default) as *mut T;
-    // SAFETY: See `phantom_host_object`. Additionally, because the cache
-    // keys on `(TypeId, object)` each call-site gets an isolated buffer,
-    // so mutations by one fake-borrow won't be visible to another fake-
-    // borrow of a different object or type.
-    unsafe { &mut *ptr }
-}
-
+/// The name comes from `objc_object` in Apple's runtime.
 #[repr(C, packed)]
 pub struct objc_object {
+    /// In life, sometimes we must ask ourselves... what is existence?
+    /// What is the meaning in love and suffering? What is it that drives us to
+    /// know? What is the joy in longing for absolutes in a universe abundant
+    /// in beautiful subjectivity?
+    ///
+    /// The `isa` pointer cannot answer these questions.
+    ///
+    /// But it does tell you what class an object belongs to.
     pub(super) isa: Class,
 }
 unsafe impl SafeRead for objc_object {}
 
+/// Generic pointer to an Objective-C object (including classes or metaclasses).
+///
+/// The name is standard Objective-C.
 #[allow(non_camel_case_types)]
 pub type id = MutPtr<objc_object>;
 
+/// Null pointer for Objective-C objects.
+///
+/// The name is standard Objective-C.
 #[allow(non_upper_case_globals)]
 pub const nil: id = Ptr::null();
 
+/// Struct used to track the host object and refcount of every object.
+/// Maybe debugging info too eventually?
+///
+/// If the `refcount` is `None`, that means this object has a static duration
+/// and should not be reference-counted, e.g. it is a class.
 pub(super) struct HostObjectEntry {
     host_object: Box<dyn AnyHostObject>,
     refcount: Option<NonZeroU32>,
 }
 
+/// Type for host objects.
 pub trait HostObject: Any + 'static {
+    /// Upcast to the superclass's host object type, if any.
+    ///
+    /// In order to support inheritance, a class's host object may extend its
+    /// superclass's host object. For the superclass to be able to access its
+    /// data without being aware of the subclass, it needs to be able to upcast
+    /// a host object.
+    ///
+    /// When trying to downcast from [AnyHostObject] to some type fails, you
+    /// should upcast and try again, repeatedly if necessary. This ensures that
+    /// if the object actually belongs to a subclass of the target type, the
+    /// downcast will eventually succeed. If [None] is returned by this method,
+    /// there are no more superclasses' host objects in the chain.
     fn as_superclass<'a>(&'a self) -> Option<&'a (dyn AnyHostObject + 'static)> {
         None
     }
+    /// Same as [HostObject::as_superclass], but for a mutable reference.
     fn as_superclass_mut<'a>(&'a mut self) -> Option<&'a mut (dyn AnyHostObject + 'static)> {
         None
     }
 }
 
+/// Convenience macro for implementing [HostObject] where the host object type
+/// extends some superclass's host object type. The superclass's host object
+/// must be in a struct member named `superclass`.
+///
+/// Example usage, if `Bar` extends `Foo`:
+///
+/// ```ignore
+/// struct BarHostObject {
+///     superclass: FooHostObject,
+///     some_extra_data: id,
+/// }
+/// impl_HostObject_with_superclass!(BarHostObject);
+/// ```
+///
+/// If the superclass doesn't have a meaningful host object (e.g. `NSObject`
+/// uses [TrivialHostObject]), `impl HostObject for FooHostObject {}` suffices.
 #[macro_export]
 macro_rules! impl_HostObject_with_superclass {
     ( $ty:ty ) => {
@@ -122,8 +121,13 @@ macro_rules! impl_HostObject_with_superclass {
         }
     };
 }
-pub use crate::impl_HostObject_with_superclass;
+pub use crate::impl_HostObject_with_superclass; // #[macro_export] is weird...
 
+/// Trait wrapping [HostObject] with a blanket implementation to make
+/// downcasting work. Don't implement it yourself.
+///
+/// This is a workaround for it not being possible to directly cast
+/// `&'a dyn HostObject` to `&'a dyn Any`.
 pub trait AnyHostObject: HostObject {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static);
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static);
@@ -141,14 +145,13 @@ impl<T: HostObject> AnyHostObject for T {
     }
 }
 
+/// Empty host object used by `[NSObject alloc]`.
 pub struct TrivialHostObject;
 impl HostObject for TrivialHostObject {}
 
 impl super::ObjC {
+    /// Read the all-important `isa`.
     pub fn read_isa(object: id, mem: &Mem) -> Class {
-        if object == nil {
-            return Ptr::null();
-        }
         mem.read(object).isa
     }
 
@@ -161,8 +164,11 @@ impl super::ObjC {
         refcount: Option<NonZeroU32>,
     ) -> id {
         let guest_object = objc_object { isa };
+        assert!(instance_size >= guest_size_of::<objc_object>());
+
         let ptr: MutPtr<objc_object> = mem.alloc(instance_size).cast();
         mem.write(ptr, guest_object);
+        assert!(!self.objects.contains_key(&ptr));
         self.objects.insert(
             ptr,
             HostObjectEntry {
@@ -173,18 +179,18 @@ impl super::ObjC {
         ptr
     }
 
+    /// Allocate a reference-counted (guest) object (like `[NSObject alloc]`)
+    /// and associate it with its host object.
+    ///
+    /// `isa` must be a real class, as the instance size will be fetched from
+    /// the class.
     pub fn alloc_object(
         &mut self,
         isa: Class,
         host_object: Box<dyn AnyHostObject>,
         mem: &mut Mem,
     ) -> id {
-        let instance_size = self
-            .get_host_object(isa)
-            .and_then(|h| h.as_any().downcast_ref::<ClassHostObject>())
-            .map(|c| c.instance_size)
-            .unwrap_or(guest_size_of::<objc_object>());
-
+        let &ClassHostObject { instance_size, .. } = self.borrow(isa);
         self.alloc_object_inner(
             isa,
             instance_size,
@@ -194,6 +200,13 @@ impl super::ObjC {
         )
     }
 
+    /// Allocate a static-lifetime (guest) object (for example, a class) and
+    /// associate it with its host object.
+    ///
+    /// It is assumed that the guest object's instance size is 4 (just an `isa`)
+    /// like `NSObject`. This means you must not use this function to implement
+    /// the `alloc` method of a class that could be the superclass of any class
+    /// in the guest app!
     pub fn alloc_static_object(
         &mut self,
         isa: Class,
@@ -204,14 +217,14 @@ impl super::ObjC {
         self.alloc_object_inner(isa, size, host_object, mem, None)
     }
 
+    /// Associate a host object with an existing static-lifetime (guest) object
+    /// (for example, a class).
     pub fn register_static_object(
         &mut self,
         guest_object: id,
         host_object: Box<dyn AnyHostObject>,
     ) {
-        if guest_object == nil {
-            return;
-        }
+        assert!(!self.objects.contains_key(&guest_object));
         self.objects.insert(
             guest_object,
             HostObjectEntry {
@@ -221,222 +234,139 @@ impl super::ObjC {
         );
     }
 
+    /// Get a reference to a host object, if the object exists.
     pub fn get_host_object(&self, object: id) -> Option<&dyn AnyHostObject> {
-        if object == nil {
-            return None;
-        }
         self.objects.get(&object).map(|entry| &*entry.host_object)
     }
 
-    pub fn borrow<T: AnyHostObject + Default + 'static>(&self, object: id) -> &T {
-        if let Some(entry) = self.objects.get(&object) {
-            let mut host_object: &(dyn AnyHostObject + 'static) = &*entry.host_object;
-            loop {
-                if let Some(res) = host_object.as_any().downcast_ref() {
-                    return res;
-                } else if let Some(next) = host_object.as_superclass() {
-                    host_object = next;
-                } else {
-                    break;
-                }
+    /// Get a reference to a host object and downcast it. Panics if there is
+    /// no such object, or if downcasting fails.
+    pub fn borrow<T: AnyHostObject + 'static>(&self, object: id) -> &T {
+        let mut host_object: &(dyn AnyHostObject + 'static) =
+            &*self.objects.get(&object).unwrap().host_object;
+        loop {
+            if let Some(res) = host_object.as_any().downcast_ref() {
+                return res;
+            } else if let Some(next) = host_object.as_superclass() {
+                host_object = next;
+            } else {
+                panic!(
+                    "Could not find host object with type {:?}, found {:?} for {object:?}",
+                    std::any::type_name::<T>(),
+                    host_object.type_name(),
+                );
             }
         }
-
-        // Fallback for missing / wrong-type objects.
-        //
-        // Previously we returned a reference to a single shared
-        // `static DUMMY_BUF: [u64; 256] = [0; 256]`. That one buffer was
-        // aliased across EVERY fake borrow of EVERY type, so as soon as a
-        // `borrow_mut` populated e.g. `UIViewHostObject.subviews` with a
-        // non-empty Vec, every subsequent fake borrow saw the same list —
-        // including of itself, causing `hitTest:` to recurse infinitely and
-        // overflow the host stack.
-        //
-        // We now leak a fresh zero-initialized buffer per (id, type) pair
-        // so the returned reference has stable, isolated storage. A proper
-        // fix would register a real `Default::default()` host object, but
-        // that requires a `T: Default` bound which many callers don't yet
-        // provide.
-        // POSIX/Objective-C semantics: a message to `nil` returns the
-        // zero/empty form of the return type — the runtime is expected
-        // to treat such calls as a no-op. Returning a zero-initialized
-        // phantom host object preserves this without flooding the log.
-        if object == nil {
-            log_dbg!(
-                "borrow on nil receiver of type {} — returning zero-initialized phantom",
-                std::any::type_name::<T>()
-            );
-        } else if let Some(entry) = self.objects.get(&object) {
-            // The object exists but its host object is a different type than
-            // requested. Reporting the actual type makes these mismatches
-            // diagnosable — it's usually either a guest pointer/type confusion
-            // or a host class that forgot to embed its superclass host object
-            // (see `impl_HostObject_with_superclass!`).
-            log!(
-                "Warning: SUPER HACK! Faking borrow for wrong-type object {:?}: \
-                 requested {}, actual host type {}",
-                object,
-                std::any::type_name::<T>(),
-                entry.host_object.type_name(),
-            );
-        } else {
-            log!(
-                "Warning: SUPER HACK! Faking borrow for missing object {:?} of type {}",
-                object,
-                std::any::type_name::<T>()
-            );
-        }
-        phantom_host_object::<T>(object)
     }
 
-    pub fn borrow_mut<T: AnyHostObject + Default + 'static>(&mut self, object: id) -> &mut T {
-        if let Some(entry) = self.objects.get_mut(&object) {
-            type Aho = dyn AnyHostObject + 'static;
-            let mut host_object: &mut Aho = &mut *entry.host_object;
-            loop {
-                let current_ptr = host_object as *mut Aho;
-                if let Some(res) = unsafe { &mut *current_ptr }.as_any_mut().downcast_mut() {
-                    return res;
-                }
-
-                let has_super = unsafe { &*current_ptr }.as_superclass().is_some();
-                if has_super {
-                    host_object = unsafe { &mut *current_ptr }.as_superclass_mut().unwrap();
-                } else {
-                    break;
-                }
+    /// Get a reference to a host object and downcast it. Panics if there is
+    /// no such object, or if downcasting fails.
+    pub fn borrow_mut<T: AnyHostObject + 'static>(&mut self, object: id) -> &mut T {
+        // Rust's borrow checker struggles with loops like this which descend
+        // through a data structure with a mutable borrow. The unsafe code is
+        // used to bypass the borrow checker.
+        type Aho = dyn AnyHostObject + 'static;
+        let mut host_object: &mut Aho = &mut *self.objects.get_mut(&object).unwrap().host_object;
+        loop {
+            if let Some(res) = unsafe { &mut *(host_object as *mut Aho) }
+                .as_any_mut()
+                .downcast_mut()
+            {
+                return res;
+            } else if let Some(next) = host_object.as_superclass_mut() {
+                host_object = next;
+            } else {
+                let host_object: &Aho = &*self.objects.get(&object).unwrap().host_object;
+                panic!(
+                    "Could not find host object with type {:?}, found {:?} for {object:?}",
+                    std::any::type_name::<T>(),
+                    host_object.type_name(),
+                );
             }
         }
-
-        // See comment in `borrow` above for rationale.
-        if object == nil {
-            log_dbg!(
-                "borrow_mut on nil receiver of type {} — returning zero-initialized phantom",
-                std::any::type_name::<T>()
-            );
-        } else {
-            log!(
-                "Warning: SUPER HACK! Faking borrow_mut for missing object {:?} of type {}",
-                object,
-                std::any::type_name::<T>()
-            );
-        }
-        phantom_host_object_mut::<T>(object)
     }
 
+    /// Getting a refcount of an object.
+    /// While Apple's docs advise to not relay on the returned value,
+    /// some games (like "Cut the Rope") does call `retainCount`.
     pub fn get_refcount(&mut self, object: id) -> NonZeroU32 {
-        let default_rc = NonZeroU32::new(1).unwrap();
-        if object == nil {
-            return default_rc;
-        }
-
-        self.objects
-            .get(&object)
-            .and_then(|e| e.refcount)
-            .unwrap_or(default_rc)
+        let Some(entry) = self.objects.get_mut(&object) else {
+            panic!("No entry found for object {object:?}, it may have already been deallocated");
+        };
+        let Some(refcount) = entry.refcount.as_mut() else {
+            // Might mean a missing `retain` override.
+            panic!("Attempt to get refcount on static-lifetime object {object:?}!");
+        };
+        *refcount
     }
 
+    /// Increase the refcount of a reference-counted object. Do not call this
+    /// directly unless you're implementing `release` on `NSObject`. That method
+    /// may be overridden.
     pub fn increment_refcount(&mut self, object: id) {
-        if object == nil {
-            return;
-        }
-        if let Some(entry) = self.objects.get_mut(&object) {
-            if let Some(refcount) = entry.refcount.as_mut() {
-                if let Some(new_rc) = refcount.get().checked_add(1) {
-                    *refcount = NonZeroU32::new(new_rc).unwrap();
-                }
-            }
-        }
+        let Some(entry) = self.objects.get_mut(&object) else {
+            panic!("No entry found for object {object:?}, it may have already been deallocated");
+        };
+        let Some(refcount) = entry.refcount.as_mut() else {
+            // Might mean a missing `retain` override.
+            panic!("Attempt to increment refcount on static-lifetime object {object:?}!");
+        };
+        *refcount = refcount.checked_add(1).unwrap();
     }
 
+    /// Decrease the refcount of a reference-counted object. Do not call this
+    /// directly unless you're implementing `release` on `NSObject`. That method
+    /// may be overridden.
+    ///
+    /// If the return value is `true`, the object needs to be deallocated. Send
+    /// it the `dealloc` message.
     #[must_use]
     pub fn decrement_refcount(&mut self, object: id) -> bool {
-        if object == nil {
-            return false;
+        let Some(entry) = self.objects.get_mut(&object) else {
+            panic!("No entry found for object {object:?}, it may have already been deallocated");
+        };
+        let Some(refcount) = entry.refcount.as_mut() else {
+            // Might mean a missing `release` override.
+            panic!("Attempt to decrement refcount on static-lifetime object {object:?}!");
+        };
+        if refcount.get() == 1 {
+            entry.refcount = None;
+            true
+        } else {
+            *refcount = NonZeroU32::new(refcount.get() - 1).unwrap();
+            false
         }
-        if let Some(entry) = self.objects.get_mut(&object) {
-            if let Some(refcount) = entry.refcount.as_mut() {
-                if refcount.get() == 1 {
-                    entry.refcount = None;
-                    return true;
-                } else {
-                    *refcount = NonZeroU32::new(refcount.get() - 1).unwrap();
-                }
-            }
-        }
-        false
     }
 
-    /// Look up the instance size (in bytes, including the `isa` pointer) for
-    /// a class. Falls back to the size of a bare `objc_object` (just the isa)
-    /// when the class has no registered [ClassHostObject] — matching the
-    /// minimum size the runtime would allocate.
-    pub fn class_instance_size(&self, class: Class) -> GuestUSize {
-        self.get_host_object(class)
-            .and_then(|h| h.as_any().downcast_ref::<ClassHostObject>())
-            .map(|c| c.instance_size)
-            .unwrap_or(guest_size_of::<objc_object>())
-    }
-
-    /// The runtime primitive behind Apple's (deprecated) `NSCopyObject`:
-    /// create an exact, shallow, byte-for-byte copy of `object`.
-    ///
-    /// Per Apple's documentation, `NSCopyObject` "Creates an exact copy of an
-    /// object." It allocates a new instance of the same class as `object`
-    /// (plus `extra_bytes` of trailing storage) and copies the bytes of the
-    /// original instance into it. This is a *shallow* copy: object-pointer
-    /// ivars are duplicated as raw pointers without any extra retain, exactly
-    /// like the real implementation (classes that adopt `NSCopying` via
-    /// `NSCopyObject` are responsible for fixing up retained ivars
-    /// themselves). The new object starts with a reference count of 1.
-    ///
-    /// Returns `nil` if `object` is `nil`.
-    pub fn object_copy(&mut self, object: id, extra_bytes: GuestUSize, mem: &mut Mem) -> id {
-        if object == nil {
-            return nil;
-        }
-        let isa = Self::read_isa(object, mem);
-        let instance_size = self.class_instance_size(isa);
-        let total_size = instance_size.saturating_add(extra_bytes);
-
-        let new_object: id = mem.alloc(total_size).cast();
-        // Copy the original instance's bytes verbatim (this includes the isa
-        // pointer, all ivars, and — if requested — leaves the trailing
-        // `extra_bytes` zero-initialised, which `mem.alloc` guarantees).
-        let src_bytes: Vec<u8> = mem.bytes_at(object.cast(), instance_size).to_vec();
-        mem.bytes_at_mut(new_object.cast(), instance_size)
-            .copy_from_slice(&src_bytes);
-
-        // Register a host-side record so the copy is a first-class object
-        // with its own reference count. A bitwise NSCopyObject copy does not
-        // duplicate host-side state, so we attach a TrivialHostObject — this
-        // matches the real runtime, where NSCopyObject is only used by classes
-        // that keep all of their state in guest-memory ivars.
-        self.objects.insert(
-            new_object,
-            HostObjectEntry {
-                host_object: Box::new(TrivialHostObject),
-                refcount: Some(NonZeroU32::new(1).unwrap()),
-            },
-        );
-        new_object
-    }
-
+    /// Deallocate an object. Do not call this directly unless you're
+    /// implementing `dealloc` and are sure you don't need to do a super-call.
     pub fn dealloc_object(&mut self, object: id, mem: &mut Mem) {
-        if object == nil {
-            return;
+        let HostObjectEntry {
+            host_object,
+            refcount,
+        } = self.objects.remove(&object).unwrap();
+
+        if let Some(refcount) = refcount {
+            // This is a serious bug if it ever happens in host code.
+            // Well-behaved apps should also never do this, but Crash Bandicoot
+            // Nitro Kart 3D is not a well-behaved app.
+            log!(
+                "Warning: {:?} was deallocated with non-zero reference count: {:?}",
+                object,
+                refcount
+            );
         }
 
-        // ARC weak-reference contract: zero out every `__weak` slot
-        // that referred to this object before its memory is freed, so
-        // subsequent `objc_loadWeakRetained` calls correctly observe
-        // `nil`. This must happen before we drop the host object,
-        // because the writeback uses guest memory only.
-        self.zero_weak_references_for(object, mem);
+        std::mem::drop(host_object);
 
-        if let Some(entry) = self.objects.remove(&object) {
-            std::mem::drop(entry.host_object);
-            mem.free(object.cast());
-        }
+        mem.free(object.cast());
+    }
+}
+
+pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
+    if obj == nil {
+        nil
+    } else {
+        super::ObjC::read_isa(obj, &env.mem)
     }
 }

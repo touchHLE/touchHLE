@@ -32,24 +32,14 @@ Compatibility:
   - [Asphalt 6](https://appdb.touchhle.org/apps/1217) (@ciciplusplus)
   - [World of Goo](https://appdb.touchhle.org/apps/1210) (@ciciplusplus)
 - API support improvements:
-  - Various small contributions. (@hikari-no-yume, @ciciplusplus, @zazatree, @abnormalmaps, @alborrajo, @acieslewicz)
-  - Implemented the Objective-C runtime functions `property_getName()` and `property_getAttributes()` (previously return-0 stubs), and the `-[NSObject dictionaryWithValuesForKeys:]` Key-Value Coding method. This fixes apps whose embedded SDKs use runtime property introspection to serialize objects (e.g. Spy Mouse HD's Burstly ad SDK, which was stuck in a network/loading loop).
-  - `class_getProperty()` no longer special-cases `[UIScreen scale]` to return `NULL`. Now that declared `@property` metadata is parsed from the app binary, the function walks the class hierarchy and returns the real `objc_property_t`, matching Apple's documented behaviour. The old hard-coded `NULL` could make apps that probe for the `scale` property mis-detect the device's screen capabilities.
-  - `-[UIViewController presentModalViewController:animated:]` now falls back to the first visible `UIWindow` when neither the presenting controller's view nor the application's key window can supply one. Previously a modal presentation by a controller that wasn't yet attached to a window (e.g. the full-screen movie player some games show on launch) silently did nothing.
-  - Removed duplicate Mach `thread_suspend()`/`thread_resume()` and `wcstoul()` symbol exports. Two dylib export tables each registered these functions, so the dynamic linker bound the first (less robust) copy and the `no_duplicate_functions` self-test panicked; the canonical bounds-checked implementations in `mach::thread_info` and `libc::wchar` are now the only ones exported.
-  - C++ Itanium ABI type_info objects and `__cxxabiv1` type_info vtables are now resolved when they are referenced through the `__nl_symbol_ptr` table, not only through external relocations. Previously a symbol like `__ZTIPKc` (typeinfo for `char const*`), which the bundled libstdc++/libc++ of some iOS 8 apps emits into the non-lazy pointer table, was left NULL and caused a NULL-page crash the first time the app's C++ code touched RTTI. This fixes apps such as [Team Umizoomi Math Racer](https://github.com/HyperHLE/HyperHLE/issues/204).
-  - Several changes have been made to fix certain apps and games that should appear in landscape, but previously were displayed stretched, cropped and/or un-rotated:
-    - If an app requires a landscape orientation in the `UIInterfaceOrientation` or `UISupportedInterfaceOrientations` keys of its `Info.plist`, touchHLE will now rotate the virtual device at startup. (@hikari-no-yume)
-    - If an app overrides the `shouldAutorotateToInterfaceOrientation:` method in a `UIViewController`, and the virtual device is in a landscape orientation, touchHLE will now apply a rotation transform to the root view when it is added to a window. (@hikari-no-yume)
-    - Fixed a very old assumption that the backing store of a `CAEAGLLayer` should always be 320×480 pixels. (@hikari-no-yume)
+  - Various small contributions. (@hikari-no-yume, @ciciplusplus, @zazatree, @abnormalmaps, @alborrajo, @acieslewicz, @JCR64, @mcd-3, @apexad)
+  - Fixed several issues related to apps that rely on UIKit to rotate their UI. (@hikari-no-yume)
   - Support for iPad device family. Device family is deduced from the app bundle, but user can also override it with `--device-family=` option. (@ciciplusplus)
-  - Implicit Core Animation animations: changing an animatable `CALayer` property (`bounds`, `position`, `anchorPoint`, `opacity`, `hidden`, `backgroundColor`, `cornerRadius`) outside an explicit transaction now creates a default `CABasicAnimation` via the current `CATransaction`, while `UIView` backing layers keep implicit animations disabled so existing `UIView` animation handling is unaffected. (ported from touchHLE)
-  - Objective-C `+load` methods are now sent during class initialization, before any `+initialize`, matching the runtime's ordering guarantee. (ported from touchHLE)
-  - `NSGarbageCollector` (with `+defaultCollector` returning `nil`, as on iOS), `NSBundle` localized `.strings` loading in the standard (non-property-list) format, and `+[NSObject willChangeValueForKey:]`/`didChangeValueForKey:` integration. (ported from touchHLE)
+  - [SQLite3](https://github.com/touchHLE/sqlite-dylib) and [libxml2](https://github.com/touchHLE/libxml2-dylib) dynamic libraries are now available, compiled from source using our [clean open-source toolchain](https://github.com/touchHLE/common-3.0-sdk). (@acieslewicz, @ciciplusplus)
 - Improved support for iOS 3.1+:
   - The bundled dynamic libraries, libgcc and libstdc++, have been updated to their iOS 4.0.1 versions. (@ciciplusplus)
   - Support for NIBArchive NIB file format decoding. (@ciciplusplus)
-- Switch to coroutine based threading system. This solved [some compatibility issues](https://github.com/touchHLE/touchHLE/issues/119) and improved performance in some games. (@abnormalmaps)
+- Switched to a coroutine-based threading system. This solves [some compatibility issues](https://github.com/touchHLE/touchHLE/issues/119) and improves performance in some games. (@abnormalmaps)
 
 ## v0.2.3 (2026-01-02)
 

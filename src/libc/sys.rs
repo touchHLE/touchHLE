@@ -4,6 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+pub mod mman;
 pub mod mount;
 pub mod ptrace;
 pub mod socket;

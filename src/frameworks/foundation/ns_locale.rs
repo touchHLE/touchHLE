@@ -7,32 +7,15 @@
 
 use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_foundation::cf_locale::{kCFLocaleCountryCode, kCFLocaleLanguageCode};
+use crate::frameworks::core_foundation::cf_locale::{kCFLocaleCountryCode, kCFLocaleIdentifier};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::window::{get_preferred_country_codes, get_preferred_language_codes};
 use crate::Environment;
 
-// MARK: - NSLocale key constants
-
 const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
-const NSLocaleLanguageCode: &str = "NSLocaleLanguageCode";
-const NSLocaleScriptCode: &str = "NSLocaleScriptCode";
-const NSLocaleVariantCode: &str = "NSLocaleVariantCode";
-const NSLocaleIdentifier: &str = "kCFLocaleIdentifierKey";
-const NSLocaleCalendar: &str = "NSLocaleCalendar";
-const NSLocaleCollationIdentifier: &str = "NSLocaleCollationIdentifier";
-const NSLocaleUsesMetricSystem: &str = "NSLocaleUsesMetricSystem";
-const NSLocaleMeasurementSystem: &str = "NSLocaleMeasurementSystem";
-const NSLocaleDecimalSeparator: &str = "NSLocaleDecimalSeparator";
-const NSLocaleGroupingSeparator: &str = "NSLocaleGroupingSeparator";
-const NSLocaleCurrencySymbol: &str = "NSLocaleCurrencySymbol";
-const NSLocaleCurrencyCode: &str = "NSLocaleCurrencyCode";
-const NSLocaleCollatorIdentifier: &str = "NSLocaleCollatorIdentifier";
-const NSLocaleQuotationBeginDelimiterKey: &str = "NSLocaleQuotationBeginDelimiterKey";
-const NSLocaleQuotationEndDelimiterKey: &str = "NSLocaleQuotationEndDelimiterKey";
+const NSLocaleIdentifier: &str = "NSLocaleIdentifier";
 
 pub const CONSTANTS: ConstantExports = &[
     (
@@ -40,64 +23,8 @@ pub const CONSTANTS: ConstantExports = &[
         HostConstant::NSString(NSLocaleCountryCode),
     ),
     (
-        "_NSLocaleLanguageCode",
-        HostConstant::NSString(NSLocaleLanguageCode),
-    ),
-    (
-        "_NSLocaleScriptCode",
-        HostConstant::NSString(NSLocaleScriptCode),
-    ),
-    (
-        "_NSLocaleVariantCode",
-        HostConstant::NSString(NSLocaleVariantCode),
-    ),
-    (
         "_NSLocaleIdentifier",
         HostConstant::NSString(NSLocaleIdentifier),
-    ),
-    (
-        "_NSLocaleCalendar",
-        HostConstant::NSString(NSLocaleCalendar),
-    ),
-    (
-        "_NSLocaleCollationIdentifier",
-        HostConstant::NSString(NSLocaleCollationIdentifier),
-    ),
-    (
-        "_NSLocaleUsesMetricSystem",
-        HostConstant::NSString(NSLocaleUsesMetricSystem),
-    ),
-    (
-        "_NSLocaleMeasurementSystem",
-        HostConstant::NSString(NSLocaleMeasurementSystem),
-    ),
-    (
-        "_NSLocaleDecimalSeparator",
-        HostConstant::NSString(NSLocaleDecimalSeparator),
-    ),
-    (
-        "_NSLocaleGroupingSeparator",
-        HostConstant::NSString(NSLocaleGroupingSeparator),
-    ),
-    (
-        "_NSLocaleCurrencySymbol",
-        HostConstant::NSString(NSLocaleCurrencySymbol),
-    ),
-    (
-        "_NSLocaleCurrencyCode",
-        HostConstant::NSString(NSLocaleCurrencyCode),
-    ),
-    (
-        "_NSLocaleCollatorIdentifier",
-        HostConstant::NSString(NSLocaleCollatorIdentifier),
-    ),
-    (
-        "_NSLocaleQuotationBeginDelimiterKey",
-        HostConstant::NSString(NSLocaleQuotationBeginDelimiterKey),
-    ),
-    (
-        "_NSLocaleQuotationEndDelimiterKey",
-        HostConstant::NSString(NSLocaleQuotationEndDelimiterKey),
     ),
 ];
 
@@ -112,32 +39,14 @@ impl State {
         &mut env.framework_state.foundation.ns_locale
     }
 }
-fn pvz_locale_override(env: &Environment) -> Option<(&'static [&'static str], &'static str, &'static str)> {
-    let id = env.bundle.bundle_identifier();
 
-    if id == "com.popcap.ios.chs.PvZiPad" {
-        // Simplified Chinese iPad HD
-        Some((&["zh-Hans", "zh_CN", "zh"], "CN", "zh_CN"))
-    } else if id == "com.popcap.ios.chs.PvZGreatWall" {
-        // Traditional Chinese iPhone / Great Wall build
-        Some((&["zh-Hant", "zh_TW", "zh-Hant_TW", "zh"], "TW", "zh_TW"))
-    } else {
-        None
-    }
-}
-// MARK: - Internal helpers
-
+/// Use `msg_class![env; NSLocale preferredLanguages]` rather than calling this
+/// directly, because it may be slow and there is no caching.
 fn get_preferred_languages(env: &mut Environment) -> Vec<String> {
     let options = env.options.as_ref();
     if let Some(ref preferred_languages) = options.preferred_languages {
         log!("The app requested your preferred languages. {:?} will reported based on your --preferred-languages= option.", preferred_languages);
         return preferred_languages.clone();
-    }
-
-    if let Some((langs, _country, _locale)) = pvz_locale_override(env) {
-        let languages: Vec<String> = langs.iter().map(|s| s.to_string()).collect();
-        log!("The app requested your preferred languages. {:?} will be reported for Chinese PvZ.", languages);
-        return languages;
     }
 
     let languages = get_preferred_language_codes(env);
@@ -152,12 +61,6 @@ fn get_preferred_languages(env: &mut Environment) -> Vec<String> {
 }
 
 fn get_preferred_countries(env: &mut Environment) -> Vec<String> {
-    if let Some((_langs, country, _locale)) = pvz_locale_override(env) {
-        let countries = vec![country.to_string()];
-        log!("The app requested your current locale. {:?} will be reported for Chinese PvZ.", countries);
-        return countries;
-    }
-
     let countries = get_preferred_country_codes(env);
     if countries.is_empty() {
         let country = "US".to_string();
@@ -169,40 +72,11 @@ fn get_preferred_countries(env: &mut Environment) -> Vec<String> {
     }
 }
 
-fn language_from_locale_identifier(identifier: &str) -> &str {
-    let sep = identifier.find('_').or_else(|| identifier.find('-'));
-    match sep {
-        Some(idx) => &identifier[..idx],
-        None => identifier,
-    }
-}
-
-fn country_from_locale_identifier(identifier: &str) -> Option<&str> {
-    let sep = identifier.find('_').or_else(|| identifier.find('-'))?;
-    let rest = &identifier[sep + 1..];
-    // Strip script code if present (e.g. "zh_Hans_CN" -> "CN")
-    if let Some(second) = rest.find('_').or_else(|| rest.find('-')) {
-        Some(&rest[second + 1..])
-    } else {
-        Some(rest)
-    }
-}
-
-/// Build a locale identifier string like "en_US".
-fn locale_identifier(language: &str, country: &str) -> String {
-    if country.is_empty() {
-        language.to_string()
-    } else {
-        format!("{}_{}", language, country)
-    }
-}
-
-// MARK: - Host object
-
-#[derive(Default)]
 struct NSLocaleHostObject {
-    country_code: id,  // NSString* — retained
-    language_code: id, // NSString* — retained
+    /// `NSString *`
+    country_code: id,
+    /// `NSString *`
+    language_code: id,
 }
 impl HostObject for NSLocaleHostObject {}
 
@@ -214,355 +88,131 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(NSLocaleHostObject {
-        country_code:  nil,
+        country_code: nil,
         language_code: nil,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
-// MARK: - Singletons
+// The documentation isn't clear about what the format of the strings should be,
+// but Super Monkey Ball does `isEqualToString:` against "fr", "es", "de", "it"
+// and "ja", and its locale detection works properly, so presumably they do not
+// usually have region suffixes.
++ (id)preferredLanguages {
+    if let Some(existing) = State::get(env).preferred_languages {
+        existing
+    } else {
+        let langs = get_preferred_languages(env);
+        let lang_ns_strings = langs.into_iter().map(|lang| ns_string::from_rust_string(env, lang)).collect();
+        let new = ns_array::from_vec(env, lang_ns_strings);
+        State::get(env).preferred_languages = Some(new);
+        new
+    }
+}
 
 + (id)currentLocale {
     if let Some(locale) = State::get(env).current_locale {
-        return locale;
+        locale
+    } else {
+        let countries = get_preferred_countries(env);
+        let country_code = ns_string::from_rust_string(env, countries[0].clone());
+        let languages = get_preferred_languages(env);
+        let language_code = ns_string::from_rust_string(env, languages[0].clone());
+        let host_object = NSLocaleHostObject {
+            country_code,
+            language_code,
+        };
+        let new_locale = env.objc.alloc_object(
+            this,
+            Box::new(host_object),
+            &mut env.mem
+        );
+        State::get(env).current_locale = Some(new_locale);
+        new_locale
     }
-    let countries = get_preferred_countries(env);
-    let languages  = get_preferred_languages(env);
-    let country_code  = ns_string::from_rust_string(env, countries[0].clone());
-    let language_code = ns_string::from_rust_string(env, languages[0].clone());
-    let new = env.objc.alloc_object(
-        this,
-        Box::new(NSLocaleHostObject { country_code, language_code }),
-        &mut env.mem,
-    );
-    // Retain so the singleton lives beyond any autorelease pool drain.
-    retain(env, new);
-    State::get(env).current_locale = Some(new);
-    new
+}
++ (id)autoupdatingCurrentLocale {
+    // TODO: autoupdating part
+    msg![env; this currentLocale]
 }
 
 + (id)systemLocale {
     if let Some(locale) = State::get(env).system_locale {
-        return locale;
-    }
-    let new = env.objc.alloc_object(
-        this,
-        Box::new(NSLocaleHostObject { country_code: nil, language_code: nil }),
-        &mut env.mem,
-    );
-    // Retain so the singleton lives beyond any autorelease pool drain.
-    retain(env, new);
-    State::get(env).system_locale = Some(new);
-    new
-}
-
-+ (id)autoupdatingCurrentLocale {
-    // We don't auto-update; return currentLocale.
-    msg_class![env; NSLocale currentLocale]
-}
-
-// MARK: - Preferred languages / locales
-
-+ (id)preferredLanguages {
-    if let Some(existing) = State::get(env).preferred_languages {
-        return existing;
-    }
-    let langs = get_preferred_languages(env);
-    let ns_strings: Vec<id> = langs
-        .into_iter()
-        .map(|l| ns_string::from_rust_string(env, l))
-        .collect();
-    let new = ns_array::from_vec(env, ns_strings);
-    // Retain so the singleton lives beyond any autorelease pool drain.
-    retain(env, new);
-    State::get(env).preferred_languages = Some(new);
-    new
-}
-
-+ (id)availableLocaleIdentifiers {
-    // Return a minimal list — enough to not return nil.
-    let ids = ["en_US", "en_GB", "fr_FR", "de_DE", "ja_JP", "zh_CN", "zh-Hans", "zh-Hans_CN", "es_ES"];
-    let ns_strings: Vec<id> = ids
-        .iter()
-        .map(|s| ns_string::from_rust_string(env, s.to_string()))
-        .collect();
-    let arr = ns_array::from_vec(env, ns_strings);
-    autorelease(env, arr)
-}
-
-+ (id)ISOLanguageCodes {
-    let codes = [
-        "en","fr","de","ja","zh","es","it","pt","ru","ko","ar","nl","sv","pl","tr",
-    ];
-    let ns_strings: Vec<id> = codes
-        .iter()
-        .map(|s| ns_string::from_rust_string(env, s.to_string()))
-        .collect();
-    let arr = ns_array::from_vec(env, ns_strings);
-    autorelease(env, arr)
-}
-
-+ (id)ISOCountryCodes {
-    let codes = [
-        "US","GB","FR","DE","JP","CN","ES","IT","PT","RU","KR","SA","NL","SE","PL",
-    ];
-    let ns_strings: Vec<id> = codes
-        .iter()
-        .map(|s| ns_string::from_rust_string(env, s.to_string()))
-        .collect();
-    let arr = ns_array::from_vec(env, ns_strings);
-    autorelease(env, arr)
-}
-
-+ (id)ISOCurrencyCodes {
-    let codes = ["USD","EUR","GBP","JPY","CNY","KRW","RUB","AUD","CAD","CHF"];
-    let ns_strings: Vec<id> = codes
-        .iter()
-        .map(|s| ns_string::from_rust_string(env, s.to_string()))
-        .collect();
-    let arr = ns_array::from_vec(env, ns_strings);
-    autorelease(env, arr)
-}
-
-+ (id)localeWithLocaleIdentifier:(id)identifier { // NSString*
-    let new: id = msg_class![env; NSLocale alloc];
-    let new: id = msg![env; new initWithLocaleIdentifier:identifier];
-    autorelease(env, new)
-}
-
-+ (id)canonicalLocaleIdentifierFromString:(id)string { // NSString*
-    // Return the string unchanged — canonicalisation is locale-library work.
-    string
-}
-
-+ (id)canonicalLanguageIdentifierFromString:(id)string { // NSString*
-    string
-}
-
-+ (id)localeIdentifierFromComponents:(id)_components { // NSDictionary*
-    let locale = if let Some((_langs, _country, locale)) = pvz_locale_override(env) {
         locale
     } else {
-        "en_US"
-    };
-    let s = ns_string::from_rust_string(env, locale.to_string());
-    autorelease(env, s)
-}
-
-+ (id)componentsFromLocaleIdentifier:(id)identifier { // NSString*
-    let id_str = ns_string::to_rust_string(env, identifier).into_owned();
-    let lang    = language_from_locale_identifier(&id_str).to_string();
-    let country = country_from_locale_identifier(&id_str)
-        .unwrap_or("")
-        .to_string();
-    let dict: id = msg_class![env; NSMutableDictionary new];
-    let lang_key   = ns_string::from_rust_string(env, NSLocaleLanguageCode.to_string());
-    let lang_val   = ns_string::from_rust_string(env, lang);
-    () = msg![env; dict setObject:lang_val forKey:lang_key];
-    release(env, lang_key);
-    release(env, lang_val);
-    if !country.is_empty() {
-        let cc_key = ns_string::from_rust_string(env, NSLocaleCountryCode.to_string());
-        let cc_val = ns_string::from_rust_string(env, country);
-        () = msg![env; dict setObject:cc_val forKey:cc_key];
-        release(env, cc_key);
-        release(env, cc_val);
+        let host_object = NSLocaleHostObject {
+            // Was confirmed on the iOS Simulator
+            country_code: nil,
+            language_code: nil,
+        };
+        let new_locale = env.objc.alloc_object(
+            this,
+            Box::new(host_object),
+            &mut env.mem
+        );
+        State::get(env).system_locale = Some(new_locale);
+        new_locale
     }
-    autorelease(env, dict)
 }
 
-// MARK: - Init / dealloc
+// TODO: constructors, more accessors
 
-- (id)initWithLocaleIdentifier:(id)string { // NSString*
-    let str = ns_string::to_rust_string(env, string).into_owned();
+- (id)initWithLocaleIdentifier:(id)string { // NSString *
+    let str = ns_string::to_rust_string(env, string);
     log_dbg!("[(NSLocale *){:?} initWithLocaleIdentifier:'{}']", this, str);
-    let lang    = language_from_locale_identifier(&str).to_string();
-    let country = country_from_locale_identifier(&str).unwrap_or("").to_string();
-    let lang_ns    = ns_string::from_rust_string(env, lang);
-    let country_ns = ns_string::from_rust_string(env, country);
-    let host = env.objc.borrow_mut::<NSLocaleHostObject>(this);
-    host.language_code = lang_ns;
-    host.country_code  = country_ns;
-    this
-}
-
-- (id)init {
+    retain(env, string);
+    // Loosely assume 2-char lang code here
+    // TODO: locale identifier parsing
+    assert_eq!(2, str.len());
+    assert!(str.to_lowercase().eq(&str));
+    assert!(!str.contains('_') && !str.contains('-'));
+    assert!(env.objc.borrow::<NSLocaleHostObject>(this).language_code == nil);
+    env.objc.borrow_mut::<NSLocaleHostObject>(this).language_code = string;
     this
 }
 
 - (())dealloc {
-    let &NSLocaleHostObject { country_code, language_code } =
-        env.objc.borrow::<NSLocaleHostObject>(this);
+    let &NSLocaleHostObject { country_code, language_code } = env.objc.borrow::<NSLocaleHostObject>(this);
     release(env, country_code);
     release(env, language_code);
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+// NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)
 }
 
-// MARK: - Identifier
-
 - (id)localeIdentifier {
-    let host = env.objc.borrow::<NSLocaleHostObject>(this);
-    let (language_code, country_code) = (host.language_code, host.country_code);
-    let lang    = ns_string::to_rust_string(env, language_code).into_owned();
-    let country = ns_string::to_rust_string(env, country_code).into_owned();
-    let id_str  = locale_identifier(&lang, &country);
-    let ns = ns_string::from_rust_string(env, id_str);
-    autorelease(env, ns)
+    let locale_id_key = ns_string::get_static_str(env, NSLocaleIdentifier);
+    msg![env; this objectForKey:locale_id_key]
 }
-
-- (id)description {
-    msg![env; this localeIdentifier]
-}
-
-// MARK: - objectForKey:
 
 - (id)objectForKey:(id)key {
-    let key_str = ns_string::to_rust_string(env, key).into_owned();
-    match key_str.as_str() {
-        // Simple id-valued fields: copy the id out, drop borrow, return.
+    let key_str: &str = &ns_string::to_rust_string(env, key);
+    match key_str {
+        // Note: this is not the cleanest separation between NS and CF parts
+        // But it does work on the iOS Simulator
+        // TODO: Define NSLocaleCountryCode _as_ kCFLocaleCountryCode
         NSLocaleCountryCode | kCFLocaleCountryCode => {
-            env.objc.borrow::<NSLocaleHostObject>(this).country_code
-        }
-        NSLocaleLanguageCode | kCFLocaleLanguageCode => {
-            env.objc.borrow::<NSLocaleHostObject>(this).language_code
-        }
-        // (kCFLocaleIdentifier has the same string value as NSLocaleIdentifier)
-        NSLocaleIdentifier => {
-            let host = env.objc.borrow::<NSLocaleHostObject>(this);
-            let (language_code, country_code) = (host.language_code, host.country_code);
-            let lang    = ns_string::to_rust_string(env, language_code).into_owned();
-            let country = ns_string::to_rust_string(env, country_code).into_owned();
-            let id_str  = locale_identifier(&lang, &country);
-            let ns = ns_string::from_rust_string(env, id_str);
-            autorelease(env, ns)
-        }
-        NSLocaleDecimalSeparator => {
-            let ns = ns_string::from_rust_string(env, ".".to_string());
-            autorelease(env, ns)
-        }
-        NSLocaleGroupingSeparator => {
-            let ns = ns_string::from_rust_string(env, ",".to_string());
-            autorelease(env, ns)
-        }
-        NSLocaleCurrencyCode => {
-            let ns = ns_string::from_rust_string(env, "USD".to_string());
-            autorelease(env, ns)
-        }
-        NSLocaleCurrencySymbol => {
-            let ns = ns_string::from_rust_string(env, "$".to_string());
-            autorelease(env, ns)
-        }
-        NSLocaleUsesMetricSystem => {
-            msg_class![env; NSNumber numberWithBool:false]
-        }
-        NSLocaleCalendar => {
-            msg_class![env; NSCalendar currentCalendar]
-        }
-        NSLocaleQuotationBeginDelimiterKey => {
-            // Left double quotation mark U+201C
-            let ns = ns_string::from_rust_string(env, "\u{201C}".to_string());
-            autorelease(env, ns)
-        }
-        NSLocaleQuotationEndDelimiterKey => {
-            // Right double quotation mark U+201D
-            let ns = ns_string::from_rust_string(env, "\u{201D}".to_string());
-            autorelease(env, ns)
-        }
-        _ => {
-            log_dbg!(
-                "NSLocale objectForKey:{} - unimplemented, returning nil",
-                key_str
+            let &NSLocaleHostObject { country_code, .. } = env.objc.borrow(this);
+            country_code
+        },
+        // TODO: Define NSLocaleIdentifier _as_ kCFLocaleIdentifier
+        NSLocaleIdentifier | kCFLocaleIdentifier => {
+            let &NSLocaleHostObject { country_code, language_code } = env.objc.borrow(this);
+            assert!(country_code != nil); // TODO
+            assert!(language_code != nil); // TODO
+            let locale_id_str = format!(
+                "{}_{}",
+                ns_string::to_rust_string(env, language_code),
+                ns_string::to_rust_string(env, country_code)
             );
-            nil
-        }
+            let res = ns_string::from_rust_string(env, locale_id_str);
+            autorelease(env, res)
+        },
+        _ => unimplemented!()
     }
-}
-
-// MARK: - displayNameForKey:value:
-
-- (id)displayNameForKey:(id)_key value:(id)value {
-    log_dbg!("NSLocale displayNameForKey:value: - returning value as-is");
-    value
-}
-
-// MARK: - Convenience accessors (iOS 4+)
-
-- (id)languageCode {
-    env.objc.borrow::<NSLocaleHostObject>(this).language_code
-}
-
-- (id)countryCode {
-    env.objc.borrow::<NSLocaleHostObject>(this).country_code
-}
-
-- (id)scriptCode {
-    nil
-}
-
-- (id)variantCode {
-    nil
-}
-
-- (id)decimalSeparator {
-    let ns = ns_string::from_rust_string(env, ".".to_string());
-    autorelease(env, ns)
-}
-
-- (id)groupingSeparator {
-    let ns = ns_string::from_rust_string(env, ",".to_string());
-    autorelease(env, ns)
-}
-
-- (id)currencyCode {
-    let ns = ns_string::from_rust_string(env, "USD".to_string());
-    autorelease(env, ns)
-}
-
-- (id)currencySymbol {
-    let ns = ns_string::from_rust_string(env, "$".to_string());
-    autorelease(env, ns)
-}
-
-- (bool)usesMetricSystem {
-    false
-}
-
-- (id)collationIdentifier {
-    nil
-}
-
-- (id)collatorIdentifier {
-    nil
-}
-
-- (id)quotationBeginDelimiter {
-    // Left double quotation mark U+201C
-    let ns = ns_string::from_rust_string(env, "\u{201C}".to_string());
-    autorelease(env, ns)
-}
-
-- (id)quotationEndDelimiter {
-    // Right double quotation mark U+201D
-    let ns = ns_string::from_rust_string(env, "\u{201D}".to_string());
-    autorelease(env, ns)
-}
-
-- (id)calendar {
-    msg_class![env; NSCalendar currentCalendar]
-}
-
-// MARK: - Equality
-
-- (bool)isEqual:(id)other {
-    if other == nil { return false; }
-    if this == other { return true; }
-    let a: id = msg![env; this localeIdentifier];
-    let b: id = msg![env; other localeIdentifier];
-    msg![env; a isEqualToString:b]
 }
 
 @end

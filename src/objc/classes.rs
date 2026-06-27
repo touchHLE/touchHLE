@@ -1,7 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0.
- * If a copy of the MPL was not distributed with this
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Handling of Objective-C classes and metaclasses.
@@ -15,11 +14,9 @@ use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
     IMP, SEL,
 };
-use crate::bundle;
 use crate::mach_o::MachO;
-use crate::mem::{
-    guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutVoidPtr, Ptr, SafeRead,
-};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::Environment;
 use std::collections::{HashMap, VecDeque};
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -35,7 +32,6 @@ pub type Class = id;
 /// will look up method implementations.
 ///
 /// Note: `superclass` can be `nil`!
-#[derive(Default)]
 pub(super) struct ClassHostObject {
     pub(super) name: String,
     pub(super) is_metaclass: bool,
@@ -45,10 +41,6 @@ pub(super) struct ClassHostObject {
     /// Maps ivar name to a tuple of an offset (as pointer) and an alignment.
     /// (Alignment is used during ivar reconciliation.)
     pub(super) ivars: HashMap<String, (ConstPtr<GuestUSize>, u32)>,
-    /// Maps declared @property name to the guest-memory pointer of its
-    /// `property_t` entry (as read from the binary's property list).
-    /// This is what `class_getProperty` queries.
-    pub(super) properties: HashMap<String, ConstVoidPtr>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
@@ -56,8 +48,17 @@ pub(super) struct ClassHostObject {
     /// Size of the allocated memory for instances of this class or metaclass.
     /// This is always >= the value in the superclass.
     pub(super) instance_size: GuestUSize,
+    /// Checks if +initialize has been called yet.
+    pub(super) is_initialized: InitializationStatus,
 }
 impl HostObject for ClassHostObject {}
+
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum InitializationStatus {
+    NotInitialized,
+    Initializing,
+    Initialized,
+}
 
 /// Placeholder object for classes and metaclasses referenced by the app that
 /// we don't have an implementation for.
@@ -126,6 +127,17 @@ struct category_t {
     _property_list: ConstVoidPtr, // property list (TODO)
 }
 unsafe impl SafeRead for category_t {}
+
+#[repr(C, packed)]
+pub struct objc_property {
+    // TODO: define fields?
+    _pad: u8,
+}
+unsafe impl SafeRead for objc_property {}
+
+/// An opaque type that represents an Objective-C declared property.
+#[allow(non_camel_case_types)]
+type objc_property_t = MutPtr<objc_property>;
 
 /// A template for a class defined with [objc_classes].
 ///
@@ -203,25 +215,97 @@ macro_rules! _objc_method {
 
 /// Macro for creating a list of [ClassTemplate]s (i.e. [ClassExports]).
 /// It imitates the Objective-C class definition syntax.
-#[macro_export]
+///
+/// ```ignore
+/// pub const CLASSES: ClassExports = objc_classes! {
+/// (env, this, _cmd); // Specify names of HostIMP implicit parameters.
+///                    // The second one should be `self` to match Objective-C,
+///                    // but that's reserved in Rust, hence `this`.
+///
+/// @implementation MyClass: NSObject
+///
+/// + (id)foo {
+///     // ...
+/// }
+///
+/// - (id)barWithQux:(u32)qux {
+///     // ...
+/// }
+///
+/// - (id)barWithVaArgs:(u32)qux, ...dots {
+///     // ...
+/// }
+///
+/// @end
+/// };
+/// ```
+///
+/// will desugar to approximately:
+///
+/// ```ignore
+/// pub const CLASSES: ClassExports = &[
+///     ("MyClass", ClassTemplate {
+///         name: "MyClass",
+///         superclass: Some("NSObject"),
+///         class_methods: &[
+///             ("foo", &(|env: &mut Environment, this: id, _cmd: SEL| -> id {
+///                 // ...
+///             } as fn(&mut Environment, id, SEL) -> id)),
+///         ],
+///         instance_methods: &[
+///             ("barWithQux:", &(|
+///                 env: &mut Environment,
+///                 this: id,
+///                 _cmd: SEL,
+///                 qux: u32
+///             | -> id {
+///                 // ...
+///             } as &fn(&mut Environment, id, SEL, u32) -> id)),
+///             ("barWithVaArgs:", &(|
+///                 env: &mut Environment,
+///                 this: id,
+///                 _cmd: SEL,
+///                 qux: u32,
+///                 va_args: DotDotDot
+///             | -> id {
+///                 // ...
+///             } as &fn(&mut Environment, id, SEL, u32, DotDotDot) -> id)),
+///         ],
+///     })
+/// ];
+/// ```
+///
+/// Note that the instance methods must be preceded by the class methods.
+#[macro_export] // documentation comment links are annoying without this
 macro_rules! objc_classes {
     {
+        // Rust's macro hygiene prevents the macro's own names for these
+        // parameters being visible, so we have to get names supplied by the
+        // macro user.
         ($env:ident, $this:ident, $_cmd:ident);
         $(
             @implementation $class_name:ident $(: $superclass_name:ident)?
+
             $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident $($($cm_namen:ident)?:($cm_typen:ty) $cm_argn:ident)*)?
                               $(, ...$cm_va_arg:ident)?
                  $cm_block:block )*
-            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty)
-$im_arg1:ident $($($im_namen:ident)?:($im_typen:ty) $im_argn:ident)*)?
+
+            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident $($($im_namen:ident)?:($im_typen:ty) $im_argn:ident)*)?
                               $(, ...$im_va_arg:ident)?
                  $im_block:block )*
+
             @end
         )+
     } => {
         &[
             $({
+                // This constant is for `msg_super!`, which needs to know which
+                // class it is has been written within (not the same as the
+                // runtime type of `this`, which could be a subclass). This is
+                // a constant instead of a let binding because that escapes
+                // Rust's macro hygiene.
                 const _OBJC_CURRENT_CLASS: &str = stringify!($class_name);
+
                 (_OBJC_CURRENT_CLASS, $crate::objc::ClassTemplate {
                     name: _OBJC_CURRENT_CLASS,
                     superclass: $crate::_objc_superclass!($(: $superclass_name)?),
@@ -272,8 +356,7 @@ $im_arg1:ident $($($im_namen:ident)?:($im_typen:ty) $im_argn:ident)*)?
         ]
     }
 }
-pub use crate::objc_classes;
-// #[macro_export] is weird...
+pub use crate::objc_classes; // #[macro_export] is weird...
 
 impl ClassHostObject {
     fn from_template(
@@ -309,7 +392,7 @@ impl ClassHostObject {
             instance_start: size,
             instance_size: size,
             ivars: HashMap::default(),
-            properties: HashMap::default(),
+            is_initialized: InitializationStatus::NotInitialized,
         }
     }
 
@@ -323,33 +406,10 @@ impl ClassHostObject {
             name,
             base_methods,
             ivars,
-            _base_properties,
             ..
         } = mem.read(data);
-        // Apple's Objective-C 2.0 runtime stores `class_rw_t.name` as a
-        // pointer to a NUL-terminated UTF-8 C string in `__objc_classname`
-        // (see <objc/runtime.h> and `class_getName`). Some real-world
-        // binaries — especially FairPlay-encrypted IPAs that were only
-        // partially decrypted by tools like Clutch, or Mach-O files whose
-        // `__TEXT` segment was clobbered — end up with `name` pointing at
-        // bytes that aren't valid UTF-8. Previously we panicked with
-        // `cstr_at_utf8().unwrap()`; mirror the real runtime instead, which
-        // logs the corruption and falls back to a synthetic name derived
-        // from the class pointer so the rest of the runtime stays usable.
-        let name = match mem.cstr_at_utf8(name) {
-            Ok(s) => s.to_string(),
-            Err(_) => {
-                log!(
-                    "Warning: ClassHostObject::from_bin: class at {:?} has an unreadable (non-UTF-8) name at {:?}; using a synthetic placeholder.",
-                    class,
-                    name,
-                );
-                format!(
-                    "_touchHLE_UnreadableClass_{:08x}",
-                    class.to_bits()
-                )
-            }
-        };
+
+        let name = mem.cstr_at_utf8(name).unwrap().to_string();
 
         let mut host_object = ClassHostObject {
             name,
@@ -360,18 +420,15 @@ impl ClassHostObject {
             instance_start,
             instance_size,
             ivars: HashMap::new(),
-            properties: HashMap::new(),
+            is_initialized: InitializationStatus::NotInitialized,
         };
+
         if !base_methods.is_null() {
             host_object.add_methods_from_bin(base_methods, mem, objc);
         }
 
         if !ivars.is_null() {
             host_object.add_ivars_from_bin(ivars, mem);
-        }
-
-        if !_base_properties.is_null() {
-            host_object.add_properties_from_bin(_base_properties, mem);
         }
 
         host_object
@@ -382,52 +439,34 @@ impl ClassHostObject {
 
 /// Decide whether a certain class/metaclass pair from the guest app should use
 /// fake class host objects and return the substitutions if so.
+///
+/// This function is called when registering classes from the guest app. It
+/// detects certain problematic classes that are, for example, too complex for
+/// touchHLE to currently support, but which can be easily replaced with simple
+/// fakes.
 fn substitute_classes(
-    bundle: &bundle::Bundle,
     mem: &Mem,
     class: Class,
     metaclass: Class,
 ) -> Option<(Box<FakeClass>, Box<FakeClass>)> {
     let class_t { data, .. } = mem.read(class.cast());
     let class_rw_t { name, .. } = mem.read(data);
-    // If the class name bytes aren't valid UTF-8 the metadata is almost
-    // certainly corrupt / still-encrypted (see comment in
-    // `ClassHostObject::from_bin`). Don't try to fake-substitute such a
-    // class — let the normal loader path log a warning and create a stub
-    // host object instead of panicking here.
-    let Ok(name) = mem.cstr_at_utf8(name) else {
-        return None;
-    };
-    // Substitute classes that seem to be from various third-party advertising
-    // or social network SDKs.
+    let name = mem.cstr_at_utf8(name).unwrap();
+
+    // Currently the only thing we try to substitute: classes that seem to be
+    // from various third-party advertising or social network SDKs.
+    // Naturally it makes a lot of use of UIKit and networking in ways we
+    // don't support yet. This isn't "ad blocking" because ads no longer work
+    // on real devices anyway :)
     if !(name.starts_with("AdMob")
         || name.starts_with("AltAds")
         || name.starts_with("Mobclix")
         || name.starts_with("FB") // Facebook
         || name.starts_with("Flurry")
         || name.starts_with("OpenFeint")
-        || name.starts_with("Tapjoy")
-        || name.starts_with("UA")
-        || name.starts_with("GAD")
-        || name.starts_with("RevMob")
-        || name.starts_with("iSimulate")
-        || name.starts_with("ALSdk") // AppLovin SDK
-        || name.starts_with("ALAd")  // AppLovin ads
-        || name.starts_with("ALEvent") // AppLovin events
-        || name.starts_with("ALIncentivized") // AppLovin incentivized ads
-        || name.starts_with("ALTargeting") // AppLovin targeting
-        || name.starts_with("ALPrivacy") // AppLovin privacy settings
-    )
-    // <-- ДОБАВЛЕНО ЗДЕСЬ
+        || name.starts_with("Tapjoy"))
     {
-        // TODO : try to remove when sqlite3 is supported.
-        if (bundle.bundle_identifier() == "com.chillingo.defenderchronicles")
-            && (name == "OFHighScoreService")
-        {
-            log!("Applying game-specific hack for Defender Chronicles: skipping OpenFeint online high score system.");
-        } else {
-            return None;
-        }
+        return None;
     }
 
     {
@@ -436,28 +475,15 @@ fn substitute_classes(
             name: metaclass_name,
             ..
         } = mem.read(data);
-        // Same defensive handling as the class-name read above. In Apple's
-        // runtime, `class_getName(cls) == class_getName(object_getClass(cls))`,
-        // but a corrupt binary can violate that invariant; an `assert!`
-        // here would crash the whole emulator over what is really just
-        // malformed input. Skip the substitution instead.
-        let Ok(metaclass_name) = mem.cstr_at_utf8(metaclass_name) else {
-            return None;
-        };
-        if name != metaclass_name {
-            log!(
-                "Warning: substitute_classes: class name {:?} != metaclass name {:?}; skipping substitution.",
-                name,
-                metaclass_name,
-            );
-            return None;
-        }
+        let metaclass_name = mem.cstr_at_utf8(metaclass_name).unwrap();
+        assert!(name == metaclass_name);
     }
 
     log!(
         "Note: substituting fake class for {} to improve compatibility",
         name
     );
+
     let class_host_object = Box::new(FakeClass {
         name: name.to_string(),
         is_metaclass: false,
@@ -502,73 +528,6 @@ impl ObjC {
         self.link_class_inner(name, /* is_metaclass: */ false, mem, false)
     }
 
-    /// For use by host functions when the caller wants to handle the
-    /// "class does not exist" case gracefully (e.g. UIClassSwapper falling
-    /// back to the NIB's original class when the app-defined custom class is
-    /// missing). Returns `Some(class)` if the class is already registered or
-    /// a host-side template exists for it; otherwise returns `None` instead
-    /// of panicking or installing a placeholder.
-    pub fn try_get_known_class(&mut self, name: &str, mem: &mut Mem) -> Option<Class> {
-        if let Some(class) = self.get_class(name, /* is_metaclass: */ false, mem) {
-            return Some(class);
-        }
-        if Self::find_template(name).is_some() {
-            return Some(self.link_class(name, /* is_metaclass: */ false, mem));
-        }
-        None
-    }
-
-    /// Find a registered class that *declares* the given instance method
-    /// (by selector name), or `None` if there is no such class.
-    ///
-    /// This scans every registered class but only matches a class that
-    /// declares the method *itself* — the superclass chain is intentionally
-    /// not walked, so unrelated classes that merely inherit the method cannot
-    /// match. Classes without a real Objective-C method table (substituted
-    /// SDK classes, unimplemented-class placeholders, etc.) are skipped.
-    ///
-    /// This is used by `UIApplicationMain` to recover the application delegate
-    /// when the app neither wires it up through its main nib nor passes a
-    /// resolvable delegate class name (some binaries reach `UIApplicationMain`
-    /// with a nil/empty delegate class name, which otherwise leaves the app
-    /// with no delegate and frozen on its launch image, because
-    /// `application:didFinishLaunchingWithOptions:` is never delivered).
-    ///
-    /// When several classes match, selection is deterministic and prefers
-    /// names that look like an application delegate (e.g. `AppDelegate`,
-    /// `AppController`), so an unrelated class that happens to implement the
-    /// selector does not shadow the real delegate.
-    pub fn class_declaring_instance_method(&self, sel_name: &str) -> Option<Class> {
-        let sel = self.lookup_selector(sel_name)?;
-        // (preference rank, class name, class); lower rank wins, ties broken by
-        // name so the result does not depend on `HashMap` iteration order.
-        let mut candidates: Vec<(u8, &str, Class)> = Vec::new();
-        for (name, &class) in self.classes.iter() {
-            let Some(host_object) = self.get_host_object(class) else {
-                continue;
-            };
-            let Some(class_host_object) =
-                host_object.as_any().downcast_ref::<ClassHostObject>()
-            else {
-                continue;
-            };
-            if class_host_object.is_metaclass || !class_host_object.methods.contains_key(&sel) {
-                continue;
-            }
-            let lower = name.to_ascii_lowercase();
-            let rank = if lower.ends_with("appdelegate") || lower.ends_with("appcontroller") {
-                0
-            } else if lower.contains("delegate") {
-                1
-            } else {
-                2
-            };
-            candidates.push((rank, name.as_str(), class));
-        }
-        candidates.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.1.cmp(b.1)));
-        candidates.first().map(|&(_, _, class)| class)
-    }
-
     fn link_class_inner(
         &mut self,
         name: &str,
@@ -580,49 +539,21 @@ impl ObjC {
         // together, so even though this function only returns one pointer, it
         // must create both. The function must not care whether the metaclass
         // is requested first, or if the class is requested first.
+
         if let Some(class) = self.get_class(name, is_metaclass, mem) {
             return class;
         };
-
-        // An empty or otherwise garbage class name never corresponds to a real
-        // class. The real Objective-C runtime returns nil for such lookups
-        // (e.g. `objc_getClass("") == nil`). These names show up in touchHLE
-        // when a guest reads a class name (or a `Class` pointer) from
-        // uninitialised/corrupt memory — e.g. a NULL-page read returning all
-        // zeroes decodes to the empty string. Registering a placeholder class
-        // under such a name is actively harmful: it (a) pollutes the class
-        // table so every subsequent lookup of that name returns a non-nil
-        // placeholder, breaking the documented "class not loaded -> nil"
-        // contract apps rely on for feature detection, and (b) leads the guest
-        // to send messages (e.g. `+new`) to a bogus class, which here was
-        // observed to spin in a tight loop printing
-        // `Class "" ... is unimplemented. Call to class method "new".`
-        // forever. Refuse to create/register such classes and return nil so
-        // the guest sees the same "no such class" result a real device would.
-        if name.is_empty() || name.chars().any(|c| c.is_control() || !c.is_ascii()) {
-            log_dbg!(
-                "Refusing to link class with empty/garbage name {:?}; returning nil.",
-                name
-            );
-            return nil;
-        }
 
         let class_host_object: Box<dyn AnyHostObject>;
         let metaclass_host_object: Box<dyn AnyHostObject>;
         if let Some(template) = Self::find_template(name) {
             // We have a template (host implementation) for this class, use it.
+
             if let Some(superclass_name) = template.superclass {
-                // В реальном Objective-C рантайме классы могут загружаться
-                // динамически.
-                // Вместо жесткого падения (assert!), если шаблон суперкласса не
-                // найден,
-                // мы просто логируем это и позволяем рантайму легально создать
-                // UnimplementedClass (или FakeClass) через механизм link_class.
-                // Это честное поведение динамического линкера: иерархия
-                // сохраняется!
-                if Self::find_template(superclass_name).is_none() {
-                    log!("Warning: Host class template {} inherits from missing {}, falling back to dynamic placeholder.", name, superclass_name);
-                }
+                // Make sure we actually have a template for the superclass
+                // before we try to link it, else we might get an unimplemented
+                // class back and have weird problems down the line
+                assert!(Self::find_template(superclass_name).is_some());
             }
 
             class_host_object = Box::new(ClassHostObject::from_template(
@@ -650,71 +581,21 @@ impl ObjC {
                 self,
             ));
         } else {
-            // ЗДЕСЬ ДОБАВЛЕНА ЛОГИКА ДЛЯ ДИНАМИЧЕСКИХ КЛАССОВ (GAD и др.)
-            let is_fake = name.starts_with("AdMob")
-                || name.starts_with("AltAds")
-                || name.starts_with("Mobclix")
-                || name.starts_with("FB")
-                || name.starts_with("Flurry")
-                || name.starts_with("OpenFeint")
-                || name.starts_with("Tapjoy")
-                || name.starts_with("UA")
-                || name.starts_with("GAD")
-                || name.starts_with("iSimulate")
-                // SpringBoard private classes (e.g. "SBSceneFor%@" → "SBSceneFor(null)").
-                // Apps probing for jailbroken-device features look these up
-                // via NSClassFromString and only act if they exist; returning
-                // a fake class lets the probe fail gracefully instead of
-                // panicking. Restricted to the known SBScene prefix to avoid
-                // accidentally swallowing real third-party SB-prefixed libs.
-                || name.starts_with("SBScene")
-                || name.starts_with("SBSystem"); // <-- ДОБАВЛЕНО ЗДЕСЬ
-
-            // Note: empty/garbage class names are rejected earlier in this
-            // function (they return nil), so by this point `name` is a
-            // plausible, if unknown, class name.
-            if !use_placeholder && !is_fake {
-                // Historically this branch panicked. In the real
-                // Objective-C runtime, looking up a class that doesn't
-                // exist returns `nil` and the caller deals with it — it
-                // never aborts the process. Apps frequently reference
-                // classes that don't exist in the iOS version they
-                // actually run on (e.g. UICollectionViewCell on iOS < 6),
-                // or that touchHLE has no host implementation for, and
-                // they expect to either fall back to a default class or
-                // to detect the absence at runtime. Crashing here breaks
-                // perfectly valid apps, so instead we log a loud warning
-                // and install an UnimplementedClass placeholder, matching
-                // the behaviour of the `link_class` (dyld) path.
-                log!(
-                    "Warning: get_known_class({:?}) — no host implementation; \
-                     installing a placeholder. Some features depending on this \
-                     class may not work.",
-                    name
-                );
+            if !use_placeholder {
+                panic!("Missing implementation for class {name}!");
             }
 
-            if is_fake {
-                class_host_object = Box::new(FakeClass {
-                    name: name.to_string(),
-                    is_metaclass: false,
-                });
-                metaclass_host_object = Box::new(FakeClass {
-                    name: name.to_string(),
-                    is_metaclass: true,
-                });
-            } else {
-                // We don't have a real implementation for this class, use a
-                // placeholder.
-                class_host_object = Box::new(UnimplementedClass {
-                    name: name.to_string(),
-                    is_metaclass: false,
-                });
-                metaclass_host_object = Box::new(UnimplementedClass {
-                    name: name.to_string(),
-                    is_metaclass: true,
-                });
-            }
+            // We don't have a real implementation for this class, use a
+            // placeholder.
+
+            class_host_object = Box::new(UnimplementedClass {
+                name: name.to_string(),
+                is_metaclass: false,
+            });
+            metaclass_host_object = Box::new(UnimplementedClass {
+                name: name.to_string(),
+                is_metaclass: true,
+            });
         }
 
         // NSObject's metaclass is special: it is its own metaclass, and it's
@@ -732,12 +613,14 @@ impl ObjC {
         };
 
         let class = self.alloc_static_object(metaclass, class_host_object, mem);
+
         if name == "NSObject" {
             // NSObject's metaclass has its class as the superclass.
             self.borrow_mut::<ClassHostObject>(metaclass).superclass = class;
         }
 
         self.classes.insert(name.to_string(), class);
+
         if is_metaclass {
             metaclass
         } else {
@@ -747,7 +630,7 @@ impl ObjC {
 
     /// For use by [crate::dyld]: register all the classes from the application
     /// binary.
-    pub fn register_bin_classes(&mut self, bundle: &bundle::Bundle, bin: &MachO, mem: &mut Mem) {
+    pub fn register_bin_classes(&mut self, bin: &MachO, mem: &mut Mem) {
         let Some(list) = bin.get_section("__objc_classlist") else {
             return;
         };
@@ -758,8 +641,9 @@ impl ObjC {
             let class = mem.read(base + i);
             let metaclass = Self::read_isa(class, mem);
 
-            let name = if let Some(fakes) = substitute_classes(bundle, mem, class, metaclass) {
+            let name = if let Some(fakes) = substitute_classes(mem, class, metaclass) {
                 let (class_host_object, metaclass_host_object) = fakes;
+
                 assert!(class_host_object.name == metaclass_host_object.name);
                 let name = class_host_object.name.clone();
 
@@ -770,40 +654,11 @@ impl ObjC {
                 let class_host_object = Box::new(ClassHostObject::from_bin(
                     class, /* is_metaclass: */ false, mem, self,
                 ));
-                let mut metaclass_host_object = Box::new(ClassHostObject::from_bin(
+                let metaclass_host_object = Box::new(ClassHostObject::from_bin(
                     metaclass, /* is_metaclass: */ true, mem, self,
                 ));
-                // Apple's Objective-C runtime guarantees that a class and its
-                // metaclass always share the same NUL-terminated UTF-8 name:
-                // `class_getName(cls)` and `class_getName(object_getClass(cls))`
-                // return the identical string (see <objc/runtime.h>). In a
-                // healthy Mach-O the `class_rw_t.name` pointer of the class and
-                // its metaclass point at the very same C string. Real-world
-                // binaries break this in two ways: (1) partially-decrypted
-                // FairPlay IPAs whose `__objc_classname` bytes are unreadable,
-                // so `from_bin` substitutes a per-pointer synthetic placeholder
-                // that necessarily diverges between class and metaclass; and
-                // (2) clobbered `__TEXT` segments where the metaclass name
-                // pointer reads a *different* but still valid-UTF-8 string.
-                // Apple's runtime never crashes on either; it simply uses the
-                // class's name. Mirror that: treat the class side as canonical
-                // and force the metaclass to match, unconditionally. This
-                // removes the previous `assert!` that aborted the whole VM
-                // (observed with GameStop_iOS, whose class/metaclass names were
-                // both readable yet mismatched).
-                if class_host_object.name != metaclass_host_object.name {
-                    log!(
-                        "Note: harmonizing mismatched class/metaclass names \
-                         ({:?} vs {:?}) to {:?} for class at {:?}/{:?} (Apple's \
-                         runtime guarantees they are identical).",
-                        class_host_object.name,
-                        metaclass_host_object.name,
-                        class_host_object.name,
-                        class,
-                        metaclass,
-                    );
-                    metaclass_host_object.name = class_host_object.name.clone();
-                }
+
+                assert!(class_host_object.name == metaclass_host_object.name);
                 let name = class_host_object.name.clone();
 
                 self.register_static_object(class, class_host_object);
@@ -846,6 +701,7 @@ impl ObjC {
         }
         // At least NSObject should be found as a root object
         assert!(found_ns_object);
+
         // Third pass to ensure no superclass has "grown into" any of its
         // subclasses.
         // (https://alwaysprocessing.blog/2023/03/12/objc-ivar-abi)
@@ -867,6 +723,7 @@ impl ObjC {
                     name,
                     &self.borrow::<ClassHostObject>(*superclass).name
                 );
+
                 let ClassHostObject {
                     ref mut instance_start,
                     ref mut instance_size,
@@ -877,18 +734,23 @@ impl ObjC {
                 if !ivars.is_empty() {
                     let mut max_alignment: u32 = 1;
                     for (offset, align) in ivars.values() {
-                        if !offset.is_null() {
-                            max_alignment = max_alignment.max(*align);
+                        if offset.is_null() {
+                            // anonymous bitfield
+                            continue;
                         }
+                        max_alignment = max_alignment.max(*align);
                     }
 
                     let align_mask = max_alignment - 1;
                     diff = (diff + align_mask) & !align_mask;
 
                     for (offset, _) in ivars.values_mut() {
-                        if !offset.is_null() {
-                            *offset = Ptr::from_bits((*offset).to_bits() + diff);
+                        if offset.is_null() {
+                            // anonymous bitfield
+                            continue;
                         }
+
+                        *offset = Ptr::from_bits((*offset).to_bits() + diff);
                     }
                 }
 
@@ -921,6 +783,7 @@ impl ObjC {
             instance_start,
             instance_size
         );
+
         if *superclass == nil {
             return (false, 0);
         }
@@ -970,6 +833,7 @@ impl ObjC {
         for (i, (_, o)) in self.classes.iter().enumerate() {
             // Why doesn't json allow trailing commas...
             let comma = if i == self.classes.len() - 1 { "" } else { "," };
+
             let host_obj = self.get_host_object(*o).unwrap();
 
             if let Some(ClassHostObject {
@@ -987,7 +851,7 @@ impl ObjC {
                     writeln!(
                         file,
                         "        {{ \"name\": \"{}\", \"super\": \"{}\", \"class_type\": \"normal\" }}{}",
-                         name, self.get_class_name(*sup), comma
+                        name, self.get_class_name(*sup), comma
                     )?;
                 }
             } else if let Some(UnimplementedClass { name, .. }) = host_obj.as_any().downcast_ref() {
@@ -1001,13 +865,7 @@ impl ObjC {
                     "        {{ \"name\": \"{name}\", \"class_type\": \"fake\" }}{comma}"
                 )?;
             } else {
-                log!(
-                    "Warning: dump_classes: encountered unrecognized class host object; emitting placeholder entry.",
-                );
-                writeln!(
-                    file,
-                    "        {{ \"name\": \"<unknown>\", \"class_type\": \"unknown\" }}{comma}"
-                )?;
+                panic!("Unrecognized class type!");
             }
         }
         writeln!(file, "    ]\n}}")
@@ -1026,22 +884,10 @@ impl ObjC {
             let cat_ptr = mem.read(base + i);
             let data = mem.read(cat_ptr);
 
-            // `category_t` is `#[repr(C, packed)]`, so `data.name` can't be
-            // borrowed directly (unaligned). Copy out the pointer first.
-            let name_ptr = data.name;
-            let name = match mem.cstr_at_utf8(name_ptr) {
-                Ok(s) => s,
-                Err(_) => {
-                    log!(
-                        "Warning: register_bin_categories: category at {:?} has an unreadable (non-UTF-8) name at {:?}; skipping.",
-                        cat_ptr,
-                        name_ptr,
-                    );
-                    continue;
-                }
-            };
+            let name = mem.cstr_at_utf8(data.name).unwrap();
             let class = data.class;
             let metaclass = Self::read_isa(class, mem);
+
             for (class, methods) in [
                 (class, data.instance_methods),
                 (metaclass, data.class_methods),
@@ -1068,7 +914,7 @@ impl ObjC {
                         instance_start: Default::default(),
                         instance_size: Default::default(),
                         ivars: Default::default(),
-                        properties: Default::default(),
+                        is_initialized: InitializationStatus::NotInitialized,
                     },
                 );
                 log_dbg!(
@@ -1114,51 +960,9 @@ impl ObjC {
         }
     }
 
-    /// Check whether `class` is a placeholder for a class touchHLE/HyperHLE
-    /// does not implement (an `UnimplementedClass` host object).
-    pub fn is_unimplemented_class(&self, class: Class) -> bool {
-        if class == nil {
-            return false;
-        }
-        let Some(host_object) = self.get_host_object(class) else {
-            return false;
-        };
-        matches!(
-            host_object.as_any().downcast_ref(),
-            Some(UnimplementedClass { .. })
-        )
-    }
-
-    /// Check whether `class` is a "fake" class (a `FakeClass` host object),
-    /// i.e. one we tolerate the existence of without truly implementing.
-    pub fn is_fake_class(&self, class: Class) -> bool {
-        if class == nil {
-            return false;
-        }
-        let Some(host_object) = self.get_host_object(class) else {
-            return false;
-        };
-        matches!(host_object.as_any().downcast_ref(), Some(FakeClass { .. }))
-    }
-
     pub fn get_class_name(&self, class: Class) -> &str {
-        // Previously this `expect`-ed and panicked the whole emulator if the
-        // class pointer didn't have a registered host object (e.g. when the
-        // app sends a message to an object whose isa was clobbered, or when
-        // a `borrow::<ClassHostObject>` already produced a phantom object —
-        // see the "SUPER HACK! Faking borrow for missing object (null) of
-        // type ClassHostObject" warnings that immediately precede the crash
-        // in older logs). Recovering with a placeholder name keeps the rest
-        // of the runtime running so logs/diagnostics still print useful
-        // info instead of taking down the whole process.
-        self.try_get_class_name(class).unwrap_or_else(|| {
-            log!(
-                "Warning: get_class_name: no host object for class {:?}; \
-                 returning \"<unknown>\".",
-                class,
-            );
-            "<unknown>"
-        })
+        self.try_get_class_name(class)
+            .expect("Could not get class name!")
     }
 
     pub fn get_superclass(&self, class: Class) -> Class {
@@ -1178,1196 +982,72 @@ impl ObjC {
             None
         }
     }
-}
 
-pub fn objc_getClass(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_begin_catch(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_end_catch(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_exception_throw(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn object_getClassName(env: &mut crate::Environment, obj: id) -> Class {
-    if obj.is_null() {
-        return nil;
-    }
-
-    let objc_obj: objc_object = env.mem.read(obj.cast());
-    objc_obj.isa
-}
-
-pub fn object_getClass(env: &mut crate::Environment, obj: id) -> Class {
-    if obj.is_null() {
-        return nil;
-    }
-
-    let objc_obj: objc_object = env.mem.read(obj.cast());
-    objc_obj.isa
-}
-
-pub fn objc_retainAutoreleasedReturnValue(
-    env: &mut crate::Environment,
-    name: ConstPtr<u8>,
-) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_autoreleaseReturnValue(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_retainAutoreleaseReturnValue(
-    env: &mut crate::Environment,
-    name: ConstPtr<u8>,
-) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_autoreleasePoolPush(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    if name.is_null() {
-        return nil;
-    }
-
-    let name_str = match env.mem.cstr_at_utf8(name) {
-        Ok(s) => s.to_string(),
-        Err(_) => return nil,
-    };
-    if let Some(class) = env.objc.get_class(&name_str, false, &env.mem) {
-        return class;
-    }
-
-    if ObjC::find_template(&name_str).is_some() {
-        return env.objc.link_class(&name_str, false, &mut env.mem);
-    }
-
-    nil
-}
-
-pub fn objc_autoreleasePoolPop(_env: &mut crate::Environment, _context: MutVoidPtr) {
-    // touchHLE manages autorelease pools through NSAutoreleasePool objects, so
-    // the matching `objc_autoreleasePoolPush` is a no-op stub that returns
-    // nil, and there is nothing to drain here. iPhone OS 2.x/3.x apps target
-    // this path very rarely (it's primarily used by ARC).
-}
-
-pub fn class_getSuperclass(env: &mut crate::Environment, cls: Class) -> Class {
-    if cls.is_null() {
-        return nil;
-    }
-    env.objc.get_superclass(cls)
-}
-
-pub fn class_getInstanceSize(env: &mut crate::Environment, cls: Class, name: SEL) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
+    pub fn is_unimplemented_class(&self, class: Class) -> bool {
+        if class == nil {
+            return false;
         }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
+        let host_object = self.get_host_object(class).unwrap();
+        matches!(
+            host_object.as_any().downcast_ref(),
+            Some(UnimplementedClass { .. })
+        )
+    }
+
+    pub fn is_fake_class(&self, class: Class) -> bool {
+        if class == nil {
+            return false;
         }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-pub fn class_getInstanceMethod(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: SEL,
-) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-/// `BOOL class_respondsToSelector(Class cls, SEL sel)`
-///
-/// Apple: "Returns a Boolean value that indicates whether instances of a
-/// class respond to a particular selector." Walks the class chain and
-/// reports YES if any class in that chain implements `sel`.
-/// <https://developer.apple.com/documentation/objectivec/1418555-class_respondstoselector>
-///
-/// Per the documentation `class_respondsToSelector(Nil, …)` returns NO and
-/// `class_respondsToSelector(cls, NULL)` also returns NO. Mirroring the
-/// real runtime here avoids the previous return-0 stub silently breaking
-/// guests that use this entry point to gate optional behaviour
-/// (e.g. `class_respondsToSelector([NSString class], @selector(...))` for
-/// runtime-availability checks in older SDKs).
-pub fn class_respondsToSelector(
-    env: &mut crate::Environment,
-    cls: Class,
-    sel: SEL,
-) -> bool {
-    if cls.is_null() || sel.is_null() {
-        return false;
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&sel) {
-                    return true;
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    false
-}
-
-pub fn method_getImplementation(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: SEL,
-) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-pub fn method_setImplementation(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: SEL,
-) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-pub fn method_getTypeEncoding(env: &mut crate::Environment, cls: Class, name: SEL) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-pub fn objc_getMetaClass(env: &mut crate::Environment, cls: Class, name: SEL) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-pub fn class_replaceMethod(env: &mut crate::Environment, cls: Class, name: SEL) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-
-    let mut curr = cls;
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-/// `BOOL class_addMethod(Class cls, SEL name, IMP imp, const char *types)`
-///
-/// Per Apple's [Objective-C Runtime Reference](https://developer.apple.com/documentation/objectivec/1418901-class_addmethod?language=objc):
-///
-/// > Adds a new method to a class with a given name and implementation.
-/// >
-/// > Returns `YES` if the method was added successfully, otherwise `NO`
-/// > (for example, the class already contains a method implementation
-/// > with that name).
-/// >
-/// > `class_addMethod` will add an override of a superclass's
-/// > implementation, but will not replace an existing implementation in
-/// > this class. To change an existing implementation, use
-/// > `method_setImplementation`.
-///
-/// We model `IMP` as a guest function pointer (the `Method` type returned
-/// by `class_getInstanceMethod` is touchHLE-specific and is not the same
-/// representation as `IMP`). The `types` string is captured into
-/// `guest_method_signatures` so that subsequent dispatch through
-/// `methodSignatureForSelector:` can honour it.
-pub fn class_addMethod(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: SEL,
-    imp: ConstVoidPtr,
-    types: ConstPtr<u8>,
-) -> bool {
-    if cls.is_null() || name.is_null() {
-        return false;
-    }
-    // Refuse to install a NULL IMP — calling it would crash the guest as
-    // soon as the selector is dispatched, and Apple's runtime treats it as
-    // a programmer error (the docs require `imp` to be a function pointer
-    // of type `IMP`).
-    if imp.is_null() {
-        log!(
-            "Warning: class_addMethod({:?}, {:?}, NULL imp, ...) — refusing to install NULL IMP",
-            cls,
-            name.as_str(&env.mem)
-        );
-        return false;
-    }
-
-    // Determine whether the receiver class already has an implementation
-    // for this selector. Apple's contract is that `class_addMethod` only
-    // succeeds when the method is NOT already defined on the receiver
-    // (overrides of superclasses ARE allowed, hence we don't walk up the
-    // chain here).
-    let already_defined = if let Some(host_obj) = env.objc.get_host_object(cls) {
-        host_obj
-            .as_any()
-            .downcast_ref::<ClassHostObject>()
-            .is_some_and(|c| c.methods.contains_key(&name))
-    } else {
-        false
-    };
-    if already_defined {
-        log_dbg!(
-            "class_addMethod({:?}, {:?}, ...) — method already defined on receiver, returning NO",
-            cls,
-            name.as_str(&env.mem)
-        );
-        return false;
-    }
-
-    // Treat the IMP as a guest function pointer. `IMP` on real Apple is
-    // `id (*)(id, SEL, ...)` — i.e. a C function pointer. Method names
-    // ending with `:` are encoded for the Thumb bit by the linker, so we
-    // pass the raw bits straight through.
-    let guest_imp =
-        crate::abi::GuestFunction::from_addr_with_thumb_bit(imp.to_bits());
-
-    // Install the new method. `borrow_mut::<ClassHostObject>` walks any
-    // host-object inheritance chain so this works for both classes and
-    // metaclasses (whose host objects are both `ClassHostObject`).
-    {
-        let class_obj = env.objc.borrow_mut::<ClassHostObject>(cls);
-        class_obj
-            .methods
-            .insert(name, super::methods::IMP::Guest(guest_imp));
-        if !types.is_null() {
-            class_obj.guest_method_signatures.insert(name, types);
-        }
-    }
-    log_dbg!(
-        "class_addMethod({:?}, {:?}, imp={:?}) — installed",
-        cls,
-        name.as_str(&env.mem),
-        imp
-    );
-    true
-}
-
-/// `Method class_getClassMethod(Class cls, SEL name)`
-///
-/// Per Apple's [Objective-C Runtime Reference](https://developer.apple.com/documentation/objectivec/1418680-class_getclassmethod?language=objc):
-///
-/// > Returns a pointer to the data structure describing the class method
-/// > identified by the given selector.
-/// >
-/// > Note: this function searches superclasses for implementations.
-///
-/// In touchHLE's simplified runtime the returned "Method" value is the
-/// class pointer itself (matching what `class_getInstanceMethod` returns).
-/// Class methods live on the metaclass, so we resolve the metaclass first
-/// and then walk its chain looking for the selector.
-pub fn class_getClassMethod(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: SEL,
-) -> ConstVoidPtr {
-    if cls.is_null() {
-        return ConstVoidPtr::null();
-    }
-    // The metaclass holds the class-method table. `ObjC::read_isa` of a
-    // class returns its metaclass.
-    let mut curr = crate::objc::ObjC::read_isa(cls, &env.mem);
-    while !curr.is_null() {
-        if let Some(host_obj) = env.objc.get_host_object(curr) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if class_obj.methods.contains_key(&name) {
-                    return curr.cast_const().cast();
-                }
-            }
-        }
-        let next = env.objc.get_superclass(curr);
-        if next == curr {
-            break;
-        }
-        curr = next;
-    }
-    ConstVoidPtr::null()
-}
-
-pub fn objc_retain(env: &mut crate::Environment, obj: id) -> id {
-    if !obj.is_null() {
-        crate::objc::retain(env, obj);
-    }
-    obj
-}
-
-pub fn objc_release(env: &mut crate::Environment, obj: id) -> id {
-    if !obj.is_null() {
-        crate::objc::release(env, obj);
-    }
-    obj
-}
-
-/// `void _objc_deallocOnMainThreadHelper(void *context)` — used by libobjc
-/// in conjunction with `dispatch_async_f(dispatch_get_main_queue(), …)` to
-/// release a `-finalize`/`-dealloc`-ing object back on the main thread when
-/// the runtime detects the object is being released on a background thread.
-/// The context argument is the `id` to release. See
-/// `objc4-866.9/runtime/NSObject.mm` (`_objc_deallocOnMainThreadHelper`).
-///
-/// Forwarding to `objc_release` is correct because touchHLE serialises the
-/// guest's execution on a single host thread; "release on the main thread"
-/// reduces to "release now".
-#[allow(non_snake_case)]
-pub fn __objc_deallocOnMainThreadHelper(env: &mut crate::Environment, context: MutVoidPtr) {
-    let obj: id = Ptr::from_bits(context.to_bits());
-    if !obj.is_null() {
-        crate::objc::release(env, obj);
+        let host_object = self.get_host_object(class).unwrap();
+        matches!(host_object.as_any().downcast_ref(), Some(FakeClass { .. }))
     }
 }
 
-pub fn ___objc_personality_v0(
-    _env: &mut crate::Environment,
-    version: i32,
-    actions: i32,
-    exception_class: u64,
-    exception_object: MutVoidPtr,
-    context: MutVoidPtr,
-) -> i32 {
-    log!(
-        "___objc_personality_v0 called! Exception handling is not fully implemented in touchHLE.\n\
-        version: {}, actions: {}, class: {:x}, object: {:?}, context: {:?}",
-        version,
-        actions,
-        exception_class,
-        exception_object,
-        context
-    );
-    // _URC_FATAL_PHASE1_ERROR
-    3
-}
-
-/// `_objc_msgForward` — the ObjC runtime's message forwarding trampoline.
-///
-/// On a real device, when `objc_msgSend` cannot find an IMP for a given
-/// selector, it dispatches through `_objc_msgForward` which triggers the
-/// full forwarding chain (`forwardingTargetForSelector:`,
-/// `methodSignatureForSelector:`, `forwardInvocation:`). touchHLE does not
-/// implement this machinery; instead we provide a stub that returns nil (0).
-///
-/// This is exported so that binaries containing external relocations to
-/// `__objc_msgForward` (e.g. Cut the Rope HD) can link without errors.
-/// When the stub is actually called, the return value of nil/0 matches the
-/// behaviour of sending a message to nil — the least-surprising fallback
-/// for games that probe forwarding.
-pub fn objc_msgForward(_env: &mut crate::Environment, _receiver: id, _sel: SEL) -> id {
-    log_dbg!(
-        "_objc_msgForward called (receiver={:?}, sel={:?}) — returning nil",
-        _receiver,
-        _sel
-    );
-    nil
-}
-
-/// `_objc_msgForward_stret` — struct-return variant of `_objc_msgForward`.
-/// Same stub behaviour: returns without writing to the stret buffer.
-pub fn objc_msgForward_stret(
-    _env: &mut crate::Environment,
-    _stret: MutVoidPtr,
-    _receiver: id,
-    _sel: SEL,
-) {
-    log_dbg!(
-        "_objc_msgForward_stret called (receiver={:?}, sel={:?}) — no-op",
-        _receiver,
-        _sel
-    );
-}
-/// `void objc_storeStrong(id *location, id obj)` — ARC's strong-store
-/// runtime helper. The clang ARC specification
-/// (<https://clang.llvm.org/docs/AutomaticReferenceCounting.html#runtime-support>)
-/// describes the canonical implementation as:
-///
-/// ```text
-/// id prev = *location;
-/// if (prev == obj) return;
-/// objc_retain(obj);
-/// *location = obj;
-/// objc_release(prev);
-/// ```
-///
-/// This is what the Apple objc runtime ships as `objc_storeStrong`. We
-/// implement it line-by-line so the reference counts of both the old
-/// and new objects stay consistent with how a non-ARC manual
-/// retain/release would have managed them.
-pub fn objc_storeStrong(
-    env: &mut crate::Environment,
-    location: crate::mem::MutPtr<id>,
-    obj: id,
-) {
-    if location.is_null() {
-        return;
-    }
-    let prev = env.mem.read(location);
-    if prev == obj {
-        return;
-    }
-    if !obj.is_null() {
-        crate::objc::retain(env, obj);
-    }
-    env.mem.write(location, obj);
-    if !prev.is_null() {
-        crate::objc::release(env, prev);
-    }
-}
-
-/// `IMP class_getMethodImplementation(Class cls, SEL name)` — Objective-C
-/// runtime helper. Per Apple's reference
-/// (<https://developer.apple.com/documentation/objectivec/1418811-class_getmethodimplementation>):
-///
-/// > Returns the function pointer that would be called if a particular
-/// > message were sent to an instance of a class. The function returned
-/// > might be a function internal to the runtime instead of an actual
-/// > method implementation. For example, if instances of `cls` do not
-/// > respond to `name`, the function returned will be part of the
-/// > runtime's message forwarding machinery.
-///
-/// touchHLE doesn't model `_objc_msgForward`; if the selector isn't
-/// implemented we return a NULL pointer, which the caller is expected
-/// to compare against and skip the dispatch (Apple binaries doing
-/// `IMP imp = class_getMethodImplementation(cls, sel); if (imp) imp(…)`
-/// behave correctly with this).
-pub fn class_getMethodImplementation(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: crate::objc::SEL,
-) -> ConstVoidPtr {
-    method_getImplementation(env, cls, name)
-}
-
-/// `IMP class_getMethodImplementation_stret(Class cls, SEL name)` — same
-/// as above but for selectors whose return type uses `objc_msgSend_stret`
-/// (large struct returns). The IMP slot is the same in touchHLE.
-pub fn class_getMethodImplementation_stret(
-    env: &mut crate::Environment,
-    cls: Class,
-    name: crate::objc::SEL,
-) -> ConstVoidPtr {
-    method_getImplementation(env, cls, name)
-}
-
-pub fn objc_retainAutorelease(env: &mut crate::Environment, obj: id) -> id {
-    if !obj.is_null() {
-        crate::objc::retain(env, obj);
-        crate::objc::autorelease(env, obj);
-    }
-    obj
-}
-
-/// `id objc_alloc(Class cls)` — ARC/libobjc fast-path allocator. Apple's
-/// objc4 runtime (`NSObject.mm`, `objc_alloc`) implements this as
-/// `callAlloc(cls, /*checkNil=*/true, /*allocWithZone=*/false)`, which for a
-/// class that does not override `+allocWithZone:` is exactly equivalent to
-/// `[cls alloc]`. Forwarding the `alloc` selector reproduces that behaviour
-/// precisely, including honouring any class that provides its own `+alloc`.
-/// Compilers emit calls to this helper instead of an `objc_msgSend(cls,
-/// @selector(alloc))` to save a selector lookup, so it must really allocate
-/// — a return-0 stub leaves the guest with a nil object and crashes later.
-pub fn objc_alloc(env: &mut crate::Environment, cls: Class) -> id {
-    if cls.is_null() {
-        return nil;
-    }
-    crate::objc::msg![env; cls alloc]
-}
-
-/// `id objc_autorelease(id obj)` — ARC/libobjc fast-path autorelease. objc4
-/// implements it as `obj ? obj->autorelease() : nil`: the object is added to
-/// the current autorelease pool and returned unchanged. touchHLE's
-/// `autorelease` helper does exactly this (with a nil fast path), so we
-/// forward to it. This is the real implementation, not a stub: returning 0
-/// here would hand the guest a nil where it expects its object back.
-pub fn objc_autorelease(env: &mut crate::Environment, obj: id) -> id {
-    crate::objc::autorelease(env, obj)
-}
-
-/// `id objc_retainBlock(id block)` — ARC runtime helper for retaining a
-/// block. Apple's objc4 runtime (`NSObject.mm`) implements this as a thin
-/// wrapper around the Blocks runtime:
-///
-/// ```text
-/// id objc_retainBlock(id x) { return (id)_Block_copy(x); }
-/// ```
-///
-/// touchHLE's `_Block_copy` (see `src/libc/blocks.rs`) does not physically
-/// duplicate the block — global blocks (the common case for static literal
-/// blocks) are not reference-counted, and stack-block promotion needs deeper
-/// Block ABI work — so it returns the same pointer. Mirroring that here keeps
-/// `objc_retainBlock` consistent with the rest of the Block runtime, while
-/// still providing the correct return value the ARC-generated code expects.
-pub fn objc_retainBlock(env: &mut crate::Environment, block: id) -> id {
-    let _ = env;
-    block
-}
-
-/// `id objc_unsafeClaimAutoreleasedReturnValue(id obj)` — ARC runtime
-/// optimisation counterpart to `objc_retainAutoreleasedReturnValue`. Apple's
-/// objc4 runtime uses it when a returned object is consumed by code that does
-/// *not* want an owning reference (e.g. the result is immediately passed on,
-/// or stored `__unsafe_unretained`): it accepts the autoreleased value and
-/// claims it without adding a retain, balancing the optimised return sequence.
-/// In touchHLE's serialised execution model there is no retain/autorelease
-/// elision to undo, so the correct behaviour is to return the object
-/// unchanged (and nil-safe). See `objc4` `NSObject.mm`,
-/// `objc_unsafeClaimAutoreleasedReturnValue`.
-pub fn objc_unsafeClaimAutoreleasedReturnValue(env: &mut crate::Environment, obj: id) -> id {
-    let _ = env;
-    obj
-}
-
-// === Additional ObjC runtime helpers used by iOS 5/6 Cocoa classes ===
-//
-// These are part of the public Objective-C runtime header
-// (`<objc/runtime.h>`) but were not historically used by the iPhone OS
-// 2.x/3.x apps that touchHLE originally targeted. iOS 6+ binaries
-// reference them through Mach-O imports (often defensively, e.g. for
-// dynamic class registration, KVO swizzling, or analytics SDKs probing
-// for runtime features). Without host implementations the linker leaves
-// the slots NULL and any first-call indirect branch crashes the
-// emulator.
-
-/// `const char *class_getName(Class cls)` — returns the C-string class
-/// name. We allocate the cstring in guest memory the first time a name
-/// is requested per class and cache the pointer in the side-table so
-/// repeated calls return the same address (matching real ObjC's
-/// guarantee that the returned pointer is stable for the lifetime of
-/// the class).
-pub fn class_getName(env: &mut crate::Environment, cls: Class) -> ConstPtr<u8> {
-    use crate::mem::Ptr;
-    if cls.is_null() {
-        // Apple: returns "nil"; touchHLE returns the empty string
-        // pointer to keep the call safe.
-        return Ptr::null();
-    }
-    let name = env.objc.get_class_name(cls).to_owned();
-    let bytes = name.as_bytes();
-    let len: u32 = bytes.len() as u32 + 1;
-    let buf: crate::mem::MutPtr<u8> = env.mem.alloc(len).cast();
-    for (i, &b) in bytes.iter().enumerate() {
-        env.mem.write(buf + i as u32, b);
-    }
-    env.mem.write(buf + bytes.len() as u32, 0);
-    buf.cast_const()
-}
-
-/// `Class objc_lookUpClass(const char *name)` — like `objc_getClass`
-/// but does *not* invoke the class handler if the class is missing
-/// (returns nil instead of trying to load it). For our HLE runtime
-/// the behaviour is identical to `objc_getClass`.
-pub fn objc_lookUpClass(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    objc_getClass(env, name)
-}
-
-/// `Class objc_getRequiredClass(const char *name)` — same as
-/// `objc_getClass` but documented to abort on miss. Our runtime is
-/// best-effort, so we just degrade to the lenient lookup; if the
-/// class is genuinely missing, returning nil keeps the guest alive
-/// instead of taking the host down.
-pub fn objc_getRequiredClass(env: &mut crate::Environment, name: ConstPtr<u8>) -> Class {
-    let class = objc_getClass(env, name);
-    if class == nil {
-        if let Ok(s) = env.mem.cstr_at_utf8(name) {
-            log!(
-                "Warning: objc_getRequiredClass({:?}): class not found; \
-                 returning nil (the real runtime would abort).",
-                s
-            );
-        }
-    }
-    class
-}
-
-/// `Class objc_allocateClassPair(Class superclass, const char *name,
-/// size_t extraBytes)` — used to dynamically create a new class.
-/// Implementing this properly requires wiring into our `ClassHostObject`
-/// machinery; until that's done, we install a placeholder
-/// (UnimplementedClass) so the symbol resolves and the guest can decide
-/// to fall back. Calls to `+[NewClass alloc]` etc. will go through the
-/// usual UnimplementedClass path.
-pub fn objc_allocateClassPair(
-    env: &mut crate::Environment,
-    _superclass: Class,
-    name: ConstPtr<u8>,
-    _extra_bytes: u32,
-) -> Class {
-    let Ok(s) = env.mem.cstr_at_utf8(name) else {
-        return nil;
-    };
-    let name_str = s.to_string();
-    log!(
-        "Warning: objc_allocateClassPair({:?}, …): dynamic class registration is \
-         not fully supported; installing an UnimplementedClass placeholder.",
-        name_str
-    );
+pub(super) fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> id {
+    let name_str = env.mem.cstr_at_utf8(name).unwrap();
     env.objc
-        .link_class(&name_str, /* is_metaclass: */ false, &mut env.mem)
+        .get_class(name_str, false, &env.mem)
+        .unwrap_or_else(|| panic!("objc_getClass() for unimplemented class {name_str}"))
 }
 
-/// `Class objc_readClassPair(Class cls, const struct objc_image_info *info)` —
-/// iOS 8+ Swift-related helper. Apps from iOS 6/7 may import the
-/// symbol but rarely actually call it. Return the input class
-/// unchanged so any best-effort caller keeps working.
-pub fn objc_readClassPair(_env: &mut crate::Environment, cls: Class, _info: ConstVoidPtr) -> Class {
-    cls
-}
-
-/// `void objc_registerClassPair(Class cls)` — finalise the registration
-/// of a dynamically created class. touchHLE's [`objc_allocateClassPair`]
-/// already inserts the class into the runtime tables; the matching
-/// `register` call is therefore a no-op that just publishes the class.
-/// <https://developer.apple.com/documentation/objectivec/1418414-objc_registerclasspair>
-pub fn objc_registerClassPair(_env: &mut crate::Environment, _cls: Class) {}
-
-/// `void objc_disposeClassPair(Class cls)` — destroys a class created
-/// with [`objc_allocateClassPair`] that has not yet been registered.
-/// touchHLE doesn't reclaim class storage, so we just drop the reference
-/// on the floor (Apple's runtime is also lazy about this for very small
-/// allocations).
-/// <https://developer.apple.com/documentation/objectivec/1418912-objc_disposeclasspair>
-pub fn objc_disposeClassPair(_env: &mut crate::Environment, _cls: Class) {}
-
-/// `Class class_setSuperclass(Class cls, Class newSuper)` — deprecated
-/// since OS X 10.5 but still exported by libobjc and used by older
-/// hooking libraries. Returns the previous superclass and rewrites the
-/// class's inheritance chain in-place.
-/// <https://developer.apple.com/documentation/objectivec/1418687-class_setsuperclass>
-pub fn class_setSuperclass(
-    env: &mut crate::Environment,
-    cls: Class,
-    new_super: Class,
-) -> Class {
-    if cls.is_null() {
-        return nil;
-    }
-    let old = env.objc.get_superclass(cls);
-    env.objc.borrow_mut::<ClassHostObject>(cls).superclass = new_super;
-    old
-}
-
-/// `Protocol *objc_getProtocol(const char *name)` — touchHLE doesn't
-/// model protocols separately; return nil so any defensive
-/// `if (proto)` check skips the protocol-specific path.
-pub fn objc_getProtocol(_env: &mut crate::Environment, _name: ConstPtr<u8>) -> id {
-    nil
-}
-
-/// `const char *protocol_getName(Protocol *p)` — paired with
-/// `objc_getProtocol`. Returns NULL since we never hand out a real
-/// Protocol pointer to the guest.
-pub fn protocol_getName(_env: &mut crate::Environment, _p: id) -> ConstPtr<u8> {
-    use crate::mem::Ptr;
-    Ptr::null()
-}
-
-/// `BOOL protocol_conformsToProtocol(Protocol *proto, Protocol *other)`
-/// per Apple's Objective-C Runtime Reference
-/// (<https://developer.apple.com/documentation/objectivec/1418841-protocol_conformstoprotocol>):
-///
-/// > Returns a Boolean value that indicates whether one protocol
-/// > conforms to another.
-pub fn protocol_conformsToProtocol(_env: &mut crate::Environment, proto: id, other: id) -> bool {
-    if proto.is_null() || other.is_null() {
-        return false;
-    }
-    proto == other
-}
-
-/// `int objc_getClassList(Class *buffer, int bufferLen)` per Apple's
-/// Objective-C Runtime Reference
-/// (<https://developer.apple.com/documentation/objectivec/1418579-objc_getclasslist>):
-///
-/// > Returns the number of currently registered classes. If `buffer` is
-/// > NULL or `bufferLen` is 0, it must just return the total count.
-/// > Otherwise it must copy up to `bufferLen` Class pointers into
-/// > `buffer`, but still return the total number registered (callers
-/// > use that to detect that they need a bigger buffer).
-pub fn objc_getClassList(
-    env: &mut crate::Environment,
-    buffer: crate::mem::MutPtr<Class>,
-    buffer_len: i32,
-) -> i32 {
-    let total = env.objc.classes.values().count();
-    if buffer.is_null() || buffer_len <= 0 {
-        return i32::try_from(total).unwrap_or(i32::MAX);
-    }
-    let cap = u32::try_from(buffer_len).unwrap_or(0);
-    let mut offset: u32 = 0;
-    for class in env.objc.classes.values() {
-        if offset >= cap {
-            break;
-        }
-        env.mem.write(buffer + offset, *class);
-        offset += 1;
-    }
-    i32::try_from(total).unwrap_or(i32::MAX)
-}
-
-/// `const char **objc_copyClassNamesForImage(const char *image,
-/// unsigned int *outCount)` — enumerate class names defined by a
-/// loaded image. We don't track image membership, so write 0 to
-/// `outCount` and return NULL. Apps either skip enumeration or hit a
-/// safe early-exit.
-pub fn objc_copyClassNamesForImage(
-    env: &mut crate::Environment,
-    _image: ConstPtr<u8>,
-    out_count: crate::mem::MutPtr<u32>,
-) -> ConstPtr<u8> {
-    use crate::mem::Ptr;
-    if !out_count.is_null() {
-        env.mem.write(out_count, 0);
-    }
-    Ptr::null()
-}
-
-/// `void *object_getIndexedIvars(id obj)` — returns a pointer to the
-/// extra bytes allocated for a class created with
-/// `objc_allocateClassPair(super, name, extraBytes)`. We don't allocate
-/// extra bytes (see [objc_allocateClassPair]), so just return the
-/// object pointer itself; callers that try to use it as scratch space
-/// will get a no-op buffer rather than crashing on NULL.
-pub fn object_getIndexedIvars(_env: &mut crate::Environment, obj: id) -> ConstVoidPtr {
-    obj.cast().cast_const()
-}
-
-/// `void method_exchangeImplementations(Method m1, Method m2)` — swaps
-/// the implementations of two methods. In the real Objective-C runtime
-/// this performs an atomic swap of the IMP pointers within the opaque
-/// Method structures.
-///
-/// In touchHLE's simplified runtime, `class_getInstanceMethod` returns
-/// the class pointer itself (not a real `objc_method` struct), so we
-/// cannot determine which selector each "Method" value refers to from
-/// the pointer alone. Games that use method_exchangeImplementations
-/// typically do so for analytics, crash reporting swizzling, or other
-/// non-essential purposes. We log the call and no-op, which is safe
-/// because the emulator does not rely on swizzled behavior for
-/// correctness.
-pub fn method_exchangeImplementations(
-    _env: &mut crate::Environment,
-    m1: ConstVoidPtr,
-    m2: ConstVoidPtr,
-) {
-    log_dbg!(
-        "method_exchangeImplementations({:?}, {:?}) — no-op (swizzling not critical in emulator)",
-        m1,
-        m2
-    );
-}
-
-/// `objc_property_t *class_copyPropertyList(Class cls, unsigned int *outCount)` —
-/// returns a NULL-terminated, malloc'd array of `objc_property_t` opaque
-/// pointers describing every declared `@property` in `cls` (not in its
-/// superclasses). Per Apple's Objective-C Runtime Reference
-/// (<https://developer.apple.com/documentation/objectivec/1418553-class_copypropertylist>):
-///
-/// > You should use `free()` to free the array.
-/// > If the class declares no properties, the function returns `NULL` and
-/// > `*outCount` is `0`.
-///
-/// We model "declared properties" using the `ClassHostObject::properties`
-/// map populated by the runtime when a `@property` directive is processed
-/// for a class. Properties inherited from superclasses are intentionally
-/// excluded, matching real Apple behaviour.
-pub fn class_copyPropertyList(
-    env: &mut crate::Environment,
-    cls: Class,
-    out_count: crate::mem::MutPtr<u32>,
-) -> crate::mem::MutPtr<ConstVoidPtr> {
-    if !out_count.is_null() {
-        env.mem.write(out_count, 0);
-    }
-    if cls.is_null() {
-        return Ptr::null();
-    }
-    // Collect property pointers WITHOUT walking the hierarchy — class_getProperty
-    // walks it (matching the documented `class_getProperty` semantics), but
-    // class_copyPropertyList must NOT, per Apple's runtime reference.
-    let entries: Vec<ConstVoidPtr> = if let Some(host_obj) = env.objc.get_host_object(cls) {
-        if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-            class_obj.properties.values().copied().collect()
-        } else {
-            Vec::new()
-        }
+pub(super) fn class_getSuperclass(env: &mut Environment, cls: Class) -> Class {
+    if cls == nil {
+        nil
     } else {
-        Vec::new()
-    };
-    if entries.is_empty() {
-        return Ptr::null();
+        env.objc.borrow::<ClassHostObject>(cls).superclass
     }
-    // Allocate a NULL-terminated array of `objc_property_t` in guest memory.
-    // The Apple manpage doesn't explicitly say it's NULL-terminated, but real
-    // libobjc returns a malloc'd array of exactly `*outCount` entries.
-    let total = (entries.len() as u32) * guest_size_of::<ConstVoidPtr>();
-    let buf: crate::mem::MutPtr<ConstVoidPtr> = env.mem.alloc(total).cast();
-    for (i, e) in entries.iter().enumerate() {
-        env.mem.write(buf + i as u32, *e);
-    }
-    if !out_count.is_null() {
-        env.mem.write(out_count, entries.len() as u32);
-    }
-    buf
 }
 
-/// `Method *class_copyMethodList(Class cls, unsigned int *outCount)` —
-/// returns a malloc'd array of `Method` pointers (one per instance method
-/// declared on `cls`). Per Apple's Objective-C Runtime Reference
-/// (<https://developer.apple.com/documentation/objectivec/1418490-class_copymethodlist>):
-///
-/// > You must free the list with `free()`.
-/// > If `cls` declares no instance methods, returns `NULL` and `*outCount` is 0.
-///
-/// touchHLE's `class_getInstanceMethod` returns the class pointer (it
-/// doesn't model real `Method` structs), so we mirror that by writing the
-/// class pointer once per known selector — callers walking the array can
-/// still use the pointers with `method_getImplementation`/`method_setImplementation`
-/// or `class_replaceMethod`, which expect this same opaque representation.
-pub fn class_copyMethodList(
-    env: &mut crate::Environment,
-    cls: Class,
-    out_count: crate::mem::MutPtr<u32>,
-) -> crate::mem::MutPtr<ConstVoidPtr> {
-    if !out_count.is_null() {
-        env.mem.write(out_count, 0);
-    }
-    if cls.is_null() {
-        return Ptr::null();
-    }
-    let count = if let Some(host_obj) = env.objc.get_host_object(cls) {
-        if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-            class_obj.methods.len()
-        } else {
-            0
-        }
-    } else {
+pub(super) fn class_getInstanceSize(env: &mut Environment, cls: Class) -> GuestUSize {
+    if cls == nil {
         0
-    };
-    if count == 0 {
-        return Ptr::null();
+    } else {
+        env.objc.borrow::<ClassHostObject>(cls).instance_size
     }
-    let total = (count as u32) * guest_size_of::<ConstVoidPtr>();
-    let buf: crate::mem::MutPtr<ConstVoidPtr> = env.mem.alloc(total).cast();
-    // We don't have a real `Method` struct, so reuse the class pointer for
-    // every entry, matching what `class_getInstanceMethod` already returns.
-    let class_as_method = ConstVoidPtr::from_bits(cls.to_bits());
-    for i in 0..count {
-        env.mem.write(buf + i as u32, class_as_method);
-    }
-    if !out_count.is_null() {
-        env.mem.write(out_count, count as u32);
-    }
-    buf
 }
 
-/// `Ivar *class_copyIvarList(Class cls, unsigned int *outCount)` — Apple's
-/// documented contract is the same NULL-terminated/malloc'd shape as the
-/// other `class_copy*List` calls. touchHLE doesn't model ivars as opaque
-/// `Ivar` structs (they're stored in a plain `host_object` map keyed by
-/// name), so we return NULL with `*outCount = 0`, which is the documented
-/// behaviour for a class that declares no ivars.
-pub fn class_copyIvarList(
-    env: &mut crate::Environment,
-    _cls: Class,
-    out_count: crate::mem::MutPtr<u32>,
-) -> crate::mem::MutPtr<ConstVoidPtr> {
-    if !out_count.is_null() {
-        env.mem.write(out_count, 0);
-    }
-    Ptr::null()
-}
-
-/// `Protocol * __unsafe_unretained *class_copyProtocolList(Class cls, unsigned int *outCount)` —
-/// same shape. We don't model adopted protocols, so return NULL with
-/// `*outCount = 0`, which is also the spec-compliant answer for a class
-/// adopting no protocols.
-pub fn class_copyProtocolList(
-    env: &mut crate::Environment,
-    _cls: Class,
-    out_count: crate::mem::MutPtr<u32>,
-) -> crate::mem::MutPtr<ConstVoidPtr> {
-    if !out_count.is_null() {
-        env.mem.write(out_count, 0);
-    }
-    Ptr::null()
-}
-
-/// `objc_property_t class_getProperty(Class cls, const char *name)` —
-/// returns an opaque pointer to the property metadata for the named
-/// declared @property, walking the class hierarchy. Returns NULL if
-/// no such property is declared.
-///
-/// Per Apple's Objective-C Runtime Reference:
-/// https://developer.apple.com/documentation/objectivec/1418553-class_getproperty
-pub fn class_getProperty(
-    env: &mut crate::Environment,
+pub(super) fn class_getProperty(
+    env: &mut Environment,
     cls: Class,
     name: ConstPtr<u8>,
-) -> ConstVoidPtr {
-    if cls.is_null() || name.is_null() {
-        return ConstVoidPtr::null();
+) -> objc_property_t {
+    if cls == nil {
+        return Ptr::null();
     }
-    let Ok(name_str) = env.mem.cstr_at_utf8(name) else {
-        return ConstVoidPtr::null();
-    };
-    let name_string = name_str.to_string();
-
-    // Walk the class hierarchy looking for the property.
-    let mut current = cls;
-    loop {
-        if let Some(host_obj) = env.objc.get_host_object(current) {
-            if let Some(class_obj) = host_obj.as_any().downcast_ref::<ClassHostObject>() {
-                if let Some(&prop_ptr) = class_obj.properties.get(&name_string) {
-                    return prop_ptr;
-                }
-                if class_obj.superclass == nil {
-                    break;
-                }
-                current = class_obj.superclass;
-                continue;
-            }
-        }
-        break;
+    let c_name = env.mem.cstr_at_utf8(name).unwrap();
+    let class_name_string = env.objc.get_class_name(cls).to_owned();
+    if class_name_string == "UIScreen" && c_name == "scale" {
+        // Even if [UIScreen scale] is implemented, we're not yet having a
+        // proper support for `objc_property_t`, so we prefer to return a NULL
+        // here (e.g. property is not declared).
+        // Some games (such as Mirror's Edge) check for those to conditionally
+        // apply some parameters depending on the iOS version without actually
+        // using the property.
+        // We also prefer to not define this as a game-specific hack, because
+        // some other EA games may rely on the same logic.
+        // TODO: support `objc_property_t` properly
+        log!("TODO: class_getProperty(UIScreen, scale) -> NULL");
+        return Ptr::null();
     }
-
-    // Property not found in hierarchy — return NULL (spec-compliant).
-    ConstVoidPtr::null()
+    todo!()
 }

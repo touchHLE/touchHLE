@@ -1,18 +1,9 @@
 /target
 /vendor/boost
 /touchHLE_sandbox
-/DCIM
-/touchHLE_apps/*.ipa
-/touchHLE_apps/*.app
+/touchHLE_apps
 touchHLE_log.txt
 touchHLE_wallpaper.*
-
-# Xcode (integration testing app)
-
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
 
 # Android
 
@@ -36,9 +27,3 @@ android/build
 # Default developer dump file
 
 DUMP.txt
-
-# Local debug junk
-*.log
-touchHLE_apps/
-target/
-*.ipa

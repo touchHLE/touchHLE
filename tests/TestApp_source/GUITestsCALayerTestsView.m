@@ -9,7 +9,7 @@
 
 #include "GUITestsCALayerTestsView.h"
 
-#define NUM_TESTS 19
+#define NUM_TESTS 20
 
 @implementation GUITestsCALayerTestsView : UIView
 
@@ -477,6 +477,7 @@ CALayer *sublayer;
                 action:@selector(test19ButtonClicked)
       forControlEvents:UIControlEventTouchUpInside];
   [self addSubview:button];
+  [button layoutSubviews]; // FIXME: workaround for touchHLE not calling this
 }
 - (void)test19ButtonClicked {
   CAMediaTimingFunction *easeInEaseOut = [CAMediaTimingFunction
@@ -491,5 +492,27 @@ CALayer *sublayer;
   [sublayer setPosition:position];
 
   [CATransaction commit];
+}
+
+// Test CATransaction and implicit animations with UIButton
+// this time without initializing an explicit CATransaction
+- (void)test20 {
+  sublayer = [CALayer new];
+  [sublayer setFrame:CGRectMake(50, 50, 200, 200)];
+  [sublayer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [testArea.layer addSublayer:sublayer];
+
+  UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+  [button setFrame:CGRectMake(40, 300, 240, 40)];
+  [button setTitle:[NSString stringWithUTF8String:"Click me too"]
+          forState:UIControlStateNormal];
+  [button addTarget:self
+                action:@selector(test20ButtonClicked)
+      forControlEvents:UIControlEventTouchUpInside];
+  [self addSubview:button];
+  [button layoutSubviews]; // FIXME: workaround for touchHLE not calling this
+}
+- (void)test20ButtonClicked {
+  [sublayer setBounds:CGRectMake(10, 10, 50, 10)];
 }
 @end

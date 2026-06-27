@@ -1,7 +1,6 @@
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0.
- * If a copy of the MPL was not distributed with this
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! `stdlib.h`
@@ -14,9 +13,9 @@ use crate::libc::errno::{set_errno, EINVAL};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
-use crate::objc::id;
 use crate::{impl_GuestRet_for_large_struct, Environment};
 use std::str::FromStr;
+use std::time::SystemTime;
 
 pub mod qsort;
 
@@ -25,110 +24,17 @@ pub struct State {
     rand: u32,
     random: u32,
     arc4random: u32,
-    /// 48-bit linear-congruential PRNG state shared by the `drand48`/`lrand48`/
-    /// `mrand48`/`seed48` family. Per the POSIX / Apple `drand48(3)` manpage
-    /// (<https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/drand48.3.html>)
-    /// the generator is `X_{n+1} = (a * X_n + c) mod 2^48`, with default
-    /// `a = 0x5DEECE66D`, `c = 0xB`, and the documented initial seed of
-    /// `0x1234ABCD330E` until `srand48`/`seed48` are called.
-    drand48: Drand48State,
-    pub atexit_handlers: Vec<GuestFunction>,
 }
 
+// Sizes of zero are implementation-defined. macOS will happily give you back
+// an allocation for any of these, so presumably iPhone OS does too.
+// (touchHLE's allocator will round up allocations to at least 16 bytes.)
 
-/// State for the POSIX `drand48`/`lrand48`/`mrand48` family. Mirrors what real
-/// libc keeps internally — a 48-bit state plus the multiplier `a` and addend
-/// `c` (modifiable via `lcong48`).
-#[derive(Copy, Clone)]
-struct Drand48State {
-    /// 48-bit `X_n`, stored in the low 48 bits of a `u64`.
-    state: u64,
-    /// 48-bit multiplier `a` (default `0x5DEECE66D`).
-    a: u64,
-    /// 48-bit addend `c` (default `0xB`).
-    c: u64,
-}
-
-impl Default for Drand48State {
-    fn default() -> Self {
-        Drand48State {
-            state: 0x1234_ABCD_330E,
-            a: 0x5DEE_CE66D,
-            c: 0xB,
-        }
-    }
-}
-
-impl Drand48State {
-    /// Advance `X_n` and return the new 48-bit value.
-    fn step(&mut self) -> u64 {
-        self.state = self.a.wrapping_mul(self.state).wrapping_add(self.c) & 0xFFFF_FFFF_FFFF;
-        self.state
-    }
-}
-
-/// Pack a `[u16; 3]` (little-endian, i.e. `xsubi[0]` is the lowest 16 bits) into
-/// a 48-bit integer. Matches the Apple-documented layout for the `xsubi` arrays
-/// taken by `seed48`, `erand48`, `nrand48`, `jrand48`.
-fn pack_xsubi(env: &Environment, xsubi: ConstPtr<u16>) -> u64 {
-    let lo = u64::from(env.mem.read(xsubi));
-    let mid = u64::from(env.mem.read(xsubi + 1));
-    let hi = u64::from(env.mem.read(xsubi + 2));
-    lo | (mid << 16) | (hi << 32)
-}
-
-fn write_xsubi(env: &mut Environment, xsubi: MutPtr<u16>, value: u64) {
-    env.mem.write(xsubi, (value & 0xFFFF) as u16);
-    env.mem.write(xsubi + 1, ((value >> 16) & 0xFFFF) as u16);
-    env.mem.write(xsubi + 2, ((value >> 32) & 0xFFFF) as u16);
-}
-
-fn malloc(env: &mut Environment, mut size: GuestUSize) -> MutVoidPtr {
+fn malloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
+    // TODO: handle errno properly
     set_errno(env, 0);
 
-    // =========================================================================
-    // FIX: Перехват бага разработчиков игр (Integer Underflow)
-    // Если размер подозрительно огромный (близок к 32-битному лимиту, >
-    // 0xF0000000),
-    // это почти наверняка отрицательное число (как -1920 байт для шага экрана).
-    // Берем модуль (абсолютное значение), чтобы спасти игру от краша.
-    // =========================================================================
-    if size > 0xF000_0000 {
-        let actual_size = (-(size as i32)) as GuestUSize;
-        log!("TouchHLE::libc::stdlib: Hack! malloc passed negative size {:#x} ({}). Allocating {} bytes instead.", size, size as i32, actual_size);
-        size = actual_size;
-    }
-
-    if size == 0 {
-        size = 1;
-        // Protect against dying on a 0-byte allocation: ISO C lets malloc(0)
-        // return either NULL or a unique pointer; we choose unique...
-    }
-
-    // Refuse allocations that exceed guest address space (32-bit).
-    // The practical guest heap is limited to ~512 MB; anything above that
-    // is almost certainly a corrupted size value. Original iPhone OS devices
-    // had at most 128-256 MB of RAM, so any allocation in the hundreds of
-    // megabytes range is highly suspect. We use 0x2000_0000 (512 MB) as
-    // the threshold — generous enough for real-world games with heavy
-    // texture/audio buffers (e.g. Dead Space) while still catching obviously
-    // corrupted values from buggy game engines (Digital Chocolate games
-    // sometimes compute nonsensical allocation sizes due to NULL pointer
-    // arithmetic when upstream issues cause initialization failures).
-    if size > 0x2000_0000 {
-        log!(
-            "TouchHLE::libc::stdlib: malloc({:#x}) refused as out of range — returning NULL",
-            size
-        );
-        set_errno(env, crate::libc::errno::ENOMEM);
-        return MutVoidPtr::null();
-    }
-
-    let ptr = env.mem.alloc(size);
-    if ptr.is_null() {
-        set_errno(env, crate::libc::errno::ENOMEM);
-    }
-    ptr.cast()
+    env.mem.alloc(size)
 }
 
 fn malloc_size(env: &mut Environment, ptr: ConstVoidPtr) -> GuestUSize {
@@ -136,153 +42,32 @@ fn malloc_size(env: &mut Environment, ptr: ConstVoidPtr) -> GuestUSize {
 }
 
 fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoidPtr {
+    // TODO: handle errno properly
     set_errno(env, 0);
-    let mut total = size.checked_mul(count).unwrap();
-    if total == 0 {
-        total = 1;
-        // Защита от падения
-    }
+
+    let total = size.checked_mul(count).unwrap();
     env.mem.calloc(total)
 }
 
-fn NSZoneMalloc(env: &mut Environment, _zone: id, mut size: GuestUSize) -> MutVoidPtr {
-    if size == 0 {
-        size = 1;
-    }
-    env.mem.alloc(size)
-}
-
-fn NSZoneRealloc(
-    env: &mut Environment,
-    _zone: MutVoidPtr,
-    ptr: MutVoidPtr,
-    mut size: GuestUSize,
-) -> MutVoidPtr {
-    if size == 0 {
-        size = 1;
-    }
-    env.mem.realloc(ptr, size)
-}
-
-fn NSZoneFree(env: &mut Environment, _zone: MutVoidPtr, ptr: MutVoidPtr) {
-    if ptr.is_null() {
-        return;
-    }
-    // Use the same safe path as libc free() — unknown pointers are
-    // gracefully rejected inside Mem::free with a log message.
-    env.mem.free(ptr)
-}
-
-/// `int posix_memalign(void **memptr, size_t alignment, size_t size);`
-///
-/// Per the [POSIX manpage](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/posix_memalign.3.html):
-///
-/// > The function `posix_memalign()` allocates `size` bytes of memory such
-/// > that the allocation's base address is a multiple of `alignment`, and
-/// > returns the allocation in the value pointed to by `memptr`. […]
-/// > `alignment` must be a power of 2 at least as large as `sizeof(void *)`.
-/// > Returns zero on success, otherwise returns one of the error values
-/// > listed below. The value of `errno` is not set on these errors.
-/// > `[EINVAL]` The `alignment` parameter is not a power of 2 at least as
-/// >            large as `sizeof(void *)`.
-/// > `[ENOMEM]` Memory allocation error.
-///
-/// The touchHLE heap (see `src/mem/allocator.rs`) already returns 16-byte
-/// aligned chunks. Apple's libmalloc also guarantees that on iOS. So for the
-/// common alignments (≤16) this is just `malloc`. For larger alignments
-/// (e.g. page-sized buffers requested by some crypto libraries) we
-/// over-allocate, slide the user pointer forward, and stash the original
-/// allocation address in the word immediately preceding the returned
-/// pointer so `free()` can find it again.
-fn posix_memalign(
-    env: &mut Environment,
-    memptr: MutPtr<MutVoidPtr>,
-    alignment: GuestUSize,
-    size: GuestUSize,
-) -> i32 {
-    if memptr.is_null() {
-        return EINVAL;
-    }
-    let ptr_align: GuestUSize = std::mem::size_of::<u32>() as GuestUSize;
-    if alignment < ptr_align || !alignment.is_power_of_two() {
-        return EINVAL;
-    }
-    // touchHLE's allocator naturally aligns to at least 16 bytes.
-    const NATURAL_ALIGN: GuestUSize = 16;
-    if alignment <= NATURAL_ALIGN {
-        let p = malloc(env, size);
-        if p.is_null() {
-            return crate::libc::errno::ENOMEM;
-        }
-        env.mem.write(memptr, p);
-        return 0;
-    }
-    // Over-allocate so that we definitely have room for an aligned slice
-    // plus a 4-byte header storing the original allocation pointer.
-    let header: GuestUSize = std::mem::size_of::<u32>() as GuestUSize;
-    let Some(over) = size.checked_add(alignment).and_then(|s| s.checked_add(header)) else {
-        return crate::libc::errno::ENOMEM;
-    };
-    let raw = env.mem.alloc(over);
-    if raw.is_null() {
-        return crate::libc::errno::ENOMEM;
-    }
-    let raw_bits = raw.to_bits();
-    // Align up to `alignment` while leaving at least `header` bytes free
-    // before the aligned address for our bookkeeping word.
-    let aligned_bits = (raw_bits + header + alignment - 1) & !(alignment - 1);
-    debug_assert!(aligned_bits >= raw_bits + header);
-    let aligned: MutVoidPtr = MutVoidPtr::from_bits(aligned_bits);
-    let header_ptr: MutPtr<u32> = MutPtr::from_bits(aligned_bits - header);
-    env.mem.write(header_ptr, raw_bits);
-    env.mem.write(memptr, aligned);
-    0
-}
-
-/// `void *valloc(size_t size);` — page-size aligned allocation. Equivalent
-/// to `posix_memalign(&p, getpagesize(), size)`.
 fn valloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
-    // Same page size touchHLE reports via `_NSGetExecutablePath` etc.
-    const PAGE_SIZE: GuestUSize = 4096;
-    let out: MutPtr<MutVoidPtr> = env.mem.alloc(4).cast();
-    let rc = posix_memalign(env, out, PAGE_SIZE, size);
-    let ptr = if rc == 0 { env.mem.read(out) } else { MutVoidPtr::null() };
-    env.mem.free(out.cast());
-    ptr
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    env.mem.valloc(size)
 }
 
-fn realloc(env: &mut Environment, ptr: MutVoidPtr, mut size: GuestUSize) -> MutVoidPtr {
+fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     if ptr.is_null() {
         return malloc(env, size);
-    }
-    if size == 0 {
-        size = 1;
     }
     env.mem.realloc(ptr, size)
-}
-
-fn reallocf(env: &mut Environment, ptr: MutVoidPtr, mut size: GuestUSize) -> MutVoidPtr {
-    set_errno(env, 0);
-    if ptr.is_null() {
-        return malloc(env, size);
-    }
-    if size == 0 {
-        size = 1;
-    }
-
-    // Пытаемся выделить новую память
-    let new_ptr = env.mem.realloc(ptr, size);
-    // Главная фишка reallocf: если realloc вернул NULL (не удалось выделить),
-    // старый указатель должен быть освобожден.
-    if new_ptr.is_null() {
-        env.mem.free(ptr);
-    }
-
-    new_ptr
 }
 
 fn free(env: &mut Environment, ptr: MutVoidPtr) {
+    // We need to catch situations of freeing NSObjects early!
     if env.objc.get_host_object(ptr.cast()).is_some() {
         log!(
             "App attempted to call free({:?}) on an object, calling dealloc_object() instead!",
@@ -291,58 +76,52 @@ fn free(env: &mut Environment, ptr: MutVoidPtr) {
         env.objc.dealloc_object(ptr.cast(), &mut env.mem);
         return;
     }
+
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     if ptr.is_null() {
-        return;
-    }
-    let addr = ptr.to_bits();
-    // If the pointer looks obviously bogus, log caller context so we can trace
-    // where the corruption originated, then bail out instead of confusing the
-    // underlying allocator.
-    if !(0x1000..0xfff0_0000).contains(&addr) {
-        let pc = env.cpu.regs()[crate::cpu::Cpu::PC];
-        let lr = env.cpu.regs()[crate::cpu::Cpu::LR];
-        log!(
-            "free({:#x}) rejected: pointer outside any plausible heap range \
-             (caller PC={:#x} LR={:#x})",
-            addr,
-            pc,
-            lr
-        );
-        return;
-    }
-    // If the pointer isn't part of any known allocation, bail out — the
-    // underlying allocator will otherwise log "Can't free" without context.
-    // This catches cases where a buggy stub returned garbage that the guest
-    // later hands back to free() (e.g. misinterpreting a float as a pointer).
-    if !env.mem.is_known_allocation(addr) {
-        let pc = env.cpu.regs()[crate::cpu::Cpu::PC];
-        let lr = env.cpu.regs()[crate::cpu::Cpu::LR];
-        log!(
-            "free({:#x}) rejected: not a known allocation \
-             (caller PC={:#x} LR={:#x})",
-            addr,
-            pc,
-            lr
-        );
+        // "If ptr is a NULL pointer, no operation is performed."
         return;
     }
     env.mem.free(ptr);
 }
 
-fn atexit(env: &mut Environment, func: GuestFunction) -> i32 {
-    set_errno(env, 0);
-    // Регистрируем функцию в стейте эмулятора
-    env.libc_state.stdlib.atexit_handlers.push(func);
-    0 // 0 означает успешную регистрацию
+fn atexit(
+    _env: &mut Environment,
+    func: GuestFunction, // void (*func)(void)
+) -> i32 {
+    // TODO: when this is implemented, make sure it's properly compatible with
+    // __cxa_atexit.
+    log!("TODO: atexit({:?}) (unimplemented)", func);
+    0 // success
 }
 
-#[allow(rustdoc::broken_intra_doc_links)]
+#[allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
+/// Counts whitespaces in `subject` starting from `offset`.
+///
+/// `getc_fn` is a callback to get next character from `subject`.
+/// 3rd parameter in this callback is a index which is safe to ignore
+/// (for example, in case of a file stream).
+/// Error signifies an abnormal stop of input,
+/// such as [crate::libc::stdio::EOF] in the file stream.
+/// Note: `'\0'` does not necessary expect to produce an error!
+///
+/// `ungetc_fn` is a callback to un-get character from `subject`.
+/// Could be ignored entirely (for example, in case of a string).
+///
+/// `subject` is either C string or file stream (for now).
+///
+/// `offset` defines an offset in `subject` from which conversion starts.
+/// Could be ignored entirely (for example, in case of a file stream).
+///
+/// Returns count of whitespaces. Error returned from `getc_fn` is propagated
+/// but count is retuned too.
 fn count_whitespace_generic<
     T,
     U,
     F1: Fn(&mut Environment, MutPtr<U>, GuestUSize) -> Result<T, ()>,
-    F2: Fn(&mut Environment, MutPtr<U>, u8),
+    F2: Fn(&mut Environment, MutPtr<U>, u8), // TODO: make last param generic too?
 >(
     env: &mut Environment,
     getc_fn: F1,
@@ -359,6 +138,7 @@ where
             return Err(count - offset);
         };
         let c: u8 = c.into();
+        // Rust's definition of whitespace excludes vertical tab, unlike C's
         if c.is_ascii_whitespace() || c == b'\x0b' {
             count += 1;
         } else {
@@ -370,7 +150,10 @@ where
 }
 
 fn atoi(env: &mut Environment, s: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
+    // conveniently, overflow is undefined, so 0 is as valid a result as any
     let (res, _) = strtol_inner(env, s, 10).unwrap_or((0, 0));
     res
 }
@@ -384,7 +167,9 @@ fn atof(env: &mut Environment, s: ConstPtr<u8>) -> f64 {
 }
 
 fn strtod(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>) -> f64 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     log_dbg!("strtod nptr {}", env.mem.cstr_at_utf8(nptr).unwrap());
     let (res, len) = atof_inner(env, nptr).unwrap_or((0.0, 0));
     if !endptr.is_null() {
@@ -394,7 +179,12 @@ fn strtod(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>)
 }
 
 fn prng(state: u32) -> u32 {
+    // The state must not be zero for this algorithm to work. This also makes
+    // the default seed be 1, which matches the C standard.
     let mut state: u32 = state.max(1);
+    // https://en.wikipedia.org/wiki/Xorshift#Example_implementation
+    // xorshift32 is not a good random number generator, but it is cute one!
+    // It's not like anyone expects the C stdlib `rand()` to be good.
     state ^= state << 13;
     state ^= state >> 17;
     state ^= state << 5;
@@ -407,17 +197,21 @@ fn srand(env: &mut Environment, seed: u32) {
     env.libc_state.stdlib.rand = seed;
 }
 
+// BSD's rand() seed function — we just use host system time,
+// good enough for games that want fresh "fake" randomness each run.
 fn sranddev(env: &mut Environment) {
-    let seed = arc4random(env);
+    let time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = (time ^ (time >> 32)) as u32;
     env.libc_state.stdlib.rand = seed;
-    log!("sranddev() stubbed: seeded rand with {}", seed);
 }
 
 fn rand(env: &mut Environment) -> i32 {
     env.libc_state.stdlib.rand = prng(env.libc_state.stdlib.rand);
     (env.libc_state.stdlib.rand as i32) & RAND_MAX
 }
-
 fn rand_r(env: &mut Environment, seed_ptr: MutPtr<u32>) -> i32 {
     let mut seed = env.mem.read(seed_ptr);
     seed = prng(seed);
@@ -425,25 +219,20 @@ fn rand_r(env: &mut Environment, seed_ptr: MutPtr<u32>) -> i32 {
     (seed as i32) & RAND_MAX
 }
 
+// BSD's "better" random number generator, with an implementation that is not
+// actually better.
 fn srandom(env: &mut Environment, seed: u32) {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     env.libc_state.stdlib.random = seed;
 }
-
 fn random(env: &mut Environment) -> i32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     env.libc_state.stdlib.random = prng(env.libc_state.stdlib.random);
     (env.libc_state.stdlib.random as i32) & RAND_MAX
-}
-
-fn arc4random_stir(env: &mut Environment) -> u32 {
-    env.libc_state.stdlib.arc4random = prng(env.libc_state.stdlib.arc4random);
-    env.libc_state.stdlib.arc4random
-}
-
-fn arc4random_addrandom(env: &mut Environment) -> u32 {
-    env.libc_state.stdlib.arc4random = prng(env.libc_state.stdlib.arc4random);
-    env.libc_state.stdlib.arc4random
 }
 
 fn arc4random(env: &mut Environment) -> u32 {
@@ -451,277 +240,34 @@ fn arc4random(env: &mut Environment) -> u32 {
     env.libc_state.stdlib.arc4random
 }
 
-/// `arc4random_uniform(upper_bound)` — returns a uniformly distributed
-/// random number less than `upper_bound`.
-///
-/// Per Apple manpage: "arc4random_uniform() is recommended over
-/// constructions like `arc4random() % upper_bound` as it avoids
-/// modulo bias when the upper bound is not a power of two."
-fn arc4random_uniform(env: &mut Environment, upper_bound: u32) -> u32 {
-    if upper_bound == 0 {
-        return 0;
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+#[repr(C, packed)]
+struct div_t {
+    quot: i32,
+    rem: i32,
+}
+unsafe impl SafeRead for div_t {}
+impl_GuestRet_for_large_struct!(div_t);
+
+fn div(_env: &mut Environment, numer: i32, denom: i32) -> div_t {
+    div_t {
+        quot: numer.wrapping_div(denom),
+        rem: numer.wrapping_rem(denom),
     }
-    // Rejection sampling to eliminate modulo bias.
-    // Compute the largest multiple of upper_bound that fits in u32.
-    let limit = u32::MAX - (u32::MAX % upper_bound);
-    loop {
-        let r = arc4random(env);
-        if r < limit {
-            return r % upper_bound;
-        }
-    }
-}
-
-// MARK: - drand48 family
-//
-// POSIX / Apple iPhone OS specification for these functions:
-// https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/drand48.3.html
-//
-// All of these share a 48-bit LCG state. `drand48`/`lrand48`/`mrand48` use the
-// implicit per-process state in `env.libc_state.stdlib.drand48`; the
-// `erand48`/`nrand48`/`jrand48` variants accept an explicit `xsubi` array
-// (three u16s, little-endian limbs).
-
-fn drand48(env: &mut Environment) -> f64 {
-    let next = env.libc_state.stdlib.drand48.step();
-    // Apple manpage: "drand48() and erand48() return non-negative,
-    // double-precision, floating-point values, uniformly distributed over the
-    // interval [0.0, 1.0)." 2^-48 gives exactly that distribution.
-    (next as f64) * (1.0_f64 / 281_474_976_710_656.0_f64)
-}
-
-fn erand48(env: &mut Environment, xsubi: MutPtr<u16>) -> f64 {
-    let mut local = Drand48State {
-        state: pack_xsubi(env, xsubi.cast_const()),
-        a: env.libc_state.stdlib.drand48.a,
-        c: env.libc_state.stdlib.drand48.c,
-    };
-    let next = local.step();
-    write_xsubi(env, xsubi, next);
-    (next as f64) * (1.0_f64 / 281_474_976_710_656.0_f64)
-}
-
-fn lrand48(env: &mut Environment) -> i32 {
-    // "lrand48() and nrand48() return non-negative, long integers,
-    // uniformly distributed over the interval [0, 2^31)" — take the high
-    // 31 bits of the 48-bit state, per the Apple manpage.
-    let next = env.libc_state.stdlib.drand48.step();
-    (next >> 17) as i32
-}
-
-fn nrand48(env: &mut Environment, xsubi: MutPtr<u16>) -> i32 {
-    let mut local = Drand48State {
-        state: pack_xsubi(env, xsubi.cast_const()),
-        a: env.libc_state.stdlib.drand48.a,
-        c: env.libc_state.stdlib.drand48.c,
-    };
-    let next = local.step();
-    write_xsubi(env, xsubi, next);
-    (next >> 17) as i32
-}
-
-fn mrand48(env: &mut Environment) -> i32 {
-    // "mrand48() and jrand48() return signed long integers uniformly
-    // distributed over the interval [-2^31, 2^31)." Take the high 32 bits
-    // of the 48-bit state and reinterpret as i32.
-    let next = env.libc_state.stdlib.drand48.step();
-    ((next >> 16) & 0xFFFF_FFFF) as u32 as i32
-}
-
-fn jrand48(env: &mut Environment, xsubi: MutPtr<u16>) -> i32 {
-    let mut local = Drand48State {
-        state: pack_xsubi(env, xsubi.cast_const()),
-        a: env.libc_state.stdlib.drand48.a,
-        c: env.libc_state.stdlib.drand48.c,
-    };
-    let next = local.step();
-    write_xsubi(env, xsubi, next);
-    ((next >> 16) & 0xFFFF_FFFF) as u32 as i32
-}
-
-fn srand48(env: &mut Environment, seedval: i32) {
-    // Apple manpage: "srand48() initializes the high-order 32 bits of the
-    // 48-bit X_i to the low-order 32 bits of the argument; the low-order
-    // 16 bits of X_i are set to the arbitrary value 330E_16." Reset
-    // multiplier/addend to their defaults, matching the spec.
-    let seed = (seedval as u32) as u64;
-    env.libc_state.stdlib.drand48 = Drand48State {
-        state: (seed << 16) | 0x330E,
-        a: 0x5DEE_CE66D,
-        c: 0xB,
-    };
-}
-
-fn seed48(env: &mut Environment, xsubi: MutPtr<u16>) -> MutPtr<u16> {
-    // "seed48() sets the value of the X_i to the 48-bit value specified in
-    // the argument, and returns a pointer to a 14-byte array containing the
-    // previous value of X_i." The Apple/POSIX contract uses a per-process
-    // internal buffer for the return value — emulate that by allocating it
-    // once and re-using the slot.
-    let previous = env.libc_state.stdlib.drand48.state;
-
-    let new_state = pack_xsubi(env, xsubi.cast_const());
-    env.libc_state.stdlib.drand48 = Drand48State {
-        state: new_state,
-        a: 0x5DEE_CE66D,
-        c: 0xB,
-    };
-
-    // Reuse a static guest-side buffer for the returned `unsigned short[3]`.
-    // POSIX guarantees the returned pointer is valid until the next call to
-    // `seed48`/`srand48`/`lcong48`. We mirror that contract by reallocating
-    // here — touchHLE's guest allocator keeps the pointer alive until the
-    // application explicitly frees it (which it must not, per POSIX).
-    let buf: MutPtr<u16> = env.mem.alloc(6).cast();
-    write_xsubi(env, buf, previous);
-    buf
-}
-
-// MARK: - mkstemp / mkdtemp (POSIX, Apple manpages)
-//
-// https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/mkstemp.3.html
-//
-// `mkstemp` takes a writable path template ending in `XXXXXX`, replaces the
-// trailing `X`s with random characters that make the name unique, creates the
-// file with `open(O_RDWR | O_CREAT | O_EXCL, 0600)` and returns the fd.
-// `mkdtemp` is the directory analogue.
-
-/// Characters used to fill the `XXXXXX` portion of the template, matching the
-/// Apple / BSD `mkstemp` implementation (uppercase + lowercase + digits).
-const MKTEMP_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-fn fill_template_xxxxxx(env: &mut Environment, template: MutPtr<u8>) -> Option<u32> {
-    let template_str = match env.mem.cstr_at_utf8(template.cast_const()) {
-        Ok(s) => s.to_owned(),
-        Err(_) => return None,
-    };
-    let len = template_str.len();
-    if len < 6
-        || !template_str.as_bytes()[len - 6..]
-            .iter()
-            .all(|&c| c == b'X')
-    {
-        // Apple manpage: "If the template doesn’t contain six trailing X's,
-        // -1 is returned and errno is set to EINVAL."
-        return None;
-    }
-    let suffix_offset = (len - 6) as u32;
-    for i in 0..6 {
-        // Drive randomness from arc4random so we don't perturb the
-        // user-visible drand48 state (which the guest may be sampling
-        // deterministically after `srand48`).
-        let r = arc4random(env);
-        let ch = MKTEMP_CHARS[(r as usize) % MKTEMP_CHARS.len()];
-        env.mem.write(template + suffix_offset + i, ch);
-    }
-    Some(suffix_offset)
-}
-
-fn mkstemp(env: &mut Environment, template: MutPtr<u8>) -> i32 {
-    use crate::libc::errno::{ENOENT, ENOTDIR};
-    set_errno(env, 0);
-
-    // Try a handful of randomisations before giving up, mirroring BSD libc's
-    // `_gettemp` (TMP_MAX is documented as at least 308,915,776 on real
-    // systems but games never need that many — touchHLE only needs to keep
-    // making progress in the rare case of a collision).
-    for _ in 0..128 {
-        if fill_template_xxxxxx(env, template).is_none() {
-            set_errno(env, EINVAL);
-            return -1;
-        }
-        // O_RDWR | O_CREAT | O_EXCL — same flag combination Darwin libc uses.
-        const O_RDWR: i32 = 0x0002;
-        const O_CREAT: i32 = 0x0200;
-        const O_EXCL: i32 = 0x0800;
-        let fd = crate::libc::posix_io::open_direct(
-            env,
-            template.cast_const(),
-            O_RDWR | O_CREAT | O_EXCL,
-        );
-        if fd >= 0 {
-            return fd;
-        }
-        // If the failure is a hard error (missing directory etc.) there is
-        // no point in retrying — propagate it.
-        let errno = crate::libc::errno::get_errno(env);
-        if errno == ENOENT || errno == ENOTDIR {
-            return -1;
-        }
-    }
-    set_errno(env, crate::libc::errno::EEXIST);
-    -1
-}
-
-fn mkdtemp(env: &mut Environment, template: MutPtr<u8>) -> MutPtr<u8> {
-    set_errno(env, 0);
-    for _ in 0..128 {
-        if fill_template_xxxxxx(env, template).is_none() {
-            set_errno(env, EINVAL);
-            return Ptr::null();
-        }
-        // Read the path, create the directory exclusively.
-        let path_str = match env.mem.cstr_at_utf8(template.cast_const()) {
-            Ok(s) => s.to_owned(),
-            Err(_) => {
-                set_errno(env, EINVAL);
-                return Ptr::null();
-            }
-        };
-        let guest_path = GuestPath::new(&path_str);
-        if env.fs.exists(guest_path) {
-            continue; // collision; reseed and try again
-        }
-        match env.fs.create_dir(guest_path) {
-            Ok(_) => return template,
-            Err(_) => continue,
-        }
-    }
-    set_errno(env, crate::libc::errno::EEXIST);
-    Ptr::null()
-}
-
-fn mktemp(env: &mut Environment, template: MutPtr<u8>) -> MutPtr<u8> {
-    // Apple manpage: "The mktemp() function is dangerous; its use is
-    // discouraged because it is racy. Use mkstemp() instead." We implement it
-    // anyway for guest binaries that link it — fill in the template but do
-    // NOT create the file, exactly as the historical contract requires.
-    set_errno(env, 0);
-    if fill_template_xxxxxx(env, template).is_none() {
-        set_errno(env, EINVAL);
-        return Ptr::null();
-    }
-    template
-}
-
-fn lcong48(env: &mut Environment, param: MutPtr<u16>) {
-    // "lcong48() allows full user control over the multiplier and addend
-    // terms in the formula." param is a `unsigned short[7]`: the first
-    // three limbs seed X_i, the next three (limbs 3..6) replace `a`, and
-    // the last (limb 6) replaces `c`.
-    let state = pack_xsubi(env, param.cast_const());
-    let a_lo = u64::from(env.mem.read(param + 3));
-    let a_mid = u64::from(env.mem.read(param + 4));
-    let a_hi = u64::from(env.mem.read(param + 5));
-    let a = a_lo | (a_mid << 16) | (a_hi << 32);
-    let c = u64::from(env.mem.read(param + 6));
-    env.libc_state.stdlib.drand48 = Drand48State { state, a, c };
 }
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     let name_cstr = env.mem.cstr_at(name);
-    let name_str = std::str::from_utf8(name_cstr).unwrap_or("");
     let Some(&value) = env.env_vars.get(name_cstr) else {
-        // POSIX `getenv()` returns NULL for unset variables — this is the
-        // documented success path for "variable doesn't exist". Logging a
-        // Warning every time floods the console for any guest using a
-        // managed runtime: Mono probes ~30 MONO_*/GC_* vars on startup,
-        // Adobe AIR queries MMGC_HEAP_*, Lua looks up LUA_PATH/CPATH,
-        // CoreFoundation reads CFFIXED_USER_HOME etc. None of these are
-        // errors, so we demote to debug-only.
-        log_dbg!("getenv({:?} ({:?})) => NULL (unset)", name, name_str);
+        log!(
+            "Warning: getenv() for {:?} ({:?}) unhandled",
+            name,
+            std::str::from_utf8(name_cstr)
+        );
         return Ptr::null();
     };
+
     log_dbg!(
         "getenv({:?} ({:?})) => {:?} ({:?})",
         name,
@@ -729,72 +275,50 @@ fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
         value,
         env.mem.cstr_at_utf8(value),
     );
+    // Caller should not modify the result
     value
 }
-
-// === ИСПРАВЛЕННЫЙ setenv ДЛЯ ОБХОДА БЛОКИРОВКИ ПАМЯТИ ===
 fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwrite: i32) -> i32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
-    // Сохраняем имя в отдельный вектор, чтобы отпустить блокировку памяти
-    let name_bytes = env.mem.cstr_at(name).to_vec();
-    if let Some(&existing) = env.env_vars.get(&name_bytes) {
+
+    let name_cstr = env.mem.cstr_at(name);
+    if let Some(&existing) = env.env_vars.get(name_cstr) {
         if overwrite == 0 {
-            return 0;
+            return 0; // success
         }
         env.mem.free(existing.cast());
     };
     let value = super::string::strdup(env, value);
-    env.env_vars.insert(name_bytes, value);
-    0
+    let name_cstr = env.mem.cstr_at(name); // reborrow
+    env.env_vars.insert(name_cstr.to_vec(), value);
+    log_dbg!(
+        "Stored new value {:?} ({:?}) for environment variable {:?}",
+        value,
+        env.mem.cstr_at_utf8(value),
+        std::str::from_utf8(name_cstr),
+    );
+    0 // success
 }
-
-// === ИСПРАВЛЕННЫЙ unsetenv ДЛЯ ОБХОДА БЛОКИРОВКИ ПАМЯТИ ===
 fn unsetenv(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
-    // Сохраняем имя в отдельный вектор
-    let name_bytes = env.mem.cstr_at(name).to_vec();
-    if let Some(&existing) = env.env_vars.get(&name_bytes) {
-        env.mem.free(existing.cast());
-        env.env_vars.remove(&name_bytes);
-        0
-    } else {
+
+    let name_cstr = env.mem.cstr_at(name);
+    if !env.env_vars.contains_key(name_cstr) {
         set_errno(env, EINVAL);
         -1
+    } else {
+        todo!()
     }
 }
 
 fn exit(env: &mut Environment, exit_code: i32) {
+    // TODO: handle errno properly
     set_errno(env, 0);
 
-    // Забираем список функций через mem::take, чтобы избежать проблем с borrow
-    // checker,
-    // так как вызов call_from_host требует мутабельного доступа к env.
-    let handlers = std::mem::take(&mut env.libc_state.stdlib.atexit_handlers);
-
-    // По стандарту atexit вызывает функции в обратном порядке (LIFO), поэтому
-    // делаем .rev()
-    for func in handlers.into_iter().rev() {
-        log_dbg!("Executing atexit handler: {:?}", func);
-        // Вызываем гостевую функцию (она не принимает аргументов и ничего не
-        // возвращает)
-        let _: () = func.call_from_host(env, ());
-    }
-
-    // Log the exit so it's clear in CI/run logs why the process stopped;
-    // previously this exited silently, which made the logs end abruptly with no
-    // explanation.
-    echo!("App called exit({}); touchHLE will now quit.", exit_code);
+    echo!("App called exit(), exiting.");
     std::process::exit(exit_code);
-}
-
-fn abort(env: &mut Environment) {
-    // abort() means the guest hit a fatal error (e.g. a failed assertion or an
-    // uncaught C++ exception calling std::terminate). Log it with a guest stack
-    // trace before quitting so the cause is visible, instead of exiting
-    // silently.
-    echo!("App called abort(); the guest encountered a fatal error.");
-    env.stack_trace_current();
-    std::process::exit(1);
 }
 
 fn bsearch(
@@ -834,7 +358,9 @@ fn bsearch(
 }
 
 fn strtof(env: &mut Environment, nptr: ConstPtr<u8>, endptr: MutPtr<ConstPtr<u8>>) -> f32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     let (number, length) = atof_inner(env, nptr).unwrap_or((0.0, 0));
     if !endptr.is_null() {
         env.mem.write(endptr, nptr + length);
@@ -848,11 +374,13 @@ pub fn strtoul(
     endptr: MutPtr<MutPtr<u8>>,
     base: i32,
 ) -> u32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     let parse_res = str_to_int_inner_generic(
         env,
         |env, s, idx| Ok(env.mem.read(s + idx)),
-        |_, _, _| (),
+        |_, _, _| (), // could be ignored
         str.cast_mut(),
         0, // starting offset
         base.try_into().unwrap(),
@@ -875,21 +403,53 @@ pub fn strtoul(
         }
     }
 }
+fn wcstoul(
+    env: &mut Environment,
+    nptr: ConstPtr<wchar_t>,
+    endptr: MutPtr<MutPtr<wchar_t>>,
+    base: i32,
+) -> u32 {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let w_string = env.mem.wcstr_at(nptr);
+    assert!(w_string.is_ascii()); // TODO
+
+    assert!(endptr.is_null()); // TODO
+
+    let c_string = env.mem.alloc_and_write_cstr(w_string.as_bytes());
+    // TODO: use str_to_int_inner_generic() instead
+    let res = strtoul(env, c_string.cast_const(), Ptr::null(), base);
+    env.mem.free(c_string.cast());
+    log_dbg!(
+        "wcstoul({:?} ({:?}), {:?}, {}) => {}",
+        nptr,
+        w_string,
+        endptr,
+        base,
+        res
+    );
+    res
+}
+
 fn strtoull(
     env: &mut Environment,
     str: ConstPtr<u8>,
     endptr: MutPtr<MutPtr<u8>>,
     base: i32,
 ) -> u64 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     let parse_res = str_to_int_inner_generic(
         env,
         |env, s, idx| Ok(env.mem.read(s + idx)),
-        |_, _, _| (),
+        |_, _, _| (), // could be ignored
         str.cast_mut(),
         0, // starting offset
         base.try_into().unwrap(),
-        u32::MAX, // <--- ИСПРАВЛЕНО НА u32::MAX
+        u32::MAX, // max_length
         |s, base| u64::from_str_radix(s, base).unwrap_or(u64::MAX),
         |num| num.wrapping_neg(),
     );
@@ -909,42 +469,10 @@ fn strtoull(
     }
 }
 
-fn strtoll(
-    env: &mut Environment,
-    str: ConstPtr<u8>,
-    endptr: MutPtr<MutPtr<u8>>,
-    base: i32,
-) -> i64 {
-    set_errno(env, 0);
-    let parse_res = str_to_int_inner_generic(
-        env,
-        |env, s, idx| Ok(env.mem.read(s + idx)),
-        |_, _, _| (),
-        str.cast_mut(),
-        0, // starting offset
-        base.try_into().unwrap(),
-        u32::MAX, // max_length
-        |s, base| i64::from_str_radix(s, base).unwrap_or(i64::MAX),
-        |num| num.checked_mul(-1).unwrap_or(i64::MIN),
-    );
-    match parse_res {
-        Ok((res, len)) => {
-            if !endptr.is_null() {
-                env.mem.write(endptr, (str + len).cast_mut());
-            }
-            res
-        }
-        Err(_) => {
-            if !endptr.is_null() {
-                env.mem.write(endptr, str.cast_mut());
-            }
-            0
-        }
-    }
-}
-
 fn strtol(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>, base: i32) -> i32 {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
     match strtol_inner(env, str, base as u32) {
         Ok((res, len)) => {
             if !endptr.is_null() {
@@ -967,7 +495,9 @@ fn realpath(
     resolve_name: MutPtr<u8>,
 ) -> MutPtr<u8> {
     assert!(!resolve_name.is_null());
+
     let file_name_str = env.mem.cstr_at_utf8(file_name).unwrap();
+    // TOD0: resolve symbolic links
     let resolved = resolve_path(
         GuestPath::new(file_name_str),
         Some(env.fs.working_directory()),
@@ -978,6 +508,13 @@ fn realpath(
         .copy_from_slice(result.as_bytes());
     env.mem
         .write(resolve_name + result.len() as GuestUSize, b'\0');
+
+    log_dbg!(
+        "realpath file_name '{}', resolve_name '{}'",
+        env.mem.cstr_at_utf8(file_name).unwrap(),
+        env.mem.cstr_at_utf8(resolve_name).unwrap()
+    );
+
     resolve_name
 }
 
@@ -987,9 +524,13 @@ fn mbstowcs(
     s: ConstPtr<u8>,
     n: GuestUSize,
 ) -> GuestUSize {
+    // TODO: handle errno properly
     set_errno(env, 0);
+
+    // TODO: support other locales
     let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
     assert_eq!(env.mem.read(ctype_locale), b'C');
+
     let size = strlen(env, s);
     let to_write = size.min(n);
     for i in 0..to_write {
@@ -1008,13 +549,17 @@ fn wcstombs(
     pwcs: MutPtr<wchar_t>,
     n: GuestUSize,
 ) -> GuestUSize {
+    // TODO: support other locales
     let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
     assert_eq!(env.mem.read(ctype_locale), b'C');
+
     if n == 0 {
         return 0;
     }
     let wcstr = env.mem.wcstr_at(pwcs);
-    let len = (wcstr.len() as GuestUSize).min(n);
+    let len: GuestUSize = wcstr.len() as GuestUSize;
+    let len = len.min(n);
+    log_dbg!("wcstombs '{}', len {}, n {}", wcstr, len, n);
     env.mem
         .bytes_at_mut(s.cast_mut(), len)
         .copy_from_slice(wcstr.as_bytes());
@@ -1026,590 +571,20 @@ fn wcstombs(
 
 fn system(env: &mut Environment, cmd: ConstPtr<u8>) -> i32 {
     if cmd.is_null() {
-        return 1;
-        // shell is available
+        log!("TODO: App checked for sh availability with system(NULL), returning 0");
+        return 0; // sh is not available!
     }
-    let cmd_str = env.mem.cstr_at_utf8(cmd).unwrap_or("").to_string();
-    log!("system({:?})", cmd_str);
-    // split_whitespace() автоматически игнорирует пробелы в начале и конце
-    let parts: Vec<&str> = cmd_str.split_whitespace().collect();
-    if parts.is_empty() {
-        return 0;
-    }
-
-    match parts[0] {
-        "mkdir" => {
-            // find path argument (skip flags like -p)
-            let path_arg = parts.iter().skip(1).find(|a| !a.starts_with('-'));
-            if let Some(path) = path_arg {
-                let guest_path = GuestPath::new(path);
-                // use create_dir_all to support mkdir -p semantics
-                match env.fs.create_dir_all(guest_path) {
-                    Ok(_) => {
-                        log!("system: mkdir {:?} => success", path);
-                        0
-                    }
-                    Err(e) => {
-                        log!("system: mkdir {:?} => error: {:?}", path, e);
-                        1
-                    }
-                }
-            } else {
-                1
-            }
-        }
-        _ => {
-            log!(
-                "Warning: system({:?}) not implemented, returning 0",
-                cmd_str
-            );
-            0
-        }
-    }
-}
-
-fn dladdr(_env: &mut Environment, _addr: ConstVoidPtr, _info: MutVoidPtr) -> i32 {
-    // FakeDladdr
-    0
-}
-
-fn kqueue(_env: &mut Environment) -> i32 {
-    // FakeKqueue
-    999
-}
-
-/// `int _NSGetExecutablePath(char *buf, uint32_t *bufsize);` — see
-/// <https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/dyld.3.html>.
-///
-/// Writes the path of the currently running executable into `buf`. On entry
-/// `*bufsize` is the capacity of `buf`; on success the path (including the
-/// trailing NUL byte) is written and 0 is returned. If the buffer is too
-/// small, `*bufsize` is updated to the required capacity and -1 is returned
-/// (the buffer contents are undefined in that case).
-///
-/// This function is the canonical way iOS apps locate their bundle, so a
-/// stub that returned 999 (and didn't even take the right argument types)
-/// caused real-world apps such as Farm Frenzy to mis-construct paths and
-/// then `chdir("")` / fail every resource lookup.
-fn _NSGetExecutablePath(env: &mut Environment, buf: MutPtr<u8>, bufsize: MutPtr<u32>) -> i32 {
-    if bufsize.is_null() {
-        return -1;
-    }
-    let exe_path = env.bundle.executable_path();
-    let path_bytes = exe_path.as_str().as_bytes();
-    // Required size includes the trailing NUL byte.
-    let required: u32 = path_bytes.len() as u32 + 1;
-    let provided: u32 = env.mem.read(bufsize);
-    if provided < required {
-        env.mem.write(bufsize, required);
-        log_dbg!(
-            "_NSGetExecutablePath: buffer too small ({} < {}), reporting required size",
-            provided,
-            required
-        );
-        return -1;
-    }
-    if buf.is_null() {
-        return -1;
-    }
-    let dst = env.mem.bytes_at_mut(buf, required);
-    dst[..path_bytes.len()].copy_from_slice(path_bytes);
-    dst[path_bytes.len()] = 0;
-    env.mem.write(bufsize, required);
-    log_dbg!("_NSGetExecutablePath => {:?}", exe_path);
-    0
-}
-
-fn kevent(
-    _env: &mut Environment,
-    _kq: i32,
-    _changelist: ConstVoidPtr,
-    _nchanges: i32,
-    _eventlist: MutVoidPtr,
-    _nevents: i32,
-    _timeout: ConstVoidPtr,
-) -> i32 {
-    // FakeKevent
-    0
-}
-
-fn __assert_rtn(
-    env: &mut Environment,
-    func: ConstPtr<u8>,
-    file: ConstPtr<u8>,
-    line: i32,
-    expr: ConstPtr<u8>,
-) {
-    let func_str = read_cstr_safe(env, func);
-    let file_str = read_cstr_safe(env, file);
-    let expr_str = read_cstr_safe(env, expr);
-    log!(
-        "Assertion failed: ({}) in function {}, file {}, line {}.",
-        expr_str,
-        func_str,
-        file_str,
-        line
-    );
-}
-
-fn __assert(env: &mut Environment, expr: ConstPtr<u8>, file: ConstPtr<u8>, line: i32) {
-    let expr_str = read_cstr_safe(env, expr);
-    let file_str = read_cstr_safe(env, file);
-    log!(
-        "Assertion failed: ({}) in file {}, line {}.",
-        expr_str,
-        file_str,
-        line
-    );
-}
-
-fn __assert_fail(
-    env: &mut Environment,
-    expr: ConstPtr<u8>,
-    file: ConstPtr<u8>,
-    line: u32,
-    func: ConstPtr<u8>,
-) {
-    let expr_str = read_cstr_safe(env, expr);
-    let file_str = read_cstr_safe(env, file);
-    let func_str = read_cstr_safe(env, func);
-    log!(
-        "Assertion failed: ({}) in function {}, file {}, line {}.",
-        expr_str,
-        func_str,
-        file_str,
-        line
-    );
-}
-
-fn read_cstr_safe(env: &mut Environment, ptr: ConstPtr<u8>) -> String {
-    if ptr.is_null() {
-        return "(null)".to_string();
-    }
-    // Read bytes until NUL terminator.
-    let mut bytes = Vec::new();
-    let mut offset = 0u32;
-    loop {
-        let b: u8 = env.mem.read(ptr + offset);
-        if b == 0 {
-            break;
-        }
-        bytes.push(b);
-        offset += 1;
-    }
-    String::from_utf8(bytes).unwrap_or_else(|_| "(invalid utf-8)".to_string())
-}
-
-#[allow(non_snake_case)]
-fn _fcvt(
-    env: &mut Environment,
-    value: f64,
-    ndigits: i32,
-    decpt: MutPtr<i32>,
-    sign: MutPtr<i32>,
-) -> MutPtr<u8> {
-    set_errno(env, 0);
-    let is_negative = value.is_sign_negative() && value != 0.0;
-    let val_abs = value.abs();
-    // Format the number with the requested fractional digits
-    let ndigits_usize = ndigits.max(0) as usize;
-    let formatted = format!("{:.*}", ndigits_usize, val_abs);
-
-    let mut digits = String::with_capacity(formatted.len());
-    let mut decimal_pos = formatted.len() as i32;
-    let mut dot_found = false;
-
-    // Extract decimal position and remove the dot from the string
-    for (i, c) in formatted.chars().enumerate() {
-        if c == '.' {
-            decimal_pos = i as i32;
-            dot_found = true;
-        } else {
-            digits.push(c);
-        }
-    }
-
-    if !dot_found {
-        decimal_pos = digits.len() as i32;
-    }
-
-    // Remove leading zero for numbers < 1 to match C behavior
-    if digits.starts_with('0') && decimal_pos == 1 && digits.len() > 1 {
-        digits.remove(0);
-        decimal_pos -= 1;
-    }
-
-    if !decpt.is_null() {
-        env.mem.write(decpt, decimal_pos);
-    }
-    if !sign.is_null() {
-        env.mem.write(sign, if is_negative { 1 } else { 0 });
-    }
-
-    // Allocate in guest memory and CAST to a u8 pointer
-    let buf_len = (digits.len() + 1) as GuestUSize;
-    let buf: MutPtr<u8> = env.mem.alloc(buf_len).cast();
-
-    env.mem
-        .bytes_at_mut(buf, digits.len() as GuestUSize)
-        .copy_from_slice(digits.as_bytes());
-    env.mem.write(buf + digits.len() as GuestUSize, b'\0');
-    buf
-}
-
-#[allow(non_snake_case)]
-fn _gcvt(env: &mut Environment, value: f64, ndigit: i32, buf: MutPtr<u8>) -> MutPtr<u8> {
-    set_errno(env, 0);
-    let ndigit = ndigit.max(0) as usize;
-    // В Rust нет точного аналога "g", поэтому мы используем стандартный трейт
-    // Display
-    // с указанием точности (количества знаков после запятой).
-    let s = format!("{:.*}", ndigit, value);
-
-    let bytes = s.as_bytes();
-    let len = bytes.len() as GuestUSize;
-    if !buf.is_null() {
-        env.mem.bytes_at_mut(buf, len).copy_from_slice(bytes);
-        env.mem.write(buf + len, b'\0');
-    }
-
-    buf
-}
-
-fn mbtowc_l(
-    env: &mut Environment,
-    pwc: MutPtr<u32>, // wchar_t на iOS/ARM32 — это 32-битный int
-    s: ConstVoidPtr,
-    n: GuestUSize,      // size_t
-    _loc: ConstVoidPtr, // locale_t (игнорируем, так как используем стандартный UTF-8)
-) -> i32 {
-    if s.is_null() {
-        return 0;
-    }
-
-    if n == 0 {
-        return -1;
-    }
-
-    let s_ptr: ConstPtr<u8> = s.cast();
-    let first_byte: u8 = env.mem.read(s_ptr);
-    if first_byte == 0 {
-        if !pwc.is_null() {
-            env.mem.write(pwc, 0);
-        }
-        return 0;
-    }
-
-    if first_byte < 0x80 {
-        if !pwc.is_null() {
-            env.mem.write(pwc, first_byte as u32);
-        }
-        return 1;
-    }
-
-    let mut codepoint: u32;
-    let bytes_to_read: u32;
-
-    if (first_byte & 0xE0) == 0xC0 {
-        codepoint = (first_byte & 0x1F) as u32;
-        bytes_to_read = 1;
-    } else if (first_byte & 0xF0) == 0xE0 {
-        codepoint = (first_byte & 0x0F) as u32;
-        bytes_to_read = 2;
-    } else if (first_byte & 0xF8) == 0xF0 {
-        codepoint = (first_byte & 0x07) as u32;
-        bytes_to_read = 3;
-    } else {
-        return -1;
-    }
-
-    if n < (bytes_to_read + 1) as GuestUSize {
-        return -1;
-    }
-
-    for i in 1..=bytes_to_read {
-        let next_byte: u8 = env.mem.read(s_ptr + i as GuestUSize);
-        if (next_byte & 0xC0) != 0x80 {
-            return -1;
-        }
-        codepoint = (codepoint << 6) | ((next_byte & 0x3F) as u32);
-    }
-
-    if !pwc.is_null() {
-        env.mem.write(pwc, codepoint);
-    }
-
-    (bytes_to_read + 1) as i32
-}
-
-fn putenv(env: &mut Environment, string: MutPtr<u8>) -> i32 {
-    if string.is_null() {
-        set_errno(env, EINVAL);
-        return -1;
-    }
-    let s = match env.mem.cstr_at_utf8(string.cast_const()) {
-        Ok(s) => s.to_owned(),
-        Err(_) => {
-            set_errno(env, EINVAL);
-            return -1;
-        }
-    };
-    log_dbg!("putenv({:?})", s);
-    // putenv is a no-op in touchHLE — we have no real environment block.
-    // Return 0 (success) so apps that call it to set e.g. timezone or locale
-    // hints don't abort on the return code.
-    0
-}
-
-#[allow(non_camel_case_types)]
-#[derive(Debug)]
-#[repr(C, packed)]
-struct div_t {
-    quot: i32,
-    rem: i32,
-}
-unsafe impl SafeRead for div_t {}
-impl_GuestRet_for_large_struct!(div_t);
-
-fn div(_env: &mut Environment, numer: i32, denom: i32) -> div_t {
-    div_t {
-        quot: numer.wrapping_div(denom),
-        rem: numer.wrapping_rem(denom),
-    }
-}
-
-/// `ldiv_t` — return type of `ldiv`. Per the C99 standard and Apple's
-/// `<stdlib.h>` (`/usr/include/stdlib.h` on macOS): two `long` fields,
-/// `quot` then `rem`. On 32-bit iOS `long` is 32 bits, so the layout
-/// matches `div_t`. We keep a separate Rust type so callers see the
-/// correct type encoding.
-#[allow(non_camel_case_types)]
-#[derive(Debug)]
-#[repr(C, packed)]
-struct ldiv_t {
-    quot: i32,
-    rem: i32,
-}
-unsafe impl SafeRead for ldiv_t {}
-impl_GuestRet_for_large_struct!(ldiv_t);
-
-/// `ldiv_t ldiv(long numer, long denom)` — per Apple's manpage:
-/// computes both the quotient and remainder of dividing `numer` by
-/// `denom` in a single operation, returning the result in an `ldiv_t`
-/// struct. Behaviour is identical to `div` on 32-bit iOS where `long`
-/// is 32 bits wide.
-fn ldiv(_env: &mut Environment, numer: i32, denom: i32) -> ldiv_t {
-    ldiv_t {
-        quot: numer.wrapping_div(denom),
-        rem: numer.wrapping_rem(denom),
-    }
-}
-
-fn setxattr(
-    env: &mut Environment,
-    path: ConstPtr<u8>,
-    name: ConstPtr<u8>,
-    _value: ConstVoidPtr,
-    size: GuestUSize,
-    position: u32,
-    options: i32,
-) -> i32 {
-    let path_str = env.mem.cstr_at_utf8(path).unwrap_or_default().to_owned();
-    let name_str = env.mem.cstr_at_utf8(name).unwrap_or_default().to_owned();
-    log_dbg!(
-        "setxattr({:?}, {:?}, size={}, position={}, options={:#x}) — ignored",
-        path_str,
-        name_str,
-        size,
-        position,
-        options
-    );
-    // Return 0 (success). touchHLE has no extended attribute storage;
-    // returning success prevents apps from treating missing xattr support
-    // as a fatal error.
-    0
-}
-
-fn fsetxattr(
-    env: &mut Environment,
-    fd: crate::libc::posix_io::FileDescriptor,
-    name: ConstPtr<u8>,
-    _value: ConstVoidPtr,
-    size: GuestUSize,
-    position: u32,
-    options: i32,
-) -> i32 {
-    let name_str = env.mem.cstr_at_utf8(name).unwrap_or_default().to_owned();
-    log_dbg!(
-        "fsetxattr(fd={}, {:?}, size={}, position={}, options={:#x}) — ignored",
-        fd,
-        name_str,
-        size,
-        position,
-        options
-    );
-    0
-}
-
-fn getxattr(
-    env: &mut Environment,
-    path: ConstPtr<u8>,
-    name: ConstPtr<u8>,
-    _value: MutVoidPtr,
-    size: GuestUSize,
-    position: u32,
-    options: i32,
-) -> i32 {
-    let path_str = env.mem.cstr_at_utf8(path).unwrap_or_default().to_owned();
-    let name_str = env.mem.cstr_at_utf8(name).unwrap_or_default().to_owned();
-    log_dbg!(
-        "getxattr({:?}, {:?}, size={}, position={}, options={:#x}) — returning ENOATTR",
-        path_str,
-        name_str,
-        size,
-        position,
-        options
-    );
-    // ENOATTR = 93 on Darwin. Return -1 and set errno.
-    set_errno(env, 93);
-    -1
-}
-
-fn fgetxattr(
-    env: &mut Environment,
-    fd: crate::libc::posix_io::FileDescriptor,
-    name: ConstPtr<u8>,
-    _value: MutVoidPtr,
-    size: GuestUSize,
-    position: u32,
-    options: i32,
-) -> i32 {
-    let name_str = env.mem.cstr_at_utf8(name).unwrap_or_default().to_owned();
-    log_dbg!(
-        "fgetxattr(fd={}, {:?}, size={}, position={}, options={:#x}) — returning ENOATTR",
-        fd,
-        name_str,
-        size,
-        position,
-        options
-    );
-    set_errno(env, 93);
-    -1
-}
-
-fn removexattr(env: &mut Environment, path: ConstPtr<u8>, name: ConstPtr<u8>, options: i32) -> i32 {
-    let path_str = env.mem.cstr_at_utf8(path).unwrap_or_default().to_owned();
-    let name_str = env.mem.cstr_at_utf8(name).unwrap_or_default().to_owned();
-    log_dbg!(
-        "removexattr({:?}, {:?}, options={:#x}) — returning ENOATTR",
-        path_str,
-        name_str,
-        options
-    );
-    set_errno(env, 93);
-    -1
-}
-
-fn fremovexattr(
-    env: &mut Environment,
-    fd: crate::libc::posix_io::FileDescriptor,
-    name: ConstPtr<u8>,
-    options: i32,
-) -> i32 {
-    let name_str = env.mem.cstr_at_utf8(name).unwrap_or_default().to_owned();
-    log_dbg!(
-        "fremovexattr(fd={}, {:?}, options={:#x}) — returning ENOATTR",
-        fd,
-        name_str,
-        options
-    );
-    set_errno(env, 93);
-    -1
-}
-
-fn listxattr(
-    env: &mut Environment,
-    path: ConstPtr<u8>,
-    namebuf: MutPtr<u8>,
-    size: GuestUSize,
-    options: i32,
-) -> i32 {
-    let path_str = env.mem.cstr_at_utf8(path).unwrap_or_default().to_owned();
-    log_dbg!(
-        "listxattr({:?}, size={}, options={:#x}) — returning 0 (empty list)",
-        path_str,
-        size,
-        options
-    );
-    // Zero-length list means no attributes. Return 0 (success, 0 bytes needed).
-    if !namebuf.is_null() && size > 0 {
-        env.mem.write(namebuf, 0u8);
-    }
-    0
-}
-
-fn flistxattr(
-    env: &mut Environment,
-    fd: crate::libc::posix_io::FileDescriptor,
-    namebuf: MutPtr<u8>,
-    size: GuestUSize,
-    options: i32,
-) -> i32 {
-    log_dbg!(
-        "flistxattr(fd={}, size={}, options={:#x}) — returning 0 (empty list)",
-        fd,
-        size,
-        options
-    );
-    if !namebuf.is_null() && size > 0 {
-        env.mem.write(namebuf, 0u8);
-    }
-    0
-}
-
-// ===========================================================================
-// MARK: - zlib supplemental
-// ===========================================================================
-
-/// `int inflateReset2(z_streamp strm, int windowBits)`
-///
-/// Per the [zlib manual](https://www.zlib.net/manual.html): "This function is
-/// equivalent to inflateEnd followed by inflateInit2, but does not free and
-/// reallocate the internal decompression state. The stream will keep attributes
-/// that may have been set by inflateInit2." It was added in zlib 1.2.3.4.
-///
-/// The bundled libz.1.2.3.dylib does not export this symbol, so apps that link
-/// against a newer SDK (e.g. Flappy Bird built for iOS 7) fail at lazy-bind
-/// time. We provide a minimal host implementation that calls through to the
-/// guest's `inflateReset` (same as calling inflateReset on the stream — window
-/// bits are stored in the stream structure anyway from the initial inflateInit2
-/// call).
-///
-/// Return value: Z_OK (0) on success.
-fn inflateReset2(
-    _env: &mut Environment,
-    _strm: MutVoidPtr,
-    _window_bits: i32,
-) -> i32 {
-    // Z_OK = 0. We cannot easily call back into the guest's inflateReset
-    // from host code without the full z_stream layout. However, the most
-    // common pattern is that inflateReset2 is called right after inflateInit2
-    // (which already set window bits) or before any actual inflate call.
-    // Returning Z_OK lets the app proceed — the stream state was already
-    // initialized by the guest's inflateInit2 which IS in the old libz.
-    log_dbg!("inflateReset2(strm={:?}, windowBits={}) -> Z_OK (stubbed)", _strm, _window_bits);
-    0 // Z_OK
+    log!("system({:?})", env.mem.cstr_at_utf8(cmd));
+    todo!()
 }
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(malloc_size(_)),
     export_c_func!(calloc(_, _)),
-    export_c_func!(realloc(_, _)),
-    export_c_func!(reallocf(_, _)),
-    export_c_func!(free(_)),
-    export_c_func!(posix_memalign(_, _, _)),
     export_c_func!(valloc(_)),
+    export_c_func!(realloc(_, _)),
+    export_c_func!(free(_)),
     export_c_func!(atexit(_)),
     export_c_func!(atoi(_)),
     export_c_func!(atol(_)),
@@ -1622,71 +597,25 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(srandom(_)),
     export_c_func!(random()),
     export_c_func!(arc4random()),
-    export_c_func!(arc4random_uniform(_)),
-    export_c_func!(arc4random_stir()),
-    export_c_func!(arc4random_addrandom()),
-    // drand48 family (POSIX / Apple iPhone OS manpage)
-    export_c_func!(drand48()),
-    export_c_func!(erand48(_)),
-    export_c_func!(lrand48()),
-    export_c_func!(nrand48(_)),
-    export_c_func!(mrand48()),
-    export_c_func!(jrand48(_)),
-    export_c_func!(srand48(_)),
-    export_c_func!(seed48(_)),
-    export_c_func!(lcong48(_)),
-    export_c_func!(mkstemp(_)),
-    export_c_func!(mkdtemp(_)),
-    export_c_func!(mktemp(_)),
+    export_c_func!(div(_, _)),
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
-    // <--- ИСПРАВЛЕНИЕ НА 3 АРГУМЕНТА ГОСТЯ
     export_c_func!(unsetenv(_)),
     export_c_func!(exit(_)),
-    export_c_func!(abort()),
-    export_c_func_aliased!("_abort", abort()),
     export_c_func!(bsearch(_, _, _, _, _)),
     export_c_func!(strtof(_, _)),
     export_c_func!(strtoul(_, _, _)),
+    export_c_func!(wcstoul(_, _, _)),
     export_c_func!(strtoull(_, _, _)),
-    export_c_func!(strtoll(_, _, _)),
-    export_c_func_aliased!("strtoq", strtoll(_, _, _)),
-    export_c_func_aliased!("strtouq", strtoull(_, _, _)),
     export_c_func!(strtol(_, _, _)),
     export_c_func!(realpath(_, _)),
     export_c_func_aliased!("realpath$DARWIN_EXTSN", realpath(_, _)),
-    // mbstowcs and wcstombs are exported from libc::wchar; not duplicated here.
-    export_c_func!(NSZoneMalloc(_, _)),
-    export_c_func!(NSZoneFree(_, _)),
-    export_c_func!(NSZoneRealloc(_, _, _)),
-    export_c_func!(__assert_rtn(_, _, _, _)),
-    export_c_func!(__assert(_, _, _)),
-    export_c_func!(__assert_fail(_, _, _, _)),
-    export_c_func!(_fcvt(_, _, _, _)),
-    export_c_func!(_gcvt(_, _, _)),
+    export_c_func!(mbstowcs(_, _, _)),
+    export_c_func!(wcstombs(_, _, _)),
     export_c_func!(system(_)),
-    export_c_func!(dladdr(_, _)),
-    export_c_func!(kqueue()),
-    export_c_func!(_NSGetExecutablePath(_, _)),
-    export_c_func!(kevent(_, _, _, _, _, _)),
-    export_c_func!(mbtowc_l(_, _, _, _)), // ОШИБКА БЫЛА ЗДЕСЬ (4 подчеркивания вместо 5)
-    export_c_func!(putenv(_)),
-    export_c_func!(div(_, _)),
-    export_c_func!(ldiv(_, _)),
-    export_c_func!(setxattr(_, _, _, _, _, _)),
-    export_c_func!(fsetxattr(_, _, _, _, _, _)),
-    export_c_func!(getxattr(_, _, _, _, _, _)),
-    export_c_func!(fgetxattr(_, _, _, _, _, _)),
-    export_c_func!(removexattr(_, _, _)),
-    export_c_func!(fremovexattr(_, _, _)),
-    export_c_func!(listxattr(_, _, _, _)),
-    export_c_func!(flistxattr(_, _, _, _)),
-    // zlib supplemental — inflateReset2 was added in zlib 1.2.3.4 but the
-    // bundled libz.1.2.3.dylib doesn't have it. Some apps (Flappy Bird)
-    // import it.
-    export_c_func!(inflateReset2(_, _)),
 ];
 
+/// A simple wrapper around [atof_inner_generic] for the case of C string.
 pub fn atof_inner(
     env: &mut Environment,
     s: ConstPtr<u8>,
@@ -1700,12 +629,33 @@ pub fn atof_inner(
     )
 }
 
-#[allow(rustdoc::broken_intra_doc_links)]
+#[allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
+/// Generic implementation of a conversion helper to `double`.
+///
+/// `getc_fn` is a callback to get next character from `subject`.
+/// 3rd parameter in this callback is a index which is safe to ignore
+/// (for example, in case of a file stream).
+/// Error signifies an abnormal stop of input,
+/// such as [crate::libc::stdio::EOF] in the file stream.
+/// Note: `'\0'` does not necessary expect to produce an error!
+///
+/// `ungetc_fn` is a callback to un-get character from `subject`.
+/// Could be ignored entirely (for example, in case of a string).
+///
+/// `subject` is either C string or file stream (for now).
+///
+/// `offset` defines an offset in `subject` from which conversion starts.
+/// Could be ignored entirely (for example, in case of a file stream).
+///
+/// Returns a tuple containing the parsed number and the length of the number in
+/// the string.
+///
+/// See also a TODO comment in [str_to_int_inner_generic].
 pub fn atof_inner_generic<
     T,
     U,
     F1: Fn(&mut Environment, MutPtr<U>, GuestUSize) -> Result<T, ()>,
-    F2: Fn(&mut Environment, MutPtr<U>, u8),
+    F2: Fn(&mut Environment, MutPtr<U>, u8), // TODO: make last param generic too?
 >(
     env: &mut Environment,
     getc_fn: F1,
@@ -1719,14 +669,24 @@ where
     let mut whitespace_len = 0;
     let mut len = 0;
     let mut chars = Vec::new();
+
+    // Helper is needed to support early returns on `getc_fn` errors
+    // (e.g. EOF in the input stream)
+    // We don't care about return of helper because modified vars are
+    // captured indirectly.
     let _ = || -> Result<(), ()> {
+        // atof() is similar to atoi().
+        // FIXME: no C99 hexfloat, INF, NAN support
         match count_whitespace_generic(env, &getc_fn, &ungetc_fn, subject, offset) {
-            Ok(count) => whitespace_len = count,
+            Ok(count) => {
+                whitespace_len = count;
+            }
             Err(count) => {
                 whitespace_len = count;
                 return Err(());
             }
         }
+
         let maybe_sign: u8 = getc_fn(env, subject, offset + whitespace_len + len)?.into();
         if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
             chars.push(maybe_sign);
@@ -1734,12 +694,15 @@ where
         } else {
             ungetc_fn(env, subject, maybe_sign);
         }
+
         let mut curr: u8 = getc_fn(env, subject, offset + whitespace_len + len)?.into();
         while (curr as char).is_ascii_digit() {
             chars.push(curr);
             len += 1;
             curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
         }
+
+        // TODO: assert C locale
         if curr == b'.' {
             chars.push(curr);
             len += 1;
@@ -1750,9 +713,11 @@ where
                 curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
             }
         }
+
         if curr.eq_ignore_ascii_case(&b'e') {
             chars.push(curr);
             len += 1;
+
             let maybe_sign: u8 = getc_fn(env, subject, offset + whitespace_len + len)?.into();
             if maybe_sign == b'+' || maybe_sign == b'-' || maybe_sign.is_ascii_digit() {
                 chars.push(maybe_sign);
@@ -1760,6 +725,7 @@ where
             } else {
                 ungetc_fn(env, subject, maybe_sign);
             }
+
             curr = getc_fn(env, subject, offset + whitespace_len + len)?.into();
             while (curr as char).is_ascii_digit() {
                 chars.push(curr);
@@ -1768,6 +734,7 @@ where
             }
         }
         ungetc_fn(env, subject, curr);
+
         assert_eq!(chars.len() as u32, len);
         Ok(())
     }();
@@ -1777,22 +744,69 @@ where
     s.parse().map(|result| (result, whitespace_len + len))
 }
 
+/// A simple wrapper around [str_to_int_inner_generic]
+/// for the case of C string and i32.
 fn strtol_inner(env: &mut Environment, str: ConstPtr<u8>, base: u32) -> Result<(i32, u32), ()> {
     str_to_int_inner_generic(
         env,
         |env, s, idx| Ok(env.mem.read(s + idx)),
-        |_, _, _| (),
+        |_, _, _| (), // could be ignored
         str.cast_mut(),
-        0,
+        0, // starting offset
         base,
-        u32::MAX,
+        u32::MAX, // max_length
         |s, base| i32::from_str_radix(s, base).unwrap_or(i32::MAX),
         |num| num.checked_mul(-1).unwrap_or(i32::MIN),
     )
 }
 
+#[allow(rustdoc::broken_intra_doc_links)] // https://github.com/rust-lang/rust/issues/83049
+/// Generic implementation of a conversion helper from string to an integer.
+///
+/// `getc_fn` is a callback to get next character from `subject`.
+/// 3rd parameter in this callback is a index which is safe to ignore
+/// (for example, in case of a file stream).
+/// Error signifies an abnormal stop of input,
+/// such as [crate::libc::stdio::EOF] in the file stream.
+/// Note: `'\0'` does not necessary expect to produce an error!
+///
+/// `ungetc_fn` is a callback to un-get character from `subject`.
+/// Could be ignored entirely (for example, in case of a string).
+///
+/// `subject` is either C string or file stream (for now).
+///
+/// `offset` defines an offset in `subject` from which conversion starts.
+/// Could be ignored entirely (for example, in case of a file stream).
+///
+/// `base` of conversion.
+/// Is mutable because in case of base 0 we need to auto-detect it.
+///
+/// `from_str_radix_fn` is a callback to actually convert accumulated string
+/// to the number.
+///
+/// `negation_fn` is a callback which specifies how '-' is treated.
+///
+/// Returns a tuple containing the parsed number in the given base and
+/// the length of the number in the string.
+///
+/// Right now this function is a bit of the mess... We bridge together the
+/// worlds of string indexing and file stream processing with questionable
+/// results. We have fair amount of integration tests for `strtoul`
+/// and `sscanf`/`fscanf`, but some of corner cases are definitely not covered.
+/// One idea for cleaning that would be to fully embrace `getc`/`ungetc`
+/// approach and get rid of indexing.
+/// (Like, let caller to deal with indexing and override `offset` somehow?)
+/// TODO: find a more powerful abstraction for generalization
 #[allow(clippy::too_many_arguments)]
-pub fn str_to_int_inner_generic<T, U, Q, F1, F2, F3, F4>(
+pub fn str_to_int_inner_generic<
+    T,
+    U,
+    Q,
+    F1: Fn(&mut Environment, MutPtr<U>, GuestUSize) -> Result<T, ()>,
+    F2: Fn(&mut Environment, MutPtr<U>, u8), // TODO: make last param generic too?
+    F3: Fn(&str, u32) -> Q,
+    F4: Fn(Q) -> Q,
+>(
     env: &mut Environment,
     getc_fn: F1,
     ungetc_fn: F2,
@@ -1806,24 +820,31 @@ pub fn str_to_int_inner_generic<T, U, Q, F1, F2, F3, F4>(
 where
     u8: From<T>,
     Q: Default,
-    F1: Fn(&mut Environment, MutPtr<U>, GuestUSize) -> Result<T, ()>,
-    F2: Fn(&mut Environment, MutPtr<U>, u8),
-    F3: Fn(&str, u32) -> Q,
-    F4: Fn(Q) -> Q,
 {
     let mut whitespace_len = 0;
     let mut len = 0;
     let mut sign = None;
     let mut prefix_length = 0;
     let mut chars = Vec::new();
+
+    // Helper is needed to support early returns on `getc_fn` errors
+    // (e.g. EOF in the input stream)
+    // We don't care about return of helper because modified vars are
+    // captured indirectly.
     let _ = || -> Result<(), ()> {
+        // strtol() doesn't work with a null-terminated string,
+        // instead it stops once it hits something that's not a digit,
+        // so we have to do some parsing ourselves.
         match count_whitespace_generic(env, &getc_fn, &ungetc_fn, subject, offset) {
-            Ok(count) => whitespace_len = count,
+            Ok(count) => {
+                whitespace_len = count;
+            }
             Err(count) => {
                 whitespace_len = count;
                 return Err(());
             }
         }
+
         let maybe_sign: u8 = getc_fn(env, subject, offset + whitespace_len + len)?.into();
         if maybe_sign == b'+' || maybe_sign == b'-' {
             sign = Some(maybe_sign);
@@ -1835,6 +856,9 @@ where
         } else {
             ungetc_fn(env, subject, maybe_sign);
         }
+        // We need to do base detection before we can start counting
+        // the number length, but after we maybe skipped the sign
+        // TODO: detect base and skip prefix in one pass
         if base == 0 {
             let curr: u8 = getc_fn(env, subject, offset + whitespace_len + len)?.into();
             base = if curr == b'0' {
@@ -1851,6 +875,7 @@ where
                 10
             }
         }
+        // Skipping prefix if needed
         if base == 8 || base == 16 {
             let curr: u8 = getc_fn(env, subject, offset + whitespace_len + len)?.into();
             if curr == b'0' {
@@ -1897,12 +922,14 @@ where
     assert!((2..=36).contains(&base));
     let magnitude_len = len - prefix_length;
     let res = if magnitude_len > 0 {
+        // TODO: set errno on range errors
         let mut res = from_str_radix_fn(s, base);
         if sign == Some(b'-') {
             res = negation_fn(res);
         }
         res
     } else {
+        // Special case - prefix of invalid octal number is a valid number 0
         if base == 8 && prefix_length > 0 {
             return Ok((Q::default(), whitespace_len + prefix_length));
         }

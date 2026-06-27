@@ -372,6 +372,7 @@ NSUInteger fontTestNum;
   CGContextSetFont(context, [self testFont]);
   CGContextSetFontSize(context, 1.0); // overridden by CGContextSetTextMatrix
 
+  // CGGlyph glyphs[] = {[self glyphForChar:'L']};
   CGGlyph glyphs[] = {[self glyphForChar:'M'], [self glyphForChar:'i'],
                       [self glyphForChar:'r'], [self glyphForChar:'r'],
                       [self glyphForChar:'o'], [self glyphForChar:'r']};
@@ -402,11 +403,15 @@ NSUInteger fontTestNum;
   [self presentContext:context];
 }
 
-// Test 7: rotation + scale via CGContextSetTextMatrix.
+// Test 7: rotation + scale via CGContextSetTextMatrix. Bakes a growing scale
+// and a step rotation into the text matrix (a=s*cos b=s*sin c=-s*sin d=s*cos),
+// leaving the CTM untouched, so CGContextShowGlyphsAtPoint must honour both
+// the text matrix's rotation and scale to fan "tXy" around the bitmap centre
+// at increasing size.
 - (void)test7 {
   CGContextRef context = [self makeContext];
   CGContextSetFont(context, [self testFont]);
-  CGContextSetFontSize(context, 1.0);
+  CGContextSetFontSize(context, 1.0); // overridden by CGContextSetTextMatrix
 
   CGGlyph glyphs[] = {[self glyphForChar:'t'], [self glyphForChar:'X'],
                       [self glyphForChar:'y']};
@@ -447,32 +452,40 @@ NSUInteger fontTestNum;
   [self presentContext:context];
 }
 
-// Test 8: squashed / distorted text via CGContextSetTextMatrix.
+// Test 8: squashed / distorted text via CGContextSetTextMatrix. Drives the
+// text matrix with non-uniform x/y scales and a shear to confirm
+// CGContextShowGlyphsAtPoint honours arbitrary 2x2 components, not just
+// uniform scale + rotation. Four passes: wide, tall, sheared (italic-like),
+// and combined shear+non-uniform-scale.
 - (void)test8 {
   CGContextRef context = [self makeContext];
   CGContextSetFont(context, [self testFont]);
-  CGContextSetFontSize(context, 1.0);
+  CGContextSetFontSize(context, 1.0); // overridden by CGContextSetTextMatrix
 
   CGGlyph glyphs[] = {[self glyphForChar:'S'], [self glyphForChar:'q'],
                       [self glyphForChar:'u'], [self glyphForChar:'a'],
                       [self glyphForChar:'s'], [self glyphForChar:'h']};
   size_t count = sizeof(glyphs) / sizeof(glyphs[0]);
 
+  // Wide: sx=48 sy=16, glyphs stretched horizontally.
   CGAffineTransform wide =
       CGAffineTransformMake(48.0, 0.0, 0.0, 16.0, 0.0, 0.0);
   CGContextSetTextMatrix(context, wide);
   CGContextShowGlyphsAtPoint(context, 10.0, 30.0, glyphs, count);
 
+  // Tall: sx=12 sy=40, glyphs squashed horizontally / stretched vertically.
   CGAffineTransform tall =
       CGAffineTransformMake(12.0, 0.0, 0.0, 40.0, 0.0, 0.0);
   CGContextSetTextMatrix(context, tall);
   CGContextShowGlyphsAtPoint(context, 10.0, 70.0, glyphs, count);
 
+  // Sheared (italic-like): sx=24 sy=24 with c=12 (x sheared by y).
   CGAffineTransform sheared =
       CGAffineTransformMake(24.0, 0.0, 12.0, 24.0, 0.0, 0.0);
   CGContextSetTextMatrix(context, sheared);
   CGContextShowGlyphsAtPoint(context, 10.0, 120.0, glyphs, count);
 
+  // Combined: non-uniform scale plus shear in both axes.
   CGAffineTransform skewed =
       CGAffineTransformMake(32.0, 6.0, 10.0, 20.0, 0.0, 0.0);
   CGContextSetTextMatrix(context, skewed);

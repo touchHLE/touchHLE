@@ -11,7 +11,7 @@
 //!   plists, e.g. `plutil -p` or `println!("{:#?}", plist::Value::...);`.
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
-use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use super::ns_string::{from_rust_string, get_static_str, to_rust_string, NSUTF8StringEncoding};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::{NSInteger, NSUInteger};
@@ -34,7 +34,6 @@ pub const CONSTANTS: ConstantExports = &[(
     HostConstant::NSString(NSKeyedArchiveRootObjectKey),
 )];
 
-#[derive(Default)]
 struct NSKeyedUnarchiverHostObject {
     plist: Dictionary,
     current_key: Option<Uid>,
@@ -86,62 +85,24 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initForReadingWithData:(id)data { // NSData *
     if data == nil {
-        release(env, this);
         return nil;
     }
 
     let length: NSUInteger = msg![env; data length];
     let bytes: ConstVoidPtr = msg![env; data bytes];
-
-    // 1. Честная проверка на пустые данные или null-указатель
-    if length == 0 || bytes.is_null() {
-        log!("Warning: [NSKeyedUnarchiver initForReadingWithData:] called with empty data. Returning nil.");
-        release(env, this);
-        return nil;
-    }
-
     let slice = env.mem.bytes_at(bytes.cast(), length);
 
-    // 2. Безопасный парсинг plist вместо жесткого .unwrap()
-    let plist = match Value::from_reader(Cursor::new(slice)) {
-        Ok(p) => p,
-        Err(e) => {
-            log!("Warning: [NSKeyedUnarchiver initForReadingWithData:] failed to parse plist: {:?}", e);
-            release(env, this);
-            return nil;
-        }
-    };
-
-    let plist = match plist.into_dictionary() {
-        Some(d) => d,
-        None => {
-            log!("Warning: [NSKeyedUnarchiver initForReadingWithData:] root is not a dictionary.");
-            release(env, this);
-            return nil;
-        }
-    };
-
-    // 3. Безопасная проверка версии и типа архива
-    if plist.get("$version").and_then(|v| v.as_unsigned_integer()) != Some(100000) {
-        log!("Warning: [NSKeyedUnarchiver initForReadingWithData:] unsupported archiver version.");
-        release(env, this);
-        return nil;
-    }
-
-    if plist.get("$archiver").and_then(|v| v.as_string()) != Some("NSKeyedArchiver") {
-        log!("Warning: [NSKeyedUnarchiver initForReadingWithData:] unsupported archiver type.");
-        release(env, this);
-        return nil;
-    }
-
-    let key_count = plist.get("$objects").and_then(|v| v.as_array()).map_or(0, |a| a.len());
-
-    // 4. Инициализация объекта (borrow_mut вызывается только ПОСЛЕ всех
-    // проверок)
     let host_obj = env.objc.borrow_mut::<NSKeyedUnarchiverHostObject>(this);
     assert!(host_obj.already_unarchived.is_empty());
     assert!(host_obj.current_key.is_none());
     assert!(host_obj.plist.is_empty());
+
+    let plist = Value::from_reader(Cursor::new(slice)).unwrap();
+    let plist = plist.into_dictionary().unwrap();
+    assert!(plist["$version"].as_unsigned_integer() == Some(100000));
+    assert!(plist["$archiver"].as_string() == Some("NSKeyedArchiver"));
+
+    let key_count = plist["$objects"].as_array().unwrap().len();
 
     host_obj.already_unarchived = vec![None; key_count];
     host_obj.plist = plist;
@@ -184,83 +145,61 @@ pub const CLASSES: ClassExports = objc_classes! {
 // if the key is unknown.
 
 - (bool)decodeBoolForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return false; };
-    if let Some(b) = value.as_boolean() { return b; }
-    if let Some(i) = value.as_signed_integer() { return i != 0; }
-    if let Some(u) = value.as_unsigned_integer() { return u != 0; }
-    log!("Warning: decodeBoolForKey: non-boolean value {:?}; returning false.", value);
-    false
+    get_value_to_decode_for_key(env, this, key)
+        .is_some_and(|value| value.as_boolean().unwrap())
 }
 
 - (f64)decodeDoubleForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return 0.0; };
-    if let Some(r) = value.as_real() { return r; }
-    if let Some(i) = value.as_signed_integer() { return i as f64; }
-    if let Some(u) = value.as_unsigned_integer() { return u as f64; }
-    log!("Warning: decodeDoubleForKey: non-numeric value {:?}; returning 0.0.", value);
-    0.0
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0.0,
+        |value| value.as_real().unwrap()
+    )
 }
 
 - (f32)decodeFloatForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return 0.0; };
-    if let Some(r) = value.as_real() { return r as f32; }
-    if let Some(i) = value.as_signed_integer() { return i as f32; }
-    if let Some(u) = value.as_unsigned_integer() { return u as f32; }
-    log!("Warning: decodeFloatForKey: non-numeric value {:?}; returning 0.0.", value);
-    0.0
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0.0,
+        |value| value.as_real().unwrap()
+    ) as f32
 }
 
 - (NSInteger)decodeIntegerForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return 0; };
-    let Some(i) = value.as_signed_integer() else {
-        log!("Warning: decodeIntegerForKey: non-integer value {:?}; returning 0.", value);
-        return 0;
-    };
-    // Clamp to NSInteger range instead of panicking.
-    if i > NSInteger::MAX as i64 { return NSInteger::MAX; }
-    if i < NSInteger::MIN as i64 { return NSInteger::MIN; }
-    i as NSInteger
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ).try_into().unwrap()
 }
 
 - (i32)decodeIntForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return 0; };
-    let Some(i) = value.as_signed_integer() else {
-        log!("Warning: decodeIntForKey: non-integer value {:?}; returning 0.", value);
-        return 0;
-    };
-    if i > i32::MAX as i64 { return i32::MAX; }
-    if i < i32::MIN as i64 { return i32::MIN; }
-    i as i32
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ).try_into().unwrap()
 }
 
 - (i32)decodeInt32ForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return 0; };
-    let Some(i) = value.as_signed_integer() else {
-        log!("Warning: decodeInt32ForKey: non-integer value {:?}; returning 0.", value);
-        return 0;
-    };
-    if i > i32::MAX as i64 { return i32::MAX; }
-    if i < i32::MIN as i64 { return i32::MIN; }
-    i as i32
+    // TODO: Check bounds, raise NSRangeException if it doesn't fit
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    ).try_into().unwrap()
 }
 
 - (i64)decodeInt64ForKey:(id)key { // NSString *
-    let Some(value) = get_value_to_decode_for_key(env, this, key) else { return 0; };
-    let Some(i) = value.as_signed_integer() else {
-        log!("Warning: decodeInt64ForKey: non-integer value {:?}; returning 0.", value);
-        return 0;
-    };
-    i
+    get_value_to_decode_for_key(env, this, key).map_or(
+        0,
+        |value| value.as_signed_integer().unwrap()
+    )
 }
 
 - (id)decodeObjectForKey:(id)key { // NSString*
     let Some(next_uid) = get_value_to_decode_for_key(env, this, key) else {
         return nil;
     };
-    let Some(next_uid) = next_uid.as_uid().copied() else {
-        log!("Warning: decodeObjectForKey: value {:?} is not a UID; returning nil.", next_uid);
-        return nil;
-    };
+    let next_uid = next_uid.as_uid().copied().unwrap();
     let object = unarchive_key(env, this, next_uid);
 
     // on behalf of the caller
@@ -269,37 +208,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (ConstPtr<u8>)decodeBytesForKey:(id)key returnedLength:(MutPtr<NSUInteger>)length {
-    if key == nil {
-        env.mem.write(length, 0);
-        return ConstPtr::null();
-    }
+    assert!(key != nil);
     let Some(data) = get_value_to_decode_for_key(env, this, key)
         .and_then(|value| value.as_data())
         .map(|data| data.to_vec()) else {
             env.mem.write(length, 0);
             return ConstPtr::null();
     };
-    let len: GuestUSize = match data.len().try_into() {
-        Ok(l) => l,
-        Err(_) => {
-            log!("Warning: decodeBytesForKey: data of length {} exceeds u32; truncating.", data.len());
-            GuestUSize::MAX
-        }
-    };
+    let len: GuestUSize = data.len().try_into().unwrap();
     let guest_bytes: MutVoidPtr = env.mem.alloc(len);
     env.objc.borrow_mut::<NSKeyedUnarchiverHostObject>(this)
         .temporary_buffers
         .push(guest_bytes);
-    let copy_len = std::cmp::min(len as usize, data.len());
     env.mem
-        .bytes_at_mut(guest_bytes.cast(), copy_len as GuestUSize)
-        .copy_from_slice(&data[..copy_len]);
+        .bytes_at_mut(guest_bytes.cast(), len)
+        .copy_from_slice(data.as_slice());
     env.mem.write(length, len);
     guest_bytes.cast().cast_const()
 }
 
 - (bool)containsValueForKey:(id)key { // NSString*
-    if key == nil { return false; }
+    assert!(key != nil);
     get_value_to_decode_for_key(env, this, key).is_some()
 }
 
@@ -319,46 +248,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     CGRectFromString(env, string)
 }
 
-// `- (void)finishDecoding`
-// <https://developer.apple.com/documentation/foundation/nskeyedunarchiver/1418233-finishdecoding>
-//
-// Instructs the archiver to construct the final object graph.  Older apps
-// (iOS < 9) call this directly; it is also called implicitly by
-// `+unarchiveObjectWithData:` in Apple's implementation.  Our decode is
-// already eager (objects are materialised as they are requested), so there
-// is nothing to flush here — we simply notify the delegate if one has been
-// set and return.
-- (())finishDecoding {
-    let delegate = env.objc.borrow::<NSKeyedUnarchiverHostObject>(this).delegate;
-    if delegate != nil {
-        // Call the delegate's `unarchiverDidFinish:` method if it responds.
-        let sel = env.objc.lookup_selector("unarchiverDidFinish:");
-        if let Some(sel) = sel {
-            if env.objc.class_has_method(
-                crate::objc::ObjC::read_isa(delegate, &env.mem),
-                sel,
-            ) {
-                let _: () = crate::objc::msg_send_no_type_checking(env, (delegate, sel, this));
-            }
-        }
-    }
-}
-
-// `- (void)setRequiresSecureCoding:(BOOL)flag`
-// <https://developer.apple.com/documentation/foundation/nskeyedunarchiver/1413855-requiressecurecoding>
-//
-// Secure coding is a feature that prevents substitution attacks when
-// deserialising objects.  touchHLE does not implement Class-level
-// conformance checks, so we just store the flag and accept both values
-// without enforcing anything.
-- (())setRequiresSecureCoding:(bool)_flag {
-    // No-op: we do not enforce secure coding checks.
-}
-
-- (bool)requiresSecureCoding {
-    false
-}
-
 @end
 
 };
@@ -368,19 +257,16 @@ fn borrow_host_obj(env: &mut Environment, unarchiver: id) -> &mut NSKeyedUnarchi
 }
 
 fn get_value_to_decode_for_key(env: &mut Environment, unarchiver: id, key: id) -> Option<&Value> {
-    if key == nil {
-        return None;
-    }
     let key = to_rust_string(env, key); // TODO: avoid copying string
     let host_obj = borrow_host_obj(env, unarchiver);
-    let scope_value = match host_obj.current_key {
+    let scope = match host_obj.current_key {
         Some(current_uid) => {
-            let objects = host_obj.plist.get("$objects").and_then(|v| v.as_array())?;
-            objects.get(current_uid.get() as usize)?
+            &host_obj.plist["$objects"].as_array().unwrap()[current_uid.get() as usize]
         }
-        None => host_obj.plist.get("$top")?,
-    };
-    let scope = scope_value.as_dictionary()?;
+        None => &host_obj.plist["$top"],
+    }
+    .as_dictionary()
+    .unwrap();
     scope.get(&key)
 }
 
@@ -395,82 +281,37 @@ fn get_value_to_decode_for_key(env: &mut Environment, unarchiver: id, key: id) -
 /// possibly autorelease it as appropriate.
 fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
     let host_obj = borrow_host_obj(env, unarchiver);
-    let key_idx = key.get() as usize;
-    if key_idx >= host_obj.already_unarchived.len() {
-        log!(
-            "Warning: unarchive_key: uid {} out of range (max {}); returning nil.",
-            key.get(),
-            host_obj.already_unarchived.len()
-        );
-        return nil;
-    }
-    if let Some(existing) = host_obj.already_unarchived[key_idx] {
+    if let Some(existing) = host_obj.already_unarchived[key.get() as usize] {
         return existing;
     }
 
-    let Some(objects) = host_obj.plist.get("$objects").and_then(|v| v.as_array()) else {
-        log!("Warning: unarchive_key: $objects missing or not an array; returning nil.");
-        return nil;
-    };
+    let objects = host_obj.plist["$objects"].as_array().unwrap();
 
-    let Some(item) = objects.get(key_idx) else {
-        log!(
-            "Warning: unarchive_key: uid {} out of $objects range; returning nil.",
-            key.get()
-        );
-        return nil;
-    };
+    let item = &objects[key.get() as usize];
     let new_object = match item {
         // The most general kind of item: a dictionary that contains the info
         // needed to invoke `initWithCoder:` on a class implementing NSCoding.
         Value::Dictionary(dict) => {
-            let Some(class_key) = dict.get("$class").and_then(|v| v.as_uid()).copied() else {
-                log!(
-                    "Warning: unarchive_key: missing $class for uid {}; returning nil.",
-                    key.get()
-                );
-                return nil;
-            };
-            let class_key_idx = class_key.get() as usize;
+            let class_key = dict["$class"].as_uid().copied().unwrap();
             let class;
-            if class_key_idx >= host_obj.already_unarchived.len() {
-                log!(
-                    "Warning: unarchive_key: class uid {} out of range; returning nil.",
-                    class_key.get()
-                );
-                return nil;
-            }
-            if let Some(existing) = host_obj.already_unarchived[class_key_idx] {
+            if let Some(existing) = host_obj.already_unarchived[class_key.get() as usize] {
                 class = existing;
             } else {
-                let Some(class_dict) = objects.get(class_key_idx) else {
-                    log!("Warning: unarchive_key: class uid {} out of $objects range; returning nil.", class_key.get());
-                    return nil;
-                };
-                let Some(class_dict) = class_dict.as_dictionary() else {
-                    log!("Warning: unarchive_key: class entry at uid {} is not a dict; returning nil.", class_key.get());
-                    return nil;
-                };
+                let class_dict = &objects[class_key.get() as usize];
+                let class_dict = class_dict.as_dictionary().unwrap();
 
-                let Some(class_name) = class_dict.get("$classname").and_then(|v| v.as_string())
-                else {
-                    log!("Warning: unarchive_key: missing $classname for class uid {}; returning nil.", class_key.get());
-                    return nil;
-                };
+                let class_name = class_dict["$classname"].as_string().unwrap();
 
                 class = {
                     // get_known_class needs &mut ObjC, so we can't call it
                     // while holding a reference to the class name, since it
                     // is ultimately owned by ObjC via the host object
                     let class_name = class_name.to_string();
-                    if class_name.is_empty() {
-                        log!("Warning: unarchive_key: empty $classname for class uid {}.", class_key.get());
-                    }
                     env.objc.get_known_class(&class_name, &mut env.mem)
                 };
                 let host_obj = borrow_host_obj(env, unarchiver); // reborrow
 
-                host_obj.already_unarchived[class_key_idx] = Some(class);
+                host_obj.already_unarchived[class_key.get() as usize] = Some(class);
             };
 
             let host_obj = borrow_host_obj(env, unarchiver); // reborrow
@@ -501,59 +342,19 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
                 let ulonglong: u64 = uint64;
                 msg![env; number initWithUnsignedLongLong:ulonglong]
             } else {
-                // plist crate docs say this is unreachable, but if we ever
-                // hit it just return a zero NSNumber rather than panicking.
-                log!("Warning: unarchive_key: integer with no signed/unsigned representation; returning 0.");
-                msg![env; number initWithInteger:(0 as NSInteger)]
+                unreachable!(); // according to plist crate docs
             }
         }
-        Value::Real(r) => {
-            let r = *r;
+        Value::Real(val) => {
+            let val = *val;
             let number: id = msg_class![env; NSNumber alloc];
-            msg![env; number initWithDouble:r]
+            msg![env; number initWithDouble:val]
         }
-        Value::Boolean(b) => {
-            let b = *b;
-            let number: id = msg_class![env; NSNumber alloc];
-            msg![env; number initWithBool:b]
-        }
-        Value::Data(data) => {
-            let data = data.clone();
-            let ns_data: id = msg_class![env; NSData alloc];
-            let len: GuestUSize = match data.len().try_into() {
-                Ok(l) => l,
-                Err(_) => GuestUSize::MAX,
-            };
-            let bytes_ptr: MutVoidPtr = env.mem.alloc(len);
-            let copy_len = std::cmp::min(len as usize, data.len());
-            env.mem
-                .bytes_at_mut(bytes_ptr.cast(), copy_len as GuestUSize)
-                .copy_from_slice(&data[..copy_len]);
-            let ns_len: NSUInteger = copy_len as NSUInteger;
-            let bytes_const: ConstVoidPtr = bytes_ptr.cast_const();
-            let result: id = msg![env; ns_data initWithBytes:bytes_const length:ns_len];
-            env.mem.free(bytes_ptr);
-            result
-        }
-        // (Value::Dictionary is handled above)
-        Value::Date(_) | Value::Array(_) | Value::Uid(_) => {
-            log!(
-                "Warning: unarchive_key: unhandled plist variant for uid {}; returning nil.",
-                key.get()
-            );
-            nil
-        }
-        _ => {
-            log!(
-                "Warning: unarchive_key: unknown plist variant for uid {}; returning nil.",
-                key.get()
-            );
-            nil
-        }
+        _ => unimplemented!("Unarchive: {:#?}", item),
     };
 
     let host_obj = borrow_host_obj(env, unarchiver); // reborrow
-    host_obj.already_unarchived[key_idx] = Some(new_object);
+    host_obj.already_unarchived[key.get() as usize] = Some(new_object);
     new_object
 }
 
@@ -625,26 +426,59 @@ pub fn decode_current_data(env: &mut Environment, unarchiver: id, is_mutable: bo
     msg![env; data initWithBytesNoCopy:guest_bytes length:len freeWhenDone:true]
 }
 
+/// Shortcut for use by `[NSString initWithCoder:]`.
+/// TODO: mutability
+pub fn decode_current_string(env: &mut Environment, unarchiver: id) -> id {
+    let key = get_static_str(env, "NS.bytes");
+    // TODO: avoid copying (twice!)
+    let bytes = get_value_to_decode_for_key(env, unarchiver, key)
+        .unwrap()
+        .as_data()
+        .unwrap()
+        .to_vec();
+
+    let len: GuestUSize = bytes.len().try_into().unwrap();
+    let guest_bytes: ConstPtr<u8> = env.mem.alloc(len).cast().cast_const();
+    env.mem
+        .bytes_at_mut(guest_bytes.cast_mut(), len)
+        .copy_from_slice(bytes.as_slice());
+
+    let str: id = msg_class![env; NSString alloc];
+    // TODO: use initWithBytesNoCopy: once implemented
+    let res = msg![env; str initWithBytes:guest_bytes length:len encoding:NSUTF8StringEncoding];
+    env.mem.free(guest_bytes.cast().cast_mut());
+    res
+}
+
+/// Shortcut for use by `[NSNumber initWithCoder:]`.
+pub fn decode_current_number(env: &mut Environment, unarchiver: id) -> id {
+    let num: id = msg_class![env; NSNumber alloc];
+    let int_key = get_static_str(env, "NS.intval");
+    let dbl_key = get_static_str(env, "NS.dblval");
+    let bool_key = get_static_str(env, "NS.boolval");
+    if let Some(value) = get_value_to_decode_for_key(env, unarchiver, int_key) {
+        // TODO: deal with type coercion
+        let longlong = value.as_signed_integer().unwrap();
+        msg![env; num initWithLongLong:longlong]
+    } else if let Some(value) = get_value_to_decode_for_key(env, unarchiver, dbl_key) {
+        // TODO: deal with type coercion
+        let double = value.as_real().unwrap();
+        msg![env; num initWithDouble:double]
+    } else if let Some(value) = get_value_to_decode_for_key(env, unarchiver, bool_key) {
+        // TODO: deal with type coercion
+        let boolean = value.as_boolean().unwrap();
+        msg![env; num initWithBool:boolean]
+    } else {
+        unimplemented!()
+    }
+}
+
 fn keys_for_key(env: &mut Environment, unarchiver: id, key: &str) -> Vec<Uid> {
     let host_obj = borrow_host_obj(env, unarchiver);
-    let Some(objects) = host_obj.plist.get("$objects").and_then(|v| v.as_array()) else {
-        return Vec::new();
-    };
-    let Some(current_key) = host_obj.current_key else {
-        return Vec::new();
-    };
-    let idx = current_key.get() as usize;
-    if idx >= objects.len() {
-        return Vec::new();
-    }
-    let item = &objects[idx];
-    let Some(dict) = item.as_dictionary() else {
-        return Vec::new();
-    };
-    let Some(arr) = dict.get(key).and_then(|v| v.as_array()) else {
-        return Vec::new();
-    };
-    arr.iter()
-        .filter_map(|value| value.as_uid().copied())
+    let objects = host_obj.plist["$objects"].as_array().unwrap();
+    let item = &objects[host_obj.current_key.unwrap().get() as usize];
+    let keys = item.as_dictionary().unwrap()[key].as_array().unwrap();
+    keys.iter()
+        .map(|value| value.as_uid().copied().unwrap())
         .collect()
 }

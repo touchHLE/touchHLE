@@ -1,16 +1,20 @@
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0.
- * If a copy of the MPL was not distributed with this
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-
 //! Audio file decoding and OpenAL bindings.
+//!
+//! The audio file decoding support is an abstraction over various libraries
+//! (currently [hound] and [symphonia]), usage of which should be
+//! confined to this module.
+//!
+//! Resources:
+//! - [Apple Core Audio Format Specification 1.0](https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_intro/CAF_intro.html)
 
-mod caf_decoder;
 mod ima4;
 pub mod openal;
-pub mod symphonia_formats;
+mod symphonia_formats;
 
 pub use ima4::decode_ima4;
 
@@ -29,14 +33,13 @@ pub enum AudioFormat {
         is_float: bool,
         is_little_endian: bool,
     },
-    /// MPEG-4 AAC. The packets exposed by [AudioFile::read_bytes] are ADTS
-    /// frames (each packet carries its own 7-byte ADTS header), which is what
-    /// `audio_queue::decode_buffer` knows how to decode.
-    Mpeg4Aac,
 }
-
+/// Fields have the same meanings as in the Core Audio Format's
+/// Audio Description chunk, which is in turn similar to Core Audio Types'
+/// `AudioStreamBasicDescription`.
 #[derive(Debug)]
 pub struct AudioDescription {
+    /// Hz
     pub sample_rate: f64,
     pub format: AudioFormat,
     pub bytes_per_packet: u32,
@@ -45,71 +48,10 @@ pub struct AudioDescription {
     pub bits_per_channel: u32,
 }
 
-pub struct AacPackets {
-    pub sample_rate: f64,
-    pub channels_per_frame: u32,
-    pub packet_bytes: Vec<u8>,
-    pub packet_offsets: Vec<usize>,
-    pub magic_cookie: Vec<u8>,
-}
-
-impl AacPackets {
-    pub fn packet_count(&self) -> u64 {
-        self.packet_offsets.len().saturating_sub(1) as u64
-    }
-
-    pub fn byte_count(&self) -> u64 {
-        self.packet_bytes.len() as u64
-    }
-
-    pub fn packet_size_upper_bound(&self) -> u32 {
-        self.packet_offsets
-            .windows(2)
-            .map(|w| (w[1] - w[0]) as u32)
-            .max()
-            .unwrap_or(0)
-    }
-
-    /// Byte offset and size of the packet with the given index, or [None] if
-    /// the index is out of range.
-    pub fn packet_info(&self, index: u64) -> Option<(u64, u32)> {
-        let index: usize = index.try_into().ok()?;
-        if index + 1 >= self.packet_offsets.len() {
-            return None;
-        }
-        let start = self.packet_offsets[index];
-        let end = self.packet_offsets[index + 1];
-        Some((start as u64, (end - start) as u32))
-    }
-
-    pub fn read_bytes(&self, offset: u64, buffer: &mut [u8]) -> Result<usize, ()> {
-        let start = offset as usize;
-        let src = self.packet_bytes.get(start..).ok_or(())?;
-        let n = buffer.len().min(src.len());
-        buffer[..n].copy_from_slice(&src[..n]);
-        Ok(n)
-    }
-}
-
-pub struct AudioFile {
-    raw_data: std::sync::Arc<Vec<u8>>,
-    inner: AudioFileInner,
-}
-
-impl Clone for AudioFile {
-    fn clone(&self) -> Self {
-        let inner = Self::parse_inner(self.raw_data.as_ref().clone()).unwrap();
-        AudioFile {
-            raw_data: self.raw_data.clone(),
-            inner,
-        }
-    }
-}
-
+pub struct AudioFile(AudioFileInner);
 enum AudioFileInner {
     Wave(hound::WavReader<Cursor<Vec<u8>>>),
     Symphonia(symphonia_formats::SymphoniaDecodedToPcm),
-    Aac(AacPackets),
 }
 
 impl AudioFile {
@@ -117,11 +59,14 @@ impl AudioFile {
         path: P,
         fs: &Fs,
     ) -> Result<Self, AudioFileOpenError> {
+        // TODO: it would be better not to load the whole file at once
         let Ok(bytes) = fs.read(path.as_ref()) else {
+            // TODO: Handle other FS related errors?
             return Err(AudioFileOpenError::FileReadError);
         };
-        if let Ok(file) = Self::read_from_vec(bytes) {
-            Ok(file)
+
+        if let Ok(bytes) = Self::read_from_vec(bytes) {
+            Ok(bytes)
         } else {
             log!(
                 "Could not decode audio file at path {:?}, likely an unimplemented file format.",
@@ -132,101 +77,27 @@ impl AudioFile {
     }
 
     pub fn read_from_vec(bytes: Vec<u8>) -> Result<Self, AudioFileOpenError> {
-        let inner = Self::parse_inner(bytes.clone())?;
-        Ok(AudioFile {
-            raw_data: std::sync::Arc::new(bytes),
-            inner,
-        })
-    }
-
-    // Extracted parse_inner to fix E0599 and removed duplicate read_from_vec
-    fn parse_inner(bytes: Vec<u8>) -> Result<AudioFileInner, AudioFileOpenError> {
-        // Only accept WAV files that the rest of the pipeline (`audio_description`
-        // and the integer-sample `read_bytes` branch) can losslessly serve.
-        // touchHLE's downstream WAVE consumers (Audio Queue / OpenAL decode in
-        // `audio_toolbox::audio_queue::decode_buffer`) emit 8-bit or 16-bit LPCM
-        // only, so anything else (24-bit Int, 32-bit Int, 32-bit Float per
-        // Microsoft WAVE / IEEE-Float specification — see Apple's Core Audio
-        // Format spec which mirrors the same bit depths,
-        // https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_chunks/CAF_chunks.html)
-        // must be transcoded. Symphonia handles those WAVE variants natively and
-        // produces 16-bit interleaved PCM, which is what the
-        // `AudioFileInner::Symphonia` branch expects. This replaces the previous
-        // `assert!(matches!(bits_per_sample, 8 | 16))` panic that took down the
-        // host whenever a guest opened, e.g., a 32-bit float WAV soundtrack
-        // (`blocksPremium/game loop v3.wav` from log+2).
-        if let Ok(reader) = hound::WavReader::new(Cursor::new(&bytes)) {
-            let spec = reader.spec();
-            if matches!(spec.bits_per_sample, 8 | 16)
-                && spec.sample_format == hound::SampleFormat::Int
-            {
-                let reader = hound::WavReader::new(Cursor::new(bytes)).unwrap();
-                return Ok(AudioFileInner::Wave(reader));
-            }
-            log!(
-                "AudioFile: WAVE with bits_per_sample={} sample_format={:?} cannot be served directly; \
-                 transcoding via Symphonia.",
-                spec.bits_per_sample,
-                spec.sample_format,
-            );
-            // Fall through to the Symphonia path below — Symphonia's WAV
-            // demuxer (`symphonia-bundle-flac`/`symphonia-format-wav`) supports
-            // every PCM WAVE bit depth Apple's iPhone-OS Core Audio accepts
-            // and produces the i16 stream the rest of the pipeline expects.
-        }
-
-        if is_adts_aac(&bytes) {
-            if let Ok(aac) = parse_adts_aac(bytes.clone()) {
-                return Ok(AudioFileInner::Aac(aac));
-            }
-        }
-
-        // CAF (Apple Core Audio Format) handling is split between three
-        // paths:
-        //
-        // 1. AAC inside CAF is exposed as AAC packets, like ADTS `.aac`
-        //    files. `try_parse_caf_aac` extracts the packets with the `caf`
-        //    crate (which, unlike `symphonia-format-caf 0.6.0-alpha.1`,
-        //    handles the legal CAF layout where the Audio Data chunk's
-        //    `mChunkSize` is `-1` — Apple's spec explicitly allows `-1` to
-        //    mean "extends to the end of the file") and wraps each packet
-        //    in an ADTS header so `audio_queue::decode_buffer` can decode
-        //    the resulting stream. See the CAF spec, "The Audio Data Chunk":
-        //    https://developer.apple.com/library/archive/documentation/MusicAudio/Reference/CAFSpec/CAF_chunks/CAF_chunks.html
-        //
-        // 2. For uncompressed LPCM and IMA4 ADPCM CAF files — which is what
-        //    PvZ (`com.popcap.PvZ`) and most other iOS games ship for short
-        //    sound effects — we decode them ourselves in
-        //    `caf_decoder::decode_caf_to_pcm` (Symphonia's CAF demuxer fails
-        //    on the `mChunkSize == -1` layout described above, which is what
-        //    was leaving PvZ silent).
-        //
-        // 3. Anything else inside a CAF container (MP3, ALAC, …) and every
-        //    other supported container falls through to Symphonia, which is
-        //    already wired up with the right format / codec features in
-        //    `Cargo.toml`. Paths 2 and 3 return the same
-        //    `SymphoniaDecodedToPcm` shape (16-bit little-endian interleaved
-        //    PCM) so the rest of the audio pipeline (AudioFile /
-        //    ExtAudioFile / AudioServices / AudioQueue `decode_buffer`'s
-        //    LPCM branch) handles them uniformly.
-        if bytes.len() >= 4 && &bytes[..4] == b"caff" {
-            if let Some(aac) = try_parse_caf_aac(&bytes) {
-                return Ok(AudioFileInner::Aac(aac));
-            }
-            if let Ok(pcm) = caf_decoder::decode_caf_to_pcm(Cursor::new(bytes.clone())) {
-                return Ok(AudioFileInner::Symphonia(pcm));
-            }
-        }
-
-        if let Ok(pcm) = symphonia_formats::decode_symphonia_to_pcm(Cursor::new(bytes)) {
-            Ok(AudioFileInner::Symphonia(pcm))
+        // WavReader::new() consume the reader (in this case, a Cursor)
+        // passed to it. This is a bit annoying considering we don't know
+        // which is appropriate for the file. This is worked around here by
+        // using temporary readers for checking if the file is the supported
+        // format, then recreating the reader if that works.
+        if hound::WavReader::new(Cursor::new(&bytes)).is_ok() {
+            let reader = hound::WavReader::new(Cursor::new(bytes)).unwrap();
+            Ok(AudioFile(AudioFileInner::Wave(reader)))
+        // TODO: Real MP3/MP4/Non-linear PCM container handling. Currently we
+        // are immediately decoding the entire file to PCM and acting as if
+        // it's a PCM file, simply because because this is easier. Full MP3
+        // support would require a lot of changes in Audio Toolbox.
+        } else if let Ok(pcm) = symphonia_formats::decode_symphonia_to_pcm(Cursor::new(bytes)) {
+            Ok(AudioFile(AudioFileInner::Symphonia(pcm)))
         } else {
             Err(AudioFileOpenError::FileDecodeError)
         }
     }
 
     pub fn audio_description(&self) -> AudioDescription {
-        match self.inner {
+        match self.0 {
             AudioFileInner::Wave(ref wave_reader) => {
                 let hound::WavSpec {
                     channels,
@@ -234,14 +105,12 @@ impl AudioFile {
                     bits_per_sample,
                     sample_format,
                 } = wave_reader.spec();
-                // `parse_inner` already routes anything other than 8-/16-bit
-                // PCM through Symphonia, so reaching this branch with another
-                // spec would mean a regression in `parse_inner`. Keep these as
-                // `debug_assert!` so a release build can still serve a sensible
-                // description if invariants are ever loosened.
-                debug_assert!(matches!(bits_per_sample, 8 | 16));
-                debug_assert!(sample_format == hound::SampleFormat::Int);
-                let _ = sample_format;
+                // Hound supports unsigned 8-bit, signed 16-bit, signed 24-bit
+                // and floating-point 32-bit linear PCM. We should expose all of
+                // these eventually, but we should only expose formats we've
+                // tested.
+                assert!(matches!(bits_per_sample, 8 | 16));
+                assert!(sample_format == hound::SampleFormat::Int);
 
                 AudioDescription {
                     sample_rate: sample_rate.into(),
@@ -270,22 +139,6 @@ impl AudioFile {
                 channels_per_frame: channels,
                 bits_per_channel: 16,
             },
-            AudioFileInner::Aac(ref aac) => AudioDescription {
-                sample_rate: aac.sample_rate,
-                format: AudioFormat::Mpeg4Aac,
-                bytes_per_packet: 0,
-                frames_per_packet: 1024,
-                channels_per_frame: aac.channels_per_frame,
-                bits_per_channel: 0,
-            },
-        }
-    }
-
-    /// The AAC packets of this file, if it is an AAC file.
-    pub fn aac_packets(&self) -> Option<&AacPackets> {
-        match self.inner {
-            AudioFileInner::Aac(ref aac) => Some(aac),
-            _ => None,
         }
     }
 
@@ -298,109 +151,85 @@ impl AudioFile {
             ..
         } = self.audio_description();
         if !matches!(format, AudioFormat::LinearPcm { .. }) {
-            // Callers only invoke this for the Wave/PCM path where the
-            // computation is meaningful. A compressed format here means
-            // something else is calling us for a CAF/AAC track we shouldn't
-            // be sampling; return a safe sentinel (1) and log so we don't
-            // tear the host down.
-            log!(
-                "Warning: AudioFile::bytes_per_sample(): called on compressed format {:?}; returning 1.",
-                format
-            );
-            return 1;
-        }
-        if frames_per_packet == 0 || channels_per_frame == 0 {
-            log!(
-                "Warning: AudioFile::bytes_per_sample(): degenerate description \
-                 (frames_per_packet={}, channels_per_frame={}); returning 1.",
-                frames_per_packet,
-                channels_per_frame
-            );
-            return 1;
+            panic!("{format:?} is a compressed format!");
         }
         ((bytes_per_packet / frames_per_packet) / channels_per_frame).into()
     }
 
     pub fn byte_count(&self) -> u64 {
-        match self.inner {
+        match self.0 {
             AudioFileInner::Wave(ref wave_reader) => {
-                let sample_count = wave_reader.len();
+                let sample_count = wave_reader.len(); // position-independent
                 u64::from(sample_count) * self.bytes_per_sample()
             }
             AudioFileInner::Symphonia(symphonia_formats::SymphoniaDecodedToPcm {
                 ref bytes,
                 ..
             }) => bytes.len() as u64,
-            AudioFileInner::Aac(ref aac) => aac.byte_count(),
         }
     }
 
     pub fn packet_count(&self) -> u64 {
-        match self.inner {
+        match self.0 {
             AudioFileInner::Wave(_)
             | AudioFileInner::Symphonia(symphonia_formats::SymphoniaDecodedToPcm { .. }) => {
+                // never variable-size
                 self.byte_count() / u64::from(self.packet_size_fixed())
             }
-            AudioFileInner::Aac(ref aac) => aac.packet_count(),
         }
     }
 
+    /// Returns the packet size if this audio format has a constant packet size,
+    /// panics if not.
     pub fn packet_size_fixed(&self) -> u32 {
         let AudioDescription {
             bytes_per_packet, ..
         } = self.audio_description();
+        assert!(bytes_per_packet != 0);
         bytes_per_packet
     }
 
     pub fn packet_size_upper_bound(&self) -> u32 {
-        match self.inner {
-            // Variable packet size: report the largest actual packet.
-            AudioFileInner::Aac(ref aac) => aac.packet_size_upper_bound(),
-            _ => self.packet_size_fixed(),
-        }
+        self.packet_size_fixed() // variable size not implemented
     }
 
-    pub fn magic_cookie(&self) -> &[u8] {
-        match self.inner {
-            AudioFileInner::Aac(ref aac) => &aac.magic_cookie,
-            _ => &[],
-        }
-    }
-
+    /// Read `buffer.len()` bytes of audio data from byte offset `offset`.
+    /// Returns the number of bytes read.
     pub fn read_bytes(&mut self, offset: u64, buffer: &mut [u8]) -> Result<usize, ()> {
-        match self.inner {
+        match self.0 {
             AudioFileInner::Wave(_) => {
                 let bytes_per_sample = self.bytes_per_sample();
                 assert!(offset.is_multiple_of(bytes_per_sample));
                 assert!(u64::try_from(buffer.len())
                     .unwrap()
                     .is_multiple_of(bytes_per_sample));
+
                 let sample_count = u64::try_from(buffer.len()).unwrap() / bytes_per_sample;
                 let sample_count: usize = sample_count.try_into().unwrap();
-                let AudioFileInner::Wave(ref mut wave_reader) = self.inner else {
+
+                let AudioFileInner::Wave(ref mut wave_reader) = self.0 else {
                     unreachable!()
                 };
+
                 let channels: u64 = wave_reader.spec().channels.into();
+                // WavReader expects number of samples which are
+                // independent of the number of channels here
                 wave_reader
                     .seek((offset / (bytes_per_sample * channels)).try_into().unwrap())
                     .map_err(|_| ())?;
+
                 let mut byte_offset = 0;
                 for sample in wave_reader.samples().take(sample_count) {
                     let sample: i16 = sample.map_err(|_| ())?;
                     match bytes_per_sample {
+                        // From the OpenAL docs: 8-bit PCM data is expressed as
+                        // an unsigned value over the range 0 to 255, 128 being
+                        // an audio output level of zero. Loaded wav samples
+                        // must be converted to that from signed with 0 as
+                        // output level 0.
                         1 => buffer[byte_offset] = (sample + 128) as u8,
                         2 => buffer[byte_offset..][..2].copy_from_slice(&sample.to_le_bytes()),
-                        other => {
-                            // 8-bit and 16-bit PCM cover the vast majority of
-                            // iOS WAV assets. Anything else means a broken/
-                            // unusual WAVE header; surface an error to the
-                            // caller rather than crashing the host.
-                            log!(
-                                "Warning: AudioFile::read_bytes(WAV): unsupported bytes_per_sample {}; aborting read.",
-                                other
-                            );
-                            return Err(());
-                        }
+                        _ => todo!(),
                     }
                     byte_offset += bytes_per_sample as usize;
                 }
@@ -416,176 +245,18 @@ impl AudioFile {
                 buffer[..bytes_to_read].copy_from_slice(bytes);
                 Ok(bytes_to_read)
             }
-            AudioFileInner::Aac(ref aac) => aac.read_bytes(offset, buffer),
         }
     }
-}
 
-const CAF_FORMAT_AAC_LC: &[u8; 4] = b"aac ";
-
-/// ADTS header sampling-frequency-index table (ISO/IEC 14496-3).
-const ADTS_SAMPLE_RATES: [u32; 13] = [
-    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
-];
-
-/// Builds the 7-byte ADTS header (protection absent) for an AAC-LC packet of
-/// `payload_len` bytes.
-fn adts_header(sample_rate_index: u8, channel_config: u8, payload_len: usize) -> [u8; 7] {
-    let frame_len = payload_len + 7;
-    [
-        0xFF,
-        0xF1, // MPEG-4, layer 0, no CRC
-        // profile = AAC LC (Audio Object Type 2, encoded as 2 - 1 = 1)
-        (0b01 << 6) | (sample_rate_index << 2) | (channel_config >> 2),
-        ((channel_config & 0x3) << 6) | (((frame_len >> 11) & 0x3) as u8),
-        ((frame_len >> 3) & 0xFF) as u8,
-        (((frame_len & 0x7) << 5) as u8) | 0x1F, // buffer fullness (VBR)
-        0xFC, // buffer fullness (cont.), 1 AAC frame per ADTS frame
-    ]
-}
-
-/// Extracts the AAC packets of a CAF file, wrapping each one in an ADTS
-/// header so that the result can be decoded as a plain ADTS stream
-/// (which is what `audio_queue::decode_buffer` expects for AAC buffers).
-fn try_parse_caf_aac(bytes: &[u8]) -> Option<AacPackets> {
-    let format_id = caf_read_format_id(bytes)?;
-    if &format_id != CAF_FORMAT_AAC_LC {
-        return None;
+    pub fn estimated_duration(&self) -> f64 {
+        let AudioDescription {
+            sample_rate,
+            bytes_per_packet,
+            frames_per_packet,
+            ..
+        } = self.audio_description();
+        assert!(bytes_per_packet != 0); // TODO
+        self.byte_count() as f64 * frames_per_packet as f64
+            / (bytes_per_packet as f64 * sample_rate)
     }
-
-    let mut reader = caf::CafPacketReader::new(Cursor::new(bytes), vec![]).ok()?;
-
-    let sample_rate = reader.audio_desc.sample_rate;
-    let channels_per_frame = reader.audio_desc.channels_per_frame;
-
-    let sample_rate_index = ADTS_SAMPLE_RATES
-        .iter()
-        .position(|&rate| f64::from(rate) == sample_rate)? as u8;
-    if !(1..=7).contains(&channels_per_frame) {
-        return None;
-    }
-    let channel_config = channels_per_frame as u8;
-
-    let magic_cookie: Vec<u8> = reader
-        .chunks
-        .iter()
-        .find_map(|chunk| {
-            if let caf::chunks::CafChunk::MagicCookie(ref cookie) = chunk {
-                Some(cookie.clone())
-            } else {
-                None
-            }
-        })
-        .unwrap_or_default();
-    let packet_count = reader.get_packet_count()?;
-    let mut packet_bytes = Vec::new();
-    let mut packet_offsets = Vec::with_capacity(packet_count + 1);
-
-    reader.seek_to_packet(0).ok()?;
-    for _ in 0..packet_count {
-        let pkt_size = reader.next_packet_size()?;
-        // The ADTS frame length field is 13 bits.
-        if pkt_size + 7 > 0x1FFF {
-            return None;
-        }
-        packet_offsets.push(packet_bytes.len());
-        packet_bytes.extend_from_slice(&adts_header(sample_rate_index, channel_config, pkt_size));
-        let start = packet_bytes.len();
-        packet_bytes.resize(start + pkt_size, 0u8);
-        reader.read_packet_into(&mut packet_bytes[start..]).ok()?;
-    }
-    packet_offsets.push(packet_bytes.len());
-
-    Some(AacPackets {
-        sample_rate,
-        channels_per_frame,
-        packet_bytes,
-        packet_offsets,
-        magic_cookie,
-    })
-}
-
-fn caf_read_format_id(bytes: &[u8]) -> Option<[u8; 4]> {
-    if bytes.len() < 8 {
-        return None;
-    }
-    if &bytes[..4] != b"caff" {
-        return None;
-    }
-    let mut pos = 8usize;
-    while pos + 12 <= bytes.len() {
-        let chunk_type = &bytes[pos..pos + 4];
-        let chunk_size = i64::from_be_bytes(bytes[pos + 4..pos + 12].try_into().ok()?);
-        pos += 12;
-        if chunk_type == b"desc" && chunk_size >= 12 {
-            let data = bytes.get(pos..pos + chunk_size as usize)?;
-            return data[8..12].try_into().ok();
-        }
-        pos = pos.checked_add(chunk_size.try_into().ok()?)?;
-    }
-    None
-}
-
-fn is_adts_aac(bytes: &[u8]) -> bool {
-    if bytes.len() < 2 {
-        return false;
-    }
-    (bytes[0] == 0xFF) && ((bytes[1] & 0xF0) == 0xF0)
-}
-
-fn parse_adts_aac(bytes: Vec<u8>) -> Result<AacPackets, ()> {
-    const SAMPLE_RATES: [u32; 13] = [
-        96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
-    ];
-    let mut pos = 0usize;
-    let mut sample_rate = 44100f64;
-    let mut channels_per_frame = 2u32;
-    let mut packet_bytes: Vec<u8> = Vec::new();
-    let mut packet_offsets: Vec<usize> = Vec::new();
-    let mut first = true;
-    while pos + 7 <= bytes.len() {
-        if bytes[pos] != 0xFF || (bytes[pos + 1] & 0xF0) != 0xF0 {
-            if packet_offsets.is_empty() {
-                return Err(());
-            }
-            break;
-        }
-
-        let protection_absent = (bytes[pos + 1] & 0x01) != 0;
-        let header_size: usize = if protection_absent { 7 } else { 9 };
-        if first {
-            let sfi = ((bytes[pos + 2] & 0x3C) >> 2) as usize;
-            if sfi < SAMPLE_RATES.len() {
-                sample_rate = SAMPLE_RATES[sfi].into();
-            }
-            let ch_cfg = ((bytes[pos + 2] & 0x01) << 2) | ((bytes[pos + 3] & 0xC0) >> 6);
-            channels_per_frame = if ch_cfg == 0 { 2 } else { u32::from(ch_cfg) };
-            first = false;
-        }
-
-        let frame_length = (((bytes[pos + 3] & 0x03) as usize) << 11)
-            | ((bytes[pos + 4] as usize) << 3)
-            | ((bytes[pos + 5] as usize) >> 5);
-
-        if frame_length < header_size || pos + frame_length > bytes.len() {
-            break;
-        }
-
-        packet_offsets.push(packet_bytes.len());
-        packet_bytes.extend_from_slice(&bytes[pos..pos + frame_length]);
-        pos += frame_length;
-    }
-
-    if packet_offsets.is_empty() {
-        return Err(());
-    }
-    packet_offsets.push(packet_bytes.len());
-
-    Ok(AacPackets {
-        sample_rate,
-        channels_per_frame,
-        packet_bytes,
-        packet_offsets,
-        magic_cookie: Vec::new(),
-    })
 }

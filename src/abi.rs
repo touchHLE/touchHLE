@@ -7,7 +7,6 @@
 //! calling conventions.
 //!
 //! Useful resources:
-//!
 //! * Apple's [Writing ARMv6 code for iOS](https://developer.apple.com/documentation/xcode/writing-armv6-code-for-ios), read together with Arm's [Procedure Call Standard for the Arm Architecture (AAPCS32)](https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst).
 //!
 //! See also: [crate::mem::SafeRead] and [crate::mem::SafeWrite].
@@ -23,9 +22,8 @@ pub const FRAME_POINTER: usize = 7;
 /// bit. This is also used as an (untyped) guest function pointer.
 ///
 /// It is wrapped in a struct to prevent mixing with other pointers.
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug)]
 pub struct GuestFunction(ConstVoidPtr);
-
 unsafe impl SafeRead for GuestFunction {}
 impl GuestFunction {
     pub const THUMB_BIT: u32 = 0x1;
@@ -132,9 +130,7 @@ macro_rules! impl_CallFromGuest {
                 let args: ($($P,)*) = {
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, Ptr::from_bits(regs[Cpu::SP]), &env.mem),)*)
                 };
-
-                log_dbg!("CallFromGuest"); // Убрали попытку вывести args из-за ограничений трейта Debug
-
+                log_dbg!("CallFromGuest {:?}", args);
                 let retval = self(env, $(args.$p),*);
                 log_dbg!("CallFromGuest => {:?}", retval);
                 if let Some(retval_ptr) = retval_ptr {
@@ -161,9 +157,7 @@ macro_rules! impl_CallFromGuest {
                     reg_offset,
                     stack_pointer: Ptr::from_bits(regs[Cpu::SP])
                 });
-
-                log_dbg!("CallFromGuest with va_list: {:?}", va_list); // Аналогично убрали args
-
+                log_dbg!("CallFromGuest {:?}, ...{:?}", args, va_list);
                 let retval = self(env, $(args.$p,)* va_list);
                 log_dbg!("CallFromGuest => {:?}", retval);
                 if let Some(retval_ptr) = retval_ptr {
@@ -188,11 +182,6 @@ impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10);
-impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11);
-impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12);
-impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12, 13 => P13);
-impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12, 13 => P13, 14 => P14);
-impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12, 13 => P13, 14 => P14, 15 => P15);
 
 /// This trait represents a guest or host function that can be called from host
 /// code, but using the guest ABI. See [CallFromGuest], which this is the
@@ -249,18 +238,14 @@ macro_rules! impl_CallFromHost {
                     write_next_arg(&mut reg_offset, regs, &mut env.mem, ptr);
                     ptr
                 });
-
                 let old_sp = extend_stack_for_args(
                     0 $(+ <$P as GuestArg>::REG_COUNT)*,
                     regs,
                 );
-
                 $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
                 self.call_from_guest(env);
-
                 let regs = env.cpu.regs_mut(); // reborrow
                 regs[Cpu::SP] = old_sp;
-
                 if let Some(retval_ptr) = retval_ptr {
                     regs[Cpu::SP] += R::SIZE_IN_MEM.unwrap();
                     <R as GuestRet>::from_mem(retval_ptr, &env.mem)
@@ -294,7 +279,6 @@ macro_rules! impl_CallFromHost {
                     let old_fp = regs[FRAME_POINTER];
                     regs[Cpu::SP] -= 8;
                     regs[FRAME_POINTER] = regs[Cpu::SP];
-
                     env.mem
                         .write(Ptr::from_bits(regs[Cpu::SP]), old_fp);
                     env.mem.write(Ptr::from_bits(regs[Cpu::SP] + 4), old_lr);
@@ -303,12 +287,10 @@ macro_rules! impl_CallFromHost {
 
                 assert!(R::SIZE_IN_MEM.is_none()); // pointer return TODO
                 let regs = env.cpu.regs_mut();
-
                 let _ = extend_stack_for_args(
                     0 $(+ <$P as GuestArg>::REG_COUNT)*,
                     regs,
                 );
-
                 let mut reg_offset = 0;
                 $(write_next_arg::<$P>(&mut reg_offset, regs, &mut env.mem, args.$p);)*
 
@@ -343,13 +325,6 @@ impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12, 13 => P13);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12, 13 => P13, 14 => P14);
-impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12, 13 => P13, 14 => P14, 15 => P15);
 
 /// Calling convention translation for a function argument type.
 pub trait GuestArg: std::fmt::Debug + Sized {
@@ -380,6 +355,7 @@ fn read_next_arg<T: GuestArg>(
     // arbitrary limit. 16 is high enough for everything right now.
     let mut fake_regs = [0u32; 16];
     let fake_regs = &mut fake_regs[0..T::REG_COUNT];
+
     for fake_reg in fake_regs.iter_mut() {
         if *reg_offset < 4 {
             *fake_reg = regs[*reg_offset];
@@ -498,7 +474,6 @@ impl_GuestArg_with!(u16, u32);
 impl_GuestArg_with!(i16, u32);
 impl_GuestArg_with!(u8, u32);
 impl_GuestArg_with!(i8, u32);
-impl_GuestArg_with!(usize, u32);
 
 impl GuestArg for bool {
     const REG_COUNT: usize = 1;
@@ -551,12 +526,7 @@ impl GuestArg for VaList {
         }
     }
     fn to_regs(self, _regs: &mut [u32]) {
-        // Returning a VaList by value is not part of the AAPCS for guest
-        // code, and we never need to write one back to register state.
-        // Log it instead of panicking if someone happens to invoke it.
-        log!(
-            "Warning: VaList::to_regs called; var-args are read from the stack, never written back. Ignoring."
-        );
+        todo!()
     }
 }
 
@@ -604,33 +574,23 @@ pub trait GuestRet: std::fmt::Debug + Sized {
     /// Read the return value from registers.
     fn from_regs(regs: &[u32]) -> Self {
         let _ = regs;
-        log!(
-            "Warning: GuestRet::from_regs called on a type that did not override it; this is a bug in the ABI implementation. Returning a default-constructed value would be UB; aborting this call."
-        );
-        panic!("GuestRet::from_regs: default impl invoked")
+        panic!()
     }
     /// Write the return value to registers.
     fn to_regs(self, regs: &mut [u32]) {
         let _ = regs;
-        log!(
-            "Warning: GuestRet::to_regs called on a type that did not override it; this is a bug in the ABI implementation."
-        );
+        panic!()
     }
 
     /// Read the return value from memory.
     fn from_mem(ptr: ConstVoidPtr, mem: &Mem) -> Self {
         let _ = (ptr, mem);
-        log!(
-            "Warning: GuestRet::from_mem called on a type that did not override it; this is a bug in the ABI implementation."
-        );
-        panic!("GuestRet::from_mem: default impl invoked")
+        panic!()
     }
     /// Write the return value to memory.
     fn to_mem(self, ptr: MutVoidPtr, mem: &mut Mem) {
         let _ = (ptr, mem);
-        log!(
-            "Warning: GuestRet::to_mem called on a type that did not override it; this is a bug in the ABI implementation."
-        );
+        panic!()
     }
 }
 
@@ -657,6 +617,7 @@ macro_rules! impl_GuestRet_for_large_struct {
         impl $crate::abi::GuestRet for $for {
             const SIZE_IN_MEM: Option<$crate::mem::GuestUSize> =
                 Some($crate::mem::guest_size_of::<$for>());
+
             fn from_mem(ptr: $crate::mem::ConstVoidPtr, mem: &$crate::mem::Mem) -> Self {
                 let ptr = ptr.cast::<Self>();
                 mem.read(ptr)
@@ -695,7 +656,6 @@ impl_GuestRet_with!(u16, u32);
 impl_GuestRet_with!(i16, u32);
 impl_GuestRet_with!(u8, u32);
 impl_GuestRet_with!(i8, u32);
-impl_GuestRet_with!(usize, u32);
 
 impl GuestRet for bool {
     fn from_regs(regs: &[u32]) -> Self {

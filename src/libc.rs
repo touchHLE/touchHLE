@@ -4,31 +4,24 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! Our implementations of various things that Apple's libSystem would provide.
-//!
 //! On other platforms these are part of the "libc", so let's call it that.
 //!
 //! Useful resources:
-//!
 //! - Apple's [iOS Manual Pages](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/) (contains what would be `man` pages if iOS had a command line)
 
-pub mod aio;
+mod generic_char;
+
 pub mod arpa;
-pub mod asl;
-pub mod blocks;
 pub mod clocale;
 pub mod crypto;
 pub mod ctype;
 pub mod cxxabi;
 pub mod dirent;
-pub mod dispatch;
 pub mod dlfcn;
 pub mod dns_sd;
 pub mod errno;
-pub mod execinfo;
 pub mod fnmatch;
-mod generic_char;
 pub mod glob;
-pub mod globals;
 pub mod ifaddrs;
 pub mod keymgr;
 pub mod libkern;
@@ -36,7 +29,6 @@ pub mod mach;
 pub mod mach_o;
 pub mod malloc;
 pub mod math;
-pub mod mmap;
 pub mod net;
 pub mod netdb;
 pub mod posix_io;
@@ -45,7 +37,6 @@ pub mod sched;
 pub mod semaphore;
 pub mod setjmp;
 pub mod signal;
-pub mod ssp;
 pub mod stdio;
 pub mod stdlib;
 pub mod string;
@@ -53,52 +44,23 @@ pub mod sys;
 pub mod sysctl;
 pub mod time;
 pub mod unistd;
-pub mod uuid;
 pub mod wchar;
 
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     path: "/usr/lib/libSystem.B.dylib",
-    aliases: &[
-        "/usr/lib/libSystem.dylib",
-        // Many iOS apps (especially Unity/Mono-based) attempt to dlopen libc
-        // under various names. On Darwin, libc is part of libSystem — these
-        // aliases let dlopen succeed instead of returning NULL.
-        "/usr/lib/libc.dylib",
-        "libc.dylib",
-        "libc.so",
-        "libc.bundle",
-        "./libc.dylib",
-        "./libc.so",
-        "./libc.bundle",
-        "libc",
-    ],
+    aliases: &["/usr/lib/libSystem.dylib"],
     class_exports: &[],
-    constant_exports: &[
-        ctype::CONSTANTS,
-        dispatch::CONSTANTS,
-        globals::CONSTANTS,
-        netdb::CONSTANTS,
-        stdio::CONSTANTS,
-        mach::init::CONSTANTS,
-        math::CONSTANTS,
-        signal::CONSTANTS,
-        ssp::CONSTANTS,
-    ],
+    constant_exports: &[ctype::CONSTANTS, stdio::CONSTANTS, mach::init::CONSTANTS],
     function_exports: &[
-        aio::FUNCTIONS,
         arpa::inet::FUNCTIONS,
-        asl::FUNCTIONS,
-        blocks::FUNCTIONS,
         clocale::FUNCTIONS,
         ctype::FUNCTIONS,
         cxxabi::FUNCTIONS,
         crypto::FUNCTIONS,
         dirent::FUNCTIONS,
-        dispatch::FUNCTIONS,
         dlfcn::FUNCTIONS,
         dns_sd::FUNCTIONS,
         errno::FUNCTIONS,
-        execinfo::FUNCTIONS,
         fnmatch::FUNCTIONS,
         glob::FUNCTIONS,
         ifaddrs::FUNCTIONS,
@@ -118,7 +80,6 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         mach_o::FUNCTIONS,
         malloc::FUNCTIONS,
         math::FUNCTIONS,
-        mmap::FUNCTIONS,
         net::if_::FUNCTIONS,
         netdb::FUNCTIONS,
         posix_io::FUNCTIONS,
@@ -128,18 +89,17 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         pthread::key::FUNCTIONS,
         pthread::mutex::FUNCTIONS,
         pthread::once::FUNCTIONS,
-        pthread::rwlock::FUNCTIONS,
         pthread::thread::FUNCTIONS,
         sched::FUNCTIONS,
         semaphore::FUNCTIONS,
         setjmp::FUNCTIONS,
         signal::FUNCTIONS,
-        ssp::FUNCTIONS,
         stdio::FUNCTIONS,
         stdio::printf::FUNCTIONS,
         stdlib::FUNCTIONS,
         stdlib::qsort::FUNCTIONS,
         string::FUNCTIONS,
+        sys::mman::FUNCTIONS,
         sys::mount::FUNCTIONS,
         sys::ptrace::FUNCTIONS,
         sys::timeb::FUNCTIONS,
@@ -149,7 +109,6 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         sysctl::FUNCTIONS,
         time::FUNCTIONS,
         unistd::FUNCTIONS,
-        uuid::FUNCTIONS,
         wchar::FUNCTIONS,
     ],
 };
@@ -157,25 +116,20 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
-    aio: aio::State,
     dirent: dirent::State,
-    dispatch: dispatch::State,
     keymgr: keymgr::State,
-    malloc: malloc::State,
     math: math::State,
-    netdb: netdb::State,
-    pub posix_io: posix_io::State,
+    posix_io: posix_io::State,
     pub pthread: pthread::State,
     pub semaphore: semaphore::State,
     pub socket: sys::socket::State,
     stdlib: stdlib::State,
     string: string::State,
-    signal: signal::State,
-    stdio: stdio::State,
+    pub stdio: stdio::State,
     time: time::State,
     errno: errno::State,
     clocale: clocale::State,
-    mach_o: mach_o::State,
     mach_vm: mach::vm_map::State,
-    mmap: mmap::State,
+    malloc: malloc::State,
+    mman: sys::mman::State,
 }

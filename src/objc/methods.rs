@@ -20,10 +20,9 @@ use std::any::TypeId;
 ///
 /// The name is standard Objective-C.
 ///
-/// In our implementation, we have both "host methods" (Rust functions)
-/// and "guest methods" (functions in the guest app). Either way, the
-/// function needs to conform to the same ABI: [id] and [SEL] must be
-/// its first two parameters.
+/// In our implementation, we have both "host methods" (Rust functions) and
+/// "guest methods" (functions in the guest app). Either way, the function needs
+/// to conform to the same ABI: [id] and [SEL] must be its first two parameters.
 #[allow(clippy::upper_case_acronyms)]
 pub enum IMP {
     Host(&'static dyn HostIMP),
@@ -38,8 +37,7 @@ pub trait HostIMP: CallFromGuest {
 
 macro_rules! impl_HostIMP {
     ( $($P:ident),* ) => {
-        impl<R, $($P,)*> HostIMP
-            for fn(&mut Environment, id, SEL, $($P,)*) -> R
+        impl<R, $($P,)*> HostIMP for fn(&mut Environment, id, SEL, $($P,)*) -> R
         where
             R: GuestRet + 'static,
             $($P: GuestArg + 'static,)*
@@ -48,25 +46,19 @@ macro_rules! impl_HostIMP {
                 <(R, (id, SEL, $($P,)*)) as MsgSendSignature>::type_info()
             }
         }
-        impl<R, $($P,)*> HostIMP
-            for fn(&mut Environment, id, SEL, $($P,)* DotDotDot) -> R
+        impl<R, $($P,)*> HostIMP for fn(&mut Environment, id, SEL, $($P,)* DotDotDot) -> R
         where
             R: GuestRet + 'static,
             $($P: GuestArg + 'static,)*
         {
             fn type_info(&self) -> (TypeId, &'static str) {
-                // Host-to-host message calls with var-args are not yet
-                // supported; surface a unique unit type so the runtime can
-                // detect a mismatch without panicking from inside the host
-                // method registration path.
-                (TypeId::of::<fn(DotDotDot) -> R>(), "host_varargs_unsupported")
+                todo!("host-to-host message calls with var-args"); // TODO
             }
         }
 
-        // Currently there is a one-to-one mapping between valid host
-        // IMP parameters and valid host message send arguments, so the
-        // traits for the latter are also implemented here for
-        // convenience.
+        // Currently there is a one-to-one mapping between valid host IMP
+        // parameters and valid host message send arguments, so the traits for
+        // the latter are also implemented here for convenience.
 
         impl<R, $($P,)*> MsgSendSignature for (R, (id, SEL, $($P,)*))
         where
@@ -74,8 +66,7 @@ macro_rules! impl_HostIMP {
             $($P: GuestArg + 'static,)*
         {
         }
-        impl<R, $($P,)*> MsgSendSuperSignature
-            for (R, (ConstPtr<objc_super>, SEL, $($P,)*))
+        impl<R, $($P,)*> MsgSendSuperSignature for (R, (ConstPtr<objc_super>, SEL, $($P,)*))
         where
             R: GuestRet + 'static,
             $($P: GuestArg + 'static,)*
@@ -91,53 +82,13 @@ impl_HostIMP!(P1, P2);
 impl_HostIMP!(P1, P2, P3);
 impl_HostIMP!(P1, P2, P3, P4);
 impl_HostIMP!(P1, P2, P3, P4, P5);
-impl_HostIMP!(P1, P2, P3, P4, P5, P6);
-
-// --- Extended HostIMP/MsgSendSuperSignature for higher-arity selectors ---
-//
-// A handful of Apple selectors take 7+ message arguments, e.g.
-// -[NSString getBytes:maxLength:usedLength:encoding:options:range:remainingRange:].
-// The matching MsgSendSignature impls already live in messages.rs, so to
-// avoid trait-impl conflicts we only fill in the HostIMP and
-// MsgSendSuperSignature halves here.
-macro_rules! impl_HostIMP_high_arity {
-    ( $($P:ident),* ) => {
-        impl<R, $($P,)*> HostIMP
-            for fn(&mut Environment, id, SEL, $($P,)*) -> R
-        where
-            R: GuestRet + 'static,
-            $($P: GuestArg + 'static,)*
-        {
-            fn type_info(&self) -> (TypeId, &'static str) {
-                <(R, (id, SEL, $($P,)*)) as MsgSendSignature>::type_info()
-            }
-        }
-        impl<R, $($P,)*> HostIMP
-            for fn(&mut Environment, id, SEL, $($P,)* DotDotDot) -> R
-        where
-            R: GuestRet + 'static,
-            $($P: GuestArg + 'static,)*
-        {
-            fn type_info(&self) -> (TypeId, &'static str) {
-                (TypeId::of::<fn(DotDotDot) -> R>(), "host_varargs_unsupported")
-            }
-        }
-        // NOTE: MsgSendSignature and MsgSendSuperSignature impls for 7–9
-        // arities already live in src/objc/messages.rs.
-    }
-}
-
-impl_HostIMP_high_arity!(P1, P2, P3, P4, P5, P6, P7);
-impl_HostIMP_high_arity!(P1, P2, P3, P4, P5, P6, P7, P8);
-impl_HostIMP_high_arity!(P1, P2, P3, P4, P5, P6, P7, P8, P9);
 
 /// Type for a guest function implementing a method. See [GuestFunction].
 pub type GuestIMP = GuestFunction;
 
 /// The layout of a method list in an app binary.
 ///
-/// The name, field names and field layout are based on what Ghidra
-/// outputs.
+/// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
 pub(super) struct method_list_t {
     entsize: GuestUSize,
@@ -148,8 +99,7 @@ unsafe impl SafeRead for method_list_t {}
 
 /// The layout of a method in an app binary.
 ///
-/// The name, field names and field layout are based on what Ghidra
-/// outputs.
+/// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
 struct method_t {
     name: ConstPtr<u8>,
@@ -168,16 +118,7 @@ impl ClassHostObject {
         objc: &mut ObjC,
     ) {
         let method_list_t { entsize, count } = mem.read(method_list_ptr);
-        let min_entsize = guest_size_of::<method_t>();
-        if entsize < min_entsize {
-            log!(
-                "Warning: add_methods_from_bin: method_list_t at {:?} declares entsize {} smaller than method_t ({}); skipping list.",
-                method_list_ptr,
-                entsize,
-                min_entsize
-            );
-            return;
-        }
+        assert!(entsize >= guest_size_of::<method_t>());
 
         let methods_base_ptr: ConstPtr<method_t> = (method_list_ptr + 1).cast();
 
@@ -189,12 +130,7 @@ impl ClassHostObject {
 
             // There is no guarantee this string is unique or known.
             // We must deduplicate it like any other.
-            // register_bin_selector returns None if the selector name
-            // is not valid UTF-8 (e.g. corrupt binary section); in
-            // that case we skip the method entry entirely.
-            let Some(sel) = objc.register_bin_selector(name, mem) else {
-                continue;
-            };
+            let sel = objc.register_bin_selector(name, mem);
             self.methods.insert(sel, IMP::Guest(imp));
             // TODO: avoid storing duplicated signatures globally
             self.guest_method_signatures.insert(sel, types);
@@ -203,9 +139,8 @@ impl ClassHostObject {
 }
 
 impl ObjC {
-    /// Checks if the provided class has a method in its class chain
-    /// (that is to say, objects of the given class respond to a
-    /// selector).
+    /// Checks if the provided class has a method in its class chain (that is
+    /// to say, objects of the given class respond to a selector).
     pub fn class_has_method(&self, class: Class, sel: SEL) -> bool {
         let mut class = class;
         loop {
@@ -250,9 +185,8 @@ impl ObjC {
         }
     }
 
-    /// Same as [Self::class_has_method], but using a named selector
-    /// (rather than a pointer).
-    #[allow(dead_code)]
+    /// Same as [Self::class_has_method], but using a named selector (rather
+    /// than a pointer).
     pub fn class_has_method_named(&self, class: Class, sel_name: &str) -> bool {
         if let Some(sel) = self.lookup_selector(sel_name) {
             self.class_has_method(class, sel)
@@ -281,8 +215,8 @@ impl ObjC {
         self.class_get_method_signature(ObjC::read_isa(obj, mem), sel)
     }
 
-    /// Same as [Self::object_has_method], but using a named selector
-    /// (rather than a pointer).
+    /// Same as [Self::object_has_method], but using a named selector (rather
+    /// than a pointer).
     pub fn object_has_method_named(&self, mem: &Mem, obj: id, sel_name: &str) -> bool {
         if let Some(sel) = self.lookup_selector(sel_name) {
             self.object_has_method(mem, obj, sel)
@@ -291,13 +225,11 @@ impl ObjC {
         }
     }
 
-    /// Checks if a class overrides a method provided by its
-    /// superclass.
+    /// Checks if a class overrides a method provided by its superclass.
     ///
-    /// This looks through a superclass chain looking for the selector,
-    /// stopping when the superclass is hit (and panicking if it never
-    /// is). It does not check whether the selector is actually a
-    /// method on the superclass.
+    /// This looks through a superclass chain looking for the selector, stopping
+    /// when the superclass is hit (and panicking if it never is). It does not
+    /// check whether the selector is actually a method on the superclass.
     pub fn class_overrides_method_of_superclass(
         &self,
         class: Class,
@@ -318,15 +250,7 @@ impl ObjC {
             if methods.contains_key(&sel) {
                 return true;
             } else if superclass == nil {
-                // Reached the root class without ever encountering the
-                // requested superclass. Treat this as "does not override":
-                // older callers panicked here, but a guest binary with an
-                // inconsistent class hierarchy should not bring down the
-                // host emulator.
-                log!(
-                    "Warning: class_overrides_method_of_superclass: superclass not found in chain for selector; reporting no override."
-                );
-                return false;
+                panic!();
             } else {
                 class = superclass;
             }

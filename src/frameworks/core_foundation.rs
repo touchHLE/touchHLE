@@ -18,20 +18,15 @@
 
 pub mod cf_allocator;
 pub mod cf_array;
-pub mod cf_binary_heap;
 pub mod cf_bundle;
 pub mod cf_data;
 pub mod cf_dictionary;
-pub mod cf_error;
-pub mod cf_host;
 pub mod cf_locale;
 pub mod cf_number;
 pub mod cf_preferences;
 pub mod cf_run_loop;
 pub mod cf_run_loop_timer;
-pub mod cf_set;
 pub mod cf_socket;
-pub mod cf_stream;
 pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
@@ -43,49 +38,34 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     aliases: &[],
     class_exports: &[
         cf_run_loop_timer::CLASSES, // Special internal classes.
-        cf_run_loop::CLASSES,
-        cf_host::CLASSES,
-        cf_stream::CLASSES,
         cf_uuid::CLASSES,
     ],
     constant_exports: &[
         cf_allocator::CONSTANTS,
         cf_bundle::CONSTANTS,
         cf_dictionary::CONSTANTS,
-        cf_error::CONSTANTS,
         cf_locale::CONSTANTS,
         cf_number::CONSTANTS,
         cf_preferences::CONSTANTS,
         cf_run_loop::CONSTANTS,
-        cf_set::CONSTANTS,
-        cf_stream::CONSTANTS,
-        cf_string::CONSTANTS,
-        cf_url::CONSTANTS,
-        time::CONSTANTS,
     ],
     function_exports: &[
         FUNCTIONS,
-        cf_allocator::FUNCTIONS,
         cf_array::FUNCTIONS,
         cf_dictionary::FUNCTIONS,
-        cf_error::FUNCTIONS,
         cf_bundle::FUNCTIONS,
         cf_socket::FUNCTIONS,
         cf_data::FUNCTIONS,
-        cf_host::FUNCTIONS,
         cf_locale::FUNCTIONS,
         cf_number::FUNCTIONS,
         cf_preferences::FUNCTIONS,
         cf_run_loop::FUNCTIONS,
         cf_run_loop_timer::FUNCTIONS,
-        cf_set::FUNCTIONS,
         cf_string::FUNCTIONS,
-        cf_stream::FUNCTIONS,
         cf_type::FUNCTIONS,
         cf_url::FUNCTIONS,
         cf_uuid::FUNCTIONS,
         time::FUNCTIONS,
-        cf_binary_heap::FUNCTIONS,
     ],
 };
 
@@ -105,11 +85,6 @@ use crate::objc::id;
 use crate::{export_c_func, impl_GuestRet_for_large_struct, msg};
 
 pub const kCFNotFound: CFIndex = -1;
-
-#[derive(Default)]
-pub struct State {
-    pub cf_binary_heap: cf_binary_heap::CFBinaryHeapState,
-}
 
 #[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]

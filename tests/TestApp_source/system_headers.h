@@ -203,6 +203,17 @@ SEL NSSelectorFromString(NSString *);
                     userInfo:(NSDictionary *)userInfo;
 @end
 
+@interface NSConditionLock : NSObject
+- (instancetype)initWithCondition:(NSInteger)condition;
+- (NSInteger)condition;
+- (void)lock;
+- (void)unlock;
+- (BOOL)tryLock;
+- (void)lockWhenCondition:(NSInteger)condition;
+- (BOOL)tryLockWhenCondition:(NSInteger)condition;
+- (void)unlockWithCondition:(NSInteger)condition;
+@end
+
 // Core Graphics
 
 // (See CGAffineTransform.c for where this define comes from.)
@@ -307,6 +318,15 @@ void CGColorSpaceRelease(CGColorSpaceRef cs);
 
 typedef struct _CGContext *CGContextRef;
 
+typedef enum {
+  kCGBlendModeNormal = 0,
+  kCGBlendModeMultiply = 1,
+  kCGBlendModeScreen = 2,
+  kCGBlendModeOverlay = 3,
+  kCGBlendModeDarken = 4,
+  kCGBlendModeLighten = 5,
+} CGBlendMode;
+
 #define kCGImageAlphaPremultipliedLast 1
 
 CGContextRef CGBitmapContextCreate(void *data, size_t width, size_t height,
@@ -315,9 +335,15 @@ CGContextRef CGBitmapContextCreate(void *data, size_t width, size_t height,
                                    unsigned int bitmapInfo);
 CGImageRef CGBitmapContextCreateImage(CGContextRef c);
 void CGContextRelease(CGContextRef c);
+void CGContextSaveGState(CGContextRef c);
+void CGContextRestoreGState(CGContextRef c);
 void CGContextSetRGBFillColor(CGContextRef c, CGFloat r, CGFloat g, CGFloat b,
                               CGFloat a);
 void CGContextFillRect(CGContextRef c, CGRect rect);
+void CGContextSetBlendMode(CGContextRef c, CGBlendMode mode);
+void CGContextTranslateCTM(CGContextRef c, CGFloat tx, CGFloat ty);
+void CGContextScaleCTM(CGContextRef c, CGFloat sx, CGFloat sy);
+void CGContextRotateCTM(CGContextRef c, CGFloat angle);
 
 // `CGFont.h` and `CGContext.h` text functions.
 
@@ -331,6 +357,10 @@ void CGContextSetFont(CGContextRef c, CGFontRef font);
 void CGContextSetFontSize(CGContextRef c, CGFloat size);
 void CGContextShowGlyphsAtPoint(CGContextRef c, CGFloat x, CGFloat y,
                                 const CGGlyph *glyphs, size_t count);
+
+// `UIGraphics.h`
+
+CGContextRef UIGraphicsGetCurrentContext(void);
 
 // Core Animation
 typedef NSString *CAMediaTimingFunctionName;
@@ -374,7 +404,6 @@ CFTimeInterval CACurrentMediaTime();
 - (void)addAnimation:(CAAnimation *)anim forKey:(NSString *)key;
 - (void)removeAnimationForKey:(NSString *)key;
 @end
-
 @interface CATransaction : NSObject
 + (void)setValue:(id)value forKey:(NSString *)key;
 + (id)valueForKey:(NSString *)key;

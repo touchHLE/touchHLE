@@ -8,15 +8,15 @@ View options:
         in use, the result may be a bit blurry. An internal resolution larger
         than your screen's is possible, in which case the output is downscaled.
 
+    --upside-down
     --landscape-left
     --landscape-right
-    --upside-down
         Changes the orientation the virtual device will have at startup.
         The default is portrait.
 
+        --upside-down means rotate 180° from portrait.
         --landscape-left means rotate 90° counterclockwise from portrait.
         --landscape-right means rotate 90° clockwise from portrait.
-        --upside-down means rotate 180° from portrait (portrait upside-down).
 
         Usually apps that require landscape mode will tell touchHLE about this,
         and it will automatically rotate the window, but some apps neglect to
@@ -41,43 +41,7 @@ Device options:
         If omitted, suitable device family would be deduced from application
         bundle itself, falling back to iPhone if needed.
 
-        Accepted values are "auto" plus any of the specific device models
-        below. The legacy names "iphone", "iphone5" and "ipad" are still
-        accepted as aliases (mapping to iPhone 3GS, iPhone 5 and iPad 2).
-
-        iPhone family (32-bit):
-            iphone-2g  (iPhone1,1)   iphone-3g  (iPhone1,2)
-            iphone-3gs (iPhone2,1)   iphone-4   (iPhone3,1)
-            iphone-4s  (iPhone4,1)   iphone-5   (iPhone5,1)
-            iphone-5c  (iPhone5,3)
-        iPad family (32-bit):
-            ipad-1  (iPad1,1)   ipad-2  (iPad2,1)   ipad-3  (iPad3,1)
-            ipad-4  (iPad3,4)   ipad-5  (iPad6,11)
-            ipad-mini   (iPad2,5)   ipad-mini-2 (iPad4,4)
-            ipad-mini-3 (iPad4,7)
-        iPod touch family (32-bit):
-            ipod-touch   (iPod1,1)   ipod-touch-2 (iPod2,1)
-            ipod-touch-3 (iPod3,1)   ipod-touch-4 (iPod4,1)
-            ipod-touch-5 (iPod5,1)
-
-        A model's hardware identifier (e.g. "iphone4,1") is also accepted.
-
-        Use "auto" to let touchHLE inspect your host display's resolution,
-        expose that resolution directly to the app, and still pick the device
-        family whose bundled resources are the closest match. The chosen family
-        is still validated against what the app bundle supports, so an
-        unsupported guess is ignored just like a manual override.
-
-    --screen-size=WxH
-        Force the emulated screen to be exactly W by H points (e.g.
-        --screen-size=320x693), exposed to the app at scale 1.0, instead of one
-        of the fixed device profiles. This is the manual counterpart to
-        "--device-family=auto": auto detects your host display automatically,
-        while this lets you pin any resolution you like. Width and height may be
-        separated by "x", "X" or ",". The order is normalised to portrait
-        (smaller value becomes the width), and the initial orientation option
-        still applies. A manual --screen-size= always wins over the resolution
-        auto-detection.
+        Accepted values are "iphone" and "ipad" respectively.
 
 Game controller options:
     --deadzone=...
@@ -313,22 +277,6 @@ Other options:
         Enabling this option may solve some rendering issues, but implies
         a performance hit which is undesirable in most of the cases.
 
-    --prefer-gles2-context
-        Force EAGL initWithAPI: to create an OpenGL ES 2.0 context even when
-        the app requested an OpenGL ES 1.1 context.
-
-        Some apps (e.g. Lego Ninjago Spinjitzu Scavenger Hunt) ask EAGL for an
-        ES 1.1 context but actually drive rendering with shader entry points
-        such as glUseProgram and glCreateShader. Without this flag, on real
-        ES drivers (e.g. Adreno / Mali on Android) those calls fall through
-        to the GLES 1.1-only stubs and the app renders an empty (black)
-        frame even though its render loop is alive.
-
-        Apps that legitimately rely on the ES 1.1 fixed-function pipeline
-        (glMatrixMode, glColor4f, glEnableClientState, glVertexPointer, …)
-        should NOT enable this flag, because real ES 2.0 has no fixed-function
-        pipeline.
-
     --allow-network-access
         Allow apps running in touchHLE to access the Internet and the local network.
 
@@ -337,28 +285,6 @@ Other options:
         This only affects return value of glGetError as seen by the guest
         and nothing else. Should be enabled only for apps which really
         need this behaviour.
-
-    --trace-gl-errors
-        For diagnostic builds. After every guest GL call dispatched through
-        the GLES wrapper, also log the host driver's glGetError() value when
-        non-zero. The log line includes the name of the offending entry
-        point so that constant 0x500 (GL_INVALID_ENUM) / 0x501
-        (GL_INVALID_VALUE) noise can be traced back to a specific call.
-        This option exists for debugging black-screen / wrong-render bugs
-        and adds a glGetError() round-trip per call, so it should not be
-        left on for normal use.
-
-    --fix-texture-min-filter
-        Workaround for apps that rely on the default ES 1.1
-        GL_TEXTURE_MIN_FILTER (GL_NEAREST_MIPMAP_LINEAR) being usable
-        on a level-0-only texture. With this flag, after every
-        glTexImage2D(level=0) call HyperHLE issues an extra
-        glTexParameteri(GL_TEXTURE_MIN_FILTER, GL_LINEAR) so that
-        strict drivers (notably Qualcomm Adreno's native ES 1.1 path)
-        don't sample the texture as opaque black just because no
-        mipmaps were uploaded. The guest's own glTexParameteri calls
-        still override this. Apps that legitimately upload mipmaps
-        should NOT enable this flag.
 
     --zero-stack-after-guest-to-host-call=<bytes>
         After a guest-to-host call returns, zero out the given number of

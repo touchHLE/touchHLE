@@ -1,21 +1,19 @@
 /*
- * Эта лицензия Source Code Form подпадает под условия Mozilla Public
- * License, v. 2.0. Если копия MPL не распространялась вместе с этим
- * файлом, вы можете получить ее на https://mozilla.org/MPL/2.0/.
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 //! The Audio Toolbox framework.
 
 use crate::audio::openal::{OpenAL, OpenALContext, OpenALManager};
 
-/// Макрос для проверки, является ли аргумент null, и возврата `paramErr` в этом
-//случае.
-/// Похоже, это именно то, что делает настоящий Audio Toolbox, и некоторые
-//приложения полагаются на это.
+/// Macro for checking if an argument is null and returning `paramErr` if so.
+/// This seems to be what the real Audio Toolbox does, and some apps rely on it.
 macro_rules! return_if_null {
     ($param:ident) => {
         if $param.is_null() {
             log_dbg!(
-                "Получен параметр NULL {}, возвращаем paramErr в {} на строке {}",
+                "Got NULL parameter {}, returning paramErr in {} on line {}",
                 stringify!($param),
                 file!(),
                 line!()
@@ -25,15 +23,13 @@ macro_rules! return_if_null {
     };
 }
 
-pub mod au_graph;
 pub mod audio_components;
-pub mod audio_converter;
 pub mod audio_file;
 pub mod audio_queue;
 pub mod audio_services;
 pub mod audio_session;
 pub mod audio_unit;
-pub mod ext_audio_file;
+pub mod extended_audio_file;
 
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     path: "/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox",
@@ -41,15 +37,13 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     class_exports: &[],
     constant_exports: &[],
     function_exports: &[
-        au_graph::FUNCTIONS,
         audio_components::FUNCTIONS,
-        audio_converter::FUNCTIONS,
         audio_file::FUNCTIONS,
         audio_queue::FUNCTIONS,
         audio_services::FUNCTIONS,
         audio_session::FUNCTIONS,
         audio_unit::FUNCTIONS,
-        ext_audio_file::FUNCTIONS,
+        extended_audio_file::FUNCTIONS,
     ],
 };
 
@@ -57,12 +51,11 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 pub struct State {
     audio_file: audio_file::State,
     audio_queue: audio_queue::State,
-    audio_components: audio_components::State,
     audio_services: audio_services::State,
+    audio_components: audio_components::State,
     audio_session: audio_session::State,
-    au_graph: au_graph::State,
-    ext_audio_file: ext_audio_file::State,
     al_context: LazyALContext,
+    extended_audio_file: extended_audio_file::State,
 }
 impl State {
     pub fn make_al_context_current<'s, 'manager: 's>(
@@ -83,45 +76,12 @@ impl LazyALContext {
     ) -> OpenAL<'s> {
         self.get_context(manager).make_current(manager)
     }
-    pub fn try_get_context(&mut self, manager: &mut OpenALManager) -> Option<&mut OpenALContext> {
-        if self.0.is_none() {
-            // OpenALContext::new already attempts a fallback to OpenAL Soft's
-            // "No Output" null backend if the host audio device cannot be
-            // opened, so under normal circumstances this will succeed. If even
-            // that fails we now log and return None instead of panicking the
-            // entire emulator — guest code calling AudioQueue/AudioFile APIs
-            // will then get error codes rather than a host crash.
-            match OpenALContext::new(manager) {
-                Ok(context) => {
-                    log_dbg!("Новый внутренний контекст OpenAL ({:?})", context);
-                    self.0 = Some(context);
-                }
-                Err(err) => {
-                    log!(
-                        "Warning: could not create OpenAL context for \
-                         AudioToolbox: {}. Audio will be unavailable until a \
-                         working backend is found.",
-                        err
-                    );
-                    return None;
-                }
-            }
-        }
-        self.0.as_mut()
-    }
-
     pub fn get_context(&mut self, manager: &mut OpenALManager) -> &mut OpenALContext {
-        // Preserve the previous (panicking) signature for callers that absolutely
-        // require a context. New callers should prefer `try_get_context`.
-        if let Some(ctx) = self.try_get_context(manager) {
-            // SAFETY: `try_get_context` just inserted a value into `self.0`
-            // when the option was None; we can re-borrow it here without UB.
-            // Using an extra `expect` keeps the error case obvious if the
-            // implementation ever drifts.
-            let _ = ctx;
+        if self.0.is_none() {
+            let context = OpenALContext::new(manager).unwrap();
+            log_dbg!("New internal OpenAL context ({:?})", context);
+            self.0 = Some(context);
         }
-        self.0
-            .as_mut()
-            .expect("OpenAL context unavailable; see prior log message for details")
+        self.0.as_mut().unwrap()
     }
 }

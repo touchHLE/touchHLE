@@ -51,8 +51,8 @@ fn task_info(
     task_info_out: task_info_t,
     task_info_out_cnt: MutPtr<mach_msg_type_number_t>,
 ) -> kern_return_t {
-    log_dbg!(
-        "task_info({:?}, {:?}, {:?}, {:?})",
+    log!(
+        "TODO: task_info({:?}, {:?}, {:?}, {:?})",
         target_task,
         flavor,
         task_info_out,
@@ -63,8 +63,6 @@ fn task_info(
     let out_size_available = env.mem.read(task_info_out_cnt);
     let out_size_expected = guest_size_of::<task_basic_info>() / guest_size_of::<integer_t>();
     assert!(out_size_expected <= out_size_available);
-    // Per Apple documentation, write back the number of elements actually returned.
-    env.mem.write(task_info_out_cnt, out_size_expected);
     // Values taken from an iPod Touch 4 running iOS 6.1
     env.mem.write(
         task_info_out.cast(),

@@ -197,6 +197,33 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest
     }
 
+    pub(super) fn strspn(
+        env: &mut Environment,
+        s: ConstPtr<T>,
+        charset: ConstPtr<T>,
+    ) -> GuestUSize {
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(s + i);
+            if c == Self::null() {
+                break;
+            }
+            let mut j = 0;
+            loop {
+                let cc = env.mem.read(charset + j);
+                if c == cc {
+                    break;
+                }
+                if cc == Self::null() {
+                    return i;
+                }
+                j += 1;
+            }
+            i += 1;
+        }
+        i
+    }
+
     pub(super) fn strcspn(
         env: &mut Environment,
         s: ConstPtr<T>,
@@ -380,6 +407,32 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
                 return Ptr::null();
             }
             offset -= 1;
+        }
+    }
+
+    pub(super) fn strpbrk(
+        env: &mut Environment,
+        string: ConstPtr<T>,
+        charset: ConstPtr<T>,
+    ) -> ConstPtr<T> {
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(string + i);
+            if c == Self::null() {
+                return Ptr::null();
+            }
+            let mut j = 0;
+            loop {
+                let cc = env.mem.read(charset + j);
+                if cc == Self::null() {
+                    break;
+                }
+                if c == cc {
+                    return string + i;
+                }
+                j += 1;
+            }
+            i += 1;
         }
     }
 

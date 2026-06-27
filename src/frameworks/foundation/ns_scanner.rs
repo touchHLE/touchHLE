@@ -59,17 +59,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithString:(id)string { // NSString *
-    // Per Apple's NSScanner, a scanner created over a nil string does not
-    // raise — it simply has nothing to scan (every scan operation fails and
-    // -isAtEnd is true). Real-world iOS apps rely on this lenient behaviour,
-    // so instead of asserting we handle nil as an empty (length 0) scanner.
-    let (string, len): (id, NSUInteger) = if string == nil {
-        (nil, 0)
-    } else {
-        let string: id = msg![env; string copy]; // Same behaviour as simulator
-        let len: NSUInteger = msg![env; string length];
-        (string, len)
-    };
+    assert!(string != nil);
+    let string: id = msg![env; string copy]; // Same behaviour as simulator
+    let len: NSUInteger = msg![env; string length];
     let default_set = msg_class![env; NSCharacterSet whitespaceAndNewlineCharacterSet];
     retain(env, default_set);
     *env.objc.borrow_mut(this) = NSScannerHostObject {
@@ -92,44 +84,30 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem);
 }
 
-- (id)charactersToBeSkipped { // NSCharacterSet *
+- (())setCharactersToBeSkipped:(id)to_be_skipped { // NSCharacterSet *
+    let old_to_be_skipped = env.objc.borrow::<NSScannerHostObject>(this).to_be_skipped;
+    env.objc.borrow_mut::<NSScannerHostObject>(this).to_be_skipped = to_be_skipped;
+    retain(env, to_be_skipped);
+    release(env, old_to_be_skipped);
+}
+- (id)charactersToBeSkipped {
     env.objc.borrow::<NSScannerHostObject>(this).to_be_skipped
-}
-
-- (())setCharactersToBeSkipped:(id)set { // NSCharacterSet *
-    // Per Apple's NSScanner documentation:
-    // https://developer.apple.com/documentation/foundation/nsscanner/1413024-characterstobeskipped
-    // "Characters to be skipped are skipped prior to the scan."
-    // Ownership: the scanner retains the new set and releases the old one
-    // (Foundation convention for Objective-C copy properties — real Apple
-    // copies, but for HLE retaining is behaviourally equivalent since the
-    // guest doesn't mutate the character set after assignment).
-    let old = env.objc.borrow::<NSScannerHostObject>(this).to_be_skipped;
-    retain(env, set);
-    env.objc.borrow_mut::<NSScannerHostObject>(this).to_be_skipped = set;
-    release(env, old);
-}
-
-- (bool)isAtEnd {
-    skip_characters(env, this);
-    let NSScannerHostObject { len, pos, .. } = env.objc.borrow::<NSScannerHostObject>(this);
-    len == pos
 }
 
 - (NSUInteger)scanLocation {
     env.objc.borrow::<NSScannerHostObject>(this).pos
 }
 
-- (())setScanLocation:(NSUInteger)location {
-    let len = env.objc.borrow::<NSScannerHostObject>(this).len;
-    // Apple docs: setting scanLocation beyond the string length raises
-    // NSRangeException.  Here we silently clamp, matching the spirit of HLE.
-    let clamped = if location > len { len } else { location };
-    env.objc.borrow_mut::<NSScannerHostObject>(this).pos = clamped;
+- (())setScanLocation:(NSUInteger)loc {
+    let host = env.objc.borrow_mut::<NSScannerHostObject>(this);
+    assert!(loc <= host.len); // TODO: raise NSRangeException
+    host.pos = loc;
 }
 
-- (id)string {
-    env.objc.borrow::<NSScannerHostObject>(this).string
+- (bool)isAtEnd {
+    skip_characters(env, this);
+    let NSScannerHostObject { len, pos, .. } = env.objc.borrow::<NSScannerHostObject>(this);
+    len == pos
 }
 
 - (bool)scanUpToCharactersFromSet:(id)cset intoString:(MutPtr<id>)str {
@@ -171,64 +149,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (bool)scanHexInt:(MutPtr<u32>)result {
+    assert!(!result.is_null());
     skip_characters(env, this);
 
-    let NSScannerHostObject { to_be_skipped, string, len, pos } =
-        std::mem::take(env.objc.borrow_mut::<NSScannerHostObject>(this));
-    if pos >= len {
-        *env.objc.borrow_mut::<NSScannerHostObject>(this) =
-            NSScannerHostObject { to_be_skipped, string, len, pos };
-        return false;
-    }
-
-    let substring: id = msg![env; string substringFromIndex:pos];
-    let st = to_rust_string(env, substring);
-    let chars: Vec<char> = st.chars().collect();
-
-    // Per Apple's documentation for -scanHexInt::
-    // "The hexadecimal integer representation may optionally be preceded by
-    //  0x or 0X." The prefix is only consumed when an actual hex digit
-    // follows it.
-    let mut i = 0usize;
-    if chars.len() >= 3
-        && chars[0] == '0'
-        && (chars[1] == 'x' || chars[1] == 'X')
-        && chars[2].is_ascii_hexdigit()
-    {
-        i = 2;
-    }
-
-    let digits_start = i;
-    let mut value: u64 = 0;
-    while i < chars.len() && chars[i].is_ascii_hexdigit() {
-        let digit = chars[i].to_digit(16).unwrap() as u64;
-        value = value.saturating_mul(16).saturating_add(digit);
-        // "If the receiver contains a hexadecimal representation greater than
-        //  UINT_MAX, then the value [...] is UINT_MAX."
-        if value > u32::MAX as u64 {
-            value = u32::MAX as u64;
-        }
-        i += 1;
-    }
-
-    if i == digits_start {
-        // No hexadecimal digits were found; scanner is unchanged.
-        *env.objc.borrow_mut::<NSScannerHostObject>(this) =
-            NSScannerHostObject { to_be_skipped, string, len, pos };
-        return false;
-    }
-
-    if !result.is_null() {
-        env.mem.write(result, value as u32);
-    }
-
-    // Only ASCII characters ("0x" + hex digits) were consumed, so the number
-    // of Rust chars equals the number of UTF-16 code units to advance by.
-    let consumed = i as NSUInteger;
-    *env.objc.borrow_mut::<NSScannerHostObject>(this) =
-        NSScannerHostObject { to_be_skipped, string, len, pos: pos + consumed };
-    log_dbg!("scanHexInt: from '{}' -> {:#x}", st, value);
-    true
+    let NSScannerHostObject { to_be_skipped: _set, string, len, pos } = env.objc.borrow::<NSScannerHostObject>(this).clone();
+    assert!(pos < len);
+    let susbstring: id = msg![env; string substringFromIndex:pos];
+    let tmp = to_rust_string(env, susbstring);
+    assert!(!tmp.starts_with("0x") && !tmp.starts_with("0X"));
+    assert!(!tmp.chars().next().unwrap().is_ascii_hexdigit()); // TODO
+    env.mem.write(result, 0);
+    false
 }
 
 - (bool)scanUpToString:(id)stop_string // NSString *
@@ -301,11 +232,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     let st = to_rust_string(env, left);
-    let mut cutoff = 0;
+    let mut cutoff = st.len();
     for (i, c) in st.char_indices() {
-        if c.is_ascii_digit() || ((c == '+' || c == '-') && i == 0) {
-            cutoff = i + 1;
-        } else {
+        if !c.is_ascii_digit() && c != '+' && c != '-' {
+            cutoff = i;
             break;
         }
     }
@@ -316,96 +246,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     if !result.is_null() {
+        // TODO: handle over/underflow properly
         let res = st[..cutoff].parse().unwrap_or(0);
         log_dbg!("scanInt: from '{}' -> {}", st, res);
-        env.mem.write(result, res);
-    }
-
-    *env.objc.borrow_mut::<NSScannerHostObject>(this) = NSScannerHostObject { to_be_skipped, string, len, pos: pos + cutoff as NSUInteger };
-    true
-}
-
-- (bool)scanFloat:(MutPtr<f32>)result {
-    skip_characters(env, this);
-
-    let NSScannerHostObject { to_be_skipped, string, len, pos } = std::mem::take(env.objc.borrow_mut::<NSScannerHostObject>(this));
-    let left: id = msg![env; string substringFromIndex:pos];
-    if left == nil {
-        *env.objc.borrow_mut::<NSScannerHostObject>(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
-        return false;
-    }
-
-    let st = to_rust_string(env, left);
-    let mut cutoff = 0;
-    let mut seen_dot = false;
-    let mut seen_digit = false;
-
-    for (i, c) in st.char_indices() {
-        if c.is_ascii_digit() {
-            seen_digit = true;
-            cutoff = i + 1;
-        } else if c == '.' && !seen_dot {
-            seen_dot = true;
-            cutoff = i + 1;
-        } else if (c == '-' || c == '+') && i == 0 {
-            cutoff = i + 1;
-        } else {
-            break;
-        }
-    }
-
-    if !seen_digit {
-        log_dbg!("scanFloat: no valid float found for '{}'", st);
-        *env.objc.borrow_mut::<NSScannerHostObject>(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
-        return false;
-    }
-
-    if !result.is_null() {
-        let res: f32 = st[..cutoff].parse().unwrap_or(0.0);
-        log_dbg!("scanFloat: from '{}' -> {}", st, res);
-        env.mem.write(result, res);
-    }
-
-    *env.objc.borrow_mut::<NSScannerHostObject>(this) = NSScannerHostObject { to_be_skipped, string, len, pos: pos + cutoff as NSUInteger };
-    true
-}
-
-- (bool)scanDouble:(MutPtr<f64>)result {
-    skip_characters(env, this);
-
-    let NSScannerHostObject { to_be_skipped, string, len, pos } = std::mem::take(env.objc.borrow_mut::<NSScannerHostObject>(this));
-    let left: id = msg![env; string substringFromIndex:pos];
-    if left == nil {
-        *env.objc.borrow_mut::<NSScannerHostObject>(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
-        return false;
-    }
-
-    let st = to_rust_string(env, left);
-    let mut cutoff = 0;
-    let mut seen_dot = false;
-    let mut seen_digit = false;
-
-    for (i, c) in st.char_indices() {
-        if c.is_ascii_digit() {
-            seen_digit = true;
-            cutoff = i + 1;
-        } else if c == '.' && !seen_dot {
-            seen_dot = true;
-            cutoff = i + 1;
-        } else if (c == '-' || c == '+') && i == 0 {
-            cutoff = i + 1;
-        } else {
-            break;
-        }
-    }
-
-    if !seen_digit {
-        *env.objc.borrow_mut::<NSScannerHostObject>(this) = NSScannerHostObject { to_be_skipped, string, len, pos };
-        return false;
-    }
-
-    if !result.is_null() {
-        let res: f64 = st[..cutoff].parse().unwrap_or(0.0);
         env.mem.write(result, res);
     }
 

@@ -7,13 +7,12 @@
 
 use super::ui_device::*;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
-use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str};
 use crate::frameworks::foundation::{ns_array, ns_string, NSInteger, NSUInteger};
 use crate::mem::MutPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr, SEL,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
+    ClassExports, HostObject, NSZonePtr,
 };
 use crate::window::DeviceOrientation;
 use crate::Environment;
@@ -23,21 +22,11 @@ pub struct State {
     /// [UIApplication sharedApplication]
     shared_application: Option<id>,
     pub(super) status_bar_hidden: bool,
-    /// Whether shake to edit is enabled
-    pub(super) application_supports_shake_to_edit: bool,
-    pub(super) ignoring_interaction_events_count: u32,
 }
 
-#[derive(Default)]
 struct UIApplicationHostObject {
     delegate: id,
     delegate_is_retained: bool,
-    status_bar_style: UIStatusBarStyle,
-    /// The most recent value set via `-setApplicationIconBadgeNumber:`.
-    /// Per Apple's UIApplication docs the property is read/write and
-    /// defaults to 0; we honour both the getter and the setter even
-    /// though touchHLE has no springboard to actually render the badge.
-    application_icon_badge_number: NSInteger,
 }
 impl HostObject for UIApplicationHostObject {}
 
@@ -53,17 +42,15 @@ pub const UIInterfaceOrientationLandscapeLeft: UIInterfaceOrientation =
     UIDeviceOrientationLandscapeRight;
 pub const UIInterfaceOrientationLandscapeRight: UIInterfaceOrientation =
     UIDeviceOrientationLandscapeLeft;
+
 type UIRemoteNotificationType = NSUInteger;
 type UIStatusBarAnimation = NSInteger;
 type UIStatusBarStyle = NSInteger;
-pub type UIApplicationState = NSInteger;
-pub const UIApplicationStateActive: UIApplicationState = 0;
-pub const UIApplicationStateInactive: UIApplicationState = 1;
-pub const UIApplicationStateBackground: UIApplicationState = 2;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
+
 @implementation UIApplication: UIResponder
 
 // This should only be called by UIApplicationMain
@@ -71,25 +58,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = Box::new(UIApplicationHostObject {
         delegate: nil,
         delegate_is_retained: false,
-        status_bar_style: 0,
-        application_icon_badge_number: 0,
     });
     env.objc.alloc_static_object(this, host_object, &mut env.mem)
 }
 
 + (id)sharedApplication {
     env.framework_state.uikit.ui_application.shared_application.unwrap_or(nil)
-}
-
-- (())setNetworkActivityIndicatorVisible:(bool)visible {
-    // touchHLE doesn't render the iOS status bar, so we just stub this
-    // and ignore the request to show/hide the spinner.
-    log_dbg!("Stubbed setNetworkActivityIndicatorVisible: {}", visible);
-}
-
-- (bool)isNetworkActivityIndicatorVisible {
-    // Always report that it's hidden.
-    false
 }
 
 // This should only be called by UIApplicationMain
@@ -137,27 +111,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())setStatusBarStyle:(UIStatusBarStyle)style {
-    env.objc.borrow_mut::<UIApplicationHostObject>(this).status_bar_style = style;
+    todo_objc_setter!(this, style);
 }
-- (UIStatusBarStyle)statusBarStyle {
-    env.objc.borrow::<UIApplicationHostObject>(this).status_bar_style
-}
-
 - (())setStatusBarStyle:(UIStatusBarStyle)style
                animated:(bool)_animated {
+    // TODO: animation
     msg![env; this setStatusBarStyle:style]
 }
 
 - (UIInterfaceOrientation)statusBarOrientation {
-    // ULTRAHLE_MINIONJUMP_STATUSBAR_BEGIN
-    if matches!(
-        env.bundle.bundle_identifier(),
-        "com.apprisetec9.minionjump" | "com.risinghighapps.kingdomprincepro"
-    ) {
-        return 4 as UIInterfaceOrientation;
-    }
-    // ULTRAHLE_MINIONJUMP_STATUSBAR_END
-
     match env.window().current_rotation() {
         DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
         DeviceOrientation::PortraitUpsideDown => UIDeviceOrientationPortraitUpsideDown,
@@ -165,35 +127,15 @@ pub const CLASSES: ClassExports = objc_classes! {
         DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
     }
 }
-
-- (f64)statusBarOrientationAnimationDuration {
-    0.3
-}
-
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
-    match orientation {
-        UIDeviceOrientationUnknown => {
-            // Per Apple docs UIDeviceOrientationUnknown (0) means the
-            // orientation cannot be determined.  Ignore it.
-        }
-        UIDeviceOrientationPortrait => {
-            env.on_parent_stack_in_coroutine(|window, _| window.rotate_device(DeviceOrientation::Portrait));
-        }
-        UIDeviceOrientationPortraitUpsideDown => {
-            env.on_parent_stack_in_coroutine(|window, _| window.rotate_device(DeviceOrientation::PortraitUpsideDown));
-        }
-        UIDeviceOrientationLandscapeLeft => {
-            env.on_parent_stack_in_coroutine(|window, _| window.rotate_device(DeviceOrientation::LandscapeLeft));
-        }
-        UIDeviceOrientationLandscapeRight => {
-            env.on_parent_stack_in_coroutine(|window, _| window.rotate_device(DeviceOrientation::LandscapeRight));
-        }
-        _ => {
-            log!("Warning: Orientation {} not handled yet (ignoring to prevent panic)", orientation);
-        }
-    }
+    env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
+        UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
+        UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
+        UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
+        UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
+        _ => unimplemented!("Orientation {} not handled yet", orientation),
+    })});
 }
-
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation
                      animated:(bool)_animated {
     // TODO: animation
@@ -207,100 +149,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.on_parent_stack_in_coroutine(|window, _| window.set_screen_saver_enabled(!disabled))
 }
 
-- (bool)canOpenURL:(id)url { // NSURL
-    // Apple `-[UIApplication canOpenURL:]` documentation: returns `YES`
-    // if the URL can be handled — i.e. the device has at least one
-    // installed application that has registered for the URL's scheme
-    // (`CFBundleURLTypes` → `CFBundleURLSchemes`). On iOS 9+ apps must
-    // additionally list each scheme they intend to query in
-    // `LSApplicationQueriesSchemes`, otherwise the call always returns
-    // NO.
-    //
-    // touchHLE has no app launcher, but legitimately reports YES for
-    // the URL schemes that the host environment (Android) routes to
-    // its own Intent handlers — `http`/`https`/`tel`/`mailto`/`sms`
-    // are universally handled, and we permit them here so apps that
-    // gate sharing buttons on `canOpenURL:` (Talking Carl's social
-    // links, the Bubble Witch share sheet, the Imobamoba "rate me"
-    // popup) take the "yes, link the user out" branch instead of
-    // greying out the button. Application-specific schemes (e.g.
-    // `fb://`, `twitter://`) we report as unavailable because no
-    // host-side app responds to them.
-    if url == nil {
-        return false;
-    }
-    let ns_string: id = msg![env; url scheme];
-    if ns_string == nil {
-        return false;
-    }
-    let scheme = ns_string::to_rust_string(env, ns_string);
-    let scheme_lower = scheme.to_lowercase();
-
-    // Schemes the host environment (browsers / mail / phone / SMS /
-    // file viewers) is guaranteed to handle on every reasonable
-    // device. Source: Apple "URL Schemes" Technote (
-    // https://developer.apple.com/library/archive/featuredarticles/iPhoneURLScheme_Reference/
-    // ).
-    const HOST_HANDLED_SCHEMES: &[&str] = &[
-        "http",
-        "https",
-        "ftp",
-        "tel",
-        "telprompt",
-        "facetime",
-        "facetime-audio",
-        "mailto",
-        "sms",
-        "imessage",
-        "file",
-        "data",
-        "itms",
-        "itms-apps",
-        "itms-services",
-        "itmss",
-        "maps",
-    ];
-    if HOST_HANDLED_SCHEMES.contains(&scheme_lower.as_str()) {
-        return true;
-    }
-
-    // Honour the Info.plist allow-list (`LSApplicationQueriesSchemes`).
-    // Real iOS uses this only to *gate* the query, not to answer it,
-    // but if the app lists a scheme there it almost always genuinely
-    // expects the answer to be NO when the corresponding app is not
-    // installed. We therefore log a debug note and return false so the
-    // app's "app isn't installed" fallback runs.
-    let main_bundle: id = msg_class![env; NSBundle mainBundle];
-    if main_bundle != nil {
-        let key_str = ns_string::get_static_str(env, "LSApplicationQueriesSchemes");
-        let allowed_arr: id = msg![env; main_bundle objectForInfoDictionaryKey:key_str];
-        if allowed_arr != nil {
-            let count: u32 = msg![env; allowed_arr count];
-            for i in 0..count {
-                let entry: id = msg![env; allowed_arr objectAtIndex:i];
-                if entry == nil {
-                    continue;
-                }
-                let entry_str = ns_string::to_rust_string(env, entry);
-                if entry_str.to_lowercase() == scheme_lower {
-                    log_dbg!(
-                        "canOpenURL: {:?} is in LSApplicationQueriesSchemes; \
-                         host can't launch it, returning NO",
-                        scheme_lower
-                    );
-                    return false;
-                }
-            }
-        }
-    }
-
-    log_dbg!(
-        "canOpenURL: scheme {:?} not handled by host, returning NO",
-        scheme_lower
-    );
-    false
-}
-
 - (bool)openURL:(id)url { // NSURL
     let ns_string = msg![env; url absoluteString];
     let url_string = ns_string::to_rust_string(env, ns_string);
@@ -310,164 +158,23 @@ pub const CLASSES: ClassExports = objc_classes! {
         echo!("App opened URL {:?}, exiting.", url_string);
     }
 
+    // iPhone OS doesn't really do multitasking, so the app expects to close
+    // when a URL is opened, e.g. Super Monkey Ball keeps opening the URL every
+    // frame! Super Monkey Ball also doesn't check whether opening failed, so
+    // it's probably best to always exit.
     exit(env);
     true
 }
 
-- (())beginIgnoringInteractionEvents {
-    env.framework_state.uikit.ui_application.ignoring_interaction_events_count += 1;
+// TODO: ignore touches
+-(())beginIgnoringInteractionEvents {
+    log!("TODO: ignoring beginIgnoringInteractionEvents");
 }
-
 - (bool)isIgnoringInteractionEvents {
-    env.framework_state.uikit.ui_application.ignoring_interaction_events_count > 0
-}
-
-- (())endIgnoringInteractionEvents {
-    let count = &mut env.framework_state.uikit.ui_application.ignoring_interaction_events_count;
-    if *count > 0 {
-        *count -= 1;
-    } else {
-        // В реальной iOS здесь выбрасывается исключение
-        // NSInternalInconsistencyException,
-        // но для стабильности эмулятора мы просто залогируем предупреждение,
-        // если игра ошиблась со счетчиком.
-        log!("Warning: endIgnoringInteractionEvents called without matching beginIgnoringInteractionEvents");
-    }
-}
-
-- (())sendEvent:(id)event { // UIEvent*
-    log_dbg!("UIApplication sendEvent: forwarding to key window");
-    let window: id = msg![env; this keyWindow];
-    if window != nil {
-        msg![env; window sendEvent:event]
-    }
-}
-
-- (bool)sendAction:(SEL)action
-                to:(id)target
-              from:(id)sender
-          forEvent:(id)_event { // UIEvent*
-    if target != nil {
-        let responds: bool = msg![env; target respondsToSelector:action];
-        if responds {
-            () = msg![env; target performSelector:action withObject:sender];
-            return true;
-        }
-        return false;
-    }
-    // Walk responder chain if target is nil.
-    let mut responder: id = sender;
-    while responder != nil {
-        let responds: bool = msg![env; responder respondsToSelector:action];
-        if responds {
-            () = msg![env; responder performSelector:action withObject:sender];
-            return true;
-        }
-        responder = msg![env; responder nextResponder];
-    }
     false
 }
-
-- (NSUInteger)beginBackgroundTaskWithExpirationHandler:(id)_handler {
-    log_dbg!("UIApplication beginBackgroundTaskWithExpirationHandler");
-    // Per Apple docs, this returns a UIBackgroundTaskIdentifier (NSUInteger).
-    // A non-zero value indicates a valid task. touchHLE does not implement
-    // background execution, so we return a fixed sentinel identifier.
-    1
-}
-
-- (())endBackgroundTask:(NSUInteger)_task {
-    log_dbg!("UIApplication endBackgroundTask: {}", _task);
-}
-
-- (NSUInteger)backgroundTimeRemaining {
-    // Report effectively infinite time remaining.
-    NSUInteger::MAX
-}
-
-- (UIApplicationState)applicationState {
-    // Always report active.
-    UIApplicationStateActive
-}
-
-- (bool)isProtectedDataAvailable {
-    true
-}
-
-- (())setMinimumBackgroundFetchInterval:(f64)_interval {
-    log!("UIApplication setMinimumBackgroundFetchInterval: stubbed");
-}
-
-- (())registerForRemoteNotifications {
-    log!("UIApplication registerForRemoteNotifications: stubbed");
-}
-
-- (())unregisterForRemoteNotifications {
-    log!("UIApplication unregisterForRemoteNotifications: stubbed");
-}
-
-- (bool)isRegisteredForRemoteNotifications {
-    false
-}
-
-- (())registerUserNotificationSettings:(id)_settings {
-    log!("UIApplication registerUserNotificationSettings: stubbed");
-}
-
-- (id)currentUserNotificationSettings {
-    nil
-}
-
-- (())cancelAllLocalNotifications {
-    log_dbg!("UIApplication cancelAllLocalNotifications: no-op (notifications not delivered by host)");
-}
-
-- (())cancelLocalNotification:(id)_notification {
-    log_dbg!("UIApplication cancelLocalNotification: no-op (notifications not delivered by host)");
-}
-
-- (())scheduleLocalNotification:(id)_notification {
-    log_dbg!("UIApplication scheduleLocalNotification: no-op (notifications not delivered by host)");
-}
-
-- (id)scheduledLocalNotifications {
-    msg_class![env; NSArray new]
-}
-
-- (())setScheduledLocalNotifications:(id)_notifications {
-    log!("UIApplication setScheduledLocalNotifications: stubbed");
-}
-
-- (bool)supportsShakeToEdit {
-    false
-}
-
-- (())setSupportsShakeToEdit:(bool)_value {
-    // Stub.
-}
-
-- (bool)applicationSupportsShakeToEdit {
-    env.framework_state.uikit.ui_application.application_supports_shake_to_edit
-}
-
-- (())setApplicationSupportsShakeToEdit:(bool)value {
-    env.framework_state.uikit.ui_application.application_supports_shake_to_edit = value;
-}
-
-- (())clearKeychainIfNecessary {
-    // Stub.
-}
-
-- (CGRect)statusBarFrame {
-    // Report a zero-height status bar since we don't render one.
-    CGRect {
-        origin: crate::frameworks::core_graphics::CGPoint { x: 0.0, y: 0.0 },
-        size: crate::frameworks::core_graphics::CGSize { width: 320.0, height: 0.0 },
-    }
-}
-
-- (())presentLocalNotificationNow:(id)_notification {
-    log_dbg!("UIApplication presentLocalNotificationNow: no-op (notifications not delivered by host)");
+-(())endIgnoringInteractionEvents {
+    log!("TODO: ignoring endIgnoringInteractionEvents");
 }
 
 - (id)keyWindow {
@@ -507,86 +214,51 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring registerForRemoteNotificationTypes:{}", types);
 }
 
-// `- (UIRemoteNotificationType)enabledRemoteNotificationTypes` —
-// per Apple's [UIApplication Reference](https://developer.apple.com/documentation/uikit/uiapplication/1623060-enabledremotenotificationtypes):
-// the bitmask of remote notification types the user has explicitly
-// enabled in Settings. touchHLE has no system Settings UI and no real
-// push notification subsystem, so no notification types are enabled —
-// the documented value for this state is `UIRemoteNotificationTypeNone`
-// (0). Returning this lets apps using the iOS 3.0–7.x API path skip
-// their push-registration branch without crashing.
-- (UIRemoteNotificationType)enabledRemoteNotificationTypes {
-    0 // UIRemoteNotificationTypeNone
-}
-
-// `applicationIconBadgeNumber` is the integer shown on the SpringBoard
-// app icon badge. touchHLE has no SpringBoard, but games (e.g.
-// notification-driven trial flows) often *read* the value back after
-// setting it to gate logic, so we store it for round-trip fidelity per
-// Apple's [UIApplication Reference](https://developer.apple.com/documentation/uikit/uiapplication/1622918-applicationiconbadgenumber).
 - (NSInteger)applicationIconBadgeNumber {
-    env.objc.borrow::<UIApplicationHostObject>(this).application_icon_badge_number
+    0 // default value
 }
 - (())setApplicationIconBadgeNumber:(NSInteger)bn {
-    log_dbg!("setApplicationIconBadgeNumber:{}", bn);
-    env.objc.borrow_mut::<UIApplicationHostObject>(this).application_icon_badge_number = bn;
+    log!("TODO: ignoring setApplicationIconBadgeNumber:{}", bn);
 }
 
+- (bool)applicationSupportsShakeToEdit {
+    true // default value
+}
+- (())setApplicationSupportsShakeToEdit:(bool)enable {
+    log!("TODO: ignoring setApplicationSupportsShakeToEdit:{}", enable);
+}
+
+// UIResponder implementation
+// From the Apple UIView docs regarding [UIResponder nextResponder]:
+// "The shared UIApplication object normally returns nil, but it returns its
+//  app delegate if that object is a subclass of UIResponder and hasn’t
+//  already been called to handle the event."
 - (id)nextResponder {
     let delegate = msg![env; this delegate];
     let app_delegate_class = msg![env; delegate class];
     let ui_responder_class = env.objc.get_known_class("UIResponder", &mut env.mem);
     if env.objc.class_is_subclass_of(app_delegate_class, ui_responder_class) {
+        // TODO: Send nil if it's already been called to handle the event
         delegate
     } else {
         nil
     }
 }
 
-@end
-
-// UIUserNotificationSettings — holds notification permission settings.
-// https://developer.apple.com/documentation/uikit/uiusernotificationsettings
-// On iOS 8+, apps call [UIApplication registerUserNotificationSettings:settings]
-// with an instance of this class. Since touchHLE does not deliver notifications,
-// we expose a minimal stub that satisfies alloc/init and settingsForTypes:categories:.
-@implementation UIUserNotificationSettings: NSObject
-
-+ (id)settingsForTypes:(NSUInteger)_types categories:(id)_categories {
-    // Return a shared dummy instance. Apps only inspect -types on the object
-    // returned by -[UIApplication currentUserNotificationSettings], which
-    // returns nil, so this object does not need to store anything.
-    msg_class![env; UIUserNotificationSettings new]
+- (())cancelAllLocalNotifications {
+    log!("TODO: [(UIApplication*){:?} cancelAllLocalNotifications", this);
 }
-
-- (NSUInteger)types {
-    0 // UIUserNotificationTypeNone
+- (())scheduleLocalNotification:(id)local_notif { // UILocalNotification *
+    log!("TODO: [(UIApplication*){:?} scheduleLocalNotification:{:?}", this, local_notif);
 }
 
 @end
 
 };
 
-/// Best-effort discovery of the application delegate class.
-///
-/// `UIApplicationMain` normally learns the delegate class from its
-/// `delegateClassName` argument (or from a connection in the main nib). When
-/// neither is available, look through the loaded classes for one that declares
-/// a `UIApplicationDelegate` launch method and use that. Returns `nil` if no
-/// candidate is found.
-fn find_app_delegate_class(env: &Environment) -> id {
-    for sel_name in [
-        "application:didFinishLaunchingWithOptions:",
-        "applicationDidFinishLaunching:",
-    ] {
-        if let Some(class) = env.objc.class_declaring_instance_method(sel_name) {
-            return class;
-        }
-    }
-    nil
-}
-
 /// `UIApplicationMain`, the entry point of the application.
+///
+/// This function should never return.
 pub(super) fn UIApplicationMain(
     env: &mut Environment,
     _argc: i32,
@@ -594,6 +266,10 @@ pub(super) fn UIApplicationMain(
     principal_class_name: id, // NSString*
     delegate_class_name: id,  // NSString*
 ) {
+    // UIKit creates and drains autorelease pools when handling events.
+    // It's not clear what granularity this should happen with, but this
+    // granularity has already caught several bugs. :)
+
     let ui_application = {
         let pool: id = msg_class![env; NSAutoreleasePool new];
 
@@ -606,12 +282,11 @@ pub(super) fn UIApplicationMain(
         let ui_application: id = msg![env; principal_class new];
 
         let device_family = env.options.device_family;
-        if let Some(main_nib_filename) = env
-            .bundle
-            .main_nib_filename(device_family)
-            .map(str::to_owned)
-        {
-            let ns_main_nib_filename = from_rust_string(env, main_nib_filename);
+        if let Some(main_nib_filename) = env.bundle.main_nib_filename(device_family) {
+            let ns_main_nib_filename = from_rust_string(env, main_nib_filename.to_string());
+            // We need to check first if main nib file exists,
+            // as `UINib nibWithNibName:bundle:` will crash on nonexistent
+            // nib otherwise
             let type_: id = get_static_str(env, "nib");
             let bundle: id = msg_class![env; NSBundle mainBundle];
             let res: id = msg![env; bundle pathForResource:ns_main_nib_filename ofType:type_];
@@ -621,7 +296,10 @@ pub(super) fn UIApplicationMain(
                 let _: id = msg![env; nib instantiateWithOwner:ui_application
                                                options:nil];
             } else {
-                log!("Warning: couldn't load main nib file.");
+                log!(
+                    "Warning: couldn't load main nib file {:?}",
+                    env.bundle.main_nib_filename(device_family)
+                );
             }
         }
 
@@ -631,118 +309,41 @@ pub(super) fn UIApplicationMain(
 
         let delegate: id = msg![env; ui_application delegate];
         if delegate != nil {
-            // The delegate was wired up while loading the main nib.
+            // The delegate was created while loading the nib file.
+            // Retain it so it doesn't get deallocated when the autorelease pool
+            // is drained. (See discussion in `setDelegate:`.)
             env.objc
                 .borrow_mut::<UIApplicationHostObject>(ui_application)
                 .delegate_is_retained = true;
             retain(env, delegate);
-        } else if delegate_class_name != nil
-            && msg![env; delegate_class_name isEqual:principal_class_name]
-        {
-            // The app uses its principal class as its own delegate.
-            let _: () = msg![env; ui_application setDelegate:ui_application];
         } else {
-            // The delegate is normally created from the class named by the
-            // `delegate_class_name` argument. Some apps reach this point
-            // without a usable name: the argument is nil (the delegate was
-            // expected from the main nib, but no nib connection set it), or
-            // the value the binary passed could not be resolved to a real
-            // class (e.g. it was derived from a class reference that ended up
-            // nil, which decodes to the empty string). Previously this left
-            // the application with a nil delegate, so
-            // `application:didFinishLaunchingWithOptions:` was never sent and
-            // the app stayed frozen on its launch image. Fall back to
-            // discovering the app's delegate class from the loaded classes.
-            let mut delegate_class: id = nil;
-            if delegate_class_name != nil {
-                let name = ns_string::to_rust_string(env, delegate_class_name).into_owned();
-                if !name.is_empty() {
-                    delegate_class = env
-                        .objc
-                        .try_get_known_class(&name, &mut env.mem)
-                        .unwrap_or(nil);
-                }
-            }
-            if delegate_class == nil {
-                delegate_class = find_app_delegate_class(env);
-                if delegate_class != nil {
-                    log!(
-                        "UIApplicationMain: no usable delegate class name was \
-                         provided; using discovered application delegate class."
-                    );
-                }
-            }
-            if delegate_class != nil {
-                let delegate: id = msg![env; delegate_class new];
-                let _: () = msg![env; ui_application setDelegate:delegate];
+            assert!(delegate_class_name != nil);
+            if msg![env; delegate_class_name isEqual:principal_class_name] {
+                // If same non-nil class name is used for both principal and
+                // delegate, it means that app is using itself as a delegate
+                let _: () = msg![env; ui_application setDelegate:ui_application];
             } else {
-                log!(
-                    "Warning: UIApplicationMain could not determine an \
-                     application delegate; the app may not finish launching."
-                );
+                // We have to construct the delegate.
+                let name = ns_string::to_rust_string(env, delegate_class_name);
+                let class = env.objc.get_known_class(&name, &mut env.mem);
+                let delegate: id = msg![env; class new];
+                let _: () = msg![env; ui_application setDelegate:delegate];
+                assert!(delegate != nil);
             }
         };
-
-        // UIMainStoryboardFile (iOS 5+) replaces NSMainNibFile for modern
-        // apps. When present, the documented launch flow is:
-        //   1. Load the named storyboard.
-        //   2. Create a UIWindow sized to the main screen's bounds.
-        //   3. Instantiate the storyboard's initial view controller.
-        //   4. Set that view controller as the window's rootViewController.
-        //   5. Send -makeKeyAndVisible to the window.
-        //   6. Assign the window to the app delegate's `window` property
-        //      via KVC (Apple's UIApplicationMain does this so app
-        //      delegates can return the window from `-window` without any
-        //      manual wiring inside `application:didFinishLaunchingWithOptions:`).
-        let storyboard_name = env
-            .bundle
-            .main_storyboard_filename(device_family)
-            .map(str::to_owned);
-        if let Some(storyboard_name) = storyboard_name {
-            let storyboard_name_ns = from_rust_string(env, storyboard_name.clone());
-            let storyboard_class = env.objc.get_known_class("UIStoryboard", &mut env.mem);
-            let storyboard: id =
-                msg![env; storyboard_class storyboardWithName:storyboard_name_ns bundle:nil];
-            release(env, storyboard_name_ns);
-
-            if storyboard != nil {
-                let initial_vc: id = msg![env; storyboard instantiateInitialViewController];
-                if initial_vc != nil {
-                    let screen: id = msg_class![env; UIScreen mainScreen];
-                    let bounds: CGRect = msg![env; screen bounds];
-                    let window: id = msg_class![env; UIWindow alloc];
-                    let window: id = msg![env; window initWithFrame:bounds];
-
-                    let _: () = msg![env; window setRootViewController:initial_vc];
-                    let _: () = msg![env; window makeKeyAndVisible];
-
-                    let delegate: id = msg![env; ui_application delegate];
-                    if delegate != nil {
-                        let window_key: id = get_static_str(env, "window");
-                        let _: () = msg![env; delegate setValue:window forKey:window_key];
-                    }
-                } else {
-                    log!(
-                        "Warning: storyboard {:?} has no initial view controller; \
-                         skipping window setup.",
-                        storyboard_name,
-                    );
-                }
-            } else {
-                log!(
-                    "Warning: couldn't load main storyboard {:?}.",
-                    storyboard_name
-                );
-            }
-        }
+        // We can't hang on to the delegate, the guest app may change it at any
+        // time.
 
         let _: () = msg![env; pool drain];
+
         ui_application
     };
 
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];
+        // iOS 3+ apps usually use application:didFinishLaunchingWithOptions:,
+        // and it seems to be prioritized over applicationDidFinishLaunching:.
         if env.objc.object_has_method_named(
             &env.mem,
             delegate,
@@ -760,16 +361,21 @@ pub(super) fn UIApplicationMain(
 
         let center: id = msg_class![env; NSNotificationCenter defaultCenter];
         let notif_name = get_static_str(env, UIApplicationDidFinishLaunchingNotification);
+        // TODO: launch options in `userInfo` if it'll ever become a concern
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
 
         let _: () = msg![env; pool drain];
     }
 
+    // Call layoutSubviews on all views in the view hierarchy.
+    // See https://medium.com/geekculture/uiview-lifecycle-part-5-faa2d44511c9
     let views = env.framework_state.uikit.ui_view.views.clone();
     for view in views {
         () = msg![env; view layoutSubviews];
     }
 
+    // Send applicationDidBecomeActive now that the application is ready to
+    // become active.
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];
@@ -779,51 +385,45 @@ pub(super) fn UIApplicationMain(
         {
             () = msg![env; delegate applicationDidBecomeActive:ui_application];
         }
+
         let center: id = msg_class![env; NSNotificationCenter defaultCenter];
         let notif_name = get_static_str(env, UIApplicationDidBecomeActiveNotification);
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
+
         let _: () = msg![env; pool drain];
     }
 
-    // Apple docs: after `beginGeneratingDeviceOrientationNotifications` the
-    // device begins generating `UIDeviceOrientationDidChangeNotification`s.
-    // On a real iPhone the accelerometer wakes the moment the user picks up
-    // the device, so the very first orientation event practically always
-    // arrives during launch. Some games (e.g. Dead Space) gate the start of
-    // their C++ engine on this first notification — if it never fires they
-    // sit forever in the run loop waiting for it. Post an initial
-    // notification here so the app can transition out of its idle splash
-    // state. See `UIDevice` documentation:
-    //   https://developer.apple.com/documentation/uikit/uidevice/1620018-beginGeneratingdeviceorientationn
-    {
-        let pool: id = msg_class![env; NSAutoreleasePool new];
-        let current_device: id = msg_class![env; UIDevice currentDevice];
-        let is_generating: bool =
-            msg![env; current_device isGeneratingDeviceOrientationNotifications];
-        if is_generating {
-            log_dbg!(
-                "Posting initial UIDeviceOrientationDidChangeNotification \
-                 so apps observing device orientation can finish initializing."
-            );
-            let _: () = msg![env; current_device _postOrientationChangeNotification];
-        }
-        let _: () = msg![env; pool drain];
-    }
+    // FIXME: There are more messages we should send.
 
+    // TODO: It might be nicer to return from this function (even though it's
+    // conceptually noreturn) and set some global flag that changes how the
+    // execution works from this point onwards, though the only real advantages
+    // would be a prettier backtrace and maybe the quit button not having to
+    // panic.
     let run_loop: id = msg_class![env; NSRunLoop mainRunLoop];
     let _: () = msg![env; run_loop run];
 }
 
+/// Tell the app it's about to quit and then exit.
 pub(super) fn exit(env: &mut Environment) {
     let ui_application: id = msg_class![env; UIApplication sharedApplication];
+
     let center: id = msg_class![env; NSNotificationCenter defaultCenter];
 
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
+
+        // Skip NSUserDefaults code while in the app picker, otherwise we get
+        // a strange error when existing touchHLE due to the fake bundle.
         if !env.is_app_picker {
+            // Apple's docs (used to) vaguely mention that `synchronize` is
+            // invoked on periodic intervals.
+            // Second best - and implemented here - is to save before app exits.
+            // TODO: call `synchronize` periodically
             let user_defaults: id = msg_class![env; NSUserDefaults standardUserDefaults];
             let _: bool = msg![env; user_defaults synchronize];
         }
+
         let delegate: id = msg![env; ui_application delegate];
         if env
             .objc
@@ -831,10 +431,13 @@ pub(super) fn exit(env: &mut Environment) {
         {
             () = msg![env; delegate applicationWillResignActive:ui_application];
         }
+
         let notif_name = get_static_str(env, UIApplicationWillResignActiveNotification);
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
+
         let _: () = msg![env; pool drain];
     };
+
     {
         let pool: id = msg_class![env; NSAutoreleasePool new];
         let delegate: id = msg![env; ui_application delegate];
@@ -844,14 +447,17 @@ pub(super) fn exit(env: &mut Environment) {
         {
             () = msg![env; delegate applicationWillTerminate:ui_application];
         }
+
         let notif_name = get_static_str(env, UIApplicationWillTerminateNotification);
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
+
         let _: () = msg![env; pool drain];
     };
 
     std::process::exit(0);
 }
 
+/// App life-cycle notifications
 const UIApplicationDidFinishLaunchingNotification: &str =
     "UIApplicationDidFinishLaunchingNotification";
 const UIApplicationDidBecomeActiveNotification: &str = "UIApplicationDidBecomeActiveNotification";
@@ -861,70 +467,14 @@ const UIApplicationWillEnterForegroundNotification: &str =
     "UIApplicationWillEnterForegroundNotification";
 const UIApplicationWillResignActiveNotification: &str = "UIApplicationWillResignActiveNotification";
 const UIApplicationWillTerminateNotification: &str = "UIApplicationWillTerminateNotification";
+/// Other app notifications
 const UIApplicationLaunchOptionsRemoteNotificationKey: &str =
     "UIApplicationLaunchOptionsRemoteNotificationKey";
 const UIApplicationDidReceiveMemoryWarningNotification: &str =
     "UIApplicationDidReceiveMemoryWarningNotification";
 
-// Apple `UIApplication.h` declares these as
-// `UIKIT_EXTERN NSNotificationName const ...` (and `NSString * const` in
-// older SDKs). The exact literal values are what Apple uses for
-// notification posting and dictionary keys; matching them lets observer
-// registration via `-[NSNotificationCenter addObserver:selector:name:object:]`
-// resolve correctly.
-//
-// References:
-// * Apple [UIApplication notification names](https://developer.apple.com/documentation/uikit/uiapplication)
-// * Apple [Launch options keys](https://developer.apple.com/documentation/uikit/uiapplication/launchoptionskey)
-// * Apple [Status-bar related notifications](https://developer.apple.com/documentation/uikit/uiapplicationdidchangestatusbarframenotification)
-const UIApplicationProtectedDataDidBecomeAvailable: &str =
-    "UIApplicationProtectedDataDidBecomeAvailable";
-const UIApplicationProtectedDataWillBecomeUnavailable: &str =
-    "UIApplicationProtectedDataWillBecomeUnavailable";
-const UIApplicationSignificantTimeChangeNotification: &str =
-    "UIApplicationSignificantTimeChangeNotification";
-const UIApplicationDidChangeStatusBarFrameNotification: &str =
-    "UIApplicationDidChangeStatusBarFrameNotification";
-const UIApplicationWillChangeStatusBarFrameNotification: &str =
-    "UIApplicationWillChangeStatusBarFrameNotification";
-const UIApplicationDidChangeStatusBarOrientationNotification: &str =
-    "UIApplicationDidChangeStatusBarOrientationNotification";
-const UIApplicationWillChangeStatusBarOrientationNotification: &str =
-    "UIApplicationWillChangeStatusBarOrientationNotification";
-const UIApplicationStatusBarFrameUserInfoKey: &str = "UIApplicationStatusBarFrameUserInfoKey";
-const UIApplicationStatusBarOrientationUserInfoKey: &str =
-    "UIApplicationStatusBarOrientationUserInfoKey";
-const UIApplicationBackgroundFetchIntervalMinimum: &str =
-    "UIApplicationBackgroundFetchIntervalMinimum";
-const UIApplicationBackgroundFetchIntervalNever: &str =
-    "UIApplicationBackgroundFetchIntervalNever";
-// Launch options keys — Apple `UIApplication.h` (`UIApplicationLaunchOptionsKey`).
-const UIApplicationLaunchOptionsURLKey: &str = "UIApplicationLaunchOptionsURLKey";
-const UIApplicationLaunchOptionsSourceApplicationKey: &str =
-    "UIApplicationLaunchOptionsSourceApplicationKey";
-const UIApplicationLaunchOptionsAnnotationKey: &str = "UIApplicationLaunchOptionsAnnotationKey";
-const UIApplicationLaunchOptionsLocalNotificationKey: &str =
-    "UIApplicationLaunchOptionsLocalNotificationKey";
-const UIApplicationLaunchOptionsLocationKey: &str = "UIApplicationLaunchOptionsLocationKey";
-const UIApplicationLaunchOptionsNewsstandDownloadsKey: &str =
-    "UIApplicationLaunchOptionsNewsstandDownloadsKey";
-const UIApplicationLaunchOptionsBluetoothCentralsKey: &str =
-    "UIApplicationLaunchOptionsBluetoothCentralsKey";
-const UIApplicationLaunchOptionsBluetoothPeripheralsKey: &str =
-    "UIApplicationLaunchOptionsBluetoothPeripheralsKey";
-const UIApplicationLaunchOptionsShortcutItemKey: &str = "UIApplicationLaunchOptionsShortcutItemKey";
-// `UIApplicationOpenSettingsURLString` from `UIApplication.h`. iOS apps
-// pass this to `-[UIApplication openURL:]` to open the system Settings
-// app at their own page; the literal value is `"app-settings:"` per
-// Apple's docs (<https://developer.apple.com/documentation/uikit/uiapplicationopensettingsurlstring>).
-const UIApplicationOpenSettingsURLString: &str = "app-settings:";
-// Newer (iOS 9) open-URL option keys — `UIApplicationOpenURLOptionsKey`.
-const UIApplicationOpenURLOptionsSourceApplicationKey: &str =
-    "UIApplicationOpenURLOptionsSourceApplicationKey";
-const UIApplicationOpenURLOptionsAnnotationKey: &str = "UIApplicationOpenURLOptionsAnnotationKey";
-const UIApplicationOpenURLOptionsOpenInPlaceKey: &str = "UIApplicationOpenURLOptionsOpenInPlaceKey";
-const UIApplicationOpenURLOptionUniversalLinksOnly: &str =
-    "UIApplicationOpenURLOptionUniversalLinksOnly";
+/// `UIApplicationLaunchOptionsKey` and `NSNotificationName` values.
+/// (Both types are strings)
 pub const CONSTANTS: ConstantExports = &[
     (
         "_UIApplicationDidFinishLaunchingNotification",
@@ -958,105 +508,6 @@ pub const CONSTANTS: ConstantExports = &[
         "_UIApplicationLaunchOptionsRemoteNotificationKey",
         HostConstant::NSString(UIApplicationLaunchOptionsRemoteNotificationKey),
     ),
-    (
-        "_UIApplicationProtectedDataDidBecomeAvailable",
-        HostConstant::NSString(UIApplicationProtectedDataDidBecomeAvailable),
-    ),
-    (
-        "_UIApplicationProtectedDataWillBecomeUnavailable",
-        HostConstant::NSString(UIApplicationProtectedDataWillBecomeUnavailable),
-    ),
-    (
-        "_UIApplicationSignificantTimeChangeNotification",
-        HostConstant::NSString(UIApplicationSignificantTimeChangeNotification),
-    ),
-    (
-        "_UIApplicationDidChangeStatusBarFrameNotification",
-        HostConstant::NSString(UIApplicationDidChangeStatusBarFrameNotification),
-    ),
-    (
-        "_UIApplicationWillChangeStatusBarFrameNotification",
-        HostConstant::NSString(UIApplicationWillChangeStatusBarFrameNotification),
-    ),
-    (
-        "_UIApplicationDidChangeStatusBarOrientationNotification",
-        HostConstant::NSString(UIApplicationDidChangeStatusBarOrientationNotification),
-    ),
-    (
-        "_UIApplicationWillChangeStatusBarOrientationNotification",
-        HostConstant::NSString(UIApplicationWillChangeStatusBarOrientationNotification),
-    ),
-    (
-        "_UIApplicationStatusBarFrameUserInfoKey",
-        HostConstant::NSString(UIApplicationStatusBarFrameUserInfoKey),
-    ),
-    (
-        "_UIApplicationStatusBarOrientationUserInfoKey",
-        HostConstant::NSString(UIApplicationStatusBarOrientationUserInfoKey),
-    ),
-    (
-        "_UIApplicationBackgroundFetchIntervalMinimum",
-        HostConstant::NSString(UIApplicationBackgroundFetchIntervalMinimum),
-    ),
-    (
-        "_UIApplicationBackgroundFetchIntervalNever",
-        HostConstant::NSString(UIApplicationBackgroundFetchIntervalNever),
-    ),
-    (
-        "_UIApplicationLaunchOptionsURLKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsURLKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsSourceApplicationKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsSourceApplicationKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsAnnotationKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsAnnotationKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsLocalNotificationKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsLocalNotificationKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsLocationKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsLocationKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsNewsstandDownloadsKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsNewsstandDownloadsKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsBluetoothCentralsKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsBluetoothCentralsKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsBluetoothPeripheralsKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsBluetoothPeripheralsKey),
-    ),
-    (
-        "_UIApplicationLaunchOptionsShortcutItemKey",
-        HostConstant::NSString(UIApplicationLaunchOptionsShortcutItemKey),
-    ),
-    (
-        "_UIApplicationOpenSettingsURLString",
-        HostConstant::NSString(UIApplicationOpenSettingsURLString),
-    ),
-    (
-        "_UIApplicationOpenURLOptionsSourceApplicationKey",
-        HostConstant::NSString(UIApplicationOpenURLOptionsSourceApplicationKey),
-    ),
-    (
-        "_UIApplicationOpenURLOptionsAnnotationKey",
-        HostConstant::NSString(UIApplicationOpenURLOptionsAnnotationKey),
-    ),
-    (
-        "_UIApplicationOpenURLOptionsOpenInPlaceKey",
-        HostConstant::NSString(UIApplicationOpenURLOptionsOpenInPlaceKey),
-    ),
-    (
-        "_UIApplicationOpenURLOptionUniversalLinksOnly",
-        HostConstant::NSString(UIApplicationOpenURLOptionUniversalLinksOnly),
-    ),
 ];
+
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(UIApplicationMain(_, _, _, _))];

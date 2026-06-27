@@ -8,7 +8,6 @@
 use super::ns_notification::NSNotificationName;
 use super::ns_string;
 
-use crate::abi::{CallFromHost, GuestFunction};
 use crate::objc::{
     id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr, SEL,
@@ -21,26 +20,15 @@ pub struct State {
     default_center: Option<id>,
 }
 
-/// A registered observer.
-///
-/// Two flavours are supported:
-/// 1. Classic target/selector pair (`-addObserver:selector:name:object:`).
-/// 2. Block-based observer (`-addObserverForName:object:queue:usingBlock:`).
-///    The `observer` field then points at the opaque token object that owns
-///    the block, and `block` carries the block id that must be invoked when
-///    the notification is delivered.
 #[derive(Clone)]
 struct Observer {
     observer: id,
     selector: SEL,
     object: id,
-    /// Non-nil for block-based observers. The block is `^void(NSNotification *)`.
-    block: id,
 }
 
-#[derive(Default)]
 struct NSNotificationCenterHostObject {
-    observers: HashMap<Cow<'static, str>, Vec<Observer>>,
+    observers: HashMap<Option<Cow<'static, str>>, Vec<Observer>>,
 }
 impl HostObject for NSNotificationCenterHostObject {}
 
@@ -72,12 +60,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     let observers = std::mem::take(&mut host_obj.observers);
     for observer in observers.values().flatten() {
         release(env, observer.object);
-        if observer.block != nil {
-            // For block-based observers, also release the heap-copied block
-            // and the opaque token we vended out.
-            release(env, observer.block);
-            release(env, observer.observer);
-        }
     }
     env.objc.dealloc_object(this, &mut env.mem);
 }
@@ -86,21 +68,11 @@ pub const CLASSES: ClassExports = objc_classes! {
          selector:(SEL)selector
              name:(NSNotificationName)name
            object:(id)object {
-    if name == nil &&
-        env.bundle.bundle_identifier().starts_with("com.chillingo.cuttherope") &&
-        selector == env.objc.lookup_selector("fetchUpdateNotification:").unwrap() {
-        // As we nullified Flurry SDK, we also need to no-op
-        // related notifications
-        log!("Applying game-specific hack for Cut the Rope: ignoring addObserver:selector:name:object: for fetchUpdateNotification:");
-        return;
-    }
-    // Per Apple: `name = nil` means "match notifications of any name from
-    // `object`". We store nil-name observers under the empty-string key and
-    // merge them in at `-postNotification:` time.
-    let name: Cow<'static, str> = if name == nil {
-        Cow::Borrowed("")
+    let name = if name != nil {
+        // Usually a static string, so no real copy will happen
+        Some(ns_string::to_rust_string(env, name))
     } else {
-        ns_string::to_rust_string(env, name)
+        None
     };
 
     log_dbg!(
@@ -136,67 +108,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         observer,
         selector,
         object,
-        block: nil,
     });
-}
-
-// `- (id<NSObject>)addObserverForName:(NSNotificationName)name
-//                              object:(id)obj
-//                               queue:(NSOperationQueue *)queue
-//                          usingBlock:(void (^)(NSNotification *note))block;`
-//
-// Per Apple's [NSNotificationCenter Reference](https://developer.apple.com/documentation/foundation/nsnotificationcenter/1411723-addobserverforname):
-// returns an opaque observer token, distinct from the receiver, that the
-// caller must keep a strong reference to. When a notification matching
-// `name`/`obj` is posted, the system enqueues `block` on `queue` (or
-// invokes it synchronously on the posting thread when `queue` is nil)
-// passing the notification as its only argument. touchHLE has no
-// `NSOperationQueue` scheduling — we always invoke `block` synchronously
-// from `-postNotification:`, which matches the `queue == nil` semantics
-// Apple documents.
-//
-// Implementation note: the returned token is itself a freshly allocated
-// `NSObject`. We store the block alongside the token in our observer
-// list (with selector = a zero SEL, since it won't be used). `block` is
-// retained — Apple's API contract is that the framework keeps the block
-// alive until `-removeObserver:` is called.
-- (id)addObserverForName:(NSNotificationName)name
-                  object:(id)object
-                   queue:(id)_queue
-              usingBlock:(id)block {
-    // The token can be any unique NSObject; an instance of NSObject is what
-    // Apple's runtime uses too.
-    let token: id = msg_class![env; NSObject new];
-
-    // Block must be copied to the heap (Apple's contract for blocks captured
-    // by the framework). `-copy` on a stack block produces a heap block; on a
-    // heap block it's a retain.
-    let block_copy: id = msg![env; block copy];
-
-    // Retain the optional `object` filter so it can't dangle while we're
-    // observing — mirrors the behaviour of -addObserver:selector:name:object:.
-    retain(env, object);
-
-    let name_key: Cow<'static, str> = if name == nil {
-        Cow::Borrowed("")
-    } else {
-        ns_string::to_rust_string(env, name)
-    };
-
-    log_dbg!(
-        "[(NSNotificationCenter*){:?} addObserverForName:{:?} object:{:?} queue:_ usingBlock:{:?}] -> token {:?}",
-        this, name_key, object, block_copy, token
-    );
-
-    let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
-    host_obj.observers.entry(name_key).or_default().push(Observer {
-        observer: token,
-        selector: SEL::null(),
-        object,
-        block: block_copy,
-    });
-
-    token
 }
 
 - (())removeObserver:(id)observer {
@@ -228,8 +140,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     let mut removed_observers = Vec::new();
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
-    if let Some(ref name) = name {
-        let Some(observers) = host_obj.observers.get_mut(name) else {
+    if name.is_some() {
+        let Some(observers) = host_obj.observers.get_mut(&name) else {
             return;
         };
         remove_observers_internal(observers, &mut removed_observers, observer, object);
@@ -241,12 +153,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     for removed_observer in removed_observers {
         release(env, removed_observer.object);
-        if removed_observer.block != nil {
-            release(env, removed_observer.block);
-            // The observer field holds the token we vended out; release
-            // the runtime's own retain on it.
-            release(env, removed_observer.observer);
-        }
     }
 }
 
@@ -257,71 +163,23 @@ pub const CLASSES: ClassExports = objc_classes! {
         notification,
     );
 
-    let name_id: id = msg![env; notification name];
-    // Usually a static string, so no real copy will happen.
-    let name: Cow<'static, str> = if name_id == nil {
-        Cow::Borrowed("")
-    } else {
-        ns_string::to_rust_string(env, name_id)
-    };
+    let name: id = msg![env; notification name];
+    // Usually a static string, so no real copy will happen
+    let name = ns_string::to_rust_string(env, name);
 
     let notification_poster: id = msg![env; notification object];
 
     log_dbg!("Notification is a {:?} posted by {:?}", name, notification_poster);
 
-    // Collect observers matching this notification: those registered for
-    // exactly this name plus those registered with `name = nil` (stored
-    // under the empty-string key). Both buckets are filtered by the
-    // `object` predicate inside the dispatch loop below.
-    let observers: Vec<Observer> = {
-        let host_obj = env.objc.borrow::<NSNotificationCenterHostObject>(this);
-        let mut merged: Vec<Observer> = Vec::new();
-        if let Some(named) = host_obj.observers.get(&name) {
-            merged.extend(named.iter().cloned());
-        }
-        // Avoid double-dispatching when the notification's own name is "".
-        if !name.is_empty() {
-            if let Some(any_name) = host_obj.observers.get(&Cow::Borrowed("")) {
-                merged.extend(any_name.iter().cloned());
-            }
-        }
-        merged
-    };
-    if observers.is_empty() {
-        return;
+    let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
+    let mut observers = host_obj.observers.get(&Some(name)).cloned().unwrap_or_default();
+    if let Some(nameless_observers) = host_obj.observers.get(&None) {
+        observers.extend(nameless_observers.iter().cloned());
     }
-    for Observer { observer, selector, object, block } in observers {
+    for Observer { observer, selector, object } in observers {
         // The object argument is a filter for which notification sources the
         // observer is interested in.
         if object != nil && notification_poster != object {
-            continue;
-        }
-
-        if block != nil {
-            // Block-based observer (added via
-            // -addObserverForName:object:queue:usingBlock:). Invoke
-            //   block(notification)
-            // using the standard 32-bit iOS block layout:
-            //     struct Block_layout {
-            //         void *isa, int flags, int reserved,
-            //         void (*invoke)(void *block, ...),
-            //         ...
-            //     };
-            // The invoke function expects the block id as its first arg and
-            // the notification as its second arg.
-            log_dbg!(
-                "Notification {:?} observed, invoking block {:?} (token {:?})",
-                notification, block, observer
-            );
-            let invoke_ptr: u32 = env.mem.read(block.cast::<u32>() + 3u32);
-            if invoke_ptr != 0 {
-                let invoke = GuestFunction::from_addr_with_thumb_bit(invoke_ptr);
-                retain(env, observer);
-                let _: () = invoke.call_from_host(env, (block, notification));
-                release(env, observer);
-            } else {
-                log!("Warning: notification block {:?} has NULL invoke pointer; skipping", block);
-            }
             continue;
         }
 

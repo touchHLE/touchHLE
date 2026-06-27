@@ -1,0 +1,278 @@
+name: Build touchHLE
+
+on:
+  push:
+    branches: [ "trunk" ]
+  pull_request:
+    branches: [ "trunk" ]
+  create: # for tags
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-osx:
+
+    runs-on: macos-15
+
+    steps:
+      # actions/checkout really doesn't work well with git-describe for some
+      # reason (most likely it strips the annotation off the tag somehow).
+      - name: Checkout touchHLE
+        shell: bash # windows :)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE"
+          git clone https://github.com/touchHLE/touchHLE "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          git fetch origin "$GITHUB_REF"
+          git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
+      - name: Install clang-format
+        run: brew install clang-format
+      - name: Check formatting
+        run: dev-scripts/format.sh --check
+      - name: Get Submodules
+        run: git submodule update --init
+      - name: Install Boost
+        run: brew install boost
+      - name: Try to get cached copy of cmake
+        id: cache-cmake
+        uses: actions/cache@v3
+        with:
+          path: vendor/cmake
+          key: cmake_3_31_6_macos
+      - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+        name: Download Cmake
+        run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-macos-universal.tar.gz"
+      - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+        name: Extract Cmake
+        run: tar xzvf "cmake-3.31.6-macos-universal.tar.gz" -C vendor && mv "vendor/cmake-3.31.6-macos-universal/CMake.app/Contents/" vendor/cmake && rm -rf vendor/cmake-3.31.6-macos-universal
+      # This is the earliest point at which we can do linting: clippy will end up
+      # building dynarmic, which needs Boost, but we don't need LLVM until
+      # building tests.
+      - name: Lint
+        run: dev-scripts/lint.sh
+        env:
+          CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+      - name: Try to get cached copy of LLVM
+        id: cache-llvm
+        uses: actions/cache@v3
+        with:
+          path: tests/llvm
+          key: llvm_12_0_0_macOS_x64
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Download LLVM
+        run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.0/clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz"
+      - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+        name: Extract LLVM
+        run: tar -xf clang+llvm-12.0.0-x86_64-apple-darwin.tar.xz && mkdir tests/llvm && mv clang+llvm-12.0.0-x86_64-apple-darwin/* tests/llvm
+      - name: Get copy of common-3.0-sdk
+        run: cd ${{ github.workspace }}/tests && curl -L https://github.com/touchHLE/common-3.0-sdk/releases/latest/download/common-3.0.sdk-macOS-universal.tar.gz | tar xzv
+      - name: Install x86_64 toolchain
+        run: rustup target add x86_64-apple-darwin
+      - name: Test
+        run: cargo test --target x86_64-apple-darwin
+        env:
+          CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+      # This step ensures that our non-iOS-specific tests are passing on macOS itself!
+      - name: Sanity check tests
+        run: cc tests/TestApp_source/cli_tests.m tests/TestApp_source/CGAffineTransform.c tests/TestApp_source/SyncTester.m tests/TestApp_source/RespondsToSelector.m tests/TestApp_source/AutoReleasePoolTest.m tests/TestApp_source/Initialize.m -framework CoreFoundation -framework Foundation -framework CoreGraphics -DDEFINE_ME_WHEN_BUILDING_ON_MACOS -DTestApp_cli_tests_main=main -ObjC && ./a.out
+      - name: Build
+        run: cargo build --target x86_64-apple-darwin --release
+        env:
+          CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+      - name: Create .app bundle
+        run: cd dev-scripts && ./make-macos-bundle.sh ../target/x86_64-apple-darwin/release/touchHLE "`cargo run --package touchHLE_version`" "`cargo run --package touchHLE_version -- --branding`" && mkdir touchHLE-dmg-src && mv *.app touchHLE-dmg-src/ && hdiutil create -volname touchHLE -srcfolder touchHLE-dmg-src touchHLE.dmg && mv touchHLE.dmg ..
+      - uses: actions/upload-artifact@v4
+        with:
+          name: touchHLE_macOS_x86_64
+          path: touchHLE.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TestApp_built_on_macOS
+          path: tests/TestApp.app
+
+  build-android:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    # actions/checkout really doesn't work well with git-describe for some
+    # reason (most likely it strips the annotation off the tag somehow).
+    - name: Checkout touchHLE
+      shell: bash # windows :)
+      run: |
+        mkdir -p "$GITHUB_WORKSPACE"
+        git clone https://github.com/touchHLE/touchHLE "$GITHUB_WORKSPACE"
+        cd "$GITHUB_WORKSPACE"
+        git fetch origin "$GITHUB_REF"
+        git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
+    - name: Check formatting
+      run: dev-scripts/format.sh --check
+    - name: Get Submodules
+      run: git submodule update --init
+    - name: Try to get cached copy of Boost
+      id: cache-boost
+      uses: actions/cache@v3
+      with:
+        path: vendor/boost
+        key: boost_1_81_0
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Download Boost
+      run: curl -L -o boost_1_81_0.7z "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Extract Boost
+      run: 7z -ovendor x boost_1_81_0.7z && mv vendor/boost_1_81_0 vendor/boost
+    - name: Try to get cached copy of cmake
+      id: cache-cmake
+      uses: actions/cache@v3
+      with:
+        path: vendor/cmake
+        key: cmake_3_31_6_linux
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Download Cmake
+      run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-linux-x86_64.tar.gz"
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Extract Cmake
+      run: tar xzvf "cmake-3.31.6-linux-x86_64.tar.gz" -C vendor && mv vendor/cmake-3.31.6-linux-x86_64 vendor/cmake
+    - name: Install AArch64 Android Rust toolchain
+      run: rustup target add aarch64-linux-android
+    - name: Install cargo-ndk
+      run: cargo install cargo-ndk@3.5.4
+    # Gradle version compatibility is a nightmare and we refuse to use gradlew.
+    - name: Try to get a cached copy of Gradle
+      id: cache-gradle
+      uses: actions/cache@v3
+      with:
+        path: gradle
+        key: gradle-8.11.1
+    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}
+      name: Download Gradle
+      run: curl -L -o gradle-8.11.1-bin.zip "https://services.gradle.org/distributions/gradle-8.11.1-bin.zip"
+    - if: ${{ steps.cache-gradle.outputs.cache-hit != 'true' }}
+      name: Extract Gradle
+      run: 7z -ogradle x gradle-8.11.1-bin.zip
+    # We need to install the correct version of Android NDK manually
+    - name: Try to get a cached copy of Android NDK
+      id: cache-android-ndk
+      uses: actions/cache@v3
+      with:
+        path: android-ndk
+        key: android-ndk-r25c
+    - if: ${{ steps.cache-android-ndk.outputs.cache-hit != 'true' }}
+      name: Download Android NDK
+      run: curl -L -o android-ndk-r25c-linux.zip "https://dl.google.com/android/repository/android-ndk-r25c-linux.zip"
+    - if: ${{ steps.cache-android-ndk.outputs.cache-hit != 'true' }}
+      name: Extract Android NDK
+      run: 7z -oandroid-ndk -snld x android-ndk-r25c-linux.zip
+    - name: Link Android NDK
+      run: ln -s $PWD'/android-ndk/android-ndk-r25c' $ANDROID_SDK_ROOT'/ndk/25.2.9519653'
+    # Why isn't there a command for this?
+    - name: Generate local.properties file
+      run: echo 'sdk.dir='$ANDROID_SDK_ROOT > android/local.properties
+    - name: Lint
+      run: dev-scripts/lint.sh ndk -t arm64-v8a
+      env:
+        # The version should match the ndkVersion defined in `android\app\build.gradle`
+        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        ANDROID_NDK: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        ANDROID_NDK_HOME: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+    # Don't attempt to run tests (can't run on Android).
+    - name: Build for Android
+      run: cd android && ../gradle/gradle-8.11.1/bin/gradle assembleRelease && mv app/build/outputs/apk/release/app-release.apk ../touchHLE.apk
+      env:
+        # The version should match the ndkVersion defined in `android\app\build.gradle`
+        ANDROID_NDK_ROOT: '/usr/local/lib/android/sdk/ndk/25.2.9519653'
+        CMAKE: ${{ github.workspace }}/vendor/cmake/bin/cmake
+    - uses: actions/upload-artifact@v4
+      with:
+        name: touchHLE_Android_AArch64
+        path: touchHLE.apk
+
+  build-win:
+
+    runs-on: windows-2022
+
+    steps:
+    # actions/checkout really doesn't work well with git-describe for some
+    # reason (most likely it strips the annotation off the tag somehow).
+    - name: Checkout touchHLE
+      shell: bash # windows :)
+      run: |
+        mkdir -p "$GITHUB_WORKSPACE"
+        git clone https://github.com/touchHLE/touchHLE "$GITHUB_WORKSPACE"
+        cd "$GITHUB_WORKSPACE"
+        git fetch origin "$GITHUB_REF"
+        git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
+    # Apparently the Windows runner already has clang-format? That's nice.
+    - name: Check formatting
+      shell: bash # no command output without this
+      run: dev-scripts/format.sh --check
+    - name: Get Submodules
+      run: git submodule update --init
+    - name: Try to get cached copy of Boost
+      id: cache-boost
+      uses: actions/cache@v3
+      with:
+        path: vendor\boost
+        key: boost_1_81_0
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Download Boost
+      run: curl -L -o boost_1_81_0.7z "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"
+    - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      name: Extract Boost
+      run: 7z -ovendor x boost_1_81_0.7z && ren vendor\boost_1_81_0 boost
+    - name: Try to get cached copy of cmake
+      id: cache-cmake
+      uses: actions/cache@v3
+      with:
+        path: vendor/cmake
+        key: cmake_3_31_6_windows
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Download Cmake
+      run: curl -L -O "https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-windows-x86_64.zip"
+    - if: ${{ steps.cache-cmake.outputs.cache-hit != 'true' }}
+      name: Extract Cmake
+      run: 7z -ovendor x "cmake-3.31.6-windows-x86_64.zip" && ren vendor\cmake-3.31.6-windows-x86_64 cmake
+    # This is the earliest point at which we can do linting: clippy will end up
+    # building dynarmic, which needs Boost, but we don't need LLVM until
+    # building tests.
+    - name: Lint
+      shell: bash # no command output without this
+      run: dev-scripts/lint.sh
+      env:
+        CMAKE: ${{ github.workspace }}\vendor\cmake\bin\cmake
+    - name: Try to get cached copy of LLVM
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: tests/llvm
+        key: llvm_12_0_1_Windows_x64
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Download LLVM
+      run: curl -L -O "https://github.com/llvm/llvm-project/releases/download/llvmorg-12.0.1/LLVM-12.0.1-win64.exe"
+    - if: ${{ steps.cache-llvm.outputs.cache-hit != 'true' }}
+      name: Extract LLVM
+      run: 7z -otests/llvm x LLVM-12.0.1-win64.exe
+    # Windows seems to break the stdout pipe for some reason
+    - name: Get copy of common-3.0-sdk
+      run: cd ${{ github.workspace }}/tests && curl -L --output ${{ runner.temp }}\sdk.tar.gz https://github.com/touchHLE/common-3.0-sdk/releases/latest/download/common-3.0.sdk-windows-x86_64.tar.gz && tar xzvf ${{ runner.temp }}\sdk.tar.gz
+    - name: Test
+      run: cargo test
+      env:
+        CMAKE: ${{ github.workspace }}\vendor\cmake\bin\cmake
+    - name: Build
+      run: cargo build --release
+      env:
+        CMAKE: ${{ github.workspace }}\vendor\cmake\bin\cmake
+    - name: Create bundle
+      shell: bash
+      run: cd dev-scripts && ./make-windows-bundle.sh ../target/release/touchHLE.exe && mv touchHLE_windows_bundle/ ..
+    - uses: actions/upload-artifact@v4
+      with:
+        name: touchHLE_Windows_x86_64
+        path: touchHLE_windows_bundle/
+    - uses: actions/upload-artifact@v4
+      with:
+        name: TestApp_built_on_Windows
+        path: tests/TestApp.app

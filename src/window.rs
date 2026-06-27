@@ -33,233 +33,20 @@ use std::time::{Duration, Instant};
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceFamily {
     iPhone,
-    iPhone3G,
-    iPhone3GS,
-    iPhone4,
-    iPhone4s,
-    iPhone5,
-    iPhone5c,
     iPad,
-    iPad2,
-    iPad3,
-    iPad4,
-    iPad5,
-    iPadMini,
-    iPadMini2,
-    iPadMini3,
-    iPodTouch,
-    iPodTouch2,
-    iPodTouch3,
-    iPodTouch4,
-    iPodTouch5,
 }
 impl std::fmt::Display for DeviceFamily {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.write_str(self.display_name())
+        std::fmt::Debug::fmt(self, f)
     }
 }
 impl DeviceFamily {
-    pub fn display_name(&self) -> &'static str {
-        match self {
-            DeviceFamily::iPhone => "iPhone",
-            DeviceFamily::iPhone3G => "iPhone 3G",
-            DeviceFamily::iPhone3GS => "iPhone 3GS",
-            DeviceFamily::iPhone4 => "iPhone 4",
-            DeviceFamily::iPhone4s => "iPhone 4s",
-            DeviceFamily::iPhone5 => "iPhone 5",
-            DeviceFamily::iPhone5c => "iPhone 5c",
-            DeviceFamily::iPad => "iPad",
-            DeviceFamily::iPad2 => "iPad 2",
-            DeviceFamily::iPad3 => "iPad 3",
-            DeviceFamily::iPad4 => "iPad 4",
-            DeviceFamily::iPad5 => "iPad 5",
-            DeviceFamily::iPadMini => "iPad mini",
-            DeviceFamily::iPadMini2 => "iPad mini 2",
-            DeviceFamily::iPadMini3 => "iPad mini 3",
-            DeviceFamily::iPodTouch => "iPod touch",
-            DeviceFamily::iPodTouch2 => "iPod touch 2",
-            DeviceFamily::iPodTouch3 => "iPod touch 3",
-            DeviceFamily::iPodTouch4 => "iPod touch 4",
-            DeviceFamily::iPodTouch5 => "iPod touch 5",
-        }
-    }
-
-    pub fn is_ipad(&self) -> bool {
-        matches!(
-            self,
-            DeviceFamily::iPad
-                | DeviceFamily::iPad2
-                | DeviceFamily::iPad3
-                | DeviceFamily::iPad4
-                | DeviceFamily::iPad5
-                | DeviceFamily::iPadMini
-                | DeviceFamily::iPadMini2
-                | DeviceFamily::iPadMini3
-        )
-    }
-
-    pub fn is_ipod_touch(&self) -> bool {
-        matches!(
-            self,
-            DeviceFamily::iPodTouch
-                | DeviceFamily::iPodTouch2
-                | DeviceFamily::iPodTouch3
-                | DeviceFamily::iPodTouch4
-                | DeviceFamily::iPodTouch5
-        )
-    }
-
-    pub fn is_phone_568(&self) -> bool {
-        matches!(self, DeviceFamily::iPhone5 | DeviceFamily::iPhone5c | DeviceFamily::iPodTouch5)
-    }
-
-    pub fn is_retina(&self) -> bool {
-        matches!(
-            self,
-            DeviceFamily::iPhone4
-                | DeviceFamily::iPhone4s
-                | DeviceFamily::iPhone5
-                | DeviceFamily::iPhone5c
-                | DeviceFamily::iPodTouch4
-                | DeviceFamily::iPodTouch5
-                | DeviceFamily::iPad3
-                | DeviceFamily::iPad4
-                | DeviceFamily::iPad5
-                | DeviceFamily::iPadMini2
-                | DeviceFamily::iPadMini3
-        )
-    }
-
-    /// Portrait (width, height) in logical points.
     pub fn portrait_size(&self) -> (u32, u32) {
-        if self.is_ipad() {
-            (768, 1024)
-        } else if self.is_phone_568() {
-            (320, 568)
-        } else {
-            (320, 480)
-        }
-    }
-
-    /// UIScreen.scale — retina multiplier.
-    pub fn scale_factor(&self) -> f32 {
-        if self.is_retina() {
-            2.0
-        } else {
-            1.0
-        }
-    }
-
-    /// sysctl hw.machine / uname machine string.
-    pub fn machine_name(&self) -> &'static str {
         match self {
-            DeviceFamily::iPhone => "iPhone1,1",
-            DeviceFamily::iPhone3G => "iPhone1,2",
-            DeviceFamily::iPhone3GS => "iPhone2,1",
-            DeviceFamily::iPhone4 => "iPhone3,1",
-            DeviceFamily::iPhone4s => "iPhone4,1",
-            DeviceFamily::iPhone5 => "iPhone5,1",
-            DeviceFamily::iPhone5c => "iPhone5,3",
-            DeviceFamily::iPad => "iPad1,1",
-            DeviceFamily::iPad2 => "iPad2,1",
-            DeviceFamily::iPad3 => "iPad3,1",
-            DeviceFamily::iPad4 => "iPad3,4",
-            DeviceFamily::iPad5 => "iPad6,11",
-            DeviceFamily::iPadMini => "iPad2,5",
-            DeviceFamily::iPadMini2 => "iPad4,4",
-            DeviceFamily::iPadMini3 => "iPad4,7",
-            DeviceFamily::iPodTouch => "iPod1,1",
-            DeviceFamily::iPodTouch2 => "iPod2,1",
-            DeviceFamily::iPodTouch3 => "iPod3,1",
-            DeviceFamily::iPodTouch4 => "iPod4,1",
-            DeviceFamily::iPodTouch5 => "iPod5,1",
+            DeviceFamily::iPhone => (320, 480),
+            DeviceFamily::iPad => (768, 1024),
         }
     }
-
-    /// Heuristically pick the emulated device family whose screen most closely
-    /// matches an arbitrary host screen of `(width, height)` physical pixels.
-    pub fn pick_for_screen(width: u32, height: u32) -> DeviceFamily {
-        if width == 0 || height == 0 {
-            return DeviceFamily::iPhone3GS;
-        }
-        let (short, long) = if width <= height {
-            (width as f32, height as f32)
-        } else {
-            (height as f32, width as f32)
-        };
-        let host_ratio = short / long;
-        const CANDIDATES: [DeviceFamily; 5] = [
-            DeviceFamily::iPhone3GS,
-            DeviceFamily::iPhone4,
-            DeviceFamily::iPhone5,
-            DeviceFamily::iPad2,
-            DeviceFamily::iPad3,
-        ];
-        let mut best = DeviceFamily::iPhone3GS;
-        let mut best_dist = f32::INFINITY;
-        for family in CANDIDATES {
-            let (w, h) = family.portrait_size();
-            let ratio = w as f32 / h as f32;
-            let dist = (ratio - host_ratio).abs();
-            if dist < best_dist {
-                best_dist = dist;
-                best = family;
-            }
-        }
-        best
-    }
-
-    /// CLI/option canonical name accepted by `--device-family=` and emitted by
-    /// the app picker. Round-trips through `TryFrom<&str>`.
-    pub fn option_name(&self) -> &'static str {
-        match self {
-            DeviceFamily::iPhone => "iphone-2g",
-            DeviceFamily::iPhone3G => "iphone-3g",
-            DeviceFamily::iPhone3GS => "iphone-3gs",
-            DeviceFamily::iPhone4 => "iphone-4",
-            DeviceFamily::iPhone4s => "iphone-4s",
-            DeviceFamily::iPhone5 => "iphone-5",
-            DeviceFamily::iPhone5c => "iphone-5c",
-            DeviceFamily::iPad => "ipad-1",
-            DeviceFamily::iPad2 => "ipad-2",
-            DeviceFamily::iPad3 => "ipad-3",
-            DeviceFamily::iPad4 => "ipad-4",
-            DeviceFamily::iPad5 => "ipad-5",
-            DeviceFamily::iPadMini => "ipad-mini",
-            DeviceFamily::iPadMini2 => "ipad-mini-2",
-            DeviceFamily::iPadMini3 => "ipad-mini-3",
-            DeviceFamily::iPodTouch => "ipod-touch",
-            DeviceFamily::iPodTouch2 => "ipod-touch-2",
-            DeviceFamily::iPodTouch3 => "ipod-touch-3",
-            DeviceFamily::iPodTouch4 => "ipod-touch-4",
-            DeviceFamily::iPodTouch5 => "ipod-touch-5",
-        }
-    }
-
-    /// Every device model the user can pick, in menu/display order. Used by the
-    /// app picker's Quick Options "Device model" selector and by docs.
-    pub const ALL_SELECTABLE: &'static [DeviceFamily] = &[
-        DeviceFamily::iPhone,
-        DeviceFamily::iPhone3G,
-        DeviceFamily::iPhone3GS,
-        DeviceFamily::iPhone4,
-        DeviceFamily::iPhone4s,
-        DeviceFamily::iPhone5,
-        DeviceFamily::iPhone5c,
-        DeviceFamily::iPad,
-        DeviceFamily::iPad2,
-        DeviceFamily::iPad3,
-        DeviceFamily::iPad4,
-        DeviceFamily::iPad5,
-        DeviceFamily::iPadMini,
-        DeviceFamily::iPadMini2,
-        DeviceFamily::iPadMini3,
-        DeviceFamily::iPodTouch,
-        DeviceFamily::iPodTouch2,
-        DeviceFamily::iPodTouch3,
-        DeviceFamily::iPodTouch4,
-        DeviceFamily::iPodTouch5,
-    ];
 }
 impl TryFrom<u64> for DeviceFamily {
     type Error = ();
@@ -274,55 +61,27 @@ impl TryFrom<u64> for DeviceFamily {
 impl TryFrom<&str> for DeviceFamily {
     type Error = ();
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        match value.to_ascii_lowercase().as_str() {
-            "iphone" => Ok(DeviceFamily::iPhone3GS),
-            "iphone-2g" | "iphone1,1" => Ok(DeviceFamily::iPhone),
-            "iphone-3g" | "iphone1,2" => Ok(DeviceFamily::iPhone3G),
-            "iphone-3gs" | "iphone2,1" => Ok(DeviceFamily::iPhone3GS),
-            "iphone-4" | "iphone3,1" => Ok(DeviceFamily::iPhone4),
-            "iphone-4s" | "iphone4,1" => Ok(DeviceFamily::iPhone4s),
-            "iphone-5" | "iphone5,1" => Ok(DeviceFamily::iPhone5),
-            "iphone-5c" | "iphone5,3" => Ok(DeviceFamily::iPhone5c),
-            "ipad" => Ok(DeviceFamily::iPad2),
-            "ipad-1" | "ipad1,1" => Ok(DeviceFamily::iPad),
-            "ipad-2" | "ipad2,1" => Ok(DeviceFamily::iPad2),
-            "ipad-3" | "ipad3,1" => Ok(DeviceFamily::iPad3),
-            "ipad-4" | "ipad3,4" => Ok(DeviceFamily::iPad4),
-            "ipad-5" | "ipad6,11" => Ok(DeviceFamily::iPad5),
-            "ipad-mini" | "ipad2,5" => Ok(DeviceFamily::iPadMini),
-            "ipad-mini-2" | "ipad4,4" => Ok(DeviceFamily::iPadMini2),
-            "ipad-mini-3" | "ipad4,7" => Ok(DeviceFamily::iPadMini3),
-            "ipod-touch" | "ipod1,1" => Ok(DeviceFamily::iPodTouch),
-            "ipod-touch-2" | "ipod2,1" => Ok(DeviceFamily::iPodTouch2),
-            "ipod-touch-3" | "ipod3,1" => Ok(DeviceFamily::iPodTouch3),
-            "ipod-touch-4" | "ipod4,1" => Ok(DeviceFamily::iPodTouch4),
-            "ipod-touch-5" | "ipod5,1" => Ok(DeviceFamily::iPodTouch5),
+        match value {
+            "iphone" => Ok(DeviceFamily::iPhone),
+            "ipad" => Ok(DeviceFamily::iPad),
             _ => Err(()),
         }
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
     Portrait,
     PortraitUpsideDown,
     LandscapeLeft,
     LandscapeRight,
 }
-fn normalize_portrait_size(size: (u32, u32)) -> (u32, u32) {
-    if size.0 <= size.1 {
-        size
-    } else {
-        (size.1, size.0)
-    }
-}
-
-fn size_for_orientation_from_size(
-    size: (u32, u32),
+fn size_for_orientation(
+    family: DeviceFamily,
     orientation: DeviceOrientation,
     scale_hack: NonZeroU32,
 ) -> (u32, u32) {
-    let (width, height) = size;
+    let (width, height) = family.portrait_size();
     let scale_hack = scale_hack.get();
     match orientation {
         DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
@@ -330,14 +89,6 @@ fn size_for_orientation_from_size(
         DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
         DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
     }
-}
-
-fn size_for_orientation(
-    family: DeviceFamily,
-    orientation: DeviceOrientation,
-    scale_hack: NonZeroU32,
-) -> (u32, u32) {
-    size_for_orientation_from_size(family.portrait_size(), orientation, scale_hack)
 }
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
     let (short_side, long_side) = if screen_size.0 < screen_size.1 {
@@ -426,14 +177,8 @@ pub enum BatteryState {
 pub enum GLVersion {
     /// OpenGL ES 1.1
     GLES11,
-    /// OpenGL ES 2.0
-    GLES20,
-    /// OpenGL ES 3.0
-    GLES30,
     /// OpenGL 2.1 compatibility profile
     GL21Compat,
-    /// OpenGL 3.3 Core profile
-    GL33Core,
 }
 
 pub struct GLContext(sdl2::video::GLContext);
@@ -465,24 +210,6 @@ fn surface_from_image(image: &Image) -> Surface<'_> {
     surface
 }
 
-/// Query the host's primary display size in physical pixels, if possible.
-///
-/// Used by `--device-family=auto` to pick the closest emulated device before
-/// the real [Window] is created. Spins up a throwaway SDL video subsystem; on
-/// any failure (e.g. headless host, no display) returns [None] so the caller
-/// can fall back to a sensible default.
-pub fn host_screen_size() -> Option<(u32, u32)> {
-    let sdl_ctx = sdl2::init().ok()?;
-    let video_ctx = sdl_ctx.video().ok()?;
-    let bounds = video_ctx.display_bounds(0).ok()?;
-    let (w, h) = bounds.size();
-    if w == 0 || h == 0 {
-        None
-    } else {
-        Some((w, h))
-    }
-}
-
 pub struct Window {
     _sdl_ctx: sdl2::Sdl,
     video_ctx: sdl2::VideoSubsystem,
@@ -502,7 +229,6 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    host_screen_size: Option<(u32, u32)>,
     internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
     device_family: DeviceFamily,
@@ -566,13 +292,11 @@ impl Window {
         video_ctx.enable_screen_saver();
 
         let scale_hack = options.scale_hack;
-        let host_screen_size = options.host_screen_size.map(normalize_portrait_size);
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
         let device_family = options.device_family.unwrap_or(DeviceFamily::iPhone);
         let device_orientation = options.initial_orientation;
         let fullscreen = options.fullscreen;
-        let portrait_screen_size = host_screen_size.unwrap_or_else(|| device_family.portrait_size());
 
         let mut window = if Self::rotatable_fullscreen() {
             // Without this, SDL will force fullscreen mode to be portrait.
@@ -597,7 +321,7 @@ impl Window {
             window
         } else {
             let (width, height) =
-                size_for_orientation_from_size(portrait_screen_size, device_orientation, scale_hack);
+                size_for_orientation(device_family, device_orientation, scale_hack);
             let window = video_ctx
                 .window(title, width, height)
                 .position_centered()
@@ -654,7 +378,6 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            host_screen_size,
             internal_gl_ins: None,
             splash_image: launch_image,
             device_family,
@@ -703,10 +426,7 @@ impl Window {
     /// Since polling can be quite expensive, this function will skip it if it
     /// was called too recently.
     pub fn poll_for_events(&mut self, options: &Options) {
-        if !self.on_main_stack {
-            log!("Warning: poll_for_events called off main stack, skipping");
-            return;
-        }
+        assert!(self.on_main_stack);
         let now = Instant::now();
         // poll roughly twice per frame to try to avoid missing frames sometimes
         if now.duration_since(self.last_polled) < Duration::from_secs_f64(1.0 / 120.0) {
@@ -729,70 +449,16 @@ impl Window {
             } else {
                 window.viewport()
             };
-            // Clamp into the viewport. On hosts (Android, large desktops) the
-            // SDL drawable is bigger than the iPhone's virtual screen and is
-            // letterboxed inside the viewport. Touches landing in the
-            // letterbox bars used to produce out-of-window iOS coordinates
-            // (e.g. y == -91 or y == 570 for a 320x460 portrait window),
-            // which made -[UIWindow hitTest:withEvent:] return nil for every
-            // such touch. The "SUPER HACK" fallback in ui_touch then forced
-            // the touch directly into the window object, bypassing all
-            // subviews — so taps near the very top/bottom of a landscape
-            // screen never reached overlay UI like CreateNewWorld dialogs
-            // or the in-game chat field. Clamping to the viewport keeps the
-            // touch on the nearest visible edge instead.
-            let in_x = in_x.clamp(vx as f32, (vx + vw) as f32);
-            let in_y = in_y.clamp(vy as f32, (vy + vh) as f32);
             // normalize to unit square centred on origin
             let x = (in_x - vx as f32) / vw as f32 - 0.5;
             let y = (in_y - vy as f32) / vh as f32 - 0.5;
             // rotate
-            //
-            // If the final EAGL presentation is not being rotated, the touch
-            // path should not rotate either. Keep hit-testing in the normal
-            // 320x480 UIKit space so EAGLView still receives the event; a
-            // separate UITouch locationInView compatibility path can remap
-            // the coordinates returned to the game.
-            let [x, y] = if std::env::var_os("TOUCHHLE_DISABLE_PRESENT_ROTATION").is_some()
-                || std::env::var_os("TOUCHHLE_DISABLE_TOUCH_ROTATION").is_some()
-            {
-                log_once!(
-                    "TOUCHHLE_DISABLE_TOUCH_ROTATION: not rotating touch hit-test coordinates [this log will only be shown once]"
-                );
-                [x, y]
-            } else {
-                let matrix = window.rotation_matrix().inverse().unwrap();
-                matrix.transform([x, y])
-            };
-
+            let matrix = window.rotation_matrix().inverse().unwrap();
+            let [x, y] = matrix.transform([x, y]);
             // back to pixels
             let (out_w, out_h) = window.size_unrotated_unscaled();
-            let mut out_x = (x + 0.5) * out_w as f32;
-            let mut out_y = (y + 0.5) * out_h as f32;
-
-            // Optional hit-test tuning only. Do not use these unless you are
-            // deliberately testing the UIKit hit-test position.
-            if let Ok(offset) = std::env::var("TOUCHHLE_HITTEST_X_OFFSET") {
-                if let Ok(offset) = offset.parse::<f32>() {
-                    out_x += offset;
-                }
-            }
-            if let Ok(offset) = std::env::var("TOUCHHLE_HITTEST_Y_OFFSET") {
-                if let Ok(offset) = offset.parse::<f32>() {
-                    out_y += offset;
-                }
-            }
-
-            // Keep the result strictly *inside* the iOS window. CGRect
-            // containment is half-open on the high edge (a point with
-            // y == bounds.size.height is *outside*), so clamping to the
-            // exclusive size of the window — e.g. y == 480 on an iPhone
-            // 480-pt landscape screen — would still cause -[UIWindow
-            // pointInside:] to return false. Subtract a single point.
-            let max_x = (out_w.saturating_sub(1)) as f32;
-            let max_y = (out_h.saturating_sub(1)) as f32;
-            let out_x = out_x.clamp(0.0, max_x);
-            let out_y = out_y.clamp(0.0, max_y);
+            let out_x = (x + 0.5) * out_w as f32;
+            let out_y = (y + 0.5) * out_h as f32;
             // Round to match touch precision of official devices.
             (out_x.round(), out_y.round())
         }
@@ -860,11 +526,9 @@ impl Window {
                 }
                 E::MouseMotion {
                     x, y, mousestate, ..
-                } => {
-                    if mousestate.right() {
-                        let (x, y) = transform_virt_accel_coords(self, (x, y));
-                        self.virtual_accelerometer_last = Some((x, y, true));
-                    }
+                } if mousestate.right() => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, true));
                 }
                 E::MouseButtonUp {
                     x,
@@ -930,14 +594,7 @@ impl Window {
                         && options.dpad_to_touch.is_some()
                     {
                         let Some((x, y, w, h)) = options.dpad_to_touch else {
-                            // We already checked dpad_to_touch.is_some() in
-                            // the surrounding if-condition, but be defensive
-                            // against future refactors and bail out instead
-                            // of panicking the host.
-                            log!(
-                                "Warning: dpad_to_touch became None between outer check and inner destructure; ignoring D-pad event."
-                            );
-                            continue;
+                            unreachable!();
                         };
 
                         // Update held state
@@ -947,17 +604,7 @@ impl Window {
                             crate::options::Button::DPadRight => self.dpad_state.right = pressed,
                             crate::options::Button::DPadUp => self.dpad_state.up = pressed,
                             crate::options::Button::DPadDown => self.dpad_state.down = pressed,
-                            _ => {
-                                // The outer `if` already restricts us to the
-                                // four D-pad buttons; if a new variant slips
-                                // through after a refactor, just ignore it
-                                // instead of crashing.
-                                log!(
-                                    "Warning: unexpected button {:?} reached D-pad arm; ignoring.",
-                                    button
-                                );
-                                continue;
-                            }
+                            _ => unreachable!(),
                         }
 
                         // Compute center
@@ -1023,14 +670,7 @@ impl Window {
                                     coords,
                                 )]))
                             }
-                            _ => {
-                                // Outer arm only matches ControllerButton{Up,Down}.
-                                log!(
-                                    "Warning: unexpected event {:?} in button-to-touch arm; ignoring.",
-                                    event
-                                );
-                                continue;
-                            }
+                            _ => unreachable!(),
                         }
                     }
                 }
@@ -1172,14 +812,7 @@ impl Window {
                         E::FingerUp { .. } => Event::TouchesUp(map),
                         E::FingerMotion { .. } => Event::TouchesMove(map),
                         E::FingerDown { .. } => Event::TouchesDown(map),
-                        _ => {
-                            // Outer arm matches FingerUp/Motion/Down only.
-                            log!(
-                                "Warning: unexpected event {:?} in multi-touch arm; treating as TouchesMove.",
-                                event
-                            );
-                            Event::TouchesMove(map)
-                        }
+                        _ => unreachable!(),
                     }
                 }
                 E::KeyDown {
@@ -1307,16 +940,7 @@ impl Window {
             if let Some(ref accelerometer) = self.accelerometer {
                 let data = accelerometer.get_data().unwrap();
                 let sdl2::sensor::SensorData::Accel(data) = data else {
-                    // We asked SDL for the accelerometer sensor explicitly
-                    // earlier; if SDL handed us a different sensor variant
-                    // (driver bug, future SDL version, etc.), keep the host
-                    // running by reporting the device flat-on-its-back
-                    // (UIAcceleration neutral position).
-                    log!(
-                        "Warning: accelerometer sensor returned non-Accel data ({:?}); reporting neutral acceleration.",
-                        data
-                    );
-                    return (0.0, 0.0, -1.0);
+                    panic!();
                 };
                 let [x, y, z] = data;
                 // UIAcceleration reports acceleration towards gravity, but SDL2
@@ -1528,21 +1152,9 @@ impl Window {
                 attr.set_context_version(1, 1);
                 attr.set_context_profile(sdl2::video::GLProfile::GLES);
             }
-            GLVersion::GLES20 => {
-                attr.set_context_version(2, 0);
-                attr.set_context_profile(sdl2::video::GLProfile::GLES);
-            }
-            GLVersion::GLES30 => {
-                attr.set_context_version(3, 0);
-                attr.set_context_profile(sdl2::video::GLProfile::GLES);
-            }
             GLVersion::GL21Compat => {
                 attr.set_context_version(2, 1);
                 attr.set_context_profile(sdl2::video::GLProfile::Compatibility);
-            }
-            GLVersion::GL33Core => {
-                attr.set_context_version(3, 3);
-                attr.set_context_profile(sdl2::video::GLProfile::Core);
             }
         }
 
@@ -1663,10 +1275,7 @@ impl Window {
     /// content appears upright. On a mobile device, this might do something
     /// else, because the user can physically rotate the screen.
     pub fn rotate_device(&mut self, new_orientation: DeviceOrientation) {
-        if !self.on_main_stack {
-            log!("Warning: rotate_device called off main stack, skipping");
-            return;
-        }
+        assert!(self.on_main_stack);
         if new_orientation == self.device_orientation {
             return;
         }
@@ -1728,19 +1337,6 @@ impl Window {
         self.device_family
     }
 
-    pub fn screen_size(&self) -> (u32, u32) {
-        self.host_screen_size
-            .unwrap_or_else(|| self.device_family.portrait_size())
-    }
-
-    pub fn screen_scale(&self) -> f32 {
-        if self.host_screen_size.is_some() {
-            1.0
-        } else {
-            self.device_family.scale_factor()
-        }
-    }
-
     /// Returns the current device orientation
     pub fn current_rotation(&self) -> DeviceOrientation {
         self.device_orientation
@@ -1751,8 +1347,8 @@ impl Window {
     /// The aspect ratio, scale and orientation reflect the guest app's view of
     /// the world.
     pub fn size_unrotated_unscaled(&self) -> (u32, u32) {
-        size_for_orientation_from_size(
-            self.screen_size(),
+        size_for_orientation(
+            self.device_family,
             DeviceOrientation::Portrait,
             NonZeroU32::new(1).unwrap(),
         )
@@ -1765,7 +1361,7 @@ impl Window {
     /// the world, but the scale and orientation might not.
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
         let (app_width, app_height) =
-            size_for_orientation_from_size(self.screen_size(), self.device_orientation, self.scale_hack);
+            size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
         if !self.fullscreen && !Self::rotatable_fullscreen() {
             return (0, 0, app_width, app_height);
         }
@@ -1816,10 +1412,7 @@ impl Window {
         self.video_ctx.is_screen_saver_enabled()
     }
     pub fn set_screen_saver_enabled(&mut self, enabled: bool) {
-        if !self.on_main_stack {
-            log!("Warning: set_screen_saver_enabled called off main stack, skipping");
-            return;
-        }
+        assert!(self.on_main_stack);
         match enabled {
             true => self.video_ctx.enable_screen_saver(),
             false => self.video_ctx.disable_screen_saver(),
@@ -1827,19 +1420,13 @@ impl Window {
     }
 
     pub fn start_text_input(&self) {
-        if !self.on_main_stack {
-            log!("Warning: start_text_input called off main stack, skipping");
-            return;
-        }
+        assert!(self.on_main_stack);
         unsafe {
             sdl2_sys::SDL_StartTextInput();
         }
     }
     pub fn stop_text_input(&self) {
-        if !self.on_main_stack {
-            log!("Warning: stop_text_input called off main stack, skipping");
-            return;
-        }
+        assert!(self.on_main_stack);
         unsafe {
             sdl2_sys::SDL_StopTextInput();
         }
@@ -1859,10 +1446,7 @@ pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
 /// The window argument allows for passing in the parent window for the
 /// messagebox, which is not required but should be done if possible.
 pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
-    if window.is_some_and(|win| !win.on_main_stack) {
-        log!("Warning: show_error_messagebox called off main stack, skipping");
-        return;
-    }
+    assert!(window.is_none_or(|win| win.on_main_stack));
     use sdl2::messagebox;
     let mbox = [
         messagebox::ButtonData {
@@ -1885,9 +1469,7 @@ pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
         window.map(|win| &win.window),
         None,
     ) else {
-        log!("Warning: Failed to show error message box; falling back to stderr only.");
-        eprintln!("touchHLE crashed: {}", error_message);
-        return;
+        panic!("Failed to show message box!");
     };
 
     match clicked_button {
@@ -1907,11 +1489,7 @@ pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
                 },
                 // Close
                 1 => {}
-                _ => {
-                    // SDL_ShowMessageBox should never return an unknown id
-                    // for the buttons we configured, but be defensive.
-                    log!("Warning: unexpected message-box button id; ignoring.");
-                }
+                _ => unreachable!(),
             }
         }
     }
@@ -1942,15 +1520,6 @@ pub fn get_battery_status() -> (i32, BatteryState) {
 }
 
 pub fn get_preferred_language_codes(env: &mut Environment) -> Vec<String> {
-    // In headless mode there is no window, and the parent-stack machinery
-    // [Environment::on_parent_stack_in_coroutine] relies on requires one. The
-    // closure below doesn't actually use the window, but routing through it
-    // would still unwrap the absent window and panic. There is no meaningful
-    // user locale to report without a session anyway, so report no preference
-    // and let the caller fall back to its default (English).
-    if env.window.is_none() {
-        return Vec::new();
-    }
     env.on_parent_stack_in_coroutine(|_, _| {
         sdl2::locale::get_preferred_locales()
             .map(|loc| loc.lang)
@@ -1959,52 +1528,9 @@ pub fn get_preferred_language_codes(env: &mut Environment) -> Vec<String> {
 }
 
 pub fn get_preferred_country_codes(env: &mut Environment) -> Vec<String> {
-    // See the note in `get_preferred_language_codes` about headless mode.
-    if env.window.is_none() {
-        return Vec::new();
-    }
     env.on_parent_stack_in_coroutine(|_, _| {
         sdl2::locale::get_preferred_locales()
             .filter_map(|loc| loc.country)
             .collect()
-    })
-}
-
-/// Show a UIAlertView-style dialog using SDL2 message box.
-/// Returns the index of the clicked button, or 0 if closed.
-pub fn show_alert_dialog(
-    env: &mut Environment,
-    title: &str,
-    message: &str,
-    buttons: &[&str],
-) -> i32 {
-    let title = title.to_string();
-    let message = message.to_string();
-    let buttons: Vec<String> = buttons.iter().map(|s| s.to_string()).collect();
-
-    env.on_parent_stack_in_coroutine(move |window, _options| {
-        use sdl2::messagebox;
-
-        let button_data: Vec<messagebox::ButtonData> = buttons
-            .iter()
-            .enumerate()
-            .map(|(i, text)| messagebox::ButtonData {
-                flags: messagebox::MessageBoxButtonFlag::NOTHING,
-                button_id: i as i32,
-                text: text.as_str(),
-            })
-            .collect();
-
-        match messagebox::show_message_box(
-            messagebox::MessageBoxFlag::INFORMATION,
-            &button_data,
-            &title,
-            &message,
-            Some(&window.window),
-            None,
-        ) {
-            Ok(messagebox::ClickedButton::CustomButton(btn)) => btn.button_id,
-            _ => 0,
-        }
     })
 }

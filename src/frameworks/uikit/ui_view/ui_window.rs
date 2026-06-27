@@ -11,9 +11,7 @@
 
 use super::UIViewHostObject;
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_graphics::cg_affine_transform::{
-    CGAffineTransform, CGAffineTransformIdentity,
-};
+use crate::frameworks::core_graphics::cg_affine_transform::CGAffineTransform;
 use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_application::{
@@ -24,8 +22,7 @@ use crate::frameworks::uikit::ui_device::{
     UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
     UIDeviceOrientationPortraitUpsideDown,
 };
-use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, release, retain, ClassExports};
-use std::collections::HashMap;
+use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
 
 #[derive(Default)]
 pub struct State {
@@ -36,14 +33,6 @@ pub struct State {
     /// The most recent window which received `makeKeyAndVisible` message.
     /// Non-retaining!
     pub key_window: Option<id>,
-    /// Per-window `rootViewController` association (iOS 4+).
-    ///
-    /// `UIWindow` itself derives from `UIView` whose host object is shared
-    /// with every plain view; we therefore keep the root-VC association out
-    /// of the per-view struct and indexed by window pointer instead. The VC
-    /// is retained while the window holds it, mirroring Apple's documented
-    /// strong-property semantics.
-    pub root_view_controllers: HashMap<id, id>,
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -80,29 +69,6 @@ pub const CLASSES: ClassExports = objc_classes! {
     // a notification.
     () = msg_super![env; this setHidden:true];
 
-    // Real iOS forces UIWindow.frame to match UIScreen.bounds regardless of
-    // whatever frame was encoded in the NIB. Interface Builder by default
-    // uses a 320x460 canvas (status bar visible) for iPhone XIBs, so a
-    // window loaded from a NIB will normally come out at 320x460 and miss
-    // the bottom 20px of the screen. Apps that hide the status bar via
-    // Info.plist (e.g. Minecraft PE 0.6.x) then end up with their EAGLView
-    // sized to the truncated window, producing a visible offset/shift.
-    //
-    // Mirror Apple's behaviour by re-setting the frame to the full screen
-    // bounds after the super decoder runs.
-    let screen: id = msg_class![env; UIScreen mainScreen];
-    let screen_bounds: CGRect = msg![env; screen bounds];
-    let current_bounds: CGRect = msg![env; this bounds];
-    if current_bounds.size != screen_bounds.size {
-        log_dbg!(
-            "UIWindow {:?}: overriding NIB-encoded size {:?} with UIScreen.bounds size {:?}",
-            this,
-            current_bounds.size,
-            screen_bounds.size,
-        );
-        () = msg![env; this setFrame:screen_bounds];
-    }
-
     let list = &mut env.framework_state.uikit.ui_view.ui_window.windows;
     list.push(this);
     log_dbg!(
@@ -120,17 +86,6 @@ pub const CLASSES: ClassExports = objc_classes! {
             env.framework_state.uikit.ui_view.ui_window.key_window = None;
         }
     }
-    // Release the strong `rootViewController` reference, if any.
-    if let Some(root_vc) = env
-        .framework_state
-        .uikit
-        .ui_view
-        .ui_window
-        .root_view_controllers
-        .remove(&this)
-    {
-        release(env, root_vc);
-    }
     let list = &mut env.framework_state.uikit.ui_view.ui_window.windows;
     let idx = list.iter().position(|&w| w == this).unwrap();
     list.remove(idx);
@@ -140,49 +95,6 @@ pub const CLASSES: ClassExports = objc_classes! {
         list,
     );
     msg_super![env; this dealloc]
-}
-
-- (())layoutIfNeeded {
-    log_dbg!("[(UIWindow*){:?} layoutIfNeeded]", this);
-    // Честная реализация: немедленно форсируем пересчет layout'а,
-    // отправляя сообщение layoutSubviews самому себе (наследуется от UIView)
-    () = msg![env; this layoutSubviews];
-}
-
-// Permissive hit-testing for the application window.
-//
-// On real iOS, UIWindow's frame matches UIScreen.bounds and touches always
-// land inside it, so the standard UIView hitTest implementation is fine.
-// In touchHLE, however, the host window can be larger than the iPhone's
-// virtual screen (Android phones, large desktop windows). Even with the
-// touch-coordinate clamp in `transform_input_coords`, edge cases such as
-// the rootViewController's view being rotated for landscape orientation
-// can leave individual modal/overlay subviews positioned in such a way
-// that a touch landing on them produces a window-coordinate point just
-// outside of UIWindow's own bounds (off-by-one at the bottom row, status
-// bar overlap, etc.). The default UIView.hitTest then early-exits via
-// pointInside, returning nil for the entire touch — which is what
-// produced the `SUPER HACK: Forcing rejected touch ...` log spam and
-// stopped the in-game chat / Create World text fields from ever becoming
-// first responder.
-//
-// Override hitTest to ALWAYS recurse into subviews. If any subview claims
-// the touch we return it; otherwise we fall back to the window itself so
-// touch dispatch is never lost. This matches Apple's documented intent:
-// "Windows don't actively participate in event handling. They merely
-// pass events on to their subviews."
-- (id)hitTest:(CGPoint)point withEvent:(id)event {
-    let subviews = env.objc.borrow::<super::UIViewHostObject>(this).subviews.clone();
-    for subview in subviews.into_iter().rev() {
-        let hidden: bool = msg![env; subview isHidden];
-        let alpha: crate::frameworks::core_graphics::CGFloat = msg![env; subview alpha];
-        let interactible: bool = msg![env; subview isUserInteractionEnabled];
-        if hidden || alpha < 0.01 || !interactible { continue; }
-        let sub_point: CGPoint = msg![env; subview convertPoint:point fromView:this];
-        let hit: id = msg![env; subview hitTest:sub_point withEvent:event];
-        if hit != nil { return hit; }
-    }
-    this
 }
 
 - (())setHidden:(bool)is_hidden {
@@ -218,91 +130,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; this setHidden:false];
 }
 
-// Legacy iOS 2/3 pattern: [window setContentView:someView]
-// Semantically equivalent to addSubview: for UIWindow.
-- (())setContentView:(id)view {
-    log_dbg!("[(UIWindow*){:?} setContentView:{:?}]", this, view);
-    () = msg![env; this addSubview:view];
+// We only model the single main screen
+- (id)screen {
+    msg_class![env; UIScreen mainScreen]
 }
-
-// Returns the first subview as the content view (legacy behaviour).
-- (id)contentView {
-    let subviews = &env.objc.borrow::<UIViewHostObject>(this).subviews;
-    subviews.first().copied().unwrap_or(nil)
-}
-
-// Support for rootViewController (iOS 4+)
-// Per Apple's [UIWindow Reference](https://developer.apple.com/documentation/uikit/uiwindow/1621581-rootviewcontroller):
-// `rootViewController` is a strong reference. Setting a new root view
-// controller installs its `-view` as a full-bounds subview of the window,
-// optionally replacing the previously installed root view. We mirror that
-// contract exactly: retain the new VC, release the old one, swap the
-// associated view, and notify the existing appearance lifecycle through
-// `-addSubview:`.
-- (())setRootViewController:(id)view_controller {
-    log_dbg!("[(UIWindow*){:?} setRootViewController:{:?}]", this, view_controller);
-
-    let previous = env
-        .framework_state
-        .uikit
-        .ui_view
-        .ui_window
-        .root_view_controllers
-        .get(&this)
-        .copied()
-        .unwrap_or(nil);
-
-    if previous == view_controller {
-        return;
-    }
-
-    // Retain BEFORE releasing the old one, so that if the new VC was the
-    // last strong holder of the old VC we don't temporarily drop it.
-    if view_controller != nil {
-        retain(env, view_controller);
-    }
-
-    if previous != nil {
-        let previous_view: id = msg![env; previous view];
-        if previous_view != nil {
-            () = msg![env; previous_view removeFromSuperview];
-        }
-        release(env, previous);
-    }
-
-    if view_controller != nil {
-        let view: id = msg![env; view_controller view];
-        // Apple's docs: the root view controller's view is resized to fill
-        // the window's bounds. Match the window bounds before adding so
-        // -layoutSubviews observes the right geometry.
-        let bounds: CGRect = msg![env; this bounds];
-        () = msg![env; view setFrame:bounds];
-        () = msg![env; this addSubview:view];
-        env.framework_state
-            .uikit
-            .ui_view
-            .ui_window
-            .root_view_controllers
-            .insert(this, view_controller);
-    } else {
-        env.framework_state
-            .uikit
-            .ui_view
-            .ui_window
-            .root_view_controllers
-            .remove(&this);
-    }
-}
-
-- (id)rootViewController {
-    env.framework_state
-        .uikit
-        .ui_view
-        .ui_window
-        .root_view_controllers
-        .get(&this)
-        .copied()
-        .unwrap_or(nil)
+- (())setScreen:(id)screen {
+    log_dbg!("[(UIWindow*){:?} setScreen:{:?}]", this, screen);
 }
 
 // UIResponder implementation
@@ -320,47 +153,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         return;
     }
 
-    // Below we treat a special case of adding a view controller's view
-    // to a window, in order to generate the appropriate display-related
-    // notifications. Apple's UIViewController contract:
-    //   - viewWillAppear: is sent before the view is added to the
-    //     view hierarchy AND will become visible.
-    //   - viewDidAppear:  is sent after that.
-    // When the view is already a subview, [UIView addSubview:] still
-    // moves it to the top of the subviews array (Apple docs:
-    // "Calls to this method with a view that is already a subview
-    //  result in the view being moved to the end of the subview list.")
-    // After moving to the top there are no obstructing siblings, so the
-    // appearance lifecycle is fired iff the view is not explicitly
-    // hidden via -setHidden:YES. The previous TODO existed because
-    // touchHLE had no way to detect this case; we now defer to
-    // -isHidden, which mirrors UIKit's actual visibility test.
-    let was_subview = env
-        .objc
-        .borrow::<UIViewHostObject>(this)
-        .subviews
-        .contains(&view);
-    let view_hidden: bool = msg![env; view isHidden];
-    let should_fire_appearance = !view_hidden;
-    if was_subview {
-        log_dbg!(
-            "[(UIWindow*){:?} addSubview:{:?}]: re-adding existing subview; \
-             moving to top, appearance lifecycle will{} fire (hidden={}).",
-            this,
-            view,
-            if should_fire_appearance { "" } else { " not" },
-            view_hidden
-        );
+    // Below we treat a special case of adding view controller's view
+    // to a window, in order to generate display related notifications
+
+    if env.objc.borrow::<UIViewHostObject>(this).subviews.contains(&view) {
+        // For the case of existing view hidden by another view,
+        // we need to delay a below sequence up until obstructions are removed
+        log!("TODO: case of existing view hidden by another view for sending view[Will,Did]Appear");
     }
 
     let vc = env.objc.borrow::<UIViewHostObject>(view).view_controller;
-    if should_fire_appearance {
-        () = msg![env; vc viewWillAppear:false];
-    }
+    () = msg![env; vc viewWillAppear:false];
     () = msg_super![env; this addSubview:view];
-    if should_fire_appearance {
-        () = msg![env; vc viewDidAppear:false];
-    }
+    () = msg![env; vc viewDidAppear:false];
 
     // Support auto-rotation. This is currently only for apps that request a
     // non-portrait interface orientation via Info.plist, as we do not yet
@@ -379,9 +184,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     //        Info.plist UIInterfaceOrientation etc). It's not clear if these
     //        are really equivalent and should all trigger autorotation.
     if let Some(orientation) = match env.window.as_ref().unwrap().current_rotation() {
+        crate::window::DeviceOrientation::PortraitUpsideDown => Some(UIDeviceOrientationPortraitUpsideDown),
         crate::window::DeviceOrientation::LandscapeLeft => Some(UIDeviceOrientationLandscapeLeft),
         crate::window::DeviceOrientation::LandscapeRight => Some(UIDeviceOrientationLandscapeRight),
-        crate::window::DeviceOrientation::PortraitUpsideDown => Some(UIDeviceOrientationPortraitUpsideDown),
         // Portrait is the default so we don't do anything here.
         crate::window::DeviceOrientation::Portrait => None,
     } {
@@ -392,22 +197,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         if should {
             log_dbg!("App requested autorotation; applying orientation transform to view {:?}.", view);
             let transform = match orientation {
+                UIInterfaceOrientationPortraitUpsideDown => CGAffineTransform::make_rotation(-std::f32::consts::PI),
                 UIInterfaceOrientationLandscapeLeft => CGAffineTransform::make_rotation(-std::f32::consts::FRAC_PI_2),
                 UIInterfaceOrientationLandscapeRight => CGAffineTransform::make_rotation(std::f32::consts::FRAC_PI_2),
-                UIInterfaceOrientationPortraitUpsideDown => CGAffineTransform::make_rotation(std::f32::consts::PI),
-                other => {
-                    // UIInterfaceOrientation has Portrait/PortraitUpsideDown/
-                    // LandscapeLeft/LandscapeRight; the first two are filtered
-                    // out earlier (Portrait => None and PortraitUpsideDown
-                    // isn't reachable from window::DeviceOrientation today).
-                    // Fall back to the identity transform so an unexpected
-                    // orientation can't take down the host.
-                    log!(
-                        "Warning: UIWindow autorotation: unsupported interface orientation {}; using identity transform.",
-                        other
-                    );
-                    CGAffineTransformIdentity
-                }
+                _ => unimplemented!(),
             };
 
             let window_frame: CGRect = msg![env; this frame];
@@ -448,43 +241,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this_layer convertPoint:point toLayer:other_layer]
 }
 
-// Apple's
-// <https://developer.apple.com/documentation/uikit/uiwindow/1621597-screen>:
-// `screen` returns the `UIScreen` the window is currently displayed on,
-// and the documented setter (`setScreen:`) is used by apps that wish to
-// move a window to an external display. We emulate a single main screen
-// only, so the getter always returns `+[UIScreen mainScreen]` and the
-// setter is a no-op that just acknowledges the call to keep the
-// "doesNotRecognizeSelector" warning from firing on apps that
-// unconditionally call `window.screen = UIScreen.mainScreen` during
-// `application:didFinishLaunchingWithOptions:`.
-- (id)screen {
-    msg_class![env; UIScreen mainScreen]
-}
-- (())setScreen:(id)_screen {
-    log_dbg!(
-        "[UIWindow setScreen:] ignored; touchHLE only emulates the main screen."
-    );
-}
-
 @end
 
 };
 
-/// Window life-cycle notifications.
-///
-/// Apple `UIWindow.h` declares each name as
-/// `UIKIT_EXTERN NSNotificationName const ...`. The literal value
-/// posted to `NSNotificationCenter` is the symbol's own name, which is
-/// what `-[NSNotificationCenter addObserver:selector:name:object:]`
-/// compares against with `-[NSString isEqualToString:]`.
-///
-/// References:
-/// * Apple [UIWindow notifications](https://developer.apple.com/documentation/uikit/uiwindow)
+/// Window life-cycle notifications
+/// TODO: more notifications
 const UIWindowDidBecomeKeyNotification: &str = "UIWindowDidBecomeKeyNotification";
-const UIWindowDidResignKeyNotification: &str = "UIWindowDidResignKeyNotification";
-const UIWindowDidBecomeHiddenNotification: &str = "UIWindowDidBecomeHiddenNotification";
-const UIWindowDidBecomeVisibleNotification: &str = "UIWindowDidBecomeVisibleNotification";
 /// Keyboard notifications
 /// TODO: more keyboard notifications
 pub const UIKeyboardWillShowNotification: &str = "UIKeyboardWillShowNotification";
@@ -499,19 +262,23 @@ pub const CONSTANTS: ConstantExports = &[
         HostConstant::NSString(UIWindowDidBecomeKeyNotification),
     ),
     (
-        "_UIWindowDidResignKeyNotification",
-        HostConstant::NSString(UIWindowDidResignKeyNotification),
+        "_UIKeyboardWillShowNotification",
+        HostConstant::NSString(UIKeyboardWillShowNotification),
     ),
     (
-        "_UIWindowDidBecomeHiddenNotification",
-        HostConstant::NSString(UIWindowDidBecomeHiddenNotification),
+        "_UIKeyboardDidShowNotification",
+        HostConstant::NSString(UIKeyboardDidShowNotification),
     ),
     (
-        "_UIWindowDidBecomeVisibleNotification",
-        HostConstant::NSString(UIWindowDidBecomeVisibleNotification),
+        "_UIKeyboardWillHideNotification",
+        HostConstant::NSString(UIKeyboardWillHideNotification),
     ),
-    // _UIKeyboardWillShowNotification, _UIKeyboardDidShowNotification,
-    // _UIKeyboardWillHideNotification, _UIKeyboardDidHideNotification and
-    // _UIKeyboardBoundsUserInfoKey are exported from
-    // uikit::ui_keyboard::CONSTANTS; not duplicated here.
+    (
+        "_UIKeyboardDidHideNotification",
+        HostConstant::NSString(UIKeyboardDidHideNotification),
+    ),
+    (
+        "_UIKeyboardBoundsUserInfoKey",
+        HostConstant::NSString(UIKeyboardBoundsUserInfoKey),
+    ),
 ];

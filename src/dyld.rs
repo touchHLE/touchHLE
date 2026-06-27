@@ -26,7 +26,7 @@ use crate::bundle;
 use crate::cpu::Cpu;
 use crate::frameworks::foundation::ns_string;
 use crate::mach_o::{MachO, SectionType};
-use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
+use crate::mem::{ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{nil, ClassExports, ObjC};
 use crate::Environment;
 use std::collections::HashMap;
@@ -1707,6 +1707,19 @@ impl Dyld {
         mem.write(function_ptr + 0, encode_a32_svc(svc));
         mem.write(function_ptr + 1, encode_a32_ret());
         GuestFunction::from_addr_with_thumb_bit(function_ptr.to_bits())
+    }
+
+    /// Like [Self::create_proc_address], but takes an unmangled C name and
+    /// returns a raw pointer to guest memory.
+    pub fn create_function_address(
+        &mut self,
+        mem: &mut Mem,
+        cpu: &mut Cpu,
+        name: &str,
+    ) -> Result<MutVoidPtr, ()> {
+        let symbol = format!("_{name}");
+        let address = self.create_proc_address(mem, cpu, &symbol)?;
+        Ok(Ptr::from_bits(address.addr_with_thumb_bit()))
     }
 }
 

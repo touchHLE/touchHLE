@@ -22,6 +22,8 @@ use std::io::Cursor;
 pub struct Bundle {
     path: GuestPathBuf,
     plist: Dictionary,
+    bundle_name: String,
+    display_name: String,
 }
 
 impl Bundle {
@@ -39,21 +41,29 @@ impl Bundle {
             .into_dictionary()
             .ok_or_else(|| "plist root value is not a dictionary".to_string())?;
 
-        let bundle_name = format!(
-            "{}.app",
-            if let Some(canonical) = plist.get("CFBundleName") {
-                canonical.as_string().unwrap()
-            } else {
-                bundle_data.bundle_name()
-            }
-        );
+        let bundle_name = match plist.get("CFBundleName") {
+            Some(canonical) => canonical.as_string().unwrap().to_string(),
+            None => bundle_data.bundle_name_from_filesystem().to_string(),
+        };
         let bundle_id = plist["CFBundleIdentifier"].as_string().unwrap();
 
-        let (fs, guest_path) = Fs::new(bundle_data, bundle_name, bundle_id, read_only_mode);
+        let (fs, guest_path) = Fs::new(
+            bundle_data,
+            format!("{bundle_name}.app"),
+            bundle_id,
+            read_only_mode,
+        );
+
+        let display_name = match plist.get("CFBundleDisplayName") {
+            Some(canonical) => canonical.as_string().unwrap().to_string(),
+            None => bundle_name.clone(),
+        };
 
         let bundle = Bundle {
             path: guest_path,
             plist,
+            bundle_name,
+            display_name,
         };
 
         Ok((bundle, fs))
@@ -64,6 +74,8 @@ impl Bundle {
         Bundle {
             path: GuestPathBuf::from(String::new()),
             plist: Dictionary::new(),
+            bundle_name: String::new(),
+            display_name: String::new(),
         }
     }
 
@@ -94,18 +106,16 @@ impl Bundle {
             .map(|name| name.as_string().unwrap())
     }
 
-    /// Name for the bundle, either the canonical name or, if there isn't one,
-    /// the name this bundle has in the filesystem.
+    /// Name for the bundle: `CFBundleName`, or, if there isn't one,
+    /// [BundleData::bundle_name_from_filesystem].
     pub fn bundle_name(&self) -> &str {
-        self.path.file_name().unwrap().strip_suffix(".app").unwrap()
+        &self.bundle_name
     }
 
+    /// Name shown for the app: `CFBundleDisplayName`, or, if there isn't one,
+    /// [Self::bundle_name].
     pub fn display_name(&self) -> &str {
-        if let Some(display_name) = self.plist.get("CFBundleDisplayName") {
-            display_name.as_string().unwrap()
-        } else {
-            ""
-        }
+        &self.display_name
     }
 
     pub fn minimum_os_version(&self) -> Option<&str> {

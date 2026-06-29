@@ -96,7 +96,7 @@ impl BundleData {
         Err("no app bundle found in the IPA archive".to_string())
     }
 
-    pub fn bundle_name(&self) -> &str {
+    pub fn bundle_name_from_filesystem(&self) -> &str {
         match self {
             BundleData::HostDirectory(bundle_path) => {
                 bundle_path.file_stem().unwrap().to_str().unwrap()

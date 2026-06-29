@@ -173,16 +173,21 @@ impl Bundle {
         // including Retina icons and such when we get there.
         // Reference: https://developer.apple.com/library/archive/qa/qa1686/_index.html
         // We check for the icon in the following order:
-        // 1. CFBundleIconFile,
+        // 1. CFBundleIconFile (or the malformed "icon file")
         // 2. CFBundleIconFiles for Icon, Icon-72,
         // 3. First in CFBundleIconFiles,
         // 4. Failsafe Icon.png
-        if let Some(filename) = self.plist.get("CFBundleIconFile").or_else(|| {
-            self.plist
-                .get("CFBundleIconFiles")
-                .and_then(|v| v.as_array())
-                .and_then(|a| Self::find_icon(a))
-        }) {
+        if let Some(filename) = self
+            .plist
+            .get("CFBundleIconFile")
+            .or_else(|| self.plist.get("icon file"))
+            .or_else(|| {
+                self.plist
+                    .get("CFBundleIconFiles")
+                    .and_then(|v| v.as_array())
+                    .and_then(|a| Self::find_icon(a))
+            })
+        {
             if filename
                 .as_string()
                 .unwrap()

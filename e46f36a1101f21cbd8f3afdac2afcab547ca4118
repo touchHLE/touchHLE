@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4528fd95_2cc1a619",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-06-29T13:15:19Z",
+      "side": 1,
+      "message": "I think this should be checking the actual status of the thread, even if it\u0027s not spawned from cocoa? If it isn\u0027t, you should put a small test for this.",
+      "revId": "e46f36a1101f21cbd8f3afdac2afcab547ca4118",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

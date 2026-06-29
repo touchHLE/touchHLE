@@ -104,7 +104,15 @@ fn enumerate_apps(apps_dir: &Path) -> Result<Vec<AppInfo>, std::io::Error> {
         };
 
         // TODO: what if this crashes?
-        let display_name = bundle.display_name().to_owned();
+        let display_name = {
+            let name = bundle.display_name();
+            if name.is_empty() {
+                bundle.bundle_name()
+            } else {
+                name
+            }
+        }
+        .to_owned();
 
         let icon = match bundle.load_icon(&fs) {
             Ok(icon) => Some(icon),

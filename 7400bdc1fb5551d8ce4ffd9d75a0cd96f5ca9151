@@ -34,6 +34,24 @@
       "parentUuid": "65d2decc_5e9d95e8",
       "revId": "7400bdc1fb5551d8ce4ffd9d75a0cd96f5ca9151",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b7344b64_bc6a7251",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-01T18:51:53Z",
+      "side": 1,
+      "message": "Oh, hang on, I would assume the `UIView` property is mapped to the `CALayer` property. Do you have a real iOS device or a VM with the iOS simulator that you could test that on?",
+      "parentUuid": "b72ee6e0_7e95e759",
+      "revId": "7400bdc1fb5551d8ce4ffd9d75a0cd96f5ca9151",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

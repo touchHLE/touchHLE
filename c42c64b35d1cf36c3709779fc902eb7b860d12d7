@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1aaf597a_0675f21c",
+        "filename": "src/environment.rs",
+        "patchSetId": 60
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-03T16:55:38Z",
+      "side": 1,
+      "message": "This needs to be updated to reflect the new state",
+      "range": {
+        "startLine": 44,
+        "startChar": 0,
+        "endLine": 44,
+        "endChar": 2
+      },
+      "revId": "c42c64b35d1cf36c3709779fc902eb7b860d12d7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

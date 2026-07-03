@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22279961_c01b7ad5",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-03T19:45:46Z",
+      "side": 1,
+      "message": "From some experimentation it seems that the calculation is ascent.ceil + (-descent).ceil. The only exception is if the ascender/descender are whole then is ascent - descent + 1",
+      "range": {
+        "startLine": 175,
+        "startChar": 4,
+        "endLine": 175,
+        "endChar": 118
+      },
+      "revId": "372e8885f92c0eb2354dfb9e878d5b471a88d0c2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a11fb4c_398f6a91",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-03T19:45:46Z",
+      "side": 1,
+      "message": "Can you make line height use the same calculation and make one of them depend on the other?",
+      "range": {
+        "startLine": 178,
+        "startChar": 11,
+        "endLine": 178,
+        "endChar": 22
+      },
+      "revId": "372e8885f92c0eb2354dfb9e878d5b471a88d0c2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

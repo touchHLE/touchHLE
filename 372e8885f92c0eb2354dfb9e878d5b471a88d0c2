@@ -98,6 +98,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0d15ddea_ba233d05",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 175,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-07T04:36:20Z",
+      "side": 1,
+      "message": "This seems to have an extra ( at the beginning but otherwise it works fine in DOA Blackjack.",
+      "parentUuid": "65c85b61_d4862064",
+      "range": {
+        "startLine": 175,
+        "startChar": 4,
+        "endLine": 175,
+        "endChar": 118
+      },
+      "revId": "372e8885f92c0eb2354dfb9e878d5b471a88d0c2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "4a11fb4c_398f6a91",
         "filename": "src/frameworks/uikit/ui_font.rs",
         "patchSetId": 38

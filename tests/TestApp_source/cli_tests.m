@@ -3032,6 +3032,56 @@ int test_fscanf_new() {
   return 0;
 }
 
+int test_fscanf_eof_before_match() {
+  FILE *file = fopen("test_fscanf_eof_before_match", "r");
+  if (!file)
+    return -2;
+
+  int a;
+  int matched = fscanf(file, "%d", &a);
+  fclose(file);
+
+  if (matched != EOF)
+    return -3;
+
+  return 0;
+}
+
+int test_fscanf_eof_during_match() {
+  FILE *file = fopen("test_fscanf_eof_during_match", "r");
+  if (!file)
+    return -2;
+
+  int a, b;
+  // This should match 123 into a, then hit EOF when trying to match the space
+  // or the second %d
+  int matched = fscanf(file, "%d %d", &a, &b);
+  fclose(file);
+
+  if (matched != 1 || a != 123)
+    return -3;
+
+  return 0;
+}
+
+int test_fscanf_match_then_eof() {
+  FILE *file = fopen("test_fscanf_match_then_eof", "r");
+  if (!file)
+    return -2;
+
+  int a;
+  // This matched 123, then matches the space, then hits EOF.
+  // Previously it would panic at the space because it tried to consume
+  // all whitespace and hit EOF.
+  int matched = fscanf(file, "%d ", &a);
+  fclose(file);
+
+  if (matched != 1 || a != 123)
+    return -3;
+
+  return 0;
+}
+
 int test_CGImage_JPEG() {
   FILE *file = fopen("test_1x1_black_pixel.jpg", "r");
   if (file == NULL) {
@@ -6406,6 +6456,9 @@ struct {
     FUNC_DEF(test_ungetc),
     FUNC_DEF(test_fscanf),
     FUNC_DEF(test_fscanf_new),
+    FUNC_DEF(test_fscanf_eof_before_match),
+    FUNC_DEF(test_fscanf_eof_during_match),
+    FUNC_DEF(test_fscanf_match_then_eof),
     FUNC_DEF(test_CFStringFind),
     FUNC_DEF(test_strcspn),
     FUNC_DEF(test_mbstowcs),

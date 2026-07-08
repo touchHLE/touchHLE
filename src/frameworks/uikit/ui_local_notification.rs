@@ -6,6 +6,7 @@
 //! `UILocalNotification`.
 
 use crate::objc::{id, objc_classes, todo_objc_setter, ClassExports};
+use crate::frameworks::foundation::NSInteger;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -27,6 +28,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setSoundName:(id)name { // NSString *
     todo_objc_setter!(this, name);
+}
+- (())setApplicationIconBadgeNumber:(NSInteger)applicationIconBadgeNumber {
+    todo_objc_setter!(this, applicationIconBadgeNumber);
 }
 
 @end

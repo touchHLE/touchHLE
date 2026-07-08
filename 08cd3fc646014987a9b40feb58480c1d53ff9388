@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e0d8872_6fce2a2b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-08T15:55:38Z",
+      "side": 1,
+      "message": "Romance Of The Three Kingdoms Touch has malformed Info.plist and needs this fix:\n{\nDTXcode \u003d 0323;\nDTSDKName \u003d \"iphoneos4.0\";\nCFBundleName \u003d ROTKTOUCH1;\n\"CFBundleDevelopmentRegion\" \u003d English;\nCFBundleVersion \u003d \"2.0\";\nNSMainNibFile \u003d MainWindow;\nUIStatusBarHidden \u003d YES;\nDTPlatformName \u003d iphoneos;\n\"CFBundleSupportedPlatforms\" \u003d (\niPhoneOS,\n);\nCFBundlePackageType \u003d APPL;\n\"CFBundleInfoDictionaryVersion\" \u003d \"6.0\";\nCFBundleExecutable \u003d RTKiPhone;\nDTCompiler \u003d \"4.2\";\nMinimumOSVersion \u003d \"3.0\";\nCFBundleIdentifier \u003d \"jp.co.koei.ROTKTOUCH1\";\nUIPrerenderedIcon \u003d NO;\n\"CFBundleResourceSpecification\" \u003d \"ResourceRules.plist\";\nDTPlatformVersion \u003d \"4.0 GM\";\nUIDeviceFamily \u003d (\n1,\n);\nCFBundleSignature \u003d \"????\";\nLSRequiresIPhoneOS \u003d YES;\n\"icon file\" \u003d \"icon.png\";\n}",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

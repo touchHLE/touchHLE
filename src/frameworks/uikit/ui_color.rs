@@ -228,6 +228,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 @implementation UIDeviceRGBColor: UIColor
 @end
+@implementation UIDeviceWhiteColor: UIColor
+@end
+@implementation UICachedDeviceWhiteColor: UIDeviceWhiteColor
+@end
 
 // Special subclass for standard colors with a static lifetime.
 // See `get_standard_color`.

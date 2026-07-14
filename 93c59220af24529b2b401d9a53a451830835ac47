@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "28e04c51_8abcc879",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-07-14T21:31:35Z",
+      "side": 1,
+      "message": "Tested with Moron Test version 2.0 (X627XMV694.asdf.TheIdiotTest). This change makes the game playable",
+      "revId": "93c59220af24529b2b401d9a53a451830835ac47",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

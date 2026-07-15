@@ -33,6 +33,24 @@
       "message": "I would prefer for the fallback to take place in the display name method. Also based on the docs it should be read from CFBundleName which we are currently not doing. https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/TP40009249-109585. Could you add that as part of the patch?",
       "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca622831_30b6068b",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-15T16:47:40Z",
+      "side": 1,
+      "message": "We are checking for CFBundleName in the plist.  Happens here -\u003e https://github.com/apexad/touchHLE/blob/trunk/src/bundle.rs#L44\n\nI thought about making display_name() do this work, but I am not sure if that is right.  The reason why is that it actually causes the log when the app first starts to also be corrected.  I was attempting to avoid that and only fix it in App Picker.  App Picker is sort of like iOS\u0027s real Springboard which I assume is where some of the logic of the Docs applies.\n\n@hikari@noyu.me what are your thoughts?  Do it like this or do it directly in the display_name() function?",
+      "parentUuid": "5386d55f_4be54af8",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

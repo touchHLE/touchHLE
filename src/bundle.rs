@@ -168,7 +168,7 @@ impl Bundle {
             .or_else(|| icon_files.first())
     }
 
-    fn icon_path(&self) -> GuestPathBuf {
+    fn icon_path(&self) -> Option<GuestPathBuf> {
         // TODO: Fix this to what an actual iOS device does,
         // including Retina icons and such when we get there.
         // Reference: https://developer.apple.com/library/archive/qa/qa1686/_index.html
@@ -176,7 +176,8 @@ impl Bundle {
         // 1. CFBundleIconFile,
         // 2. CFBundleIconFiles for Icon, Icon-72,
         // 3. First in CFBundleIconFiles,
-        // 4. Failsafe Icon.png
+        // (Icon.png / icon.png failsafe is handled in load_icon(),
+        // since it needs filesystem access.)
         if let Some(filename) = self.plist.get("CFBundleIconFile").or_else(|| {
             self.plist
                 .get("CFBundleIconFiles")
@@ -189,22 +190,29 @@ impl Bundle {
                 .to_lowercase()
                 .ends_with(".png")
             {
-                self.path.join(filename.as_string().unwrap())
+                Some(self.path.join(filename.as_string().unwrap()))
             } else {
                 let filename_with_extension = format!("{}.png", filename.as_string().unwrap());
-                self.path.join(filename_with_extension)
+                Some(self.path.join(filename_with_extension))
             }
         } else {
-            self.path.join("Icon.png")
+            None
         }
     }
 
     /// Load icon and round off its corners (and add sheen if needed) for
     /// display.
     pub fn load_icon(&self, fs: &Fs) -> Result<Image, String> {
-        let bytes = fs
-            .read(self.icon_path())
-            .map_err(|_| "Could not read icon file".to_string())?;
+        let bytes = if let Some(path) = self.icon_path() {
+            fs.read(path)
+                .map_err(|_| "Could not read icon file".to_string())?
+        } else {
+            // No explicit icon was specified in the plist; fall back to
+            // checking the filesystem directly for Icon.png, then icon.png.
+            fs.read(self.path.join("Icon.png"))
+                .or_else(|_| fs.read(self.path.join("icon.png")))
+                .map_err(|_| "Could not find app icon (Icon.png or icon.png)".to_string())?
+        };
         let mut image =
             Image::from_bytes(&bytes).map_err(|e| format!("Could not parse icon image: {e}"))?;
         // UIPrerenderedIcon is used to avoid iOS applying a sheen effect,

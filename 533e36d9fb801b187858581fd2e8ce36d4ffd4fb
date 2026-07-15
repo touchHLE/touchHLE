@@ -111,6 +111,30 @@
       },
       "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9f27171_c58dc150",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-15T16:50:28Z",
+      "side": 1,
+      "message": "Done.  Refactored it so the Icon.png/icon.png failsafe is handled in load_icon() and actually checks the file system.",
+      "parentUuid": "18983f23_e0937d2b",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 2
+      },
+      "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

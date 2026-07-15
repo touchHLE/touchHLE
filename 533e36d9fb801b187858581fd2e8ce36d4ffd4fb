@@ -87,6 +87,30 @@
       },
       "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18983f23_e0937d2b",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-15T03:37:31Z",
+      "side": 1,
+      "message": "I\u0027m not a fan of adding arbitrary keys to our plist parsing, since we\u0027ll have to handle every single malformed plist on our end. I think the real fix might be on the fs side, since HFS is case insensitive and our VFS is not.",
+      "parentUuid": "5d4e5da1_891e7282",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 2
+      },
+      "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

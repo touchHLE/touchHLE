@@ -63,6 +63,30 @@
       },
       "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d4e5da1_891e7282",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-15T03:15:37Z",
+      "side": 1,
+      "message": "There is a todo that explains we definitely don\u0027y yet do it exactly how iOS probably does it, but it\u0027s close enough. See https://github.com/touchHLE/touchHLE/blob/trunk/src/bundle.rs#L172\n\nI could probably add a note about the malformed \"icon file\" in the plist there too?",
+      "parentUuid": "0baede17_d954d77a",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 2
+      },
+      "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,29 @@
       "message": "Romance Of The Three Kingdoms Touch has malformed Info.plist and needs this fix:\n{\n\tDTXcode \u003d 0323;\n\tDTSDKName \u003d \"iphoneos4.0\";\n\tCFBundleName \u003d ROTKTOUCH1;\n\t\"CFBundleDevelopmentRegion\" \u003d English;\n\tCFBundleVersion \u003d \"2.0\";\n\tNSMainNibFile \u003d MainWindow;\n\tUIStatusBarHidden \u003d YES;\n\tDTPlatformName \u003d iphoneos;\n\t\"CFBundleSupportedPlatforms\" \u003d (\n\t\tiPhoneOS,\n\t);\n\tCFBundlePackageType \u003d APPL;\n\t\"CFBundleInfoDictionaryVersion\" \u003d \"6.0\";\n\tCFBundleExecutable \u003d RTKiPhone;\n\tDTCompiler \u003d \"4.2\";\n\tMinimumOSVersion \u003d \"3.0\";\n\tCFBundleIdentifier \u003d \"jp.co.koei.ROTKTOUCH1\";\n\tUIPrerenderedIcon \u003d NO;\n\t\"CFBundleResourceSpecification\" \u003d \"ResourceRules.plist\";\n\tDTPlatformVersion \u003d \"4.0 GM\";\n\tUIDeviceFamily \u003d (\n\t\t1,\n\t);\n\tCFBundleSignature \u003d \"????\";\n\tLSRequiresIPhoneOS \u003d YES;\n\t\"icon file\" \u003d \"icon.png\";\n}",
       "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89c1e59e_f8536616",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-15T03:08:11Z",
+      "side": 1,
+      "message": "Are you sure that its reading this key from the plist? Perhaps they are doing a fallback to Icon.png/icon.png if nothing is provided in the plist?",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 2
+      },
+      "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

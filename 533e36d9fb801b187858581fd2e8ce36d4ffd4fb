@@ -159,6 +159,30 @@
       },
       "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fea2c7ec_ec71b62f",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-19T22:18:22Z",
+      "side": 1,
+      "message": "In theory we could implement the hfs unicode comparison function, but that might be a bit too much.",
+      "parentUuid": "404afeb1_0b17bd15",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 2
+      },
+      "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

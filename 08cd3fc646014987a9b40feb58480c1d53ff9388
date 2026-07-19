@@ -51,6 +51,24 @@
       "parentUuid": "5386d55f_4be54af8",
       "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b0f6567_db19f883",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-19T22:31:49Z",
+      "side": 1,
+      "message": "But this bundle_name() that\u0027s being called is a different bundle_name that doesnt check CFBundleName, no? What do you mean by corrects the log name and why is it an issue?",
+      "parentUuid": "ca622831_30b6068b",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

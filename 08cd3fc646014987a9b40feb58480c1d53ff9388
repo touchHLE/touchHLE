@@ -141,6 +141,24 @@
       "parentUuid": "96256151_0b393588",
       "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c1fe37e6_b221c0d4",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-20T14:39:06Z",
+      "side": 1,
+      "message": "Yes, I guess the last part of the bundle Identifier? So if the bundle Identifier is jp.co.koei.ROTKTOUCH1, \"Display Name\" would be ROTKTOUCH1\n\nI\u0027ll update this patch when I get a chance to try and fix the bundle_name and display_name to be consistent as it seems like it\u0027s in 2 places with different implementations now.",
+      "parentUuid": "9e16beec_460a287e",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

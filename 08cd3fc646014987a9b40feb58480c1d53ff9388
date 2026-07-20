@@ -123,6 +123,24 @@
       "parentUuid": "6b4b8230_c674c005",
       "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e16beec_460a287e",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-20T01:03:50Z",
+      "side": 1,
+      "message": "With regards to the log, wouldn\u0027t the display name technically be the bundle identifier if display name is unset. Do we care here if the internal plist value is unset?",
+      "parentUuid": "96256151_0b393588",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

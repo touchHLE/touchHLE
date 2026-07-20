@@ -183,6 +183,30 @@
       },
       "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eeb4e658_632c8683",
+        "filename": "src/bundle.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-20T00:47:00Z",
+      "side": 1,
+      "message": "Certainly out of the scope of this patch and likely overkill as I don\u0027t think this is really an issue anywhere else in touchHLE.",
+      "parentUuid": "fea2c7ec_ec71b62f",
+      "range": {
+        "startLine": 183,
+        "startChar": 0,
+        "endLine": 183,
+        "endChar": 2
+      },
+      "revId": "533e36d9fb801b187858581fd2e8ce36d4ffd4fb",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

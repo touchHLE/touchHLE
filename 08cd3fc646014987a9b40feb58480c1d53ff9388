@@ -69,6 +69,24 @@
       "parentUuid": "ca622831_30b6068b",
       "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b4b8230_c674c005",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-20T00:44:35Z",
+      "side": 1,
+      "message": "Correct me if I am wrong, but it seems like the code I referenced is what is setting what ultimately is returned by the bundle_name() function? It uses CFBundleName if it exists.\n\nThis log:\n\nPicked: ./touchHLE_apps/Romance Of The Three Kingdoms Touch.ipa\nApp bundle info:\n- Display name: \n- Version: 2.0\n- Identifier: jp.co.koei.ROTKTOUCH1\n- Internal name (canonical): ROTKTOUCH1.app\n- Minimum OS version: 3.0\n- Required device capabilities: (not specified)\n- Device family: iPhone\n\nIf we fix it directly in display_name() it will show there fixed as well.  It\u0027s not a problem to fix it, but I\u0027m just trying to preserve the correct data and really look at App Picker as a reimplemented Springboard so it can and should have some responsibility to fix things.",
+      "parentUuid": "3b0f6567_db19f883",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

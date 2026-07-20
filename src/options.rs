@@ -196,14 +196,14 @@ impl Options {
             let smoothing_strength: f32 = smoothing_strength
                 .parse()
                 .ok()
-                .and_then(|s| if s < 0.0 { None } else { Some(s) })
+                .filter(|&s| s >= 0.0)
                 .ok_or_else(|| {
                     "Invalid smoothing strength for --stabilize-virtual-cursor=".to_string()
                 })?;
             let sticky_radius: f32 = sticky_radius
                 .parse()
                 .ok()
-                .and_then(|s| if s < 0.0 { None } else { Some(s) })
+                .filter(|&s| s >= 0.0)
                 .ok_or_else(|| {
                     "Invalid sticky radius for --stabilize-virtual-cursor=".to_string()
                 })?;
@@ -236,7 +236,7 @@ impl Options {
                 let limit: f64 = value
                     .parse()
                     .ok()
-                    .and_then(|v| if v <= 0.0 { None } else { Some(v) })
+                    .filter(|&v| v > 0.0)
                     .ok_or_else(|| "Invalid value for --fps-limit=".to_string())?;
                 self.fps_limit = Some(limit);
             }

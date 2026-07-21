@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "78232b88_264633f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-07-21T22:28:46Z",
+      "side": 1,
+      "message": "This reverts the clang-format fixes in dynarmic, I\u0027m assuming this is unintentional?",
+      "revId": "29751939f899ea0e0b77c00edb464973c814741f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -159,6 +159,24 @@
       "parentUuid": "9e16beec_460a287e",
       "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e07dfe57_169e721a",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-23T03:46:56Z",
+      "side": 1,
+      "message": "Alright, so trying to maintain the bundle name from the filesystem as well as the one in the plist and then attempting to keep the log on app open to show only from the plist proved to be a lot more difficult than just taking your initial advice and let the log get corrected.\n\nAdditionally, I consolidated the logic so Bundle\u0027s structure actually keeps track of bundle_name and display_name and bundle_name() and display_name() are this much simpler now.",
+      "parentUuid": "c1fe37e6_b221c0d4",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

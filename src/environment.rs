@@ -177,7 +177,7 @@ fn generate_binary_load_order(graph: &[BinaryDependencyNode]) -> Result<Vec<usiz
     for node in graph {
         let &bin_index = node_to_index
             .get(node.name.as_str())
-            .ok_or_else(|| format!("Failed to find {:?} name mapping", &node.name))?;
+            .ok_or_else(|| format!("Failed to find {:?} name mapping", node.name))?;
 
         // Bin names dont include prefix while dynamic lib paths do
         for dependency in node

@@ -64,6 +64,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; main_bundle objectForInfoDictionaryKey:name_key]
 }
 
+- (id)operatingSystemName {
+    assert_process_info_singleton(env, this); // TODO
+    // This is the value documented by Foundation for the Darwin/Mach family.
+    ns_string::get_static_str(env, "NSMACHOperatingSystem")
+}
+
+- (id)operatingSystemVersionString {
+    assert_process_info_singleton(env, this); // TODO
+    // Human-readable only. Puzzle Agent uses this together with
+    // operatingSystemName while collecting platform diagnostics.
+    ns_string::get_static_str(env, "Version 3.1.3 (Build 7E18)")
+}
+
 @end
 
 };

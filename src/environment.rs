@@ -336,22 +336,27 @@ impl Environment {
                 log!("Warning: {}", e);
             }
 
-            let launch_image_path = bundle.launch_image_path();
-            let launch_image = if fs.is_file(&launch_image_path) {
-                let res = fs
-                    .read(launch_image_path)
-                    .map_err(|_| "Could not read launch image file".to_string())
-                    .and_then(|bytes| {
-                        image::Image::from_bytes(&bytes)
-                            .map_err(|e| format!("Could not parse launch image: {e}"))
-                    });
-                if let Err(ref e) = res {
-                    log!("Warning: {}", e);
+            let launch_image_path = bundle
+                .launch_image_paths(options.initial_orientation, device_family)
+                .into_iter()
+                .find(|(path, _)| fs.is_file(path));
+            let launch_image =
+                if let Some((launch_image_path, orientation_specific)) = launch_image_path {
+                    let res = fs
+                        .read(launch_image_path)
+                        .map_err(|_| "Could not read launch image file".to_string())
+                        .and_then(|bytes| {
+                            image::Image::from_bytes(&bytes)
+                                .map_err(|e| format!("Could not parse launch image: {e}"))
+                        })
+                        .map(|image| (image, orientation_specific));
+                    if let Err(ref e) = res {
+                        log!("Warning: {}", e);
+                    };
+                    res.ok()
+                } else {
+                    None
                 };
-                res.ok()
-            } else {
-                None
-            };
 
             Some(Box::new(window::Window::new(
                 &format!(

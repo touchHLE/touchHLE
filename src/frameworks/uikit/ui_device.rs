@@ -13,6 +13,10 @@ use crate::window::{get_battery_status, BatteryState, DeviceFamily, DeviceOrient
 
 pub const UIDeviceOrientationDidChangeNotification: &str =
     "UIDeviceOrientationDidChangeNotification";
+pub const UIDeviceBatteryLevelDidChangeNotification: &str =
+    "UIDeviceBatteryLevelDidChangeNotification";
+pub const UIDeviceBatteryStateDidChangeNotification: &str =
+    "UIDeviceBatteryStateDidChangeNotification";
 
 pub type UIDeviceOrientation = NSInteger;
 #[allow(dead_code)]
@@ -43,10 +47,20 @@ pub struct State {
     current_device: Option<id>,
 }
 
-pub const CONSTANTS: ConstantExports = &[(
-    "_UIDeviceOrientationDidChangeNotification",
-    HostConstant::NSString(UIDeviceOrientationDidChangeNotification),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_UIDeviceOrientationDidChangeNotification",
+        HostConstant::NSString(UIDeviceOrientationDidChangeNotification),
+    ),
+    (
+        "_UIDeviceBatteryLevelDidChangeNotification",
+        HostConstant::NSString(UIDeviceBatteryLevelDidChangeNotification),
+    ),
+    (
+        "_UIDeviceBatteryStateDidChangeNotification",
+        HostConstant::NSString(UIDeviceBatteryStateDidChangeNotification),
+    ),
+];
 
 pub const CLASSES: ClassExports = objc_classes! {
 

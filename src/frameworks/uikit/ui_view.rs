@@ -69,6 +69,7 @@ const UIViewAnimationCurveLinear: UIViewAnimationCurve = 3;
 pub struct State {
     /// List of views for internal purposes. Non-retaining!
     pub(super) views: Vec<id>,
+    pub ui_image_view: ui_image_view::State,
     pub ui_window: ui_window::State,
     pub animation_block_count: usize,
 }
@@ -82,10 +83,15 @@ pub(super) struct UIViewHostObject {
     superview: id,
     /// The view controller that controls this view. This is a weak reference
     view_controller: id,
+    /// Only used by UIWindow. Strong reference for the iOS 4
+    /// rootViewController property.
+    root_view_controller: id,
     tag: NSInteger,
     clears_context_before_drawing: bool,
     user_interaction_enabled: bool,
     multiple_touch_enabled: bool,
+    /// Gesture recognizers attached to this view. These are strong references.
+    gesture_recognizers: Vec<id>,
 }
 impl HostObject for UIViewHostObject {}
 impl Default for UIViewHostObject {
@@ -97,10 +103,12 @@ impl Default for UIViewHostObject {
             subviews: Vec::new(),
             superview: nil,
             view_controller: nil,
+            root_view_controller: nil,
             tag: 0,
             clears_context_before_drawing: true,
             user_interaction_enabled: true,
             multiple_touch_enabled: false,
+            gesture_recognizers: Vec::new(),
         }
     }
 }
@@ -121,6 +129,13 @@ impl HostObject for UIViewAnimationDelegateHostObject {}
 pub fn set_view_controller(env: &mut Environment, view: id, controller: id) {
     let host_obj = env.objc.borrow_mut::<UIViewHostObject>(view);
     host_obj.view_controller = controller;
+}
+
+pub(super) fn gesture_recognizers(env: &Environment, view: id) -> Vec<id> {
+    env.objc
+        .borrow::<UIViewHostObject>(view)
+        .gesture_recognizers
+        .clone()
 }
 
 /// Shared parts of `initWithCoder:` and `initWithFrame:`. These can't call
@@ -438,6 +453,44 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UIViewHostObject>(this).multiple_touch_enabled = enabled;
 }
 
+- (id)gestureRecognizers {
+    let recognizers = env.objc.borrow::<UIViewHostObject>(this).gesture_recognizers.clone();
+    for recognizer in &recognizers {
+        retain(env, *recognizer);
+    }
+    let result = ns_array::from_vec(env, recognizers);
+    autorelease(env, result)
+}
+
+- (())addGestureRecognizer:(id)recognizer {
+    if recognizer == nil {
+        return;
+    }
+    let old_view: id = msg![env; recognizer view];
+    if old_view == this {
+        return;
+    }
+    if old_view != nil {
+        () = msg![env; old_view removeGestureRecognizer:recognizer];
+    }
+    retain(env, recognizer);
+    env.objc.borrow_mut::<UIViewHostObject>(this).gesture_recognizers.push(recognizer);
+    super::ui_gesture_recognizer::set_view(env, recognizer, this);
+}
+
+- (())removeGestureRecognizer:(id)recognizer {
+    let position = env
+        .objc
+        .borrow::<UIViewHostObject>(this)
+        .gesture_recognizers
+        .iter()
+        .position(|&candidate| candidate == recognizer);
+    let Some(position) = position else { return };
+    env.objc.borrow_mut::<UIViewHostObject>(this).gesture_recognizers.remove(position);
+    super::ui_gesture_recognizer::set_view(env, recognizer, nil);
+    release(env, recognizer);
+}
+
 - (())setExclusiveTouch:(bool)exclusive {
     log!("TODO: ignoring setExclusiveTouch:{} for view {:?}", exclusive, this);
 }
@@ -445,6 +498,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())layoutSubviews {
     // On iOS 5.1 and earlier, the default implementation of this method does
     // nothing.
+}
+
+- (())layoutIfNeeded {
+    // touchHLE does not yet track UIKit's internal "needs layout" bit. Calling
+    // layoutSubviews here preserves the synchronous behavior apps rely on;
+    // UIView's default implementation is a no-op, while subclasses can perform
+    // their actual layout work.
+    () = msg![env; this layoutSubviews];
 }
 
 - (id)superview {
@@ -620,18 +681,25 @@ pub const CLASSES: ClassExports = objc_classes! {
         superview,
         subviews,
         view_controller,
+        root_view_controller,
         tag: _,
         clears_context_before_drawing: _,
         user_interaction_enabled: _,
         multiple_touch_enabled: _,
+        gesture_recognizers,
     } = std::mem::take(env.objc.borrow_mut(this));
 
     release(env, layer);
     assert!(view_controller == nil);
+    release(env, root_view_controller);
     assert!(superview == nil);
     for subview in subviews {
         env.objc.borrow_mut::<UIViewHostObject>(subview).superview = nil;
         release(env, subview);
+    }
+    for recognizer in gesture_recognizers {
+        super::ui_gesture_recognizer::set_view(env, recognizer, nil);
+        release(env, recognizer);
     }
 
     let state = &mut env.framework_state.uikit.ui_view.views;

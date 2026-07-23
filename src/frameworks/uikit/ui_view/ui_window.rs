@@ -22,7 +22,9 @@ use crate::frameworks::uikit::ui_device::{
     UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
     UIDeviceOrientationPortraitUpsideDown,
 };
-use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
+use crate::objc::{
+    id, msg, msg_class, msg_super, nil, objc_classes, release, retain, ClassExports,
+};
 
 #[derive(Default)]
 pub struct State {
@@ -128,6 +130,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // TODO: post UIWindowDidBecomeVisibleNotification
     () = msg![env; this setHidden:false];
+}
+
+- (id)rootViewController {
+    env.objc.borrow::<UIViewHostObject>(this).root_view_controller
+}
+
+- (())setRootViewController:(id)view_controller {
+    retain(env, view_controller);
+    let old = std::mem::replace(
+        &mut env.objc.borrow_mut::<UIViewHostObject>(this).root_view_controller,
+        view_controller,
+    );
+
+    if old != nil {
+        let old_view: id = msg![env; old view];
+        let old_superview: id = msg![env; old_view superview];
+        if old_superview == this {
+            () = msg![env; old_view removeFromSuperview];
+        }
+        release(env, old);
+    }
+
+    if view_controller != nil {
+        let view: id = msg![env; view_controller view];
+        let bounds: CGRect = msg![env; this bounds];
+        () = msg![env; view setFrame:bounds];
+        () = msg![env; this addSubview:view];
+    }
 }
 
 // We only model the single main screen

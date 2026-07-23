@@ -49,6 +49,9 @@ pub struct Options {
     pub stick_to_touch: Option<(f32, f32, f32, f32)>,
     pub stabilize_virtual_cursor: Option<(f32, f32)>,
     pub gles1_implementation: Option<GLESImplementation>,
+    /// Allow selected early OpenGL ES 2.0 apps to use the GLES2 subset exposed
+    /// through touchHLE's desktop OpenGL 2.1 compatibility backend.
+    pub gles2_compat: bool,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
     pub preferred_languages: Option<Vec<String>>,
@@ -82,6 +85,7 @@ impl Default for Options {
             stick_to_touch: None,
             stabilize_virtual_cursor: None,
             gles1_implementation: None,
+            gles2_compat: false,
             direct_memory_access: true,
             gdb_listen_addrs: None,
             preferred_languages: None,
@@ -213,6 +217,8 @@ impl Options {
                 GLESImplementation::from_short_name(value)
                     .map_err(|_| "Unrecognized --gles1= value".to_string())?,
             );
+        } else if arg == "--gles2-compat" {
+            self.gles2_compat = true;
         } else if arg == "--disable-direct-memory-access" {
             self.direct_memory_access = false;
         } else if let Some(address) = arg.strip_prefix("--gdb=") {

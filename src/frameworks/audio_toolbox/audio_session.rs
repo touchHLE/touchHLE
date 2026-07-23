@@ -26,6 +26,7 @@ const kAudioSessionProperty_CurrentHardwareSampleRate: AudioSessionPropertyID = 
 const kAudioSessionProperty_CurrentHardwareOutputNumberChannels: AudioSessionPropertyID =
     fourcc(b"choc");
 const kAudioSessionProperty_CurrentHardwareOutputVolume: AudioSessionPropertyID = fourcc(b"chov");
+const kAudioSessionProperty_AudioInputAvailable: AudioSessionPropertyID = fourcc(b"aiav");
 const kAudioSessionProperty_PreferredHardwareIOBufferDuration: AudioSessionPropertyID =
     fourcc(b"iobd");
 const kAudioSessionProperty_PreferredHardwareSampleRate: AudioSessionPropertyID = fourcc(b"hwsr");
@@ -38,7 +39,7 @@ pub struct State {
     pub current_hardware_sample_rate: f64,
     pub current_hardware_output_number_channels: u32,
     current_hardware_output_volume: f32,
-    current_hardware_io_buffer_duration: f32,
+    pub current_hardware_io_buffer_duration: f32,
 }
 impl Default for State {
     fn default() -> Self {
@@ -120,6 +121,11 @@ fn AudioSessionGetProperty(
             let value: f32 = state.current_hardware_output_volume;
             env.mem.write(out_data.cast(), value);
         }
+        kAudioSessionProperty_AudioInputAvailable => {
+            // touchHLE currently does not emulate microphone input.
+            let value: u32 = 0;
+            env.mem.write(out_data.cast(), value);
+        }
         kAudioSessionProperty_CurrentHardwareIOBufferDuration => {
             let value: f32 = state.current_hardware_io_buffer_duration;
             env.mem.write(out_data.cast(), value);
@@ -156,18 +162,35 @@ fn AudioSessionSetProperty(
         log!("Warning: AudioSessionSetProperty() failed");
         return kAudioSessionBadPropertySizeError;
     }
-    if in_ID == kAudioSessionProperty_PreferredHardwareSampleRate {
-        env.framework_state
-            .audio_toolbox
-            .audio_session
-            .current_hardware_sample_rate = env.mem.read(in_data.cast::<f64>());
-        log!(
-            "AudioSessionSetProperty current_hardware_sample_rate {}",
+    match in_ID {
+        kAudioSessionProperty_AudioCategory => {
+            let category = env.mem.read(in_data.cast::<u32>());
             env.framework_state
                 .audio_toolbox
                 .audio_session
-                .current_hardware_sample_rate
-        );
+                .audio_session_category = category;
+            log!(
+                "AudioSessionSetProperty audio_session_category {}",
+                debug_fourcc(category)
+            );
+        }
+        kAudioSessionProperty_PreferredHardwareSampleRate => {
+            let sample_rate = env.mem.read(in_data.cast::<f64>());
+            env.framework_state
+                .audio_toolbox
+                .audio_session
+                .current_hardware_sample_rate = sample_rate;
+            log!("AudioSessionSetProperty current_hardware_sample_rate {sample_rate}");
+        }
+        kAudioSessionProperty_PreferredHardwareIOBufferDuration => {
+            let duration = env.mem.read(in_data.cast::<f32>());
+            env.framework_state
+                .audio_toolbox
+                .audio_session
+                .current_hardware_io_buffer_duration = duration;
+            log!("AudioSessionSetProperty current_hardware_io_buffer_duration {duration}");
+        }
+        _ => unreachable!(),
     }
 
     let result = 0; // success
@@ -229,6 +252,7 @@ fn get_audio_session_property_size(in_ID: AudioSessionPropertyID) -> GuestUSize 
         kAudioSessionProperty_CurrentHardwareSampleRate => guest_size_of::<f64>(),
         kAudioSessionProperty_CurrentHardwareOutputNumberChannels => guest_size_of::<u32>(),
         kAudioSessionProperty_CurrentHardwareOutputVolume => guest_size_of::<f32>(),
+        kAudioSessionProperty_AudioInputAvailable => guest_size_of::<u32>(),
         kAudioSessionProperty_CurrentHardwareIOBufferDuration => guest_size_of::<f32>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(in_ID)),
     }

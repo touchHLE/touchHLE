@@ -7,7 +7,7 @@
 
 use std::collections::hash_map::Entry;
 
-use crate::dyld::FunctionExports;
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::mem::{ConstPtr, MutPtr};
@@ -52,3 +52,11 @@ pub fn setlocale(
 }
 
 pub const FUNCTIONS: FunctionExports = &[export_c_func!(setlocale(_, _))];
+
+// Darwin exposes the value used by the MB_CUR_MAX macro as a global. The
+// default "C" locale is single-byte, which matches the only locale behavior
+// currently implemented above.
+pub const CONSTANTS: ConstantExports = &[(
+    "___mb_cur_max",
+    HostConstant::Custom(|env| env.mem.alloc_and_write(1i32).cast().cast_const()),
+)];

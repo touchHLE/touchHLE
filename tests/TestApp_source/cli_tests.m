@@ -336,10 +336,12 @@ int test_vsnprintf() {
   }
   free(str);
   // Test length modifiers
-  str = str_format("%d %ld %lld %qd %u %lu %llu %qu", 10, 100, 4294967296,
-                   4294967296, 10, 100, 4294967296, 4294967296);
+  str = str_format("%d %ld %lld %qd %u %lu %llu %qu %llu", 10, 100,
+                   4294967296, 4294967296, 10, 100, 4294967296, 4294967296,
+                   18446744073709551615ULL);
   if (strcmp(str,
-             "10 100 4294967296 4294967296 10 100 4294967296 4294967296") !=
+             "10 100 4294967296 4294967296 10 100 4294967296 4294967296 "
+             "18446744073709551615") !=
       0) {
     free(str);
     return -24;
@@ -3171,6 +3173,30 @@ int test_fwrite() {
     return -1;
   }
   return 0;
+}
+
+int test_tmpfile() {
+  FILE *file = tmpfile();
+  if (file == NULL)
+    return -1;
+
+  const char contents[] = "temporary data";
+  if (fwrite(contents, 1, sizeof(contents), file) != sizeof(contents)) {
+    fclose(file);
+    return -2;
+  }
+  rewind(file);
+
+  char read_back[sizeof(contents)] = {0};
+  if (fread(read_back, 1, sizeof(read_back), file) != sizeof(read_back)) {
+    fclose(file);
+    return -3;
+  }
+  if (memcmp(contents, read_back, sizeof(contents)) != 0) {
+    fclose(file);
+    return -4;
+  }
+  return fclose(file) == 0 ? 0 : -5;
 }
 
 // === flockfile / funlockfile tests ===
@@ -6411,6 +6437,7 @@ struct {
     FUNC_DEF(test_mbstowcs),
     FUNC_DEF(test_CFMutableString),
     FUNC_DEF(test_fwrite),
+    FUNC_DEF(test_tmpfile),
     FUNC_DEF(test_flockfile_basic),
     FUNC_DEF(test_flockfile_recursive),
     FUNC_DEF(test_ftrylockfile_unlocked),

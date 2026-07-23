@@ -29,6 +29,7 @@ pub struct State {
     /// Current EAGLContext for each thread
     current_ctxs: std::collections::HashMap<crate::ThreadId, Option<crate::objc::id>>,
     strings_cache: std::collections::HashMap<GLenum, ConstPtr<u8>>,
+    next_vertex_array_name: u32,
 }
 impl State {
     fn current_ctx_for_thread(&mut self, thread: crate::ThreadId) -> &mut Option<crate::objc::id> {

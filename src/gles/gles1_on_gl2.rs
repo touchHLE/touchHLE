@@ -833,6 +833,134 @@ impl GLES for GLES1OnGL2<'_> {
         gl21::GetString(name)
     }
 
+    unsafe fn AttachShader(&mut self, program: GLuint, shader: GLuint) {
+        gl21::AttachShader(program, shader)
+    }
+    unsafe fn BindAttribLocation(&mut self, program: GLuint, index: GLuint, name: *const i8) {
+        gl21::BindAttribLocation(program, index, name)
+    }
+    unsafe fn BlendEquationSeparate(&mut self, mode_rgb: GLenum, mode_alpha: GLenum) {
+        gl21::BlendEquationSeparate(mode_rgb, mode_alpha)
+    }
+    unsafe fn BlendFuncSeparate(
+        &mut self,
+        src_rgb: GLenum,
+        dst_rgb: GLenum,
+        src_alpha: GLenum,
+        dst_alpha: GLenum,
+    ) {
+        gl21::BlendFuncSeparate(src_rgb, dst_rgb, src_alpha, dst_alpha)
+    }
+    unsafe fn CompileShader(&mut self, shader: GLuint) {
+        gl21::CompileShader(shader)
+    }
+    unsafe fn CreateProgram(&mut self) -> GLuint {
+        gl21::CreateProgram()
+    }
+    unsafe fn CreateShader(&mut self, shader_type: GLenum) -> GLuint {
+        gl21::CreateShader(shader_type)
+    }
+    unsafe fn DeleteProgram(&mut self, program: GLuint) {
+        gl21::DeleteProgram(program)
+    }
+    unsafe fn DeleteShader(&mut self, shader: GLuint) {
+        gl21::DeleteShader(shader)
+    }
+    unsafe fn DetachShader(&mut self, program: GLuint, shader: GLuint) {
+        gl21::DetachShader(program, shader)
+    }
+    unsafe fn DisableVertexAttribArray(&mut self, index: GLuint) {
+        gl21::DisableVertexAttribArray(index)
+    }
+    unsafe fn EnableVertexAttribArray(&mut self, index: GLuint) {
+        gl21::EnableVertexAttribArray(index)
+    }
+    unsafe fn GetAttribLocation(&mut self, program: GLuint, name: *const i8) -> GLint {
+        gl21::GetAttribLocation(program, name)
+    }
+    unsafe fn GetProgramInfoLog(
+        &mut self,
+        program: GLuint,
+        buf_size: GLsizei,
+        length: *mut GLsizei,
+        info_log: *mut i8,
+    ) {
+        gl21::GetProgramInfoLog(program, buf_size, length, info_log)
+    }
+    unsafe fn GetCurrentProgram(&mut self) -> GLuint {
+        let mut program = 0;
+        gl21::GetIntegerv(gl21::CURRENT_PROGRAM, &mut program);
+        program as GLuint
+    }
+    unsafe fn GetProgramiv(&mut self, program: GLuint, pname: GLenum, params: *mut GLint) {
+        gl21::GetProgramiv(program, pname, params)
+    }
+    unsafe fn GetShaderInfoLog(
+        &mut self,
+        shader: GLuint,
+        buf_size: GLsizei,
+        length: *mut GLsizei,
+        info_log: *mut i8,
+    ) {
+        gl21::GetShaderInfoLog(shader, buf_size, length, info_log)
+    }
+    unsafe fn GetShaderiv(&mut self, shader: GLuint, pname: GLenum, params: *mut GLint) {
+        gl21::GetShaderiv(shader, pname, params)
+    }
+    unsafe fn GetUniformLocation(&mut self, program: GLuint, name: *const i8) -> GLint {
+        gl21::GetUniformLocation(program, name)
+    }
+    unsafe fn LinkProgram(&mut self, program: GLuint) {
+        gl21::LinkProgram(program)
+    }
+    unsafe fn ShaderSource(
+        &mut self,
+        shader: GLuint,
+        count: GLsizei,
+        strings: *const *const i8,
+        lengths: *const GLint,
+    ) {
+        gl21::ShaderSource(shader, count, strings, lengths)
+    }
+    unsafe fn Uniform1f(&mut self, location: GLint, v0: GLfloat) {
+        gl21::Uniform1f(location, v0)
+    }
+    unsafe fn Uniform1i(&mut self, location: GLint, v0: GLint) {
+        gl21::Uniform1i(location, v0)
+    }
+    unsafe fn Uniform4fv(&mut self, location: GLint, count: GLsizei, value: *const GLfloat) {
+        gl21::Uniform4fv(location, count, value)
+    }
+    unsafe fn UseProgram(&mut self, program: GLuint) {
+        gl21::UseProgram(program)
+    }
+    unsafe fn ValidateProgram(&mut self, program: GLuint) {
+        gl21::ValidateProgram(program)
+    }
+    unsafe fn VertexAttrib1fv(&mut self, index: GLuint, values: *const GLfloat) {
+        gl21::VertexAttrib1fv(index, values)
+    }
+    unsafe fn VertexAttrib2fv(&mut self, index: GLuint, values: *const GLfloat) {
+        gl21::VertexAttrib2fv(index, values)
+    }
+    unsafe fn VertexAttrib3fv(&mut self, index: GLuint, values: *const GLfloat) {
+        gl21::VertexAttrib3fv(index, values)
+    }
+    unsafe fn VertexAttrib4fv(&mut self, index: GLuint, values: *const GLfloat) {
+        gl21::VertexAttrib4fv(index, values)
+    }
+    unsafe fn VertexAttribPointer(
+        &mut self,
+        index: GLuint,
+        size: GLint,
+        type_: GLenum,
+        normalized: GLboolean,
+        stride: GLsizei,
+        pointer: *const GLvoid,
+    ) {
+        gl21::VertexAttribPointer(index, size, type_, normalized, stride, pointer)
+    }
+
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf) {
         assert!([

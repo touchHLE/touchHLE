@@ -94,6 +94,135 @@ pub trait GLES {
     #[allow(dead_code)]
     unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte;
 
+    // OpenGL ES 2.0 programmable pipeline. These have default implementations
+    // so native GLES1 backends remain usable; the desktop GL2 compatibility
+    // backend overrides them for selected early apps that require GLES2.
+    unsafe fn AttachShader(&mut self, _program: GLuint, _shader: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn BindAttribLocation(&mut self, _program: GLuint, _index: GLuint, _name: *const i8) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn BlendEquationSeparate(&mut self, _mode_rgb: GLenum, _mode_alpha: GLenum) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn BlendFuncSeparate(
+        &mut self,
+        _src_rgb: GLenum,
+        _dst_rgb: GLenum,
+        _src_alpha: GLenum,
+        _dst_alpha: GLenum,
+    ) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn CompileShader(&mut self, _shader: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn CreateProgram(&mut self) -> GLuint {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn CreateShader(&mut self, _shader_type: GLenum) -> GLuint {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn DeleteProgram(&mut self, _program: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn DeleteShader(&mut self, _shader: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn DetachShader(&mut self, _program: GLuint, _shader: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn DisableVertexAttribArray(&mut self, _index: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn EnableVertexAttribArray(&mut self, _index: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetAttribLocation(&mut self, _program: GLuint, _name: *const i8) -> GLint {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetProgramInfoLog(
+        &mut self,
+        _program: GLuint,
+        _buf_size: GLsizei,
+        _length: *mut GLsizei,
+        _info_log: *mut i8,
+    ) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetCurrentProgram(&mut self) -> GLuint {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetProgramiv(&mut self, _program: GLuint, _pname: GLenum, _params: *mut GLint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetShaderInfoLog(
+        &mut self,
+        _shader: GLuint,
+        _buf_size: GLsizei,
+        _length: *mut GLsizei,
+        _info_log: *mut i8,
+    ) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetShaderiv(&mut self, _shader: GLuint, _pname: GLenum, _params: *mut GLint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn GetUniformLocation(&mut self, _program: GLuint, _name: *const i8) -> GLint {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn LinkProgram(&mut self, _program: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn ShaderSource(
+        &mut self,
+        _shader: GLuint,
+        _count: GLsizei,
+        _strings: *const *const i8,
+        _lengths: *const GLint,
+    ) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn Uniform1f(&mut self, _location: GLint, _v0: GLfloat) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn Uniform1i(&mut self, _location: GLint, _v0: GLint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn Uniform4fv(&mut self, _location: GLint, _count: GLsizei, _value: *const GLfloat) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn UseProgram(&mut self, _program: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn ValidateProgram(&mut self, _program: GLuint) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn VertexAttrib1fv(&mut self, _index: GLuint, _values: *const GLfloat) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn VertexAttrib2fv(&mut self, _index: GLuint, _values: *const GLfloat) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn VertexAttrib3fv(&mut self, _index: GLuint, _values: *const GLfloat) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn VertexAttrib4fv(&mut self, _index: GLuint, _values: *const GLfloat) {
+        panic!("GLES2 is not supported by this backend")
+    }
+    unsafe fn VertexAttribPointer(
+        &mut self,
+        _index: GLuint,
+        _size: GLint,
+        _type_: GLenum,
+        _normalized: GLboolean,
+        _stride: GLsizei,
+        _pointer: *const GLvoid,
+    ) {
+        panic!("GLES2 is not supported by this backend")
+    }
+
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);

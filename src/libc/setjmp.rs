@@ -62,6 +62,12 @@ fn setjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>) -> i32 {
     0 // no longjmp() was performed
 }
 
+fn sigsetjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, _save_mask: i32) -> i32 {
+    // Signal masks are not currently emulated, but the register/stack state is
+    // identical to setjmp for the apps supported here.
+    setjmp(env, jmp_buf)
+}
+
 fn longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
     let lr = env.cpu.regs()[crate::cpu::Cpu::LR];
     let fp = env.cpu.regs()[abi::FRAME_POINTER];
@@ -89,4 +95,13 @@ fn longjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
         .branch(GuestFunction::from_addr_with_thumb_bit(buf.lr));
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(setjmp(_)), export_c_func!(longjmp(_, _))];
+fn siglongjmp(env: &mut Environment, jmp_buf: MutPtr<JmpBuf>, status: u32) {
+    longjmp(env, jmp_buf, status)
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(setjmp(_)),
+    export_c_func!(longjmp(_, _)),
+    export_c_func!(sigsetjmp(_, _)),
+    export_c_func!(siglongjmp(_, _)),
+];

@@ -144,11 +144,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     match *env.objc.borrow(this) {
         // FIXME: don't assume URL is already absolute
         NSURLHostObject::FileURL { ns_string, .. } => ns_string,
-        NSURLHostObject::OtherURL { ns_string } => {
-            // TODO: full RFC 1808 resolution
-            assert!(to_rust_string(env, ns_string).starts_with("http"));
-            ns_string
-        },
+        // The stored string is already absolute for the URL constructors we
+        // currently implement. Schemes such as itms-apps:, mailto: and tel:
+        // are just as valid here as HTTP URLs.
+        NSURLHostObject::OtherURL { ns_string } => ns_string,
     }
 }
 

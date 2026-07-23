@@ -42,6 +42,14 @@ fn usleep(env: &mut Environment, useconds: useconds_t) -> i32 {
     0 // success
 }
 
+fn alarm(_env: &mut Environment, seconds: u32) -> u32 {
+    // touchHLE does not currently deliver Unix signals. These games use alarm
+    // only around best-effort network/service checks, so accepting/cancelling
+    // it without a pending signal matches the non-blocking path they need.
+    log_dbg!("TODO: alarm({seconds}) -> 0 (signals are not emulated)");
+    0
+}
+
 #[allow(non_camel_case_types)]
 pub type pid_t = i32;
 #[allow(non_camel_case_types)]
@@ -192,6 +200,7 @@ fn sysconf(_env: &mut Environment, name: i32) -> i32 {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sleep(_)),
     export_c_func!(usleep(_)),
+    export_c_func!(alarm(_)),
     export_c_func!(getpid()),
     export_c_func!(getppid()),
     export_c_func!(isatty(_)),

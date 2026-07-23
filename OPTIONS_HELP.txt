@@ -8,6 +8,9 @@ View options:
         in use, the result may be a bit blurry. An internal resolution larger
         than your screen's is possible, in which case the output is downscaled.
 
+        On desktop, press F11 or Alt+Enter while an app is running to switch
+        between windowed and full-screen mode.
+
     --upside-down
     --landscape-left
     --landscape-right
@@ -188,6 +191,11 @@ Game controller options:
         movements within a 10px radius will be completely ignored.
 
 Graphics driver options:
+    --gles2-compat
+        Enables touchHLE's experimental OpenGL ES 2.0 subset using the desktop
+        OpenGL 2.1 compatibility backend. This is an app-specific option and
+        is not a complete implementation of OpenGL ES 2.0.
+
     --gles1=...
         Force touchHLE to use a particular OpenGL ES 1.1 implementation.
         This may be useful for troubleshooting graphics driver issues.

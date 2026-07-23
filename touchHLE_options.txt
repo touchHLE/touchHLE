@@ -13,3 +13,16 @@
 #
 # Text on a line following a hash sign (#) is treated as a comment and ignored.
 # Empty lines are also ignored.
+
+# Puzzle Agent renders for a landscape iPhone but does not declare an
+# interface orientation in Info.plist. Start it in the matching orientation.
+com.telltalegames.Grickle101Low: --landscape-left
+
+# Puzzle Agent HD renders in landscape on iPad, but its Info.plist causes the
+# legacy orientation fallback to select PortraitUpsideDown.
+com.telltalegames.Grickle101: --landscape-left
+
+# Early Telltale iPad/iPhone engine builds use the GLES2 subset provided by
+# touchHLE's desktop OpenGL 2.1 compatibility backend.
+com.telltalegames.SamMax301: --landscape-left --gles2-compat
+com.telltalegames.WallaceGromit102: --landscape-left --gles2-compat

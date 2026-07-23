@@ -536,6 +536,36 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithObjects:(id)firstObj, ...args {
+    let mut objects = Vec::new();
+    if firstObj != nil {
+        retain(env, firstObj);
+        objects.push(firstObj);
+        let mut varargs = args.start();
+        loop {
+            let next_arg: id = varargs.next(env);
+            if next_arg.is_null() {
+                break;
+            }
+            retain(env, next_arg);
+            objects.push(next_arg);
+        }
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+    this
+}
+
+- (id)initWithObjects:(ConstPtr<id>)objects_ptr count:(NSUInteger)count {
+    let mut objects = Vec::with_capacity(count as usize);
+    for i in 0..count {
+        let object: id = env.mem.read(objects_ptr + i);
+        retain(env, object);
+        objects.push(object);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+    this
+}
+
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
     init_with_coder_inner(env, this, coder)

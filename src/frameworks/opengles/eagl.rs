@@ -15,7 +15,7 @@ use crate::frameworks::foundation::NSUInteger;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLESContext, GLES};
+use crate::gles::{create_gles1_ctx, create_gles2_compat_ctx, gles1_on_gl2, GLESContext, GLES};
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
@@ -61,6 +61,8 @@ const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
 pub(super) struct EAGLContextHostObject {
     pub(super) gles_ctx: Option<Box<dyn GLESContext>>,
+    /// API value requested by the guest.
+    api: EAGLRenderingAPI,
     /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: Rc<RefCell<HashMap<GLuint, id>>>,
@@ -79,6 +81,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)alloc {
     let host_object = Box::new(EAGLContextHostObject {
         gles_ctx: None,
+        api: kEAGLRenderingAPIOpenGLES1,
         renderbuffer_drawable_bindings: Rc::new(RefCell::new(HashMap::new())),
         fps_counter: None,
         next_frame_due: None,
@@ -110,7 +113,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
-    if api != kEAGLRenderingAPIOpenGLES1 {
+    let compatible_gles2 = api == kEAGLRenderingAPIOpenGLES2 && env.options.gles2_compat;
+    if api != kEAGLRenderingAPIOpenGLES1 && !compatible_gles2 {
         log!(
             "TODO: App requested EAGL initWithAPI:{} sharegroup:{:?}, returning nil as we only support API 1 for now",
             api,
@@ -121,6 +125,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if group == nil {
         return msg![env; this initWithAPI:api];
+    }
+
+    if compatible_gles2 {
+        log!("Using the OpenGL 2.1 compatibility backend for EAGL API 2");
     }
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
@@ -135,7 +143,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     env.window.as_mut().unwrap().set_share_with_current_context(true);
 
-    let mut gles1_ins = create_gles1_ctx(env);
+    let mut gles1_ins = if compatible_gles2 {
+        create_gles2_compat_ctx(env)
+    } else {
+        create_gles1_ctx(env)
+    };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     {
@@ -144,6 +156,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
 
     env.window.as_mut().unwrap().set_share_with_current_context(false);
 
@@ -152,7 +165,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api {
-    if api != kEAGLRenderingAPIOpenGLES1 {
+    let compatible_gles2 = api == kEAGLRenderingAPIOpenGLES2 && env.options.gles2_compat;
+    if api != kEAGLRenderingAPIOpenGLES1 && !compatible_gles2 {
         log!(
             "TODO: App requested EAGL initWithAPI:{}, returning nil as we only support API 1 for now",
             api
@@ -160,7 +174,15 @@ pub const CLASSES: ClassExports = objc_classes! {
         return nil;
     }
 
-    let mut gles1_ins = create_gles1_ctx(env);
+    if compatible_gles2 {
+        log!("Using the OpenGL 2.1 compatibility backend for EAGL API 2");
+    }
+
+    let mut gles1_ins = if compatible_gles2 {
+        create_gles2_compat_ctx(env)
+    } else {
+        create_gles1_ctx(env)
+    };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     {
@@ -169,13 +191,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
 
     this
 }
 
 - (EAGLRenderingAPI)API {
-    // TODO: support later API versions
-    kEAGLRenderingAPIOpenGLES1
+    env.objc.borrow::<EAGLContextHostObject>(this).api
 }
 
 - (id)sharegroup {
@@ -668,6 +690,18 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     let old_blend_sfactor: GLenum = get_int(gles, gles11::BLEND_SRC) as _;
     let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
 
+    // GLES2 applications leave their shader program bound while presenting.
+    // touchHLE draws the renderbuffer to the window with the GL2 compatibility
+    // fixed-function pipeline, so the guest program must be disabled for that
+    // internal presentation quad and restored immediately afterwards.
+    let old_program = if env.options.gles2_compat {
+        let program = gles.GetCurrentProgram();
+        gles.UseProgram(0);
+        Some(program)
+    } else {
+        None
+    };
+
     let old_tex_env_mode = get_tex_env_int(gles, gles11::TEXTURE_ENV, gles11::TEXTURE_ENV_MODE);
     // if the mode is REPLACE, we don't have to reset the other texture
     // environment values
@@ -680,6 +714,10 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
 
     // Draw the quad
     present_frame(gles, viewport, rotation_matrix, virtual_cursor_visible_at);
+
+    if let Some(program) = old_program {
+        gles.UseProgram(program);
+    }
 
     // Clean up the texture
     gles.DeleteTextures(1, &texture);

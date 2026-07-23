@@ -47,6 +47,8 @@ pub struct AudioComponentInstanceHostObject {
     pub last_render_time: Option<Instant>,
     pub al_source: Option<ALuint>,
     pub is_running_handler: bool,
+    pub has_started_playback: bool,
+    pub underrun_count: u32,
 }
 impl Default for AudioComponentInstanceHostObject {
     fn default() -> Self {
@@ -76,6 +78,8 @@ impl Default for AudioComponentInstanceHostObject {
             last_render_time: None,
             al_source: None,
             is_running_handler: false,
+            has_started_playback: false,
+            underrun_count: 0,
         }
     }
 }

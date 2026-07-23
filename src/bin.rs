@@ -8,5 +8,6 @@
 #![allow(non_snake_case)]
 
 fn main() -> Result<(), String> {
+    touchHLE::install_panic_log_hook();
     touchHLE::main(std::env::args())
 }

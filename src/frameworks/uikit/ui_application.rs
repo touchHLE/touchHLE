@@ -166,6 +166,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (bool)canOpenURL:(id)url { // NSURL
+    let ns_string: id = msg![env; url absoluteString];
+    let url_string = ns_string::to_rust_string(env, ns_string).to_ascii_lowercase();
+    ["http:", "https:", "mailto:", "tel:", "itms:", "itms-apps:"]
+        .iter()
+        .any(|scheme| url_string.starts_with(scheme))
+}
+
 // TODO: ignore touches
 -(())beginIgnoringInteractionEvents {
     log!("TODO: ignoring beginIgnoringInteractionEvents");

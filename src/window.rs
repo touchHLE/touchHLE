@@ -231,6 +231,8 @@ pub struct Window {
     scale_hack: NonZeroU32,
     internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
+    /// Whether the selected image already targets the startup orientation.
+    splash_image_is_orientation_specific: bool,
     device_family: DeviceFamily,
     device_orientation: DeviceOrientation,
     controller_ctx: sdl2::GameControllerSubsystem,
@@ -256,10 +258,40 @@ impl Window {
     pub fn rotatable_fullscreen() -> bool {
         env::consts::OS == "android"
     }
+
+    fn toggle_fullscreen(&mut self) {
+        if Self::rotatable_fullscreen() {
+            return;
+        }
+
+        let new_fullscreen = !self.fullscreen;
+        let mode = if new_fullscreen {
+            sdl2::video::FullscreenType::Desktop
+        } else {
+            sdl2::video::FullscreenType::Off
+        };
+        match self.window.set_fullscreen(mode) {
+            Ok(()) => {
+                self.fullscreen = new_fullscreen;
+                log!(
+                    "Switched to {} mode.",
+                    if self.fullscreen {
+                        "fullscreen"
+                    } else {
+                        "windowed"
+                    }
+                );
+            }
+            Err(error) => {
+                log!("Could not toggle fullscreen mode: {error}");
+            }
+        }
+    }
+
     pub fn new(
         title: &str,
         icon: Option<Image>,
-        launch_image: Option<Image>,
+        launch_image: Option<(Image, bool)>,
         options: &Options,
     ) -> Window {
         let sdl_ctx = sdl2::init().unwrap();
@@ -325,6 +357,7 @@ impl Window {
             let window = video_ctx
                 .window(title, width, height)
                 .position_centered()
+                .resizable()
                 .opengl()
                 .build()
                 .unwrap();
@@ -363,6 +396,10 @@ impl Window {
         #[cfg(target_os = "macos")]
         let max_height = window.size().1;
 
+        let (splash_image, splash_image_is_orientation_specific) = launch_image
+            .map(|(image, orientation_specific)| (Some(image), orientation_specific))
+            .unwrap_or((None, false));
+
         let mut window = Window {
             _sdl_ctx: sdl_ctx,
             video_ctx,
@@ -379,7 +416,8 @@ impl Window {
             fullscreen,
             scale_hack,
             internal_gl_ins: None,
-            splash_image: launch_image,
+            splash_image,
+            splash_image_is_orientation_specific,
             device_family,
             device_orientation,
             controller_ctx,
@@ -816,6 +854,25 @@ impl Window {
                     }
                 }
                 E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::F11),
+                    repeat: false,
+                    ..
+                } => {
+                    self.toggle_fullscreen();
+                    continue;
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::Return),
+                    keymod,
+                    repeat: false,
+                    ..
+                } if keymod
+                    .intersects(sdl2::keyboard::Mod::LALTMOD | sdl2::keyboard::Mod::RALTMOD) =>
+                {
+                    self.toggle_fullscreen();
+                    continue;
+                }
+                E::KeyDown {
                     keycode: Some(sdl2::keyboard::Keycode::F12),
                     ..
                 } => {
@@ -1201,13 +1258,31 @@ impl Window {
     fn display_splash(&mut self) {
         assert!(self.splash_image.is_some());
 
+        let image = self.splash_image.as_ref().unwrap();
+        let (image_width, image_height) = image.dimensions();
+
+        // Legacy iPhone landscape launch images are stored in a portrait-sized
+        // Default.png with their content already rotated. Applying the normal
+        // framebuffer rotation to such an image turns it upside down, so use
+        // the inverse rotation for that case. Native landscape-sized launch
+        // images and portrait launch images use the regular transform.
+        let is_landscape = matches!(
+            self.device_orientation,
+            DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight
+        );
+        let rotation = if self.splash_image_is_orientation_specific {
+            Matrix::identity()
+        } else if is_landscape && image_height > image_width {
+            self.rotation_matrix().inverse().unwrap()
+        } else {
+            self.rotation_matrix()
+        };
+
         // OpenGL ES expects bottom-to-top row order for image data, but our
         // image data will be top-to-bottom. A reflection transform compensates.
-        let matrix = self.rotation_matrix().multiply(&Matrix::y_flip());
+        let matrix = rotation.multiply(&Matrix::y_flip());
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
-
-        let image = self.splash_image.as_ref().unwrap();
 
         unsafe {
             let mut gl_ctx = self
@@ -1224,13 +1299,12 @@ impl Window {
             let mut texture = 0;
             gl_ctx.GenTextures(1, &mut texture);
             gl_ctx.BindTexture(gles11::TEXTURE_2D, texture);
-            let (width, height) = image.dimensions();
             gl_ctx.TexImage2D(
                 gles11::TEXTURE_2D,
                 0,
                 gles11::RGBA as _,
-                width as _,
-                height as _,
+                image_width as _,
+                image_height as _,
                 0,
                 gles11::RGBA,
                 gles11::UNSIGNED_BYTE,
@@ -1362,10 +1436,6 @@ impl Window {
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
         let (app_width, app_height) =
             size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
-        if !self.fullscreen && !Self::rotatable_fullscreen() {
-            return (0, 0, app_width, app_height);
-        }
-
         let (screen_width, screen_height) = self.window.drawable_size();
 
         let app_aspect = app_width as f32 / app_height as f32;

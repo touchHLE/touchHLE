@@ -310,6 +310,7 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             event
         );
         let _: () = msg![env; view touchesBegan:touches withEvent:event];
+        super::ui_gesture_recognizer::touches_began(env, view, touches);
     }
 
     release(env, pool);
@@ -396,6 +397,7 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             event
         );
         let _: () = msg![env; view touchesMoved:touches withEvent:event];
+        super::ui_gesture_recognizer::touches_moved(env, view, touches);
     }
 
     release(env, pool);
@@ -487,6 +489,7 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             event
         );
         let _: () = msg![env; view touchesEnded:touches withEvent:event];
+        super::ui_gesture_recognizer::touches_ended(env, view, touches);
     }
 
     release(env, pool);

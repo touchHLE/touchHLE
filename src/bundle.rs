@@ -13,7 +13,7 @@
 
 use crate::fs::{BundleData, Fs, GuestPath, GuestPathBuf};
 use crate::image::Image;
-use crate::window::DeviceFamily;
+use crate::window::{DeviceFamily, DeviceOrientation};
 use plist::dictionary::Dictionary;
 use plist::Value;
 use std::io::Cursor;
@@ -139,13 +139,43 @@ impl Bundle {
             .join(self.plist["CFBundleExecutable"].as_string().unwrap())
     }
 
-    pub fn launch_image_path(&self) -> GuestPathBuf {
-        if let Some(base_name) = self.plist.get("UILaunchImageFile") {
-            self.path
-                .join(format!("{}.png", base_name.as_string().unwrap()))
-        } else {
-            self.path.join("Default.png") // not guaranteed to exist!
+    pub fn launch_image_paths(
+        &self,
+        orientation: DeviceOrientation,
+        device_family: DeviceFamily,
+    ) -> Vec<(GuestPathBuf, bool)> {
+        let base_name = self
+            .plist
+            .get("UILaunchImageFile")
+            .map(|value| value.as_string().unwrap().trim_end_matches(".png"))
+            .unwrap_or("Default");
+
+        // iPad apps from iOS 3.2 may provide a different launch image for
+        // every interface orientation. Device and interface landscape names
+        // are opposite because the content rotates against the device.
+        let orientation_names: &[&str] = match orientation {
+            DeviceOrientation::Portrait => &["Portrait"],
+            DeviceOrientation::PortraitUpsideDown => &["PortraitUpsideDown", "Portrait"],
+            DeviceOrientation::LandscapeLeft => &["LandscapeRight", "Landscape"],
+            DeviceOrientation::LandscapeRight => &["LandscapeLeft", "Landscape"],
+        };
+
+        let mut names = Vec::new();
+        for orientation_name in orientation_names {
+            if device_family == DeviceFamily::iPad {
+                names.push((format!("{base_name}-{orientation_name}~ipad.png"), true));
+            }
+            names.push((format!("{base_name}-{orientation_name}.png"), true));
         }
+        if device_family == DeviceFamily::iPad {
+            names.push((format!("{base_name}~ipad.png"), false));
+        }
+        names.push((format!("{base_name}.png"), false));
+
+        names
+            .into_iter()
+            .map(|(name, orientation_specific)| (self.path.join(name), orientation_specific))
+            .collect()
     }
 
     pub fn status_bar_hidden(&self) -> bool {

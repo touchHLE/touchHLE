@@ -200,6 +200,41 @@ pub const CLASSES: ClassExports = objc_classes! {
     from_rust_ordering(host_object.time_interval.total_cmp(&another_date_host_object.time_interval))
 }
 
+- (id)laterDate:(id)anotherDate { // NSDate *
+    let this_interval = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+    let other_interval = env
+        .objc
+        .borrow::<NSDateHostObject>(anotherDate)
+        .time_interval;
+    if this_interval >= other_interval {
+        this
+    } else {
+        anotherDate
+    }
+}
+
+- (id)earlierDate:(id)anotherDate { // NSDate *
+    let this_interval = env.objc.borrow::<NSDateHostObject>(this).time_interval;
+    let other_interval = env
+        .objc
+        .borrow::<NSDateHostObject>(anotherDate)
+        .time_interval;
+    if this_interval <= other_interval {
+        this
+    } else {
+        anotherDate
+    }
+}
+
+- (bool)isEqualToDate:(id)anotherDate { // NSDate *
+    !anotherDate.is_null()
+        && env.objc.borrow::<NSDateHostObject>(this).time_interval
+            == env
+                .objc
+                .borrow::<NSDateHostObject>(anotherDate)
+                .time_interval
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)

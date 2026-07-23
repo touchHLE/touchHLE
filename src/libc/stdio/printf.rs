@@ -255,12 +255,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             }
             b'd' | b'i' | b'u' => {
                 assert!(!left_justified);
-                // Note: on 32-bit system int and long are i32,
-                // so single length_modifier is ignored (but not double one!)
-                let int: i64 = if specifier == b'u' {
-                    if length_modifier == Some("ll") {
-                        let uint: u64 = args.next(env);
-                        uint.try_into().unwrap()
+                if specifier == b'u' {
+                    let uint: u64 = if length_modifier == Some("ll") {
+                        args.next(env)
                     } else if length_modifier == Some("hh") {
                         let uint: u8 = args.next(env);
                         uint.into()
@@ -271,8 +268,37 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                         assert!(length_modifier.is_none() || length_modifier == Some("l"));
                         let uint: u32 = args.next(env);
                         uint.into()
+                    };
+
+                    let uint_with_precision = if precision.is_some_and(|value| value > 0) {
+                        format!("{:01$}", uint, precision.unwrap())
+                    } else {
+                        format!("{uint}")
+                    };
+
+                    if pad_width > 0 {
+                        let pad_width = pad_width as usize;
+                        if pad_char == '0' && precision.is_none() {
+                            if prepend_sign {
+                                assert!(uint != 0); // TODO
+                                write!(&mut res, "+{:0>1$}", uint, pad_width - 1).unwrap();
+                            } else {
+                                write!(&mut res, "{uint:0>pad_width$}").unwrap();
+                            }
+                        } else {
+                            assert!(!prepend_sign);
+                            write!(&mut res, "{uint_with_precision:>pad_width$}").unwrap();
+                        }
+                    } else {
+                        assert!(!prepend_sign);
+                        res.extend_from_slice(uint_with_precision.as_bytes());
                     }
-                } else if length_modifier == Some("ll") {
+                    continue;
+                }
+
+                // Note: on 32-bit system int and long are i32,
+                // so single length_modifier is ignored (but not double one!)
+                let int: i64 = if length_modifier == Some("ll") {
                     args.next(env)
                 } else if length_modifier == Some("hh") {
                     let int: i8 = args.next(env);
@@ -334,11 +360,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b'x' => {
                 assert!(!prepend_sign);
                 assert!(!left_justified);
-                // Note: on 32-bit system unsigned int and unsigned long
-                // are u32, so length_modifier is ignored
-                let uint: u32 = if length_modifier == Some("ll") {
-                    let uint: u64 = args.next(env);
-                    uint.try_into().unwrap()
+                // On a 32-bit system unsigned int and unsigned long are u32,
+                // while unsigned long long remains u64.
+                let uint: u64 = if length_modifier == Some("ll") {
+                    args.next(env)
                 } else if length_modifier == Some("hh") {
                     let uint: u8 = args.next(env);
                     uint.into()
@@ -348,7 +373,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 } else {
                     assert!(length_modifier.is_none() || length_modifier == Some("l"));
                     let uint: u32 = args.next(env);
-                    uint
+                    uint.into()
                 };
                 if pad_width > 0 {
                     assert!(precision.is_none()); // TODO
@@ -374,11 +399,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 assert!(!prepend_sign);
                 assert!(!left_justified);
                 assert!(precision.is_none());
-                // Note: on 32-bit system unsigned int and unsigned long
-                // are u32, so length_modifier is ignored
-                let uint: u32 = if length_modifier == Some("ll") {
-                    let uint: u64 = args.next(env);
-                    uint.try_into().unwrap()
+                // On a 32-bit system unsigned int and unsigned long are u32,
+                // while unsigned long long remains u64.
+                let uint: u64 = if length_modifier == Some("ll") {
+                    args.next(env)
                 } else if length_modifier == Some("hh") {
                     let uint: u8 = args.next(env);
                     uint.into()
@@ -388,7 +412,7 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                 } else {
                     assert!(length_modifier.is_none() || length_modifier == Some("l"));
                     let uint: u32 = args.next(env);
-                    uint
+                    uint.into()
                 };
                 if pad_width > 0 {
                     let pad_width = pad_width as usize;

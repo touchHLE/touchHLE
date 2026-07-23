@@ -62,6 +62,27 @@ use std::path::PathBuf;
 
 pub use touchHLE_version::*;
 
+/// Install a panic hook that also writes the panic payload and source location
+/// to touchHLE's log file. This must run before entering a guest coroutine:
+/// on Windows, unwinding a panic across the coroutine's alternate stack can
+/// itself fail before the normal top-level error reporting is reached.
+pub fn install_panic_log_hook() {
+    std::panic::set_hook(Box::new(|info| {
+        let payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
+            *s
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            s.as_str()
+        } else {
+            "(non-string payload)"
+        };
+        if let Some(location) = info.location() {
+            echo_no_panic!("Panic at {}: {}", location, payload);
+        } else {
+            echo_no_panic!("Panic: {}", payload);
+        }
+    }));
+}
+
 /// This is the true entry point on Android (SDLActivity calls it after
 /// initialization). On other platforms the true entry point is in src/bin.rs.
 #[cfg(target_os = "android")]
@@ -70,22 +91,9 @@ pub extern "C" fn SDL_main(
     _argc: std::ffi::c_int,
     _argv: *const *const std::ffi::c_char,
 ) -> std::ffi::c_int {
-    // Rust's default panic handler prints to stderr, but on Android that just
-    // gets discarded, so we set a custom hook to make debugging easier.
-    std::panic::set_hook(Box::new(|info| {
-        let payload = if let Some(s) = info.payload().downcast_ref::<&str>() {
-            s
-        } else if let Some(s) = info.payload().downcast_ref::<String>() {
-            s
-        } else {
-            "(non-string payload)"
-        };
-        if let Some(location) = info.location() {
-            echo!("Panic at {}: {}", location, payload);
-        } else {
-            echo!("Panic: {}", payload);
-        }
-    }));
+    // Android discards stderr, and all platforms benefit from having the panic
+    // details in touchHLE_log.txt before coroutine unwinding begins.
+    install_panic_log_hook();
 
     // Empty args: brings up app picker.
     match main([String::new()].into_iter()) {

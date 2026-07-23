@@ -10,7 +10,7 @@
 use std::time::Instant;
 
 use crate::audio::openal::al_types::{ALuint, ALvoid};
-use crate::audio::openal::{AL_BUFFERS_PROCESSED, AL_PLAYING, AL_SOURCE_STATE};
+use crate::audio::openal::{AL_BUFFERS_PROCESSED, AL_BUFFERS_QUEUED, AL_PLAYING, AL_SOURCE_STATE};
 
 use crate::abi::CallFromHost;
 use crate::dyld::FunctionExports;
@@ -206,7 +206,6 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     let mut source: ALuint = 0;
     unsafe {
         context.GenSources(1, &mut source);
-        context.SourcePlay(source);
         assert_eq!(context.GetError(), 0);
     }
 
@@ -218,6 +217,8 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     audio_unit_state.al_source = Some(source);
     audio_unit_state.last_render_time = Some(Instant::now());
     audio_unit_state.started = true;
+    audio_unit_state.has_started_playback = false;
+    audio_unit_state.underrun_count = 0;
 
     let result = 0; // Success
     log_dbg!("AudioOutputUnitStart({:?}) -> {:?}", ci, result);
@@ -238,6 +239,7 @@ fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     {
         audio_unit_state.started = false;
         audio_unit_state.last_render_time = None;
+        audio_unit_state.has_started_playback = false;
 
         if let Some(al_source) = audio_unit_state.al_source {
             unsafe {
@@ -268,6 +270,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
 
     let audio_session::State {
         current_hardware_sample_rate,
+        current_hardware_io_buffer_duration,
         ..
     } = at_state.audio_session;
 
@@ -315,6 +318,8 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
 
     let al_source = audio_unit_host_object.al_source.unwrap();
     let mut al_buffers = Vec::new();
+    let mut al_source_state = 0;
+    let mut al_buffers_queued = 0;
     unsafe {
         let mut buffers_processed = 0;
         context.GetSourcei(al_source, AL_BUFFERS_PROCESSED, &mut buffers_processed);
@@ -324,118 +329,170 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
             al_buffers.push(al_buffer);
             context.GetSourcei(al_source, AL_BUFFERS_PROCESSED, &mut buffers_processed);
         }
+        context.GetSourcei(al_source, AL_BUFFERS_QUEUED, &mut al_buffers_queued);
+        context.GetSourcei(al_source, AL_SOURCE_STATE, &mut al_source_state);
         assert_eq!(context.GetError(), 0);
     }
 
     let now = Instant::now();
 
-    // Calculate number of frames by checking how much time passed since
-    // the last render. Limit to 100ms to prevent delay from adding up
-    // if it's been too long since the last render.
-    // Ace Combat Xi relies on it being 2048 frames (at 48000Hz, 42ms) or under
-    // If it's higher, flawed game logic causes it to call memset in a loop for
-    // every frame over 2048 until it reaches the provided frame number.
-    // TODO: Verify if this behavior is right
-    let elapsed_time = now.duration_since(audio_unit_host_object.last_render_time.unwrap());
-    let number_frames = ((elapsed_time.as_secs_f64() * sample_rate) as u32).min(2048);
+    // Keep four hardware-sized slices queued. A real AudioUnit invokes its
+    // callback from a dedicated high-priority audio thread, while touchHLE
+    // currently services it from the guest run loop. Four OpenAL streaming
+    // buffers provide enough reserve for occasional longer guest frames
+    // without changing the hardware-sized slice passed to each callback.
+    // The old implementation generated
+    // exactly as many frames as elapsed in the 60 Hz run loop and usually had
+    // no reserve at all, so small scheduling delays stopped and restarted the
+    // OpenAL source, producing intermittent clicks.
+    const TARGET_QUEUED_BUFFERS: i32 = 4;
+    if al_source_state == AL_PLAYING && al_buffers_queued >= TARGET_QUEUED_BUFFERS {
+        if !al_buffers.is_empty() {
+            unsafe { context.DeleteBuffers(al_buffers.len() as i32, al_buffers.as_ptr()) };
+            assert_eq!(unsafe { context.GetError() }, 0);
+        }
+        audio_unit_host_object.is_running_handler = false;
+        return;
+    }
+
+    if al_source_state != AL_PLAYING && audio_unit_host_object.has_started_playback {
+        audio_unit_host_object.underrun_count += 1;
+        let count = audio_unit_host_object.underrun_count;
+        if count <= 5 || count.is_power_of_two() {
+            log!(
+                "AudioUnit {:?} output underrun #{count}; re-priming source",
+                audio_unit
+            );
+        }
+    }
+
+    let number_frames = frames_for_io_buffer(
+        current_hardware_io_buffer_duration,
+        sample_rate,
+        audio_unit_host_object.maximum_frames_per_slice,
+    );
+    let render_callback = audio_unit_host_object.render_callback.unwrap();
 
     let bytes_per_channel = stream_format.bits_per_channel / 8;
     let actual_bytes_per_frame = stream_format.channels_per_frame * bytes_per_channel;
 
     let buffer_size = number_frames * actual_bytes_per_frame;
 
-    // Alloc callback arguments
-    let action_flags = env.mem.alloc_and_write(0);
+    // Fill the whole reserve now, rather than waiting for another run-loop
+    // iteration. This is especially important when the guest occasionally
+    // spends longer than one hardware slice doing rendering or game logic.
+    let buffers_to_queue = (TARGET_QUEUED_BUFFERS - al_buffers_queued).max(0);
+    for _ in 0..buffers_to_queue {
+        // Alloc callback arguments
+        let action_flags = env.mem.alloc_and_write(0);
 
-    let (audio_buffer_list, buffer1Data, buffer2Data): (
-        MutVoidPtr,
-        MutVoidPtr,
-        Option<MutVoidPtr>,
-    ) = if input_stream_format.is_some() {
-        let bufferData = env.mem.alloc(buffer_size);
-        let audio_buffer_list: AudioBufferList<1> = AudioBufferList {
-            number_buffers: 1,
-            buffers: [AudioBuffer {
-                number_channels: stream_format.channels_per_frame,
-                data_byte_size: buffer_size,
-                data: bufferData,
-            }],
-        };
-        (
-            env.mem.alloc_and_write(audio_buffer_list).cast(),
-            bufferData,
-            None,
-        )
-    } else {
-        // Resident Evil 4 expects 2 buffers
-        // though it copies the same data to both
-        let buffer1Data = env.mem.alloc(buffer_size);
-        let buffer2Data = env.mem.alloc(buffer_size);
-        let audio_buffer_list: AudioBufferList<2> = AudioBufferList {
-            number_buffers: 2,
-            buffers: [
-                AudioBuffer {
+        let (audio_buffer_list, buffer1Data, buffer2Data): (
+            MutVoidPtr,
+            MutVoidPtr,
+            Option<MutVoidPtr>,
+        ) = if input_stream_format.is_some() {
+            let bufferData = env.mem.alloc(buffer_size);
+            let audio_buffer_list: AudioBufferList<1> = AudioBufferList {
+                number_buffers: 1,
+                buffers: [AudioBuffer {
                     number_channels: stream_format.channels_per_frame,
                     data_byte_size: buffer_size,
-                    data: buffer1Data,
-                },
-                AudioBuffer {
-                    number_channels: stream_format.channels_per_frame,
-                    data_byte_size: buffer_size,
-                    data: buffer2Data,
-                },
-            ],
+                    data: bufferData,
+                }],
+            };
+            (
+                env.mem.alloc_and_write(audio_buffer_list).cast(),
+                bufferData,
+                None,
+            )
+        } else {
+            // Resident Evil 4 expects 2 buffers
+            // though it copies the same data to both
+            let buffer1Data = env.mem.alloc(buffer_size);
+            let buffer2Data = env.mem.alloc(buffer_size);
+            let audio_buffer_list: AudioBufferList<2> = AudioBufferList {
+                number_buffers: 2,
+                buffers: [
+                    AudioBuffer {
+                        number_channels: stream_format.channels_per_frame,
+                        data_byte_size: buffer_size,
+                        data: buffer1Data,
+                    },
+                    AudioBuffer {
+                        number_channels: stream_format.channels_per_frame,
+                        data_byte_size: buffer_size,
+                        data: buffer2Data,
+                    },
+                ],
+            };
+            (
+                env.mem.alloc_and_write(audio_buffer_list).cast(),
+                buffer1Data,
+                Some(buffer2Data),
+            )
         };
-        (
-            env.mem.alloc_and_write(audio_buffer_list).cast(),
-            buffer1Data,
-            Some(buffer2Data),
-        )
-    };
 
-    // Run render callback
-    let AURenderCallbackStruct {
-        input_proc: inputProc,
-        input_proc_ref_con: inputProcRefCon,
-    } = audio_unit_host_object.render_callback.unwrap();
-    let () = inputProc.call_from_host(
-        env,
-        (
-            inputProcRefCon,
-            action_flags,
-            nil.cast_void().cast_const(),
-            0u32,
-            number_frames,
-            audio_buffer_list,
-        ),
-    );
+        // Run render callback
+        let AURenderCallbackStruct {
+            input_proc: inputProc,
+            input_proc_ref_con: inputProcRefCon,
+        } = render_callback;
+        let () = inputProc.call_from_host(
+            env,
+            (
+                inputProcRefCon,
+                action_flags,
+                nil.cast_void().cast_const(),
+                0u32,
+                number_frames,
+                audio_buffer_list,
+            ),
+        );
+
+        let at_state = &mut env.framework_state.audio_toolbox;
+        let context = at_state
+            .al_context
+            .make_al_context_current(env.openal_manager.as_mut());
+
+        let (al_format, _sample_rate, processed_data) =
+            decode_buffer(&env.mem, &stream_format, buffer1Data.cast(), buffer_size);
+
+        unsafe {
+            // Get an unqueued buffer or create a new one
+            let al_buffer = al_buffers.pop().unwrap_or_else(|| {
+                let mut al_buffer = 0;
+                context.GenBuffers(1, &mut al_buffer);
+                al_buffer
+            });
+
+            context.BufferData(
+                al_buffer,
+                al_format,
+                processed_data.as_ptr() as *const ALvoid,
+                processed_data.len().try_into().unwrap(),
+                sample_rate as i32,
+            );
+            context.SourceQueueBuffers(al_source, 1, &al_buffer);
+            assert_eq!(context.GetError(), 0);
+        }
+
+        // TODO: Do something with the action flags?
+        env.mem.free(action_flags.cast_void());
+
+        env.mem.free(buffer1Data.cast_void());
+        if let Some(buffer2Data) = buffer2Data {
+            env.mem.free(buffer2Data.cast_void());
+        }
+
+        env.mem.free(audio_buffer_list.cast_void());
+    }
 
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
         .make_al_context_current(env.openal_manager.as_mut());
 
-    let (al_format, _sample_rate, processed_data) =
-        decode_buffer(&env.mem, &stream_format, buffer1Data.cast(), buffer_size);
-
     unsafe {
-        // Get an unqueued buffer or create a new one
-        let al_buffer = al_buffers.pop().unwrap_or_else(|| {
-            let mut al_buffer = 0;
-            context.GenBuffers(1, &mut al_buffer);
-            al_buffer
-        });
-
-        context.BufferData(
-            al_buffer,
-            al_format,
-            processed_data.as_ptr() as *const ALvoid,
-            processed_data.len().try_into().unwrap(),
-            sample_rate as i32,
-        );
-        context.SourceQueueBuffers(al_source, 1, &al_buffer);
-
-        let mut al_source_state = 0;
         context.GetSourcei(al_source, AL_SOURCE_STATE, &mut al_source_state);
         if al_source_state != AL_PLAYING {
             context.SourcePlay(al_source);
@@ -451,16 +508,6 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
         assert_eq!(context.GetError(), 0);
     }
 
-    // TODO: Do something with the action flags?
-    env.mem.free(action_flags.cast_void());
-
-    env.mem.free(buffer1Data.cast_void());
-    if let Some(buffer2Data) = buffer2Data {
-        env.mem.free(buffer2Data.cast_void());
-    }
-
-    env.mem.free(audio_buffer_list.cast_void());
-
     let audio_unit_host_object = audio_components::State::get(&mut env.framework_state)
         .audio_component_instances
         .get_mut(&audio_unit)
@@ -469,6 +516,25 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
 
     audio_unit_host_object.last_render_time = Some(now);
     audio_unit_host_object.is_running_handler = false;
+    audio_unit_host_object.has_started_playback = true;
+}
+
+fn frames_for_io_buffer(duration: f32, sample_rate: f64, maximum_frames: u32) -> u32 {
+    ((duration as f64 * sample_rate).round() as u32).clamp(1, maximum_frames)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::frames_for_io_buffer;
+
+    #[test]
+    fn hardware_buffer_frame_count() {
+        assert_eq!(frames_for_io_buffer(0.023_220, 44_100.0, 1024), 1024);
+        assert_eq!(
+            frames_for_io_buffer(1024.0 / 48_000.0, 48_000.0, 1024),
+            1024
+        );
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

@@ -70,6 +70,9 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         return None;
     }
 
+    // Advance any UIImageView frame animations before compositing.
+    crate::frameworks::uikit::ui_view::ui_image_view::update_animations(env);
+
     if find_fullscreen_eagl_layer(env) != nil {
         // No composition done, EAGLContext will present directly.
         log_dbg!("Using CAEAGLLayer fast path, skipping composition");

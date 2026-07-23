@@ -129,6 +129,18 @@ pub fn create_gles1_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
     })
 }
 
+/// Create the desktop OpenGL 2.1 compatibility backend used by touchHLE's
+/// opt-in GLES2 subset. Unlike normal GLES1 selection this must not choose a
+/// native GLES1 implementation, which has no programmable pipeline.
+pub fn create_gles2_compat_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
+    env.on_parent_stack_in_coroutine(|window, _options| {
+        log!("Creating an OpenGL ES 2.0 compatibility context:");
+        GLESImplementation::GLES1OnGL2
+            .construct(window)
+            .expect("Couldn't create the OpenGL ES 2.0 compatibility context!")
+    })
+}
+
 /// Same as [create_gles1_ctx], but without calling
 /// [Environment::on_parent_stack_in_coroutine]. Only should be called by
 /// functions not inside a coroutine that can't use [Environment].

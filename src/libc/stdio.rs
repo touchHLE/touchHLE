@@ -10,7 +10,7 @@ use super::posix_io::{
     STDIN_FILENO, STDOUT_FILENO,
 };
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
-use crate::fs::GuestPath;
+use crate::fs::{GuestPath, GuestPathBuf};
 use crate::libc::errno::{set_errno, EBUSY};
 use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead};
@@ -31,6 +31,10 @@ struct FILEHostObject {
     pushbacks: Vec<u8>,
     lock_count: u32,
     owning_thread: Option<ThreadId>,
+    /// `tmpfile()` streams are removed after their descriptor has been closed.
+    /// This is done at `fclose()` time instead of immediately after creation
+    /// because Windows does not normally allow deleting an open file.
+    temporary_path: Option<GuestPathBuf>,
 }
 
 #[allow(clippy::upper_case_acronyms)]
@@ -44,6 +48,7 @@ unsafe impl SafeRead for FILE {}
 #[derive(Default)]
 pub struct State {
     file_streams: HashMap<MutPtr<FILE>, FILEHostObject>,
+    next_temporary_file_id: u64,
 }
 impl State {
     fn get_mut(env: &mut Environment) -> &mut Self {
@@ -65,6 +70,7 @@ impl State {
                     pushbacks: Vec::new(),
                     lock_count: 0,
                     owning_thread: None,
+                    temporary_path: None,
                 },
             );
         }
@@ -162,11 +168,58 @@ fn fopen(env: &mut Environment, filename: ConstPtr<u8>, mode: ConstPtr<u8>) -> M
                     pushbacks: Vec::new(),
                     lock_count: 0,
                     owning_thread: None,
+                    temporary_path: None,
                 },
             );
             res
         }
     }
+}
+
+fn tmpfile(env: &mut Environment) -> MutPtr<FILE> {
+    // C requires a binary update stream whose backing file is automatically
+    // removed when the stream is closed. Use the app sandbox's temporary
+    // directory and O_EXCL so two live streams can never alias one another.
+    for _ in 0..100 {
+        let temporary_file_id = {
+            let state = State::get_mut(env);
+            let id = state.next_temporary_file_id;
+            state.next_temporary_file_id = state.next_temporary_file_id.wrapping_add(1);
+            id
+        };
+        let path = env
+            .fs
+            .home_directory()
+            .join("tmp")
+            .join(format!("touchHLE-tmpfile-{temporary_file_id}"));
+        let path_ptr = env.mem.alloc_and_write_cstr(path.as_str().as_bytes());
+        let fd = posix_io::open_direct(
+            env,
+            path_ptr.cast_const(),
+            O_RDWR | O_CREAT | posix_io::O_EXCL,
+        );
+        env.mem.free(path_ptr.cast());
+
+        if fd == -1 {
+            continue;
+        }
+
+        let file_ptr = env.mem.alloc_and_write(FILE { fd });
+        let old = State::get_mut(env).file_streams.insert(
+            file_ptr,
+            FILEHostObject {
+                pushbacks: Vec::new(),
+                lock_count: 0,
+                owning_thread: None,
+                temporary_path: Some(path),
+            },
+        );
+        assert!(old.is_none());
+        return file_ptr;
+    }
+
+    log!("Warning: tmpfile() could not create a unique temporary file");
+    Ptr::null()
 }
 
 fn fread(
@@ -477,15 +530,29 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
             fd
         );
     }
-    assert!(State::get_mut(env).file_streams.remove(&file_ptr).is_some());
+    let host_object = State::get_mut(env)
+        .file_streams
+        .remove(&file_ptr)
+        .expect("fclose() called with unknown FILE pointer");
 
     env.mem.free(file_ptr.cast());
 
-    match posix_io::close(env, fd) {
+    let close_result = match posix_io::close(env, fd) {
         0 => 0,
         -1 => EOF,
         _ => unreachable!(),
+    };
+
+    if let Some(path) = host_object.temporary_path {
+        if env.fs.remove(&path).is_err() {
+            log!(
+                "Warning: fclose() could not remove tmpfile backing path {:?}",
+                path
+            );
+        }
     }
+
+    close_result
 }
 
 fn ferror(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
@@ -713,6 +780,7 @@ pub const CONSTANTS: ConstantExports = &[
 pub const FUNCTIONS: FunctionExports = &[
     // Standard C functions
     export_c_func!(fopen(_, _)),
+    export_c_func!(tmpfile()),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgetc(_)),
     export_c_func!(getc(_)),

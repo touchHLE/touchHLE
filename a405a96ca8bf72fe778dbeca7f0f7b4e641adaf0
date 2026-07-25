@@ -16,6 +16,24 @@
       "message": "You might want to rebase before committing so you show up as submitter.",
       "revId": "a405a96ca8bf72fe778dbeca7f0f7b4e641adaf0",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d6881228_701677ce",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 69
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-07-25T17:26:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b3a82169_c8270ba3",
+      "revId": "a405a96ca8bf72fe778dbeca7f0f7b4e641adaf0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

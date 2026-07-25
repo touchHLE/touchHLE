@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3a82169_c8270ba3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 69
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-25T14:08:40Z",
+      "side": 1,
+      "message": "You might want to rebase before committing so you show up as submitter.",
+      "revId": "a405a96ca8bf72fe778dbeca7f0f7b4e641adaf0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

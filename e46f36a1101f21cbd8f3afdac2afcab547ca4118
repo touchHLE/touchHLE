@@ -16,6 +16,24 @@
       "message": "I think this should be checking the actual status of the thread, even if it\u0027s not spawned from cocoa? If it isn\u0027t, you should put a small test for this.",
       "revId": "e46f36a1101f21cbd8f3afdac2afcab547ca4118",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fae56596_c612cbd2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-07-25T17:33:44Z",
+      "side": 1,
+      "message": "Sorry, i\u0027m not too knowledgeable on this, how can i have the NSThread method run without calling the object\u0027s method? or inversely, how can i get the NSThread instance of a pthread?",
+      "parentUuid": "4528fd95_2cc1a619",
+      "revId": "e46f36a1101f21cbd8f3afdac2afcab547ca4118",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

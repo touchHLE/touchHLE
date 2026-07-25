@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d72db687_a21d2523",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-25T21:38:45Z",
+      "side": 1,
+      "message": "What do you mean by “needs”? I don\u0027t see anything about this plist that would prevent the app from working.",
+      "parentUuid": "6e0d8872_6fce2a2b",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5386d55f_4be54af8",
         "filename": "src/environment/app_picker.rs",
         "patchSetId": 1

@@ -33,6 +33,24 @@
       "message": "I don\u0027t understand what this is doing at all?",
       "revId": "c04d4fcd43d2d326af190648425c7394b9cff60c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ea375f5_de54cd47",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-25T21:43:57Z",
+      "side": 1,
+      "message": "90% of the lines changed in the patch don\u0027t affect the behaviour at all, and I don\u0027t understand why the new way is an improvement. And then the remaining 10% is a change to the display name method which makes it use a stored value for some reason, rather than computing at call-time like every other method does.",
+      "parentUuid": "f5303e86_ab03b421",
+      "revId": "c04d4fcd43d2d326af190648425c7394b9cff60c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

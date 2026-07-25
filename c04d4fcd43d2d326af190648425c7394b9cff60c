@@ -51,6 +51,24 @@
       "parentUuid": "f5303e86_ab03b421",
       "revId": "c04d4fcd43d2d326af190648425c7394b9cff60c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "16737643_a30d2c46",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-25T21:54:18Z",
+      "side": 1,
+      "message": "I think the main goal is to use the bundle name as a fallback for the display name, with some additional fixes, so that the app picker doesn\u0027t show a blank name. I do agree that i don\u0027t think we need to add the names to the bundle. My preference would be have the bundle name method check the plist and fall back to the file name and then have display name fall back to the bundle name method. Though that\u0027s just my opinion.",
+      "parentUuid": "0ea375f5_de54cd47",
+      "revId": "c04d4fcd43d2d326af190648425c7394b9cff60c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

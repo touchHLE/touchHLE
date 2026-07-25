@@ -34,6 +34,24 @@
       "parentUuid": "610edc4d_9c74ff13",
       "revId": "da00a94fb48103eaf2e37303acd0b30b91eafdd1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a05eef9b_dc92c22b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-07-25T17:29:14Z",
+      "side": 1,
+      "message": "Indeed it was not needed for Silent Hill, sorry for taking too long to check",
+      "parentUuid": "12f0a6c6_eb97336b",
+      "revId": "da00a94fb48103eaf2e37303acd0b30b91eafdd1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

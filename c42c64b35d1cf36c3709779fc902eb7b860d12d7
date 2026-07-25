@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba9dd499_c0ba6d2b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 60
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-25T14:06:09Z",
+      "side": 1,
+      "message": "+2 in principle but I agree with acieslewicz\u0027s comment.",
+      "revId": "c42c64b35d1cf36c3709779fc902eb7b860d12d7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1aaf597a_0675f21c",

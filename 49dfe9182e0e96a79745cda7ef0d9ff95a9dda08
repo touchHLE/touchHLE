@@ -88,6 +88,24 @@
       "parentUuid": "0854a786_71e029ee",
       "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14e10712_16202be7",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 1038379
+      },
+      "writtenOn": "2026-07-26T22:49:33Z",
+      "side": 1,
+      "message": "Pushed a change to always blank the dict, while only doing the second half if other isn\u0027t nil.",
+      "parentUuid": "4bb91bd2_287830af",
+      "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

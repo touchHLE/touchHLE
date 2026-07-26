@@ -34,6 +34,24 @@
       "parentUuid": "79005072_dfced306",
       "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e0cb2286_253cb7a3",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-26T21:41:07Z",
+      "side": 1,
+      "message": "I ran a small test program on macOS Monterey:\n\n    #import \"Foundation/Foundation.h\"\n    \n    NSMutableDictionary *dict \u003d [NSMutableDictionary dictionary];\n    [dict addObject:@YES forKey:@\"one\"];\n    NSLog(@\"%@\", dict);\n    [dict setDictionary:nil];\n    NSLog(@\"%@\", dict);\n\nThe output looked something like:\n\n    {\n        one \u003d 1;\n    }\n    {\n    }\n\nSo it looks like it does handle nil, but not quite in the way you did it here. I guess you\u0027ll want to update the patch?",
+      "parentUuid": "0532ccef_39531940",
+      "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

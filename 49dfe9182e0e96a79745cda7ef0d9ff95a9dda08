@@ -16,6 +16,24 @@
       "message": "Does the app call this with nil or something?",
       "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0532ccef_39531940",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 1038379
+      },
+      "writtenOn": "2026-07-26T21:21:17Z",
+      "side": 1,
+      "message": "Seems to, yeah. Without this guard and return, I encountered a crash from a nil reference being passed in by the game. (Unless that\u0027s caused by an unrelated touchHLE-specific issue...? I haven\u0027t actually tried it in ObjC proper.)",
+      "parentUuid": "79005072_dfced306",
+      "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

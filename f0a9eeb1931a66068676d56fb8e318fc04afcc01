@@ -74,6 +74,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "abc3466e_a4810a6c",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-26T17:47:51Z",
+      "side": 1,
+      "message": "Maybe if we\u0027re explicit in the appdb reports, that they should copy the info from the log directly, it would be ok?",
+      "parentUuid": "4cb626a3_6af61b5c",
+      "range": {
+        "startLine": 109,
+        "startChar": 0,
+        "endLine": 109,
+        "endChar": 2
+      },
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8eae69ef_dcb57ac8",
         "filename": "src/environment/app_picker.rs",
         "patchSetId": 4

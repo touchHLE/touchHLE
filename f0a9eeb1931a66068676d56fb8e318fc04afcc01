@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4cb626a3_6af61b5c",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-26T17:28:57Z",
+      "side": 1,
+      "message": "If there isn\u0027t a display name in the bundle, perhaps we should display “(not specified)”?\n\nMaybe this would confuse people writing appdb reports however.",
+      "parentUuid": "1c133ba8_7847bfa5",
+      "range": {
+        "startLine": 109,
+        "startChar": 0,
+        "endLine": 109,
+        "endChar": 2
+      },
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8eae69ef_dcb57ac8",
         "filename": "src/environment/app_picker.rs",
         "patchSetId": 4

@@ -123,6 +123,24 @@
       "parentUuid": "190da667_32752fc0",
       "revId": "c04d4fcd43d2d326af190648425c7394b9cff60c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "11c3ee66_d44ea748",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-26T01:06:11Z",
+      "side": 1,
+      "message": "I agree with you @hikari@noyu.me and it’s actually how I originally had this patch. I’ll revert it back to patch set 1 with it so the fallback only happens in app picker.",
+      "parentUuid": "9619be9d_cf243691",
+      "revId": "c04d4fcd43d2d326af190648425c7394b9cff60c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

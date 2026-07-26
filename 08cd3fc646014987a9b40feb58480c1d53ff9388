@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0f080099_0bbcc3c8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-26T01:06:11Z",
+      "side": 1,
+      "message": "So, right now in the App Picker, the icon now shows correctly, but no text is displayed under it.",
+      "parentUuid": "d72db687_a21d2523",
+      "revId": "08cd3fc646014987a9b40feb58480c1d53ff9388",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "5386d55f_4be54af8",
         "filename": "src/environment/app_picker.rs",
         "patchSetId": 1

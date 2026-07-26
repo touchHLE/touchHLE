@@ -818,6 +818,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     old_host_obj.release(env);
 }
 
+- (())setDictionary:(id)other { // NSDictionary *
+    if other == nil  {
+        return;
+    }
+    () = msg![env; this removeAllObjects];
+    () = msg![env; this addEntriesFromDictionary:other];
+}
+
 - (())addEntriesFromDictionary:(id)other { // NSDictionary *
     let host_obj: DictionaryHostObject = std::mem::take(env.objc.borrow_mut(other));
     for (k, v) in host_obj.map.values().flatten() {

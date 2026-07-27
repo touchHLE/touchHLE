@@ -200,6 +200,24 @@
       "parentUuid": "86f7cae6_5c4225c1",
       "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6f287800_2b2a0c48",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-27T03:32:51Z",
+      "side": 1,
+      "message": "I tested on a real device (iPhone 5 running iOS 10.3.4) and it actually displays just \"RTK\" on the Home Screen.  Does it strip off iPhone!?",
+      "parentUuid": "492dd03b_123fa44f",
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

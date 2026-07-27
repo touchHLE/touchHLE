@@ -160,6 +160,24 @@
       "parentUuid": "d1f65aa5_eaa54032",
       "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32feb97b_48f4d8d7",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 1038379
+      },
+      "writtenOn": "2026-07-27T03:02:37Z",
+      "side": 1,
+      "message": "Yep, good call. Moved the if other \u003d\u003d nil into addEntriesFromDictionary.",
+      "parentUuid": "05520bc5_3d30109a",
+      "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

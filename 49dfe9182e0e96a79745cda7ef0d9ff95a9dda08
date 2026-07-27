@@ -124,6 +124,24 @@
       "parentUuid": "14e10712_16202be7",
       "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d1f65aa5_eaa54032",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 1038379
+      },
+      "writtenOn": "2026-07-27T01:15:43Z",
+      "side": 1,
+      "message": "Tested and it does appear `addEntriesFromDictionary:nil` doesn\u0027t crash:\n\n```\nNSMutableDictionary *dict \u003d [[NSMutableDictionary alloc] init];\n[dict addObject:@YES forKey:@\"one\"];\nNSLog(@\"%@\", dict);\n[dict addEntriesFromDictionary:(NSMutableDictionary*)nil];\nNSLog(@\"%@\", dict);\n```\n\nPrints:\n\n```\n2026-07-26 18:12:06.185 a.out[23420:6360090] {\n    one \u003d 1;\n}\n2026-07-26 18:12:06.185 a.out[23420:6360090] {\n    one \u003d 1;\n}\n```",
+      "parentUuid": "d780d154_7d099297",
+      "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

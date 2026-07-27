@@ -193,6 +193,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "c629aa9c_61497689",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-27T14:23:34Z",
+      "side": 1,
+      "message": "No because it does layered fallbacks CFBundleDisplayName -\u003e CFBundleName -\u003e CFBundleExecutable/app name",
+      "parentUuid": "edc49b99_2aea8529",
+      "range": {
+        "startLine": 110,
+        "startChar": 0,
+        "endLine": 110,
+        "endChar": 2
+      },
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "86f7cae6_5c4225c1",
         "filename": "src/environment/app_picker.rs",
         "patchSetId": 4
@@ -240,6 +264,24 @@
       "side": 1,
       "message": "I tested on a real device (iPhone 5 running iOS 10.3.4) and it actually displays just \"RTK\" on the Home Screen.  Does it strip off iPhone!?",
       "parentUuid": "492dd03b_123fa44f",
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3854073a_7bc87d03",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-27T14:23:34Z",
+      "side": 1,
+      "message": "It doesn\u0027t strip. I took a look at the actual bundle. Its actually pulling the CFBundleDisplayName from the InfoPlist.strings in from the lproj, as well as potentially the icon itself.",
+      "parentUuid": "6f287800_2b2a0c48",
       "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -284,6 +284,24 @@
       "parentUuid": "6f287800_2b2a0c48",
       "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "beb4da0a_25dafc3a",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 112,
+      "author": {
+        "id": 1038414
+      },
+      "writtenOn": "2026-07-27T14:35:42Z",
+      "side": 1,
+      "message": "For more context, the English.lproj is the default for languages that don\u0027t exist.",
+      "parentUuid": "3854073a_7bc87d03",
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

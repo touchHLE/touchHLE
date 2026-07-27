@@ -167,6 +167,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "edc49b99_2aea8529",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-27T03:34:05Z",
+      "side": 1,
+      "message": "This seems to be a duplicate of\n\n\"I think the last fallback is actually provided by CFBundleExecutable. From my testing this has to \u003d\u003d the on bundle name on disk, so it seems more likely that it would get pulled from the plist, but Im ok with parsing from the file name.\"  No need to have both open.",
+      "parentUuid": "8eae69ef_dcb57ac8",
+      "range": {
+        "startLine": 110,
+        "startChar": 0,
+        "endLine": 110,
+        "endChar": 2
+      },
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "86f7cae6_5c4225c1",

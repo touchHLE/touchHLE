@@ -122,6 +122,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3837b193_bce842a7",
+        "filename": "src/environment/app_picker.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 109,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-07-27T01:39:28Z",
+      "side": 1,
+      "message": "FYI, the game with the broken plist that started this whole patch, that now finally displays an in icon but has no name under it, is already in the appdb.  https://appdb.touchhle.org/apps/1175\n\nAlso, the game works now, like 4-5 stars (I have not played into it that far yet).  But I\u0027m waiting to submit a new appdb report until this thing with its name in the App Picker (and the logs too) is sorted out.",
+      "parentUuid": "8d9b6707_88217221",
+      "range": {
+        "startLine": 109,
+        "startChar": 0,
+        "endLine": 109,
+        "endChar": 2
+      },
+      "revId": "f0a9eeb1931a66068676d56fb8e318fc04afcc01",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8eae69ef_dcb57ac8",
         "filename": "src/environment/app_picker.rs",
         "patchSetId": 4

@@ -142,6 +142,24 @@
       "parentUuid": "d780d154_7d099297",
       "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "05520bc5_3d30109a",
+        "filename": "src/frameworks/foundation/ns_dictionary.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 822,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-07-27T01:23:09Z",
+      "side": 1,
+      "message": "In that case we can fix that method and simplify this one in one go.",
+      "parentUuid": "d1f65aa5_eaa54032",
+      "revId": "49dfe9182e0e96a79745cda7ef0d9ff95a9dda08",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

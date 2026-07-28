@@ -7,7 +7,9 @@
 
 use super::{ns_array, ns_string};
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_foundation::cf_locale::{kCFLocaleCountryCode, kCFLocaleIdentifier};
+use crate::frameworks::core_foundation::cf_locale::{
+    kCFLocaleCountryCode, kCFLocaleIdentifier, kCFLocaleLanguageCode,
+};
 use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
@@ -15,12 +17,17 @@ use crate::window::{get_preferred_country_codes, get_preferred_language_codes};
 use crate::Environment;
 
 const NSLocaleCountryCode: &str = "NSLocaleCountryCode";
+const NSLocaleLanguageCode: &str = "NSLocaleLanguageCode";
 const NSLocaleIdentifier: &str = "NSLocaleIdentifier";
 
 pub const CONSTANTS: ConstantExports = &[
     (
         "_NSLocaleCountryCode",
         HostConstant::NSString(NSLocaleCountryCode),
+    ),
+    (
+        "_NSLocaleLanguageCode",
+        HostConstant::NSString(NSLocaleIdentifier),
     ),
     (
         "_NSLocaleIdentifier",
@@ -210,6 +217,10 @@ pub const CLASSES: ClassExports = objc_classes! {
             );
             let res = ns_string::from_rust_string(env, locale_id_str);
             autorelease(env, res)
+        },
+        NSLocaleLanguageCode | kCFLocaleLanguageCode => {
+            let &NSLocaleHostObject { language_code, .. } = env.objc.borrow(this);
+            language_code
         },
         _ => unimplemented!()
     }

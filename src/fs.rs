@@ -593,6 +593,15 @@ impl Fs {
             if let Err(e) = std::fs::create_dir_all(&path) {
                 panic!("Could not create documents sub-directory for app at {path:?}: {e:?}");
             }
+            // Some other apps also expect a cache folder to be present.
+            let path = paths::user_data_base_path()
+                .join(paths::SANDBOX_DIR)
+                .join(bundle_id)
+                .join("Library")
+                .join("Caches");
+            if let Err(e) = std::fs::create_dir_all(&path) {
+                panic!("Could not create cache sub-directory for app at {path:?}: {e:?}");
+            }
         }
 
         // Some Free Software libraries are bundled with touchHLE.

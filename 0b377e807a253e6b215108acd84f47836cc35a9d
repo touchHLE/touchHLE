@@ -16,6 +16,24 @@
       "message": "This will crash if movie_player is stopped before this notification is processed (stop method does call the release).\n\nThis need to be fixed.\n\nIf we have a guarantee that MPMoviePlayerPlaybackDidFinishNotification would always be delivered, you can move release from stop to here.",
       "revId": "0b377e807a253e6b215108acd84f47836cc35a9d",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a2470adc_feb79c87",
+        "filename": "src/frameworks/media_player/movie_player.rs",
+        "patchSetId": 38
+      },
+      "lineNbr": 230,
+      "author": {
+        "id": 1038501
+      },
+      "writtenOn": "2026-07-28T15:20:12Z",
+      "side": 1,
+      "message": "I don\u0027t know if this 100% matches Apple\u0027s behavior, but i just retained the object before the notification is delivered. I think this should work fine.\n\n(also i can\u0027t remove you as a reviewer, you\u0027ll have to do it yourself, sorry)",
+      "parentUuid": "be34cb54_f10fdc05",
+      "revId": "0b377e807a253e6b215108acd84f47836cc35a9d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

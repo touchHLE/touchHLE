@@ -52,6 +52,24 @@
       "parentUuid": "ebc19ed7_fcf1bf5e",
       "revId": "c07680db3b7d4160001acb2560f8d4584b436131",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4b399bcf_4993a6ac",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 5
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 1038645
+      },
+      "writtenOn": "2026-08-09T05:32:03Z",
+      "side": 1,
+      "message": "I moved this back to just a log for now, but I\u0027ll leave it as WIP so you know not to review it.  Since this is for the doa_blackjack set, hopefully I\u0027ll find motivation to properly try and implement this function when some of the other patch sets for this game get merged.",
+      "parentUuid": "b01e30d0_25425e23",
+      "revId": "c07680db3b7d4160001acb2560f8d4584b436131",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

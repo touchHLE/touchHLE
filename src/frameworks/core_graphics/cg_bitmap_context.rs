@@ -12,7 +12,7 @@ use super::cg_color_space::{
 use super::cg_context::{
     kCGBlendModeCopy, kCGBlendModeDarken, kCGBlendModeLighten, kCGBlendModeMultiply,
     kCGBlendModeNormal, kCGBlendModeScreen, CGBlendMode, CGContextHostObject, CGContextRef,
-    CGContextSubclass,
+    CGContextSubclass, kCGLineCapButt
 };
 use super::cg_image::{
     self, kCGBitmapAlphaInfoMask, kCGBitmapByteOrderMask, kCGImageAlphaFirst, kCGImageAlphaLast,
@@ -92,6 +92,7 @@ pub fn CGBitmapContextCreate(
         blend_mode: kCGBlendModeNormal,
         text_transform: None,
         state_stack: Vec::new(),
+        line_cap: kCGLineCapButt
     };
     let isa = env
         .objc

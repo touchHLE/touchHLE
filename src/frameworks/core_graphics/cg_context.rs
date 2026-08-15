@@ -40,6 +40,11 @@ pub const kCGBlendModeDarken: CGBlendMode = 4;
 pub const kCGBlendModeLighten: CGBlendMode = 5;
 pub const kCGBlendModeCopy: CGBlendMode = 17;
 
+pub type CGLineCap = i32;
+pub const kCGLineCapButt: CGLineCap = 0; // Default
+pub const kCGLineCapRound: CGLineCap = 1;
+pub const kCGLineCapSquare: CGLineCap = 2;
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -71,6 +76,7 @@ type ContextState = (
     CGFontRef,                            // font
     CGFloat,                              // font size
     CGBlendMode,                          // blend mode
+    CGLineCap,                            // line cap
 );
 
 pub(super) struct CGContextHostObject {
@@ -83,6 +89,8 @@ pub(super) struct CGContextHostObject {
     pub(super) blend_mode: CGBlendMode,
     /// Text transform.
     pub(super) text_transform: Option<CGAffineTransform>,
+    /// Line cap
+    pub(super) line_cap: CGLineCap,
     pub(super) state_stack: Vec<ContextState>,
 }
 impl HostObject for CGContextHostObject {}
@@ -276,6 +284,7 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
         host_obj.font,
         host_obj.font_size,
         host_obj.blend_mode,
+        host_obj.line_cap,
     ));
     CGFontRetain(env, env.objc.borrow::<CGContextHostObject>(context).font);
 }
@@ -428,6 +437,22 @@ fn CGContextShowGlyphsAtPositions(
     }
 }
 
+fn CGContextSetLineCap(
+    env: &mut Environment,
+    context: CGContextRef,
+    cap: CGLineCap
+) {
+    assert!(cap == kCGLineCapButt || cap == kCGLineCapRound || cap == kCGLineCapSquare);
+    log_dbg!(
+        "CGContextSetLineCap({:?}, {})",
+        context,
+        cap
+    );
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .line_cap = cap;
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -459,4 +484,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetTextMatrix(_, _)),
     export_c_func!(CGContextShowGlyphsAtPoint(_, _, _, _, _)),
     export_c_func!(CGContextShowGlyphsAtPositions(_, _, _, _)),
+    export_c_func!(CGContextSetLineCap(_, _)),
 ];

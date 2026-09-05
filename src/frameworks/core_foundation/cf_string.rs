@@ -593,3 +593,17 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringGetPascalString(_, _, _, _)),
     export_c_func!(CFStringNormalize(_, _)),
 ];
+
+#[cfg(test)]
+mod find_with_options_tests {
+    use super::find_utf16_range;
+    #[test]
+    fn searches_forward_and_backward() {
+        let source: Vec<u16> = "hello hello".encode_utf16().collect();
+        let needle: Vec<u16> = "hello".encode_utf16().collect();
+        assert_eq!(find_utf16_range(&source, &needle, 0), Some(0));
+        assert_eq!(find_utf16_range(&source, &needle, 4), Some(6));
+        assert_eq!(find_utf16_range(&source, &needle, 8), Some(0));
+        assert_eq!(find_utf16_range(&source, &needle, 12), Some(6));
+    }
+}

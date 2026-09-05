@@ -7,15 +7,15 @@
 
 use crate::objc::{id, msg, objc_classes, release, ClassExports, HostObject, NSZonePtr};
 use crate::{Environment, ThreadId};
-use std::collections::HashMap;
+use std::num::NonZeroU32;
 
 #[derive(Default)]
-pub struct State {
-    pool_stacks: HashMap<ThreadId, Vec<id>>,
+pub struct ThreadLocalState {
+    pool_stack: Option<Vec<id>>,
 }
-impl State {
+impl ThreadLocalState {
     fn get(env: &mut Environment) -> &mut Self {
-        &mut env.framework_state.foundation.ns_autorelease_pool
+        &mut env.get_tl_framework_state().foundation.ns_autorelease_pool
     }
 }
 
@@ -42,9 +42,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (())addObject:(id)obj {
     let current_thread = env.current_thread;
-    if let Some(current_pool) = State::get(env)
-        .pool_stacks
-        .get(&current_thread)
+    if let Some(current_pool) = ThreadLocalState::get(env)
+        .pool_stack
+        .as_ref()
         .and_then(|pool_stack| pool_stack.last().copied())
     {
         msg![env; current_pool addObject:obj]
@@ -59,9 +59,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)init {
     let current_thread = env.current_thread;
-    let pool_stack = State::get(env).pool_stacks
-        .entry(current_thread)
-        .or_default();
+    let pool_stack = ThreadLocalState::get(env).pool_stack.get_or_insert_default();
     pool_stack.push(this);
     log_dbg!("New pool: {:?}, current thread {}", this, current_thread);
     this
@@ -95,13 +93,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // It's unclear what should happen when draining a pool on the wrong thread,
     // but we prefer to be conservative here
     assert_eq!(host_obj.original_thread, current_thread);
-    let pool_stack = &mut env
-        .framework_state
-        .foundation
-        .ns_autorelease_pool
-        .pool_stacks
-        .get_mut(&current_thread)
-        .unwrap();
+    let pool_stack = ThreadLocalState::get(env).pool_stack.as_mut().unwrap();
     // NSAutoReleasePool seems to keep popping until reaches the appropriate
     // pool object. If there are pools that are "above" it in the stack, it
     // deallocates them as well.
@@ -117,10 +109,19 @@ pub const CLASSES: ClassExports = objc_classes! {
         )
     };
     let to_drop: Vec<id> = pool_stack.drain(index..).collect();
+    log_dbg!("Dropping pools {:?}", to_drop);
     for pool in to_drop.into_iter().rev() {
+        if pool != this {
+            // It's a bit ugly, but we cannot call a release on those other
+            // pools as we already drained the shared pool stacks.
+            // So we manually decrement and dealloc instead.
+            // TODO: refactor this
+            assert_eq!(env.objc.get_refcount(pool), NonZeroU32::new(1).unwrap());
+            _ = env.objc.decrement_refcount(pool);
+        }
         let host_obj: &mut NSAutoreleasePoolHostObject = env.objc.borrow_mut(pool);
         let objects = std::mem::take(&mut host_obj.objects);
-        env.objc.dealloc_object(this, &mut env.mem);
+        env.objc.dealloc_object(pool, &mut env.mem);
         for object in objects {
             release(env, object);
         }

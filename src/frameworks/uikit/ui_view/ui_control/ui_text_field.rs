@@ -9,7 +9,7 @@
 //! - [UITextFieldDelegate overview](https://developer.apple.com/documentation/uikit/uitextfielddelegate?language=objc)
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_graphics::{CGPoint, CGRect};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::{ns_string, NSInteger, NSRange, NSUInteger};
 use crate::frameworks::uikit::ui_font::{UITextAlignment, UITextAlignmentLeft};
@@ -159,6 +159,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; text_label setFont:new_font]
 }
 
+- (())setMinimumFontSize:(CGFloat)size {
+    let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
+    () = msg![env; text_label setMinimumFontSize:size];
+}
+
 - (())setClearsOnBeginEditing:(bool)clear {
     todo_objc_setter!(this, clear);
 }
@@ -254,7 +259,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 
     env.framework_state.uikit.ui_responder.first_responder = this;
-    env.window().start_text_input();
+    env.on_parent_stack_in_coroutine(|window, _| window.start_text_input());
 
     let name = ns_string::get_static_str(env, UIKeyboardDidShowNotification);
     // TODO: userInfo
@@ -291,7 +296,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: () = msg![env; center postNotificationName:name object:this userInfo:nil];
 
     env.framework_state.uikit.ui_responder.first_responder = nil;
-    env.window().stop_text_input();
+    env.on_parent_stack_in_coroutine(|window, _| window.stop_text_input());
 
     let name = ns_string::get_static_str(env, UIKeyboardDidHideNotification);
     // TODO: userInfo

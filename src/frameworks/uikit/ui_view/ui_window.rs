@@ -16,9 +16,11 @@ use crate::frameworks::core_graphics::{CGPoint, CGRect};
 use crate::frameworks::foundation::ns_string;
 use crate::frameworks::uikit::ui_application::{
     UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight,
+    UIInterfaceOrientationPortraitUpsideDown,
 };
 use crate::frameworks::uikit::ui_device::{
     UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
+    UIDeviceOrientationPortraitUpsideDown,
 };
 use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
 
@@ -112,6 +114,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; center postNotificationName:notif_name object:this userInfo:nil];
 }
 
+- (bool)isKeyWindow {
+    env.framework_state.uikit.ui_view.ui_window.key_window == Some(this)
+}
+
 - (())makeKeyAndVisible {
     // TODO: We don't currently have send any non-touch events to windows,
     // so there's no meaning in it yet.
@@ -122,6 +128,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     // TODO: post UIWindowDidBecomeVisibleNotification
     () = msg![env; this setHidden:false];
+}
+
+// We only model the single main screen
+- (id)screen {
+    msg_class![env; UIScreen mainScreen]
+}
+- (())setScreen:(id)screen {
+    log_dbg!("[(UIWindow*){:?} setScreen:{:?}]", this, screen);
 }
 
 // UIResponder implementation
@@ -170,6 +184,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     //        Info.plist UIInterfaceOrientation etc). It's not clear if these
     //        are really equivalent and should all trigger autorotation.
     if let Some(orientation) = match env.window.as_ref().unwrap().current_rotation() {
+        crate::window::DeviceOrientation::PortraitUpsideDown => Some(UIDeviceOrientationPortraitUpsideDown),
         crate::window::DeviceOrientation::LandscapeLeft => Some(UIDeviceOrientationLandscapeLeft),
         crate::window::DeviceOrientation::LandscapeRight => Some(UIDeviceOrientationLandscapeRight),
         // Portrait is the default so we don't do anything here.
@@ -182,6 +197,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         if should {
             log_dbg!("App requested autorotation; applying orientation transform to view {:?}.", view);
             let transform = match orientation {
+                UIInterfaceOrientationPortraitUpsideDown => CGAffineTransform::make_rotation(-std::f32::consts::PI),
                 UIInterfaceOrientationLandscapeLeft => CGAffineTransform::make_rotation(-std::f32::consts::FRAC_PI_2),
                 UIInterfaceOrientationLandscapeRight => CGAffineTransform::make_rotation(std::f32::consts::FRAC_PI_2),
                 _ => unimplemented!(),

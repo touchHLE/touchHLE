@@ -12,7 +12,7 @@ use crate::mem::{MutVoidPtr, Ptr};
 use crate::Environment;
 
 fn CFSocketCreate(
-    _env: &mut Environment,
+    env: &mut Environment,
     allocator: CFAllocatorRef,
     protocol_family: i32,
     type_: i32,
@@ -21,7 +21,7 @@ fn CFSocketCreate(
     callout: MutVoidPtr,
     context: MutVoidPtr,
 ) -> CFTypeRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     log!(
         "TODO: CFSocketCreate({}, {}, {}, {}, {:?}, {:?}) -> NULL",
         protocol_family,

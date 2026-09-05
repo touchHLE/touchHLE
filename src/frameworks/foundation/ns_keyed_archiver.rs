@@ -82,6 +82,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     encode_object_for_key(env, this, object, key);
 }
 
+- (())encodeInt:(i32)val
+         forKey:(id)key {
+    let key = normalize_key(env, key);
+    let scope = get_value_to_encode_for_current_key(env, this);
+    assert!(!scope.contains_key(&key));
+    scope.insert(key, Value::Integer(val.into()));
+}
+
 - (())encodeBytes:(ConstPtr<u8>)bytes
            length:(NSUInteger)length
            forKey:(id)key { // NSString *
@@ -129,7 +137,24 @@ fn normalize_key(env: &mut Environment, key: id) -> String {
     key.to_string()
 }
 
-fn get_value_to_encode_for_current_key(env: &mut Environment, archiver: id) -> &mut Dictionary {
+pub fn set_value_to_encode_for_current_key(env: &mut Environment, archiver: id, value: Value) {
+    assert_eq!(
+        env.objc
+            .borrow::<NSKeyedArchiverHostObject>(archiver)
+            .encoded_data,
+        nil
+    );
+    let host_object = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(archiver);
+    let current_key_idx = host_object.current_key.unwrap().get() as usize;
+    host_object
+        .plist
+        .get_mut("$objects")
+        .unwrap()
+        .as_array_mut()
+        .unwrap()[current_key_idx] = value;
+}
+
+pub fn get_value_to_encode_for_current_key(env: &mut Environment, archiver: id) -> &mut Dictionary {
     assert_eq!(
         env.objc
             .borrow::<NSKeyedArchiverHostObject>(archiver)
@@ -152,7 +177,7 @@ fn get_value_to_encode_for_current_key(env: &mut Environment, archiver: id) -> &
     .unwrap()
 }
 
-fn encode_object(env: &mut Environment, archiver: id, object: id) -> Uid {
+pub fn encode_object(env: &mut Environment, archiver: id, object: id) -> Uid {
     let class = msg![env; object class];
     let host_object = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(archiver);
     if let Some(existing_uid) = host_object.already_archived.get(&object).cloned() {
@@ -171,12 +196,25 @@ fn encode_object(env: &mut Environment, archiver: id, object: id) -> Uid {
         let new_uid = Uid::new(len as u64 - 1);
         if object == class {
             // If the class selector returns itself, we're encoding a Class
-            let classname = Value::String(env.objc.get_class_name(class).into());
+            let mut classname = None;
             let mut classes = Vec::new();
             let mut current_class = class;
             while current_class != nil {
                 let class_name = env.objc.get_class_name(current_class);
-                classes.push(Value::String(class_name.into()));
+                // We don't want to encode classes of our private
+                // implementations! Instead, we only encode `public`
+                // classes. We also assume following general inheritance chain:
+                // Class1 -> ... -> ClassN -> _touchHLE_ClassA ->
+                // ... -> _touchHLE_ClassZ
+                // In that case an instance of _touchHLE_ClassZ would be
+                // encoded as instance of ClassN. And classes Class1 to
+                // ClassN would be encoded as well.
+                if !class_name.starts_with("_touchHLE") {
+                    if classname.is_none() {
+                        classname = Some(Value::String(class_name.into()));
+                    }
+                    classes.push(Value::String(class_name.into()));
+                }
                 current_class = env.objc.get_superclass(current_class);
             }
             let host_object = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(archiver);
@@ -191,7 +229,7 @@ fn encode_object(env: &mut Environment, archiver: id, object: id) -> Uid {
                 .as_dictionary_mut()
                 .unwrap();
             entry.insert("$classes".into(), Value::Array(classes));
-            entry.insert("$classname".into(), classname);
+            entry.insert("$classname".into(), classname.unwrap());
         } else {
             let previous_key = env
                 .objc
@@ -199,12 +237,18 @@ fn encode_object(env: &mut Environment, archiver: id, object: id) -> Uid {
                 .current_key
                 .replace(new_uid);
             let class: id = msg![env; object class];
-            encode_object_for_key(env, archiver, class, "$class".into());
+            // TODO: it seems that NSString class itself is _not_ encoded??
+            let str_class = env.objc.get_known_class("NSString", &mut env.mem);
+            if !env.objc.class_is_subclass_of(class, str_class) {
+                encode_object_for_key(env, archiver, class, "$class".into());
+            }
             () = msg![env; object encodeWithCoder:archiver];
             env.objc
                 .borrow_mut::<NSKeyedArchiverHostObject>(archiver)
                 .current_key = previous_key;
         }
+        let host_object = env.objc.borrow_mut::<NSKeyedArchiverHostObject>(archiver);
+        host_object.already_archived.insert(object, new_uid);
         new_uid
     }
 }

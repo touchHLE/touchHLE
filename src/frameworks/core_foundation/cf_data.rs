@@ -13,7 +13,7 @@ use super::{CFIndex, CFRange};
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
 use crate::frameworks::foundation::{NSRange, NSUInteger};
-use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr};
 use crate::objc::{id, msg, msg_class};
 use crate::Environment;
 
@@ -25,11 +25,26 @@ pub fn CFDataCreate(
     bytes: ConstPtr<u8>,
     length: CFIndex,
 ) -> CFDataRef {
-    assert!(allocator == kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     let bytes: ConstVoidPtr = bytes.cast();
     let length: NSUInteger = length.try_into().unwrap();
     let new: id = msg_class![env; NSData alloc];
     msg![env; new initWithBytes:bytes length:length]
+}
+
+fn CFDataCreateWithBytesNoCopy(
+    env: &mut Environment,
+    allocator: CFAllocatorRef,
+    bytes: ConstPtr<u8>,
+    length: CFIndex,
+    deallocator: CFAllocatorRef,
+) -> CFDataRef {
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
+    assert!(env.mem.read(deallocator).is_null()); // unimplemented
+    let bytes: MutVoidPtr = bytes.cast().cast_mut();
+    let length: NSUInteger = length.try_into().unwrap();
+    let new: id = msg_class![env; NSData alloc];
+    msg![env; new initWithBytesNoCopy:bytes length:length freeWhenDone:false]
 }
 
 pub fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {
@@ -52,6 +67,7 @@ fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, range: CFRange, buffer
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFDataCreate(_, _, _)),
+    export_c_func!(CFDataCreateWithBytesNoCopy(_, _, _, _)),
     export_c_func!(CFDataGetLength(_)),
     export_c_func!(CFDataGetBytePtr(_)),
     export_c_func!(CFDataGetBytes(_, _, _)),

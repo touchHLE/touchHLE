@@ -38,23 +38,29 @@ cmake = "0.1.49"
 gl_generator = "0.14.0"
 
 [dependencies]
-caf = "0.1.0"
 hound = "3.5.0"
 mach_object = "0.1.17"
 plist = "1.8.0"
 zip = { version = "0.6.4", default-features = false, features = ["deflate"] }
 rusttype = "0.9.3"
-# While most Symphonia codecs are (likely) unpatented/have freely licenseable 
-# patents as of 2024, all of the AAC profiles except AAC-LC (likely) have 
-# active patent claims. The "aac" feature only enables AAC-LC, so it's should 
+# Needed so we can access underlying OwnedFace from rusttype
+# (bump version if rusttype is updated!)
+owned_ttf_parser = "0.15.2"
+# While most Symphonia codecs are (likely) unpatented/have freely licenseable
+# patents as of 2024, all of the AAC profiles except AAC-LC (likely) have
+# active patent claims. The "aac" feature only enables AAC-LC, so it's should
 # be ok.
 # (The above statements should not understood as legal claims/advice.)
-symphonia = { version = "0.5.3", default-features = false, features = ["adpcm", "wav", "aac", "isomp4", "mp3", "alac"] }
+symphonia = { version = "0.6.0", default-features = false, features = [
+    # formats
+    "caf", "isomp4", "wav",
+    # codecs
+    "aac", "adpcm", "alac", "mp3", "pcm"
+] }
 quick-xml = "0.38.4"
 digest = "0.10.7"
 md-5 = "0.10.6"
 sha1 = "0.10.6"
-yore = "1.1.0"
 encoding_rs = "0.8.35"
 # We currently use a fork of rust-sdl2 because we need a fix for Android builds
 # that's not upstream yet.
@@ -71,8 +77,10 @@ touchHLE_pvrt_decompress_wrapper = { path = "src/image/pvrt_decompress_wrapper" 
 touchHLE_stb_image_wrapper = { path = "src/image/stb_image_wrapper" }
 touchHLE_version = { path = "src/version" }
 windows-sys = { version = "0.61.0", features = ["Win32_System_Memory"] }
-libc = "0.2.175"
 nibarchive = "0.1.0"
+libc = "0.2.180"
+corosensei = "0.3.2"
+uuid = { version = "1.2.2", default-features = false, features = ["v4"] }
 
 [build-dependencies]
 cargo-license = "0.5.1"

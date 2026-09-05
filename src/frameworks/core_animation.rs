@@ -51,8 +51,12 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 #[derive(Default)]
 pub struct State {
     ca_media_timing_function: ca_media_timing_function::State,
-    ca_transaction: ca_transaction::State,
     composition: composition::State,
+}
+
+#[derive(Default)]
+pub struct ThreadLocalState {
+    ca_transaction: ca_transaction::ThreadLocalState,
 }
 
 // This function should call mach_absolute_time() and convert the result into

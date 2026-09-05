@@ -56,6 +56,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithData:(id)data { // NSData *
+    if data == nil {
+        release(env, this);
+        return nil;
+    }
     retain(env, data);
     env.objc.borrow_mut::<NSXMLParserHostObject>(this).data = data;
     this

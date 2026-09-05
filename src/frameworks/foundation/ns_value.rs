@@ -6,16 +6,19 @@
 //! The `NSValue` class cluster, including `NSNumber`.
 
 use super::ns_string::{from_rust_ordering, from_rust_string};
-use super::{NSComparisonResult, NSOrderedSame, NSUInteger, _nib_archive_decoder};
+use super::{
+    _nib_archive_decoder, ns_keyed_unarchiver, NSComparisonResult, NSOrderedSame, NSUInteger,
+};
 use crate::frameworks::core_foundation::cf_number::{
     kCFNumberCharType, kCFNumberFloat32Type, kCFNumberFloatType, kCFNumberIntType,
     kCFNumberSInt16Type, kCFNumberSInt32Type, kCFNumberSInt8Type, kCFNumberShortType, CFNumberType,
 };
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_keyed_archiver::get_value_to_encode_for_current_key;
 use crate::frameworks::foundation::NSInteger;
 use crate::mem::{ConstVoidPtr, MutVoidPtr};
 use crate::objc::{
-    autorelease, id, msg, msg_class, objc_classes, release, retain, Class, ClassExports,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
     HostObject, NSZonePtr,
 };
 use crate::Environment;
@@ -232,6 +235,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, new)
 }
 
++ (id)numberWithUnsignedInteger:(NSUInteger)value {
+    // TODO: for greater efficiency we could return a static-lifetime value
+
+    let new: id = msg![env; this alloc];
+    let new: id = msg![env; new initWithUnsignedInteger:value];
+    autorelease(env, new)
+}
+
 + (id)numberWithLongLong:(i64)value {
     // TODO: for greater efficiency we could return a static-lifetime value
 
@@ -277,14 +288,29 @@ pub const CLASSES: ClassExports = objc_classes! {
 // NSCoding implementation
 - (id)initWithCoder:(id)coder {
     let class: Class = msg![env; coder class];
+    let keyed_unarch_class: Class = msg_class![env; NSKeyedUnarchiver class];
     let nib_archive_class: Class = msg_class![env; _touchHLE_NIBArchiveDecoder class];
-    let new_num = if env.objc.class_is_subclass_of(class, nib_archive_class) {
+    let new_num = if env.objc.class_is_subclass_of(class, keyed_unarch_class) {
+        ns_keyed_unarchiver::decode_current_number(env, coder)
+    } else if env.objc.class_is_subclass_of(class, nib_archive_class) {
         _nib_archive_decoder::decode_current_number(env, coder)
     } else {
         unimplemented!();
     };
     release(env, this);
     new_num
+}
+- (())encodeWithCoder:(id)coder {
+    let host_object = env.objc.borrow::<NSNumberHostObject>(this);
+    let (key, val) = match host_object {
+        NSNumberHostObject::Int(i) => ("NS.intval", plist::Value::Integer((*i).into())),
+        NSNumberHostObject::Double(d) => ("NS.dblval", plist::Value::Real(*d)),
+        NSNumberHostObject::Bool(b) => ("NS.boolval", plist::Value::Boolean(*b)),
+        _ => unimplemented!("{:?}", host_object)
+    };
+
+    let scope = get_value_to_encode_for_current_key(env, coder);
+    scope.insert(key.to_string(), val);
 }
 
 - (id)initWithBool:(bool)value {
@@ -324,6 +350,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithInteger:(NSInteger)value {
     *env.objc.borrow_mut(this) = NSNumberHostObject::Int(value);
+    this
+}
+
+- (id)initWithUnsignedInteger:(NSUInteger)value {
+    *env.objc.borrow_mut(this) = NSNumberHostObject::UnsignedInt(value);
     this
 }
 
@@ -400,19 +431,45 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)description {
-    let desc = match env.objc.borrow(this) {
-        NSNumberHostObject::Bool(value) => from_rust_string(env, (*value as i32).to_string()),
-        NSNumberHostObject::UnsignedLongLong(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::UnsignedInt(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::Int(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::LongLong(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::Float(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::Double(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::Short(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::UnsignedShort(value) => from_rust_string(env, value.to_string()),
-        NSNumberHostObject::Char(value) => from_rust_string(env, value.to_string()),
+    msg![env; this stringValue]
+}
+
+- (id)stringValue {
+    msg![env; this descriptionWithLocale:nil]
+}
+- (id)descriptionWithLocale:(id)locale {
+    assert_eq!(locale, nil); // TODO
+    // TODO: do not alloc format strings each time
+    let format = match env.objc.borrow(this) {
+        NSNumberHostObject::Bool(_) | NSNumberHostObject::Char(_) | NSNumberHostObject::Int(_) => from_rust_string(env, "%i".to_string()),
+        NSNumberHostObject::Double(_) => from_rust_string(env, "%0.16g".to_string()),
+        NSNumberHostObject::Float(_) => from_rust_string(env, "%0.7g".to_string()),
+        NSNumberHostObject::LongLong(_) => from_rust_string(env, "%lli".to_string()),
+        NSNumberHostObject::Short(_) => from_rust_string(env, "%hi".to_string()),
+        NSNumberHostObject::UnsignedInt(_) => from_rust_string(env, "%u".to_string()),
+        NSNumberHostObject::UnsignedLongLong(_) => from_rust_string(env, "%llu".to_string()),
+        NSNumberHostObject::UnsignedShort(_) => from_rust_string(env, "%hu".to_string()),
     };
-    autorelease(env, desc)
+    let ns_string_class = env.objc.get_known_class("NSString", &mut env.mem);
+    let sel = env.objc.lookup_selector("stringWithFormat:").unwrap();
+    // TODO: type info for host-to-host message calls with var-args
+    let res = match env.objc.borrow(this) {
+        NSNumberHostObject::Bool(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value as i32)),
+        NSNumberHostObject::Char(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::Double(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::Float(value) => {
+            // Need to promote float to double for the expected argument of %g
+            crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value as f64))
+        },
+        NSNumberHostObject::Int(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::LongLong(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::Short(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::UnsignedInt(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::UnsignedLongLong(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+        NSNumberHostObject::UnsignedShort(value) => crate::objc::msg_send_no_type_checking(env, (ns_string_class, sel, format, *value)),
+    };
+    release(env, format);
+    res
 }
 
 - (NSUInteger)hash {

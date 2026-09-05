@@ -15,7 +15,8 @@ use super::{
     IMP, SEL,
 };
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::Environment;
 use std::collections::{HashMap, VecDeque};
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -36,6 +37,7 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) guest_method_signatures: HashMap<SEL, ConstPtr<u8>>,
     /// Maps ivar name to a tuple of an offset (as pointer) and an alignment.
     /// (Alignment is used during ivar reconciliation.)
     pub(super) ivars: HashMap<String, (ConstPtr<GuestUSize>, u32)>,
@@ -46,8 +48,17 @@ pub(super) struct ClassHostObject {
     /// Size of the allocated memory for instances of this class or metaclass.
     /// This is always >= the value in the superclass.
     pub(super) instance_size: GuestUSize,
+    /// Checks if +initialize has been called yet.
+    pub(super) is_initialized: InitializationStatus,
 }
 impl HostObject for ClassHostObject {}
+
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum InitializationStatus {
+    NotInitialized,
+    Initializing,
+    Initialized,
+}
 
 /// Placeholder object for classes and metaclasses referenced by the app that
 /// we don't have an implementation for.
@@ -116,6 +127,17 @@ struct category_t {
     _property_list: ConstVoidPtr, // property list (TODO)
 }
 unsafe impl SafeRead for category_t {}
+
+#[repr(C, packed)]
+pub struct objc_property {
+    // TODO: define fields?
+    _pad: u8,
+}
+unsafe impl SafeRead for objc_property {}
+
+/// An opaque type that represents an Objective-C declared property.
+#[allow(non_camel_case_types)]
+type objc_property_t = MutPtr<objc_property>;
 
 /// A template for a class defined with [objc_classes].
 ///
@@ -365,10 +387,12 @@ impl ClassHostObject {
                     (objc.selectors[name], IMP::Host(host_imp))
                 }),
             ),
+            guest_method_signatures: HashMap::default(),
             // maybe this should be 0 for NSObject? does it matter?
             instance_start: size,
             instance_size: size,
             ivars: HashMap::default(),
+            is_initialized: InitializationStatus::NotInitialized,
         }
     }
 
@@ -392,9 +416,11 @@ impl ClassHostObject {
             is_metaclass,
             superclass,
             methods: HashMap::new(),
+            guest_method_signatures: HashMap::new(),
             instance_start,
             instance_size,
             ivars: HashMap::new(),
+            is_initialized: InitializationStatus::NotInitialized,
         };
 
         if !base_methods.is_null() {
@@ -433,10 +459,11 @@ fn substitute_classes(
     // don't support yet. This isn't "ad blocking" because ads no longer work
     // on real devices anyway :)
     if !(name.starts_with("AdMob")
+        || name.starts_with("AdWhirl")
         || name.starts_with("AltAds")
-        || name.starts_with("Mobclix")
         || name.starts_with("FB") // Facebook
         || name.starts_with("Flurry")
+        || name.starts_with("Mobclix")
         || name.starts_with("OpenFeint")
         || name.starts_with("Tapjoy"))
     {
@@ -470,6 +497,11 @@ fn substitute_classes(
 }
 
 impl ObjC {
+    /// Iterator over all known classes and their names.
+    pub fn all_classes(&self) -> impl Iterator<Item = (&String, &Class)> {
+        self.classes.iter()
+    }
+
     fn get_class(&self, name: &str, is_metaclass: bool, mem: &Mem) -> Option<Class> {
         let class = self.classes.get(name).copied()?;
         Some(if is_metaclass {
@@ -879,9 +911,11 @@ impl ObjC {
                         is_metaclass: Default::default(),
                         superclass: nil,
                         methods: Default::default(),
+                        guest_method_signatures: Default::default(),
                         instance_start: Default::default(),
                         instance_size: Default::default(),
                         ivars: Default::default(),
+                        is_initialized: InitializationStatus::NotInitialized,
                     },
                 );
                 log_dbg!(
@@ -949,4 +983,72 @@ impl ObjC {
             None
         }
     }
+
+    pub fn is_unimplemented_class(&self, class: Class) -> bool {
+        if class == nil {
+            return false;
+        }
+        let host_object = self.get_host_object(class).unwrap();
+        matches!(
+            host_object.as_any().downcast_ref(),
+            Some(UnimplementedClass { .. })
+        )
+    }
+
+    pub fn is_fake_class(&self, class: Class) -> bool {
+        if class == nil {
+            return false;
+        }
+        let host_object = self.get_host_object(class).unwrap();
+        matches!(host_object.as_any().downcast_ref(), Some(FakeClass { .. }))
+    }
+}
+
+pub(super) fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> id {
+    let name_str = env.mem.cstr_at_utf8(name).unwrap();
+    env.objc
+        .get_class(name_str, false, &env.mem)
+        .unwrap_or_else(|| panic!("objc_getClass() for unimplemented class {name_str}"))
+}
+
+pub(super) fn class_getSuperclass(env: &mut Environment, cls: Class) -> Class {
+    if cls == nil {
+        nil
+    } else {
+        env.objc.borrow::<ClassHostObject>(cls).superclass
+    }
+}
+
+pub(super) fn class_getInstanceSize(env: &mut Environment, cls: Class) -> GuestUSize {
+    if cls == nil {
+        0
+    } else {
+        env.objc.borrow::<ClassHostObject>(cls).instance_size
+    }
+}
+
+pub(super) fn class_getProperty(
+    env: &mut Environment,
+    cls: Class,
+    name: ConstPtr<u8>,
+) -> objc_property_t {
+    if cls == nil {
+        return Ptr::null();
+    }
+    let c_name = env.mem.cstr_at_utf8(name).unwrap();
+    let class_name_string = env.objc.get_class_name(cls).to_owned();
+    if class_name_string == "UIScreen" && c_name == "scale" {
+        // Even if [UIScreen scale] is implemented, we're not yet having a
+        // proper support for `objc_property_t`, so we prefer to return a NULL
+        // here (e.g. property is not declared).
+        // Some games (such as Mirror's Edge) check for those to conditionally
+        // apply some parameters depending on the iOS version without actually
+        // using the property.
+        // We also prefer to not define this as a game-specific hack, because
+        // some other EA games may rely on the same logic.
+        // TODO: support `objc_property_t` properly
+        log!("TODO: class_getProperty(UIScreen, scale) -> NULL");
+        return Ptr::null();
+    }
+    todo!()
 }

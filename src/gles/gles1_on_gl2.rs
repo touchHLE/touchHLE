@@ -144,7 +144,7 @@ const GET_PARAMS: ParamTable = ParamTable(&[
     (gl21::ALPHA_BITS, ParamType::Int, 1),
     (gl21::ALPHA_TEST, ParamType::Boolean, 1),
     (gl21::ALPHA_TEST_FUNC, ParamType::Int, 1),
-    // TODO: ALPHA_TEST_REF (has special type conversion behavior)
+    (gl21::ALPHA_TEST_REF, ParamType::FloatSpecial, 1), // TODO correct type
     (gl21::ARRAY_BUFFER_BINDING, ParamType::Int, 1),
     (gl21::BLEND, ParamType::Boolean, 1),
     (gl21::BLEND_DST, ParamType::Int, 1),
@@ -746,17 +746,35 @@ impl GLES for GLES1OnGL2<'_> {
         gl21::DisableClientState(array);
     }
     unsafe fn GetBooleanv(&mut self, pname: GLenum, params: *mut GLboolean) {
-        let (type_, _count) = GET_PARAMS.get_type_info(pname);
-        // TODO: type conversion
-        assert!(type_ == ParamType::Boolean);
-        gl21::GetBooleanv(pname, params);
+        let (type_, count) = GET_PARAMS.get_type_info(pname);
+        match type_ {
+            ParamType::Boolean => {
+                gl21::GetBooleanv(pname, params);
+            }
+            ParamType::Float => {
+                assert_eq!(count, 1); // TODO
+                let mut f: GLfloat = 0.0;
+                gl21::GetFloatv(pname, &mut f);
+                *params = if f == 0.0 { gl21::FALSE } else { gl21::TRUE };
+            }
+            ParamType::Int => {
+                assert_eq!(count, 1); // TODO
+                let mut i: GLint = 0;
+                gl21::GetIntegerv(pname, &mut i);
+                *params = if i == 0 { gl21::FALSE } else { gl21::TRUE };
+            }
+            _ => unimplemented!("TODO: type conversion for {:?}", type_),
+        }
     }
     // TODO: GetFixedv
     unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat) {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);
-        // TODO: type conversion
-        assert!(type_ == ParamType::Float || type_ == ParamType::FloatSpecial);
-        gl21::GetFloatv(pname, params);
+        match type_ {
+            ParamType::Float | ParamType::FloatSpecial => {
+                gl21::GetFloatv(pname, params);
+            }
+            _ => unimplemented!("TODO: type conversion for {:?}", type_),
+        }
     }
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint) {
         let (type_, _count) = GET_PARAMS.get_type_info(pname);
@@ -1922,7 +1940,11 @@ impl GLES for GLES1OnGL2<'_> {
 
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum) {
-        assert!(mode == gl21::MODELVIEW || mode == gl21::PROJECTION || mode == gl21::TEXTURE);
+        if mode == gl21::MODELVIEW_MATRIX {
+            log_dbg!("Tolerating glMatrixMode({:#x}) of unsupported mode", mode);
+        } else {
+            assert!(mode == gl21::MODELVIEW || mode == gl21::PROJECTION || mode == gl21::TEXTURE);
+        }
         gl21::MatrixMode(mode);
     }
     unsafe fn LoadIdentity(&mut self) {

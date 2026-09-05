@@ -11,7 +11,7 @@ use crate::frameworks::core_graphics::cg_bitmap_context::CGBitmapContextDrawer;
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::frameworks::foundation::NSInteger;
-use crate::objc::{autorelease, id, objc_classes, ClassExports, HostObject};
+use crate::objc::{autorelease, id, msg, objc_classes, ClassExports, HostObject};
 use crate::Environment;
 use std::collections::HashMap;
 use std::ops::Range;
@@ -95,6 +95,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @implementation UIFont: NSObject
 
+// Values are checked against iPhone 3GS, iOS 4.0.1
++ (CGFloat)labelFontSize {
+    17.0
+}
++ (CGFloat)buttonFontSize {
+    18.0
+}
++ (CGFloat)smallSystemFontSize {
+    12.0
+}
++ (CGFloat)systemFontSize {
+    14.0
+}
+
 + (id)systemFontOfSize:(CGFloat)size {
     let host_object = UIFontHostObject {
         size,
@@ -147,6 +161,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     let host_object = env.objc.borrow::<UIFontHostObject>(this);
     let font = env.framework_state.uikit.ui_font.get_font_by_kind(host_object.kind);
     font.line_gap(host_object.size)
+}
+
+- (CGFloat)lineHeight {
+    // This is calculated based on the documentation:
+    // https://developer.apple.com/library/archive/documentation/TextFonts/Conceptual/CocoaTextArchitecture/FontHandling/FontHandling.html
+    let ascender: CGFloat = msg![env; this ascender];
+    let descender: CGFloat = msg![env; this descender];
+    let leading: CGFloat = msg![env; this leading];
+    assert!(descender <= 0.0);
+    ascender + leading - descender
 }
 
 @end
@@ -221,8 +245,28 @@ pub fn size_with_font(
     CGSize { width, height }
 }
 
+/// Determine how the text lines will be rendered given a constraint
+pub fn break_lines_with_font<'a>(
+    env: &mut Environment,
+    font: id,
+    text: &'a str,
+    constrained: Option<(CGSize, UILineBreakMode)>,
+) -> Vec<(f32, &'a str)> {
+    let host_object = env.objc.borrow::<UIFontHostObject>(font);
+
+    let font = get_font(
+        &mut env.framework_state.uikit.ui_font,
+        host_object.kind,
+        text,
+    );
+
+    let wrap = constrained.map(|(size, ui_mode)| (size.width, convert_line_break_mode(ui_mode)));
+
+    font.break_lines(host_object.size, text, wrap)
+}
+
 #[inline(always)]
-fn draw_font_glyph(
+pub fn draw_font_glyph(
     drawer: &mut CGBitmapContextDrawer,
     raster_glyph: crate::font::RasterGlyph,
     fill_color: (f32, f32, f32, f32),

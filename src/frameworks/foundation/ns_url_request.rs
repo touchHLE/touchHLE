@@ -104,6 +104,36 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithURL:(id)url {
+    if url == nil {
+        return nil;
+    }
+    let url_desc: id = msg![env; url description];
+        log_dbg!(
+        "[(NSURLRequest *){:?} initWithURL:{}]",
+        this,
+        to_rust_string(env, url_desc)
+    );
+
+    // Preserving old behaviour
+    if !env.options.network_access {
+        log_dbg!(
+            "Network access is disabled, [(NSURLRequest *){:?} initWithURL:{}] -> nil",
+            this,
+            to_rust_string(env, url_desc)
+        );
+        release(env, this);
+        return nil;
+    }
+
+    let url_copy = msg![env; url copy];
+    env.objc.borrow_mut::<NSURLRequestHostObject>(this).url = url_copy;
+    env.objc.borrow_mut::<NSURLRequestHostObject>(this).cache_policy = NSURLRequestUseProtocolCachePolicy;
+    env.objc.borrow_mut::<NSURLRequestHostObject>(this).timeout_interval = 60.0;
+
+    this
+}
+
 - (id)URL {
     env.objc.borrow::<NSURLRequestHostObject>(this).url
 }
@@ -149,10 +179,28 @@ pub const CLASSES: ClassExports = objc_classes! {
     // No need to retain http_body as we made a copy
 }
 
+- (())setURL:(id)url { // NSURL *
+    let url_copy = msg![env; url copy];
+
+    let host_obj = env.objc.borrow_mut::<NSURLRequestHostObject>(this);
+    let old_url = std::mem::replace(&mut host_obj.url, url_copy);
+    release(env, old_url);
+    // No need to retain url_copy as we made a copy
+}
+
 - (())setValue:(id)value // NSString *
     forHTTPHeaderField:(id)field { // NSString *
     log_dbg!("[(NSURLRequest*){:?} setValue:'{}' forHTTPHeaderField:'{}']", this, to_rust_string(env, value), to_rust_string(env, field));
     let http_header_fields = env.objc.borrow_mut::<NSURLRequestHostObject>(this).http_header_fields;
+    () = msg![env; http_header_fields setObject:value forKey:field];
+}
+
+- (())addValue:(id)value // NSString *
+    forHTTPHeaderField:(id)field { // NSString *
+    log_dbg!("[(NSURLRequest*){:?} addValue:'{}' forHTTPHeaderField:'{}']", this, to_rust_string(env, value), to_rust_string(env, field));
+    let http_header_fields = env.objc.borrow_mut::<NSURLRequestHostObject>(this).http_header_fields;
+    let existing: id = msg![env; http_header_fields objectForKey:field];
+    assert_eq!(existing, nil); // TODO: append values with comma
     () = msg![env; http_header_fields setObject:value forKey:field];
 }
 

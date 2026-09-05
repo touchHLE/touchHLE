@@ -6,3 +6,4 @@
 //! `libkern`
 
 pub mod os_atomic;
+pub mod task;

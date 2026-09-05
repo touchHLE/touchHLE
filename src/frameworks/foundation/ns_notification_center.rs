@@ -28,7 +28,7 @@ struct Observer {
 }
 
 struct NSNotificationCenterHostObject {
-    observers: HashMap<Cow<'static, str>, Vec<Observer>>,
+    observers: HashMap<Option<Cow<'static, str>>, Vec<Observer>>,
 }
 impl HostObject for NSNotificationCenterHostObject {}
 
@@ -68,17 +68,12 @@ pub const CLASSES: ClassExports = objc_classes! {
          selector:(SEL)selector
              name:(NSNotificationName)name
            object:(id)object {
-    if name == nil &&
-        env.bundle.bundle_identifier().starts_with("com.chillingo.cuttherope") &&
-        selector == env.objc.lookup_selector("fetchUpdateNotification:").unwrap() {
-        // As we nullified Flurry SDK, we also need to no-op
-        // related notifications
-        log!("Applying game-specific hack for Cut the Rope: ignoring addObserver:selector:name:object: for fetchUpdateNotification:");
-        return;
-    }
-    // TODO: handle case where name is nil
-    // Usually a static string, so no real copy will happen
-    let name = ns_string::to_rust_string(env, name);
+    let name = if name != nil {
+        // Usually a static string, so no real copy will happen
+        Some(ns_string::to_rust_string(env, name))
+    } else {
+        None
+    };
 
     log_dbg!(
         "[(NSNotificationCenter*){:?} addObserver:{:?} selector:{:?} name:{:?} object:{:?}",
@@ -145,8 +140,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     let mut removed_observers = Vec::new();
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
-    if let Some(ref name) = name {
-        let Some(observers) = host_obj.observers.get_mut(name) else {
+    if name.is_some() {
+        let Some(observers) = host_obj.observers.get_mut(&name) else {
             return;
         };
         remove_observers_internal(observers, &mut removed_observers, observer, object);
@@ -177,9 +172,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     log_dbg!("Notification is a {:?} posted by {:?}", name, notification_poster);
 
     let host_obj = env.objc.borrow_mut::<NSNotificationCenterHostObject>(this);
-    let Some(observers) = host_obj.observers.get(&name).cloned() else {
-        return;
-    };
+    let mut observers = host_obj.observers.get(&Some(name)).cloned().unwrap_or_default();
+    if let Some(nameless_observers) = host_obj.observers.get(&None) {
+        observers.extend(nameless_observers.iter().cloned());
+    }
     for Observer { observer, selector, object } in observers {
         // The object argument is a filter for which notification sources the
         // observer is interested in.

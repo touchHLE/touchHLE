@@ -9,6 +9,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::errno::set_errno;
 use crate::mem::{ConstPtr, MutPtr};
 use crate::Environment;
+use std::num::FpCategory;
 
 // TODO: move to `fenv.h`
 type FERoundingDirection = i32;
@@ -397,6 +398,18 @@ fn lroundf(env: &mut Environment, arg: f32) -> i32 {
 
     arg.max(i32::MIN as f32).min(i32::MAX as f32).round() as i32
 }
+fn llround(env: &mut Environment, arg: f64) -> i64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    arg.max(i64::MIN as f64).min(i64::MAX as f64).round() as i64
+}
+fn llroundf(env: &mut Environment, arg: f32) -> i64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    arg.max(i64::MIN as f32).min(i64::MAX as f32).round() as i64
+}
 fn trunc(_env: &mut Environment, arg: f64) -> f64 {
     arg.trunc()
 }
@@ -412,6 +425,20 @@ fn modff(env: &mut Environment, val: f32, iptr: MutPtr<f32>) -> f32 {
     let ivalue = truncf(env, val);
     env.mem.write(iptr, ivalue);
     val - ivalue
+}
+fn rint(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    match env.libc_state.math.rounding_direction {
+        FE_TONEAREST => {
+            // As tested on both macOS and iOS Simulator, by default it
+            // rounds to the nearest integer with ties on even
+            arg.round_ties_even()
+        }
+        FE_TOWARDZERO => arg.trunc(),
+        _ => unimplemented!(),
+    }
 }
 fn lrint(env: &mut Environment, arg: f64) -> i32 {
     // TODO: handle errno properly
@@ -485,6 +512,24 @@ fn hypot(env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
     sqrt(env, arg1 * arg1 + arg2 * arg2)
 }
 
+/// This alias is for readability, POSIX just uses `int`.
+type GuestFPCategory = i32;
+const FP_NAN: GuestFPCategory = 1;
+const FP_INFINITE: GuestFPCategory = 2;
+const FP_ZERO: GuestFPCategory = 3;
+const FP_NORMAL: GuestFPCategory = 4;
+const FP_SUBNORMAL: GuestFPCategory = 5;
+
+fn __fpclassifyf(_env: &mut Environment, arg: f32) -> GuestFPCategory {
+    match arg.classify() {
+        FpCategory::Nan => FP_NAN,
+        FpCategory::Infinite => FP_INFINITE,
+        FpCategory::Zero => FP_ZERO,
+        FpCategory::Normal => FP_NORMAL,
+        FpCategory::Subnormal => FP_SUBNORMAL,
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(abs(_)),
     export_c_func!(fabs(_)),
@@ -549,10 +594,13 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(roundf(_)),
     export_c_func!(lround(_)),
     export_c_func!(lroundf(_)),
+    export_c_func!(llround(_)),
+    export_c_func!(llroundf(_)),
     export_c_func!(trunc(_)),
     export_c_func!(truncf(_)),
     export_c_func!(modf(_, _)),
     export_c_func!(modff(_, _)),
+    export_c_func!(rint(_)),
     export_c_func!(lrint(_)),
     export_c_func!(lrintf(_)),
     // Rounding direction
@@ -569,4 +617,5 @@ pub const FUNCTIONS: FunctionExports = &[
     // Other
     export_c_func!(nan(_)),
     export_c_func!(hypot(_, _)),
+    export_c_func!(__fpclassifyf(_)),
 ];

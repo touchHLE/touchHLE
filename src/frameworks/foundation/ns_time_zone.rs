@@ -9,6 +9,11 @@ use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::objc::{autorelease, id, nil, release, retain, ClassExports, HostObject, NSZonePtr};
 use crate::{msg, objc_classes};
 
+#[derive(Default)]
+pub struct State {
+    system_time_zone: Option<id>,
+}
+
 struct NSTimeZoneHostObject {
     // NSString*
     time_zone: id,
@@ -35,9 +40,27 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 + (id)localTimeZone {
-    // As reported by the Aspen Simulator
-    let tz_name: id = ns_string::get_static_str(env, "Canada/Eastern");
-    msg![env; this timeZoneWithName:tz_name]
+    // According to docs, `localTimeZone` is not cached in contrast to
+    // `systemTimeZone`
+    let gmt_tz_name: id = ns_string::get_static_str(env, "GMT");
+    msg![env; this timeZoneWithName:gmt_tz_name]
+}
+
++ (id)systemTimeZone {
+    if let Some(system_time_zone) = env.framework_state.foundation.ns_time_zone.system_time_zone {
+        system_time_zone
+    } else {
+        let new: id = msg![env; this alloc];
+        let gmt_tz_name: id = ns_string::get_static_str(env, "GMT");
+        let new: id = msg![env; new initWithName:gmt_tz_name];
+        env.framework_state.foundation.ns_time_zone.system_time_zone = Some(new);
+        new
+    }
+}
+
++ (id)defaultTimeZone {
+    // TODO: implement setting a default time zone
+    msg![env; this systemTimeZone]
 }
 
 - (())dealloc {
@@ -57,9 +80,19 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<NSTimeZoneHostObject>(this).time_zone
 }
 
+- (id)abbreviation {
+    // TODO: support zone abbreviations
+    ns_string::get_static_str(env, "GMT")
+}
+
 - (NSInteger)secondsFromGMT {
     // TODO: respect timezone
     0
+}
+
+// NSCopying implementation
+- (id)copyWithZone:(NSZonePtr)_zone {
+    retain(env, this)
 }
 
 @end

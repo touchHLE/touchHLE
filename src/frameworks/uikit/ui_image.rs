@@ -22,7 +22,7 @@ use crate::objc::{
 use crate::Environment;
 use std::collections::HashMap;
 
-const CACHE_SIZE: usize = 10;
+const CACHE_SIZE: usize = 60;
 
 #[derive(Default)]
 pub struct State {
@@ -180,6 +180,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())drawAtPoint:(CGPoint)point {
     let context = UIGraphicsGetCurrentContext(env);
+    if context == nil {
+        log!("Warning: [(UIImage*){:?} drawAtPoint:{:?}] is called with nil context, ignoring.", this, point);
+        return;
+    }
     let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
     let rect = CGRect {
         origin: point,

@@ -118,7 +118,7 @@ pub enum CpuState {
 }
 
 /// A reason that can cause CPU execution to be interrupted.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CpuError {
     /// Memory error during execution (probably a null page access).
     MemoryError,
@@ -184,29 +184,35 @@ impl Cpu {
         }
     }
 
+    /// Dump the registers of the current cpu to the log output.
+    /// Silently ignores panics.
     pub fn dump_regs(&self) {
         let regs = self.regs();
         Self::echo_regs(regs);
     }
 
     pub fn echo_regs(regs: &[u32; 16]) {
-        for row in 0..4 {
-            use std::fmt::Write;
-            let mut line = String::new();
-            for col in 0..4 {
-                let reg_idx = row * 4 + col;
-                match reg_idx {
-                    Self::SP => write!(&mut line, "\t SP: "),
-                    Self::LR => write!(&mut line, "\t LR: "),
-                    Self::PC => write!(&mut line, "\t PC: "),
-                    _ if reg_idx <= 9 => write!(&mut line, "\t R{reg_idx}: "),
-                    _ => write!(&mut line, "\tR{reg_idx}: "),
+        // Silently ignore panics so it's safe to use in contexts where we
+        // can't panic.
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            for row in 0..4 {
+                use std::fmt::Write;
+                let mut line = String::new();
+                for col in 0..4 {
+                    let reg_idx = row * 4 + col;
+                    match reg_idx {
+                        Self::SP => write!(&mut line, "\t SP: "),
+                        Self::LR => write!(&mut line, "\t LR: "),
+                        Self::PC => write!(&mut line, "\t PC: "),
+                        _ if reg_idx <= 9 => write!(&mut line, "\t R{reg_idx}: "),
+                        _ => write!(&mut line, "\tR{reg_idx}: "),
+                    }
+                    .unwrap();
+                    write!(&mut line, "{:#010x}", regs[reg_idx]).unwrap();
                 }
-                .unwrap();
-                write!(&mut line, "{:#010x}", regs[reg_idx]).unwrap();
+                echo!("{}", line);
             }
-            echo!("{}", line);
-        }
+        }));
     }
 
     pub fn cpsr(&self) -> u32 {

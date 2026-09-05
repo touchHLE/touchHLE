@@ -9,12 +9,13 @@ use crate::abi::{CallFromHost, GuestFunction};
 use crate::dyld::{export_c_func, export_c_func_aliased, FunctionExports};
 use crate::fs::{resolve_path, GuestPath};
 use crate::libc::clocale::{setlocale, LC_CTYPE};
-use crate::libc::errno::set_errno;
+use crate::libc::errno::{set_errno, EINVAL};
 use crate::libc::string::strlen;
 use crate::libc::wchar::wchar_t;
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr};
-use crate::Environment;
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
+use crate::{impl_GuestRet_for_large_struct, Environment};
 use std::str::FromStr;
+use std::time::SystemTime;
 
 pub mod qsort;
 
@@ -46,6 +47,13 @@ fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoid
 
     let total = size.checked_mul(count).unwrap();
     env.mem.calloc(total)
+}
+
+fn valloc(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    env.mem.valloc(size)
 }
 
 fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
@@ -188,9 +196,27 @@ const RAND_MAX: i32 = i32::MAX;
 fn srand(env: &mut Environment, seed: u32) {
     env.libc_state.stdlib.rand = seed;
 }
+
+// BSD's rand() seed function — we just use host system time,
+// good enough for games that want fresh "fake" randomness each run.
+fn sranddev(env: &mut Environment) {
+    let time = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let seed = (time ^ (time >> 32)) as u32;
+    env.libc_state.stdlib.rand = seed;
+}
+
 fn rand(env: &mut Environment) -> i32 {
     env.libc_state.stdlib.rand = prng(env.libc_state.stdlib.rand);
     (env.libc_state.stdlib.rand as i32) & RAND_MAX
+}
+fn rand_r(env: &mut Environment, seed_ptr: MutPtr<u32>) -> i32 {
+    let mut seed = env.mem.read(seed_ptr);
+    seed = prng(seed);
+    env.mem.write(seed_ptr, seed);
+    (seed as i32) & RAND_MAX
 }
 
 // BSD's "better" random number generator, with an implementation that is not
@@ -212,6 +238,23 @@ fn random(env: &mut Environment) -> i32 {
 fn arc4random(env: &mut Environment) -> u32 {
     env.libc_state.stdlib.arc4random = prng(env.libc_state.stdlib.arc4random);
     env.libc_state.stdlib.arc4random
+}
+
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+#[repr(C, packed)]
+struct div_t {
+    quot: i32,
+    rem: i32,
+}
+unsafe impl SafeRead for div_t {}
+impl_GuestRet_for_large_struct!(div_t);
+
+fn div(_env: &mut Environment, numer: i32, denom: i32) -> div_t {
+    div_t {
+        quot: numer.wrapping_div(denom),
+        rem: numer.wrapping_rem(denom),
+    }
 }
 
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
@@ -256,6 +299,18 @@ fn setenv(env: &mut Environment, name: ConstPtr<u8>, value: ConstPtr<u8>, overwr
         std::str::from_utf8(name_cstr),
     );
     0 // success
+}
+fn unsetenv(env: &mut Environment, name: ConstPtr<u8>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    let name_cstr = env.mem.cstr_at(name);
+    if !env.env_vars.contains_key(name_cstr) {
+        set_errno(env, EINVAL);
+        -1
+    } else {
+        todo!()
+    }
 }
 
 fn exit(env: &mut Environment, exit_code: i32) {
@@ -347,6 +402,35 @@ pub fn strtoul(
             0
         }
     }
+}
+fn wcstoul(
+    env: &mut Environment,
+    nptr: ConstPtr<wchar_t>,
+    endptr: MutPtr<MutPtr<wchar_t>>,
+    base: i32,
+) -> u32 {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let w_string = env.mem.wcstr_at(nptr);
+    assert!(w_string.is_ascii()); // TODO
+
+    assert!(endptr.is_null()); // TODO
+
+    let c_string = env.mem.alloc_and_write_cstr(w_string.as_bytes());
+    // TODO: use str_to_int_inner_generic() instead
+    let res = strtoul(env, c_string.cast_const(), Ptr::null(), base);
+    env.mem.free(c_string.cast());
+    log_dbg!(
+        "wcstoul({:?} ({:?}), {:?}, {}) => {}",
+        nptr,
+        w_string,
+        endptr,
+        base,
+        res
+    );
+    res
 }
 
 fn strtoull(
@@ -508,6 +592,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(malloc_size(_)),
     export_c_func!(calloc(_, _)),
+    export_c_func!(valloc(_)),
     export_c_func!(realloc(_, _)),
     export_c_func!(free(_)),
     export_c_func!(atexit(_)),
@@ -516,16 +601,21 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(atof(_)),
     export_c_func!(strtod(_, _)),
     export_c_func!(srand(_)),
+    export_c_func!(sranddev()),
     export_c_func!(rand()),
+    export_c_func!(rand_r(_)),
     export_c_func!(srandom(_)),
     export_c_func!(random()),
     export_c_func!(arc4random()),
+    export_c_func!(div(_, _)),
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
+    export_c_func!(unsetenv(_)),
     export_c_func!(exit(_)),
     export_c_func!(bsearch(_, _, _, _, _)),
     export_c_func!(strtof(_, _)),
     export_c_func!(strtoul(_, _, _)),
+    export_c_func!(wcstoul(_, _, _)),
     export_c_func!(strtoull(_, _, _)),
     export_c_func!(strtol(_, _, _)),
     export_c_func!(realpath(_, _)),

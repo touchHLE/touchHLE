@@ -459,11 +459,11 @@ pub(super) struct timeval {
 unsafe impl SafeRead for timeval {}
 
 #[allow(non_camel_case_types)]
-#[derive(Default)]
+#[derive(Copy, Clone, Debug, Default)]
 #[repr(C, packed)]
 pub struct timespec {
-    tv_sec: time_t,
-    tv_nsec: i32,
+    pub tv_sec: time_t,
+    pub tv_nsec: i32,
 }
 unsafe impl SafeRead for timespec {}
 
@@ -523,7 +523,7 @@ fn nanosleep(env: &mut Environment, rqtp: ConstPtr<timespec>, _rmtp: MutPtr<time
     log_dbg!("nanosleep {} {}", tv_sec, tv_nsec);
     let total_sleep = Duration::from_secs(tv_sec.try_into().unwrap())
         + Duration::from_nanos(tv_nsec.try_into().unwrap());
-    env.sleep(total_sleep, true);
+    env.sleep(total_sleep);
     0 // success
 }
 
@@ -701,6 +701,51 @@ fn strftime(
                 assert!((0..60).contains(&minute));
                 let formatted_minute = format!("{:02}", minute);
                 res.extend_from_slice(formatted_minute.as_bytes());
+            }
+            b'I' => {
+                let hour12 = time_val.tm_hour % 12;
+                let hour = if hour12 == 0 { 12 } else { hour12 };
+                assert!((1..=12).contains(&hour));
+                let formatted_hour = format!("{:02}", hour);
+                res.extend_from_slice(formatted_hour.as_bytes());
+            }
+            b'p' => {
+                let hour = time_val.tm_hour;
+                let formatted = if hour < 12 { "AM" } else { "PM" };
+                res.extend_from_slice(formatted.as_bytes());
+            }
+            b'a' => {
+                let wday = time_val.tm_wday;
+                assert!((0..7).contains(&wday));
+                let wday_str = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][wday as usize];
+                res.extend_from_slice(wday_str.as_bytes());
+            }
+            b'b' => {
+                let mon = time_val.tm_mon;
+                assert!((0..12).contains(&mon));
+                let mon_str = [
+                    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
+                    "Dec",
+                ][mon as usize];
+                res.extend_from_slice(mon_str.as_bytes());
+            }
+            b'Y' => {
+                let year = time_val.tm_year + 1900;
+                assert!((0..=9999).contains(&year)); // TODO
+                let formatted_year = format!("{}", year);
+                res.extend_from_slice(formatted_year.as_bytes());
+            }
+            b'S' => {
+                let seconds = time_val.tm_sec;
+                assert!((0..=60).contains(&seconds));
+                let formatted_seconds = format!("{:02}", seconds);
+                res.extend_from_slice(formatted_seconds.as_bytes());
+            }
+            b'Z' => {
+                assert!(time_val.tm_zone.is_null()); // TODO
+
+                // TODO: return the current timezone
+                res.extend_from_slice(b"GMT");
             }
             _ => unimplemented!(
                 "Format character '{}'. Formatted up to index {}",

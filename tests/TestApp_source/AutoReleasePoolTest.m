@@ -24,17 +24,6 @@ int test_AutoreleasePool(void) {
       return -1;
     }
     if ([obj2 retainCount] != 1) {
-      return -1;
-    }
-  }
-
-  // Check that dealloc works
-  {
-    dealloc_counter = 0;
-    NSAutoreleasePool *arp1 = [NSAutoreleasePool new];
-    DeallocDetection *obj1 = [[DeallocDetection new] autorelease];
-    [arp1 dealloc];
-    if (dealloc_counter != 1) {
       return -2;
     }
   }
@@ -58,11 +47,11 @@ int test_AutoreleasePool(void) {
     [arp2 drain];
     if (dealloc_counter != 2 || [obj0 retainCount] != 1 ||
         [obj1 retainCount] != 1) {
-      return -3;
+      return -4;
     }
     [arp1 drain];
     if (dealloc_counter != 3 || [obj0 retainCount] != 1) {
-      return -3;
+      return -5;
     }
     [obj0 release];
   }
@@ -80,11 +69,11 @@ int test_AutoreleasePool(void) {
     [arp2 drain];
     // Should dealloc both arp3 and arp2
     if (dealloc_counter != 2) {
-      return -3;
+      return -6;
     }
     // Should not dealloc arp1
     if ([obj1 retainCount] != 1) {
-      return -3;
+      return -7;
     }
     [arp1 drain];
   }

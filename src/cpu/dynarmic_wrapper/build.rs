@@ -32,8 +32,9 @@ fn build_type_windows() -> &'static str {
 fn main() {
     let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = package_root.join("../../..");
+    let dynarmic_root = workspace_root.join("vendor/dynarmic");
 
-    let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
+    let mut build = cmake::Config::new(&dynarmic_root);
     build.define("DYNARMIC_FRONTENDS", "A32"); // We don't need 64-bit
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
@@ -121,7 +122,8 @@ fn main() {
     }
 
     // rerun-if-changed seems to not work if pointed to a directory :(
-    //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));
+    //rerun_if_changed(&dynarmic_root);
+    rerun_if_changed(&workspace_root.join(".git/modules/dynarmic/HEAD"));
 
     cc::Build::new()
         .file(package_root.join("lib.cpp"))

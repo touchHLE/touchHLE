@@ -20,6 +20,8 @@ use crate::objc::{
     retain, todo_objc_setter, ClassExports, NSZonePtr,
 };
 
+type UIBaselineAdjustment = NSInteger;
+
 pub struct UILabelHostObject {
     superclass: super::UIViewHostObject,
     /// `NSString*`
@@ -161,6 +163,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     assert!(!adjusts); // TODO
 }
 
+- (())setMinimumFontSize:(CGFloat)size {
+    todo_objc_setter!(this, size);
+}
+
 - (id)textColor {
     env.objc.borrow::<UILabelHostObject>(this).text_color
 }
@@ -231,6 +237,10 @@ pub const CLASSES: ClassExports = objc_classes! {
         log!("TODO: UILabel numberOfLines > 1 (label {:?})", this);
     }
     () = msg![env; this setNeedsDisplay];
+}
+
+- (())setBaselineAdjustment:(UIBaselineAdjustment)value {
+    todo_objc_setter!(this, value);
 }
 
 - (())drawRect:(CGRect)_rect {

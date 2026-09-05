@@ -109,8 +109,15 @@ fn gethostbyname(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<hostent> {
     Ptr::null()
 }
 
+fn gethostent(_env: &mut Environment) -> MutPtr<hostent> {
+    log!("TODO: gethostent() => NULL");
+    // TODO: set h_errno
+    Ptr::null()
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getaddrinfo(_, _, _, _)),
     export_c_func!(freeaddrinfo(_)),
     export_c_func!(gethostbyname(_)),
+    export_c_func!(gethostent()),
 ];

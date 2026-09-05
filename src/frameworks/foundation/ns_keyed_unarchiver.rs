@@ -11,7 +11,7 @@
 //!   plists, e.g. `plutil -p` or `println!("{:#?}", plist::Value::...);`.
 //! - Apple's [Archives and Serializations Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/archives.html)
 
-use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use super::ns_string::{from_rust_string, get_static_str, to_rust_string, NSUTF8StringEncoding};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::{NSInteger, NSUInteger};
@@ -331,8 +331,7 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
             from_rust_string(env, s)
         }
         Value::Integer(int) => {
-            #[allow(clippy::clone_on_copy)]
-            let int = int.clone();
+            let int = *int;
             // Similar logic to deserialize_plist()
             let number: id = msg_class![env; NSNumber alloc];
             // TODO: is this the correct order of preference? does it matter?
@@ -345,6 +344,11 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
             } else {
                 unreachable!(); // according to plist crate docs
             }
+        }
+        Value::Real(val) => {
+            let val = *val;
+            let number: id = msg_class![env; NSNumber alloc];
+            msg![env; number initWithDouble:val]
         }
         _ => unimplemented!("Unarchive: {:#?}", item),
     };
@@ -420,6 +424,53 @@ pub fn decode_current_data(env: &mut Environment, unarchiver: id, is_mutable: bo
     assert!(is_mutable); // TODO
     let data: id = msg_class![env; NSMutableData alloc];
     msg![env; data initWithBytesNoCopy:guest_bytes length:len freeWhenDone:true]
+}
+
+/// Shortcut for use by `[NSString initWithCoder:]`.
+/// TODO: mutability
+pub fn decode_current_string(env: &mut Environment, unarchiver: id) -> id {
+    let key = get_static_str(env, "NS.bytes");
+    // TODO: avoid copying (twice!)
+    let bytes = get_value_to_decode_for_key(env, unarchiver, key)
+        .unwrap()
+        .as_data()
+        .unwrap()
+        .to_vec();
+
+    let len: GuestUSize = bytes.len().try_into().unwrap();
+    let guest_bytes: ConstPtr<u8> = env.mem.alloc(len).cast().cast_const();
+    env.mem
+        .bytes_at_mut(guest_bytes.cast_mut(), len)
+        .copy_from_slice(bytes.as_slice());
+
+    let str: id = msg_class![env; NSString alloc];
+    // TODO: use initWithBytesNoCopy: once implemented
+    let res = msg![env; str initWithBytes:guest_bytes length:len encoding:NSUTF8StringEncoding];
+    env.mem.free(guest_bytes.cast().cast_mut());
+    res
+}
+
+/// Shortcut for use by `[NSNumber initWithCoder:]`.
+pub fn decode_current_number(env: &mut Environment, unarchiver: id) -> id {
+    let num: id = msg_class![env; NSNumber alloc];
+    let int_key = get_static_str(env, "NS.intval");
+    let dbl_key = get_static_str(env, "NS.dblval");
+    let bool_key = get_static_str(env, "NS.boolval");
+    if let Some(value) = get_value_to_decode_for_key(env, unarchiver, int_key) {
+        // TODO: deal with type coercion
+        let longlong = value.as_signed_integer().unwrap();
+        msg![env; num initWithLongLong:longlong]
+    } else if let Some(value) = get_value_to_decode_for_key(env, unarchiver, dbl_key) {
+        // TODO: deal with type coercion
+        let double = value.as_real().unwrap();
+        msg![env; num initWithDouble:double]
+    } else if let Some(value) = get_value_to_decode_for_key(env, unarchiver, bool_key) {
+        // TODO: deal with type coercion
+        let boolean = value.as_boolean().unwrap();
+        msg![env; num initWithBool:boolean]
+    } else {
+        unimplemented!()
+    }
 }
 
 fn keys_for_key(env: &mut Environment, unarchiver: id, key: &str) -> Vec<Uid> {

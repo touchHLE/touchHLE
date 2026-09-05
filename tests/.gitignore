@@ -1,4 +1,5 @@
 /llvm
+/TestApp.app/*.o
 /TestApp.app/TestApp
 /TestApp_source/build
 /Payload

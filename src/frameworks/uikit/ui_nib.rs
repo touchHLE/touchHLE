@@ -146,6 +146,11 @@ pub const CLASSES: ClassExports = objc_classes! {
         assert!(msg![env; delegate_class isKindOfClass:ui_nib_class]);
         let file_owner = env.objc.borrow::<UINibHostObject>(delegate).file_owner;
         assert!(file_owner != nil);
+        release(env, this);
+        // NSKeyedUnarchiver holds ownership of already instantiated objects
+        // and release them on dealloc. But here we replace a proxy object with
+        // a file owner! Thus, we must retain it on behalf of the coder.
+        retain(env, file_owner);
         file_owner
     } else {
         log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);

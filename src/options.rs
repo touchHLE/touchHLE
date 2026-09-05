@@ -61,6 +61,7 @@ pub struct Options {
     pub dumping_options: DumpingOptions,
     pub dumping_file: PathBuf,
     pub ignore_gl_errors: bool,
+    pub zero_stack_after_guest_to_host_call: Option<u32>,
 }
 
 impl Default for Options {
@@ -93,6 +94,7 @@ impl Default for Options {
             dumping_options: Default::default(),
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
             ignore_gl_errors: false,
+            zero_stack_after_guest_to_host_call: None,
         }
     }
 }
@@ -114,6 +116,8 @@ impl Options {
 
         if arg == "--fullscreen" {
             self.fullscreen = true;
+        } else if arg == "--upside-down" {
+            self.initial_orientation = DeviceOrientation::PortraitUpsideDown;
         } else if arg == "--landscape-left" {
             self.initial_orientation = DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
@@ -192,14 +196,14 @@ impl Options {
             let smoothing_strength: f32 = smoothing_strength
                 .parse()
                 .ok()
-                .and_then(|s| if s < 0.0 { None } else { Some(s) })
+                .filter(|&s| s >= 0.0)
                 .ok_or_else(|| {
                     "Invalid smoothing strength for --stabilize-virtual-cursor=".to_string()
                 })?;
             let sticky_radius: f32 = sticky_radius
                 .parse()
                 .ok()
-                .and_then(|s| if s < 0.0 { None } else { Some(s) })
+                .filter(|&s| s >= 0.0)
                 .ok_or_else(|| {
                     "Invalid sticky radius for --stabilize-virtual-cursor=".to_string()
                 })?;
@@ -232,7 +236,7 @@ impl Options {
                 let limit: f64 = value
                     .parse()
                     .ok()
-                    .and_then(|v| if v <= 0.0 { None } else { Some(v) })
+                    .filter(|&v| v > 0.0)
                     .ok_or_else(|| "Invalid value for --fps-limit=".to_string())?;
                 self.fps_limit = Some(limit);
             }
@@ -248,6 +252,10 @@ impl Options {
             self.dumping_file = crate::paths::user_data_base_path().join(path);
         } else if arg == "--ignore-gl-errors" {
             self.ignore_gl_errors = true;
+        } else if let Some(value) = arg.strip_prefix("--zero-stack-after-guest-to-host-call=") {
+            self.zero_stack_after_guest_to_host_call = Some(value.parse().map_err(|_| {
+                "Invalid value for --zero-stack-after-guest-to-host-call=".to_string()
+            })?);
         } else {
             return Ok(false);
         };

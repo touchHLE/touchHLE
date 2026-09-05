@@ -11,6 +11,7 @@
 use crate::frameworks::core_graphics::CGRect;
 use crate::frameworks::foundation::ns_objc_runtime::NSStringFromClass;
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
+use crate::frameworks::foundation::NSInteger;
 use crate::frameworks::uikit::ui_application::{
     UIInterfaceOrientation, UIInterfaceOrientationPortrait,
 };
@@ -38,6 +39,8 @@ struct UIViewControllerHostObject {
     bundle: id,
 }
 impl HostObject for UIViewControllerHostObject {}
+
+type UIModalTransitionStyle = NSInteger;
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -76,6 +79,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dealloc {
     let &UIViewControllerHostObject { view, nib_name, bundle } = env.objc.borrow(this);
 
+    if view != nil {
+        set_view_controller(env, view, nil);
+    }
     release(env, view);
     release(env, nib_name);
     release(env, bundle);
@@ -177,6 +183,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setWantsFullScreenLayout:(bool)wants {
     todo_objc_setter!(this, wants);
+}
+- (())setHidesBottomBarWhenPushed:(bool)hides {
+    todo_objc_setter!(this, hides);
+}
+- (())setModalTransitionStyle:(UIModalTransitionStyle)style {
+    todo_objc_setter!(this, style);
 }
 
 - (())dismissModalViewControllerAnimated:(bool)animated {

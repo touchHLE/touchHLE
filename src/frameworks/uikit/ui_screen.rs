@@ -6,7 +6,7 @@
 //! `UIScreen`.
 
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
-use crate::objc::{id, msg, objc_classes, ClassExports, TrivialHostObject};
+use crate::objc::{id, msg, msg_class, objc_classes, ClassExports, TrivialHostObject};
 
 #[derive(Default)]
 pub struct State {
@@ -34,6 +34,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         new
    }
 }
+
+// We only model just one screen (main screen).
++ (id)screens {
+    let main_screen: id = msg![env; this mainScreen];
+    msg_class![env; NSArray arrayWithObject:main_screen]
+}
+
 - (id)retain { this }
 - (())release {}
 - (id)autorelease { this }

@@ -17,7 +17,7 @@ use std::collections::HashMap;
 /// corresponds the Apple's one
 /// TODO: match struct sizes
 #[allow(clippy::upper_case_acronyms)]
-struct DIR {
+pub(super) struct DIR {
     idx: usize,
 }
 unsafe impl SafeRead for DIR {}
@@ -32,13 +32,13 @@ const DT_REG: DirentFileType = 8;
 #[allow(non_camel_case_types)]
 #[derive(Debug)]
 #[repr(C, packed)]
-struct dirent {
+pub(super) struct dirent {
     d_ino: u64,
     d_seekoff: u64,
     d_reclen: u16,
-    d_namlen: u16,
+    pub(super) d_namlen: u16,
     d_type: u8,
-    d_name: [u8; MAXPATHLEN],
+    pub(super) d_name: [u8; MAXPATHLEN],
 }
 unsafe impl SafeRead for dirent {}
 impl_GuestRet_for_large_struct!(dirent);
@@ -54,7 +54,7 @@ impl State {
     }
 }
 
-fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
+pub(super) fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
     // TODO: handle errno properly
     set_errno(env, 0);
 
@@ -78,7 +78,7 @@ fn opendir(env: &mut Environment, filename: ConstPtr<u8>) -> MutPtr<DIR> {
 }
 
 // TODO: return '.' and '..' entries as well
-fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
+pub(super) fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
     // TODO: handle errno properly
     set_errno(env, 0);
 
@@ -122,7 +122,7 @@ fn readdir(env: &mut Environment, dirp: MutPtr<DIR>) -> MutPtr<dirent> {
     }
 }
 
-fn closedir(env: &mut Environment, dirp: MutPtr<DIR>) -> i32 {
+pub(super) fn closedir(env: &mut Environment, dirp: MutPtr<DIR>) -> i32 {
     // TODO: handle errno properly
     set_errno(env, 0);
 
@@ -174,6 +174,7 @@ fn scandir(
     let mut output: MutPtr<MutPtr<dirent>> = env.mem.alloc(size).cast();
     env.mem.write(list, output);
 
+    #[allow(clippy::explicit_counter_loop)]
     for entry in tmp_vec {
         env.mem.write(output, entry);
         output += 1;

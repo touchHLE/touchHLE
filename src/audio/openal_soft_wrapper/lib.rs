@@ -58,6 +58,13 @@ pub mod alc_defines {
     pub const ALC_SYNC: ALCint = 0x1009;
     pub const ALC_MONO_SOURCES: ALCint = 0x1010;
     pub const ALC_STEREO_SOURCES: ALCint = 0x1011;
+
+    // Errors (See descriptions in Section 6.3.6 of OpenAL 1.1 specification)
+    pub const ALC_INVALID_DEVICE: ALCenum = 0xA001;
+    pub const ALC_INVALID_CONTEXT: ALCenum = 0xA002;
+    pub const ALC_INVALID_ENUM: ALCenum = 0xA003;
+    pub const ALC_INVALID_VALUE: ALCenum = 0xA004;
+    pub const ALC_OUT_OF_MEMORY: ALCenum = 0xA005;
 }
 
 extern "C" {
@@ -110,6 +117,8 @@ pub mod al_defines {
     pub const AL_RENDERER: ALenum = 0xb003;
     pub const AL_EXTENSIONS: ALenum = 0xb004;
 
+    pub const AL_BUFFER: ALenum = 0x1009;
+
     pub const AL_MAX_GAIN: ALenum = 0x100E;
 
     pub const AL_SOURCE_STATE: ALenum = 0x1010;
@@ -137,6 +146,7 @@ extern "C" {
 
     pub fn alIsBuffer(buffer: ALuint) -> ALboolean;
     pub fn alIsSource(source: ALuint) -> ALboolean;
+    pub fn alIsExtensionPresent(extName: *const ALchar) -> ALboolean;
 
     pub fn alEnable(capability: ALenum);
 
@@ -205,6 +215,11 @@ extern "C" {
     pub fn alSourcePause(source: ALuint);
     pub fn alSourceStop(source: ALuint);
     pub fn alSourceRewind(source: ALuint);
+
+    pub fn alSourcePlayv(n: ALsizei, sources: *const ALuint);
+    pub fn alSourcePausev(n: ALsizei, sources: *const ALuint);
+    pub fn alSourceStopv(n: ALsizei, sources: *const ALuint);
+    pub fn alSourceRewindv(n: ALsizei, sources: *const ALuint);
 
     pub fn alSourceQueueBuffers(source: ALuint, nb: ALsizei, buffers: *const ALuint);
     pub fn alSourceUnqueueBuffers(source: ALuint, nb: ALsizei, buffers: *mut ALuint);

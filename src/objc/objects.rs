@@ -22,6 +22,7 @@
 
 use super::{Class, ClassHostObject};
 use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::Environment;
 use std::any::Any;
 use std::num::NonZeroU32;
 
@@ -359,5 +360,13 @@ impl super::ObjC {
         std::mem::drop(host_object);
 
         mem.free(object.cast());
+    }
+}
+
+pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
+    if obj == nil {
+        nil
+    } else {
+        super::ObjC::read_isa(obj, &env.mem)
     }
 }

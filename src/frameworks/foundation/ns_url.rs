@@ -5,7 +5,7 @@
  */
 //! `NSURL`.
 
-use super::ns_string::{from_rust_string, get_static_str, to_rust_string, NSUTF8StringEncoding};
+use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::NSUInteger;
 use crate::fs::{GuestPath, GuestPathBuf};
 use crate::mem::MutPtr;
@@ -165,9 +165,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let &NSURLHostObject::FileURL { ns_string, .. } = env.objc.borrow(this) else {
         unimplemented!(); // TODO
     };
-    msg![env; ns_string getCString:buffer
-                         maxLength:buffer_size
-                          encoding:NSUTF8StringEncoding]
+    msg![env; ns_string getFileSystemRepresentation:buffer maxLength:buffer_size]
 }
 
 - (id)URLByAppendingPathComponent:(id)path_component // NSString *

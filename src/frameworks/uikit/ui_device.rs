@@ -9,7 +9,7 @@ use crate::dyld::ConstantExports;
 use crate::dyld::HostConstant;
 use crate::frameworks::foundation::{ns_string, NSInteger};
 use crate::objc::{id, msg, objc_classes, todo_objc_setter, ClassExports, TrivialHostObject};
-use crate::window::{get_battery_status, BatteryState, DeviceOrientation};
+use crate::window::{get_battery_status, BatteryState, DeviceFamily, DeviceOrientation};
 
 pub const UIDeviceOrientationDidChangeNotification: &str =
     "UIDeviceOrientationDidChangeNotification";
@@ -18,7 +18,6 @@ pub type UIDeviceOrientation = NSInteger;
 #[allow(dead_code)]
 pub const UIDeviceOrientationUnknown: UIDeviceOrientation = 0;
 pub const UIDeviceOrientationPortrait: UIDeviceOrientation = 1;
-#[allow(dead_code)]
 pub const UIDeviceOrientationPortraitUpsideDown: UIDeviceOrientation = 2;
 pub const UIDeviceOrientationLandscapeLeft: UIDeviceOrientation = 3;
 pub const UIDeviceOrientationLandscapeRight: UIDeviceOrientation = 4;
@@ -32,6 +31,12 @@ pub const UIDeviceBatteryStateUnknown: UIDeviceBatteryState = 0;
 pub const UIDeviceBatteryStateUnplugged: UIDeviceBatteryState = 1;
 pub const UIDeviceBatteryStateCharging: UIDeviceBatteryState = 2;
 pub const UIDeviceBatteryStateFull: UIDeviceBatteryState = 3;
+
+type UIUserInterfaceIdiom = NSInteger;
+#[allow(dead_code)]
+const UIUserInterfaceIdiomUnspecified: UIUserInterfaceIdiom = -1;
+const UIUserInterfaceIdiomPhone: UIUserInterfaceIdiom = 0;
+const UIUserInterfaceIdiomPad: UIUserInterfaceIdiom = 1;
 
 #[derive(Default)]
 pub struct State {
@@ -64,10 +69,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())beginGeneratingDeviceOrientationNotifications {
-    log!("TODO: beginGeneratingDeviceOrientationNotifications");
+    log_once!("TODO: beginGeneratingDeviceOrientationNotifications");
 }
 - (())endGeneratingDeviceOrientationNotifications {
-    log!("TODO: endGeneratingDeviceOrientationNotifications");
+    log_once!("TODO: endGeneratingDeviceOrientationNotifications");
+}
+- (bool)isGeneratingDeviceOrientationNotifications {
+    log_once!("TODO: isGeneratingDeviceOrientationNotifications");
+    false
 }
 
 - (id)model {
@@ -106,17 +115,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (UIDeviceOrientation)orientation {
     match env.window().current_rotation() {
         DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
+        DeviceOrientation::PortraitUpsideDown => UIDeviceOrientationPortraitUpsideDown,
         DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeLeft,
         DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
     }
 }
 - (())setOrientation:(UIDeviceOrientation)orientation {
-    env.window_mut().rotate_device(match orientation {
+    env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
+        UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
         UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
-    });
+    })});
 }
 
 - (bool)isBatteryMonitoringEnabled {
@@ -140,6 +151,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         BatteryState::OnBattery => UIDeviceBatteryStateUnplugged,
         BatteryState::NoBattery | BatteryState::Charging => UIDeviceBatteryStateCharging,
         BatteryState::Full => UIDeviceBatteryStateFull,
+    }
+}
+
+- (UIUserInterfaceIdiom)userInterfaceIdiom {
+    match env.window().device_family() {
+        DeviceFamily::iPhone => UIUserInterfaceIdiomPhone,
+        DeviceFamily::iPad => UIUserInterfaceIdiomPad,
     }
 }
 

@@ -197,6 +197,7 @@ pub const CLASSES: ClassExports = objc_classes! {
                         let domain = get_static_str(env, NSCocoaErrorDomain);
                         let error = msg_class![env; NSError alloc];
                         let error = msg![env; error initWithDomain:domain code:NSFileReadNoSuchFileError userInfo:nil];
+                        autorelease(env, error);
                         env.mem.write(out_error, error);
                     }
                     _ => unimplemented!()
@@ -215,7 +216,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let toPath = ns_string::to_rust_string(env, toPath); // TODO: avoid copy
     match env.fs.rename(GuestPath::new(&path), GuestPath::new(&toPath)) {
         Ok(()) => true,
-        Err(()) => {
+        Err(_) => {
             if !error.is_null() {
                todo!(); // TODO: create an NSError if requested
             }

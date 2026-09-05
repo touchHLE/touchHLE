@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [[ "$1" = "--check" ]]; then
     RUSTFMT_EXTRA='--check'

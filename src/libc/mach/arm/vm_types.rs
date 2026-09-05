@@ -2,8 +2,9 @@
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Parts of this file are derived from SDL 2's Android project template, which
- * has a different license. Please see vendor/SDL/LICENSE.txt for details.
  */
-include ':app'
+//! VM types
+
+use crate::libc::mach::core_types::natural_t;
+
+pub type vm_size_t = natural_t;

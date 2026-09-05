@@ -11,11 +11,11 @@ use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str}
 use crate::frameworks::foundation::{ns_array, ns_string, NSInteger, NSUInteger};
 use crate::mem::MutPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
+    ClassExports, HostObject, NSZonePtr,
 };
 use crate::window::DeviceOrientation;
-use crate::{todo_objc_setter, Environment};
+use crate::Environment;
 
 #[derive(Default)]
 pub struct State {
@@ -113,21 +113,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setStatusBarStyle:(UIStatusBarStyle)style {
     todo_objc_setter!(this, style);
 }
+- (())setStatusBarStyle:(UIStatusBarStyle)style
+               animated:(bool)_animated {
+    // TODO: animation
+    msg![env; this setStatusBarStyle:style]
+}
 
 - (UIInterfaceOrientation)statusBarOrientation {
     match env.window().current_rotation() {
         DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
+        DeviceOrientation::PortraitUpsideDown => UIDeviceOrientationPortraitUpsideDown,
         DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeLeft,
         DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
     }
 }
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
-    env.window_mut().rotate_device(match orientation {
+    env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
+        UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
         UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
-    });
+    })});
 }
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation
                      animated:(bool)_animated {
@@ -139,13 +146,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     !env.window().is_screen_saver_enabled()
 }
 - (())setIdleTimerDisabled:(bool)disabled {
-    env.window_mut().set_screen_saver_enabled(!disabled);
+    env.on_parent_stack_in_coroutine(|window, _| window.set_screen_saver_enabled(!disabled))
 }
 
 - (bool)openURL:(id)url { // NSURL
     let ns_string = msg![env; url absoluteString];
     let url_string = ns_string::to_rust_string(env, ns_string);
-    if let Err(e) = crate::window::open_url(&url_string) {
+    if let Err(e) = crate::window::open_url(env, &url_string) {
         echo!("App opened URL {:?} unsuccessfully ({}), exiting.", url_string, e);
     } else {
         echo!("App opened URL {:?}, exiting.", url_string);
@@ -214,6 +221,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     log!("TODO: ignoring setApplicationIconBadgeNumber:{}", bn);
 }
 
+- (bool)applicationSupportsShakeToEdit {
+    true // default value
+}
+- (())setApplicationSupportsShakeToEdit:(bool)enable {
+    log!("TODO: ignoring setApplicationSupportsShakeToEdit:{}", enable);
+}
+
 // UIResponder implementation
 // From the Apple UIView docs regarding [UIResponder nextResponder]:
 // "The shared UIApplication object normally returns nil, but it returns its
@@ -229,6 +243,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         nil
     }
+}
+
+- (())cancelAllLocalNotifications {
+    log!("TODO: [(UIApplication*){:?} cancelAllLocalNotifications", this);
+}
+- (())scheduleLocalNotification:(id)local_notif { // UILocalNotification *
+    log!("TODO: [(UIApplication*){:?} scheduleLocalNotification:{:?}", this, local_notif);
 }
 
 @end
@@ -394,7 +415,7 @@ pub(super) fn exit(env: &mut Environment) {
 
         // Skip NSUserDefaults code while in the app picker, otherwise we get
         // a strange error when existing touchHLE due to the fake bundle.
-        if !env.is_fake {
+        if !env.is_app_picker {
             // Apple's docs (used to) vaguely mention that `synchronize` is
             // invoked on periodic intervals.
             // Second best - and implemented here - is to save before app exits.

@@ -13,17 +13,18 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLESContext, GLES};
+use crate::gles::{create_gles1_ctx_no_parent_stack, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
+use crate::Environment;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
 use sdl2_sys::SDL_PowerState;
 use std::collections::{HashMap, VecDeque};
 use std::env;
-use std::f32::consts::FRAC_PI_2;
+use std::f32::consts::{FRAC_PI_2, PI};
 use std::num::NonZeroU32;
 use std::ptr::null_mut;
 use std::time::{Duration, Instant};
@@ -71,6 +72,7 @@ impl TryFrom<&str> for DeviceFamily {
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
     Portrait,
+    PortraitUpsideDown,
     LandscapeLeft,
     LandscapeRight,
 }
@@ -83,6 +85,7 @@ fn size_for_orientation(
     let scale_hack = scale_hack.get();
     match orientation {
         DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
+        DeviceOrientation::PortraitUpsideDown => (width * scale_hack, height * scale_hack),
         DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
         DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
     }
@@ -94,7 +97,9 @@ fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32
         (screen_size.1, screen_size.0)
     };
     match orientation {
-        DeviceOrientation::Portrait => (short_side, long_side),
+        DeviceOrientation::Portrait | DeviceOrientation::PortraitUpsideDown => {
+            (short_side, long_side)
+        }
         DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight => {
             (long_side, short_side)
         }
@@ -109,6 +114,7 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
             DeviceOrientation::Portrait => "Portrait",
             // The inversion is deliberate. These probably correspond to
             // iPhone OS content orientations?
+            DeviceOrientation::PortraitUpsideDown => "PortraitUpsideDown",
             DeviceOrientation::LandscapeLeft => "LandscapeRight",
             DeviceOrientation::LandscapeRight => "LandscapeLeft",
         },
@@ -236,7 +242,13 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    /// Whether or not we are on the "main" environment stack (rather than
+    /// a coroutine stack). Checked in various functions to make sure that
+    /// certain SDL functions (that call JNI functions) are on the main
+    /// stack on Android.
+    pub(super) on_main_stack: bool,
 }
+
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
     /// display fullscreen, but SDL2 will let us control the orientation, i.e.
@@ -385,13 +397,14 @@ impl Window {
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
             virtual_accelerometer_last: None,
+            on_main_stack: true,
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
         // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
         // because SDL2 won't let us use more than one graphics API in the same
         // window, and we also need OpenGL ES for the app's own rendering.
-        let mut gl_ins = create_gles1_ctx(&mut window, options);
+        let mut gl_ins = create_gles1_ctx_no_parent_stack(&mut window, options);
         {
             let gl_ctx = gl_ins.make_current(&mut window);
             log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
@@ -413,6 +426,7 @@ impl Window {
     /// Since polling can be quite expensive, this function will skip it if it
     /// was called too recently.
     pub fn poll_for_events(&mut self, options: &Options) {
+        assert!(self.on_main_stack);
         let now = Instant::now();
         // poll roughly twice per frame to try to avoid missing frames sometimes
         if now.duration_since(self.last_polled) < Duration::from_secs_f64(1.0 / 120.0) {
@@ -512,11 +526,9 @@ impl Window {
                 }
                 E::MouseMotion {
                     x, y, mousestate, ..
-                } => {
-                    if mousestate.right() {
-                        let (x, y) = transform_virt_accel_coords(self, (x, y));
-                        self.virtual_accelerometer_last = Some((x, y, true));
-                    }
+                } if mousestate.right() => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, true));
                 }
                 E::MouseButtonUp {
                     x,
@@ -1263,6 +1275,7 @@ impl Window {
     /// content appears upright. On a mobile device, this might do something
     /// else, because the user can physically rotate the screen.
     pub fn rotate_device(&mut self, new_orientation: DeviceOrientation) {
+        assert!(self.on_main_stack);
         if new_orientation == self.device_orientation {
             return;
         }
@@ -1389,6 +1402,7 @@ impl Window {
     pub fn rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
+            DeviceOrientation::PortraitUpsideDown => Matrix::z_rotation(PI),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
             DeviceOrientation::LandscapeRight => Matrix::z_rotation(FRAC_PI_2),
         }
@@ -1398,6 +1412,7 @@ impl Window {
         self.video_ctx.is_screen_saver_enabled()
     }
     pub fn set_screen_saver_enabled(&mut self, enabled: bool) {
+        assert!(self.on_main_stack);
         match enabled {
             true => self.video_ctx.enable_screen_saver(),
             false => self.video_ctx.disable_screen_saver(),
@@ -1405,15 +1420,25 @@ impl Window {
     }
 
     pub fn start_text_input(&self) {
-        self.video_ctx.text_input().start();
+        assert!(self.on_main_stack);
+        unsafe {
+            sdl2_sys::SDL_StartTextInput();
+        }
     }
     pub fn stop_text_input(&self) {
-        self.video_ctx.text_input().stop();
+        assert!(self.on_main_stack);
+        unsafe {
+            sdl2_sys::SDL_StopTextInput();
+        }
+    }
+
+    pub fn on_main_stack(&self) -> bool {
+        self.on_main_stack
     }
 }
 
-pub fn open_url(url: &str) -> Result<(), String> {
-    sdl2::url::open_url(url).map_err(|e| e.to_string())
+pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
+    env.on_parent_stack_in_coroutine(|_, _| sdl2::url::open_url(url).map_err(|e| e.to_string()))
 }
 
 /// Show an SDL messagebox for an error (typically after a panic).
@@ -1421,6 +1446,7 @@ pub fn open_url(url: &str) -> Result<(), String> {
 /// The window argument allows for passing in the parent window for the
 /// messagebox, which is not required but should be done if possible.
 pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
+    assert!(window.is_none_or(|win| win.on_main_stack));
     use sdl2::messagebox;
     let mbox = [
         messagebox::ButtonData {
@@ -1453,7 +1479,7 @@ pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
                 // Open data directory (contains log file on android)
                 0 => match crate::paths::url_for_opening_user_data_dir() {
                     Ok(url) => {
-                        if let Err(e) = crate::window::open_url(&url) {
+                        if let Err(e) = sdl2::url::open_url(&url).map_err(|e| e.to_string()) {
                             echo!("Couldn't open file manager at {:?}: {}", url, e);
                         } else {
                             echo!("Opened file manager at {:?}, exiting.", url);
@@ -1493,14 +1519,18 @@ pub fn get_battery_status() -> (i32, BatteryState) {
     )
 }
 
-pub fn get_preferred_language_codes() -> Vec<String> {
-    sdl2::locale::get_preferred_locales()
-        .map(|loc| loc.lang)
-        .collect()
+pub fn get_preferred_language_codes(env: &mut Environment) -> Vec<String> {
+    env.on_parent_stack_in_coroutine(|_, _| {
+        sdl2::locale::get_preferred_locales()
+            .map(|loc| loc.lang)
+            .collect()
+    })
 }
 
-pub fn get_preferred_country_codes() -> Vec<String> {
-    sdl2::locale::get_preferred_locales()
-        .filter_map(|loc| loc.country)
-        .collect()
+pub fn get_preferred_country_codes(env: &mut Environment) -> Vec<String> {
+    env.on_parent_stack_in_coroutine(|_, _| {
+        sdl2::locale::get_preferred_locales()
+            .filter_map(|loc| loc.country)
+            .collect()
+    })
 }

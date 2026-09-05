@@ -37,18 +37,18 @@ type AudioUnitScope = u32;
 type AudioUnitElement = u32;
 
 #[repr(C, packed)]
-struct AudioBufferList<const COUNT: usize> {
-    number_buffers: u32,
-    buffers: [AudioBuffer; COUNT],
+pub struct AudioBufferList<const COUNT: usize> {
+    pub number_buffers: u32,
+    pub buffers: [AudioBuffer; COUNT],
 }
 unsafe impl SafeRead for AudioBufferList<1> {}
 unsafe impl SafeRead for AudioBufferList<2> {}
 
 #[repr(C, packed)]
 pub struct AudioBuffer {
-    number_channels: u32,
-    data_byte_size: u32,
-    data: MutVoidPtr,
+    pub number_channels: u32,
+    pub data_byte_size: u32,
+    pub data: MutVoidPtr,
 }
 
 // TODO: Other scopes
@@ -201,7 +201,7 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     let context = env
         .framework_state
         .audio_toolbox
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let mut source: ALuint = 0;
     unsafe {
@@ -228,7 +228,7 @@ fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let audio_components_state = &mut at_state.audio_components;
 
@@ -264,7 +264,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let audio_session::State {
         current_hardware_sample_rate,
@@ -413,7 +413,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
         .al_context
-        .make_al_context_current(&mut env.openal_manager);
+        .make_al_context_current(env.openal_manager.as_mut());
 
     let (al_format, _sample_rate, processed_data) =
         decode_buffer(&env.mem, &stream_format, buffer1Data.cast(), buffer_size);

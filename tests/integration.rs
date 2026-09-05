@@ -135,22 +135,57 @@ fn run_test_app(
     let test_app_path = tests_dir.join(format!("{}.app", test_app_name));
 
     let source_path = tests_dir.join(format!("{}_source", test_app_name));
-    let sources = std::fs::read_dir(&source_path)
+    let all_sources: Vec<PathBuf> = std::fs::read_dir(&source_path)
         .unwrap()
         .map(|entry| PathBuf::from(entry.unwrap().file_name()))
         .filter(|filename| {
             filename
                 .extension()
-                .is_some_and(|ext| ext == "m" || ext == "c")
+                .is_some_and(|ext| ext == "m" || ext == "c" || ext == "cpp")
         })
-        .map(|entry| source_path.join(entry));
+        .map(|entry| source_path.join(entry))
+        .collect();
+
+    // C++ files must be compiled separately because the -ObjC flag (needed
+    // for Objective-C linking) forces all files to be treated as Objective-C.
+    let mut cpp_objects = Vec::new();
+    let (cpp_sources, sources): (Vec<_>, Vec<_>) = all_sources
+        .into_iter()
+        .partition(|p| p.extension().is_some_and(|ext| ext == "cpp"));
+    for cpp_src in &cpp_sources {
+        let obj_path = tests_dir
+            .join(format!("{}.app", test_app_name))
+            .join(cpp_src.file_stem().unwrap())
+            .with_extension("o");
+        // Compile C++ without -ObjC, -fno-objc-exceptions, etc.
+        let mut cpp_args: Vec<&str> = extra_compile_args
+            .iter()
+            .copied()
+            .filter(|a| {
+                *a != "-ObjC"
+                    && *a != "-fno-objc-exceptions"
+                    && *a != "-fno-objc-arc"
+                    && *a
+                        != "-fno-objc-arc-e
+          +xceptions"
+            })
+            .collect();
+        cpp_args.push("-c");
+        build_object(
+            tests_dir,
+            &obj_path,
+            [cpp_src.as_path()].into_iter(),
+            &cpp_args,
+        )?;
+        cpp_objects.push(obj_path);
+    }
 
     build_object(
         &tests_dir,
         &tests_dir
             .join(format!("{}.app", test_app_name))
             .join(test_app_name),
-        sources,
+        sources.iter().chain(cpp_objects.iter()),
         extra_compile_args,
     )?;
     let binary_name = "touchHLE";
@@ -333,6 +368,11 @@ fn test_app() -> Result<(), Box<dyn Error>> {
         }
         build_object(&tests_dir, &out_path, [stub_src_path].iter(), &compile_args).unwrap();
     }
+
+    // Link against libstdc++ to support C++ test sources (virtual inheritance
+    // tests etc). The bundled libstdc++ dylib path is already in the search
+    // path via bundled_libs_search_arg.
+    extra_compile_args.push("-lstdc++.6.0.9");
 
     // Vec<String> -> &[&str] ownership shenanigans
     for arg in &extra_linker_args {

@@ -84,8 +84,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem);
 }
 
-- (id)charactersToBeSkipped { // NSCharacterSet *
+- (())setCharactersToBeSkipped:(id)to_be_skipped { // NSCharacterSet *
+    let old_to_be_skipped = env.objc.borrow::<NSScannerHostObject>(this).to_be_skipped;
+    env.objc.borrow_mut::<NSScannerHostObject>(this).to_be_skipped = to_be_skipped;
+    retain(env, to_be_skipped);
+    release(env, old_to_be_skipped);
+}
+- (id)charactersToBeSkipped {
     env.objc.borrow::<NSScannerHostObject>(this).to_be_skipped
+}
+
+- (NSUInteger)scanLocation {
+    env.objc.borrow::<NSScannerHostObject>(this).pos
+}
+
+- (())setScanLocation:(NSUInteger)loc {
+    let host = env.objc.borrow_mut::<NSScannerHostObject>(this);
+    assert!(loc <= host.len); // TODO: raise NSRangeException
+    host.pos = loc;
 }
 
 - (bool)isAtEnd {

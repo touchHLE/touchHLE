@@ -9,6 +9,7 @@
 //! but here it is the same type.
 
 use super::cf_array::CFArrayRef;
+use super::cf_dictionary::CFDictionaryRef;
 use super::cf_string::CFStringRef;
 use super::cf_url::CFURLRef;
 use super::CFTypeRef;
@@ -19,16 +20,27 @@ use crate::objc::{id, msg, msg_class, retain};
 use crate::Environment;
 
 const kCFBundleVersionKey: &str = "CFBundleVersion";
+const kCFBundleExecutableKey: &str = "CFBundleExecutable";
 
-pub const CONSTANTS: ConstantExports = &[(
-    "_kCFBundleVersionKey",
-    HostConstant::NSString(kCFBundleVersionKey),
-)];
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_kCFBundleVersionKey",
+        HostConstant::NSString(kCFBundleVersionKey),
+    ),
+    (
+        "_kCFBundleExecutableKey",
+        HostConstant::NSString(kCFBundleExecutableKey),
+    ),
+];
 
 pub type CFBundleRef = CFTypeRef;
 
 fn CFBundleGetMainBundle(env: &mut Environment) -> CFBundleRef {
     msg_class![env; NSBundle mainBundle]
+}
+
+fn CFBundleGetInfoDictionary(env: &mut Environment, bundle: CFBundleRef) -> CFDictionaryRef {
+    msg![env; bundle infoDictionary]
 }
 
 fn CFBundleGetValueForInfoDictionaryKey(
@@ -69,6 +81,11 @@ fn CFBundleGetVersionNumber(env: &mut Environment, bundle: CFBundleRef) -> u32 {
 
 fn CFBundleCopyBundleURL(env: &mut Environment, bundle: CFBundleRef) -> CFURLRef {
     let url: CFURLRef = msg![env; bundle bundleURL];
+    msg![env; url copy]
+}
+
+fn CFBundleCopyExecutableURL(env: &mut Environment, bundle: CFBundleRef) -> CFURLRef {
+    let url: id = msg![env; bundle executableURL];
     msg![env; url copy]
 }
 
@@ -173,9 +190,11 @@ fn CFBundleCopyLocalizedString(
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFBundleGetMainBundle()),
+    export_c_func!(CFBundleGetInfoDictionary(_)),
     export_c_func!(CFBundleGetValueForInfoDictionaryKey(_, _)),
     export_c_func!(CFBundleGetVersionNumber(_)),
     export_c_func!(CFBundleCopyBundleURL(_)),
+    export_c_func!(CFBundleCopyExecutableURL(_)),
     export_c_func!(CFBundleCopyResourcesDirectoryURL(_)),
     export_c_func!(CFBundleCopyResourceURL(_, _, _, _)),
     export_c_func!(CFBundleCopyBundleLocalizations(_)),

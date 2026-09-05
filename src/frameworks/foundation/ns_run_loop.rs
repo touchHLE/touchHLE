@@ -18,9 +18,13 @@ use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, kCFRunLoopDefaultMode, CFRunLoopRef,
 };
 use crate::frameworks::{core_animation, media_player, uikit};
-use crate::objc::{id, msg, objc_classes, release, retain, Class, ClassExports, HostObject};
+use crate::libc::semaphore::{host_create_semaphore, sem_post, sem_t};
+use crate::mem::MutPtr;
+use crate::objc::{
+    id, msg, msg_send, nil, objc_classes, release, retain, Class, ClassExports, HostObject, SEL,
+};
 use crate::Environment;
-use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// `NSString*`
@@ -41,8 +45,8 @@ pub const CONSTANTS: ConstantExports = &[
 ];
 
 #[derive(Default)]
-pub struct State {
-    run_loops: HashMap<ThreadId, id>,
+pub struct ThreadLocalState {
+    run_loop: id,
 }
 
 struct NSRunLoopHostObject {
@@ -50,11 +54,23 @@ struct NSRunLoopHostObject {
     /// Weak reference. Audio queue must remove itself when destroyed (TODO).
     /// They are in no particular order.
     audio_queues: Vec<AudioQueueRef>,
+    /// Objects to run for performSelector:onThread:(afterDelay:/waitUntilDone:)
+    selector_objects: VecDeque<ObjectSelectorSource>,
     /// Strong references to `NSTimer*` in no particular order. Timers are owned
     /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
 }
 impl HostObject for NSRunLoopHostObject {}
+
+#[derive(Clone, Debug)]
+struct ObjectSelectorSource {
+    target: id,
+    selector: SEL,
+    argument: id,
+    due_by: Option<Instant>,
+    // Used for waitUntilDone:, (uses NULL if not waiting)
+    semaphore: MutPtr<sem_t>,
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -182,6 +198,102 @@ pub(super) fn remove_timer(env: &mut Environment, run_loop: id, timer: id) {
     }
 }
 
+/// Adds a selector to perform on the target run loop from
+/// performSelector:withObject:onThread:(afterDelay:/waitUntilDone:). The delay
+/// arg corrseponds to the afterDelay: arg and should_sync corresponds to
+/// waitUntilDone: arg.
+///
+/// If should_sync is set to true, a semaphore that should
+/// be waited on by the calling thread is returned. Otherwise, a null value is
+/// returned.
+pub(super) fn add_perform_request(
+    env: &mut Environment,
+    run_loop: id,
+    target: id,
+    selector: SEL,
+    argument: id,
+    delay: Option<f64>,
+    should_sync: bool,
+) -> MutPtr<sem_t> {
+    log_dbg!(
+        "Adding object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}",
+        selector.as_str(env.mem.as_mut())
+    );
+    let semaphore = if should_sync {
+        host_create_semaphore(env, 0)
+    } else {
+        MutPtr::null()
+    };
+    retain(env, target);
+    retain(env, argument);
+
+    let NSRunLoopHostObject {
+        selector_objects, ..
+    } = &mut env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop);
+    let due_by = delay.map(|dur| {
+        Instant::now()
+            .checked_add(Duration::from_secs_f64(dur))
+            .unwrap()
+    });
+    selector_objects.push_back(ObjectSelectorSource {
+        target,
+        selector,
+        argument,
+        due_by,
+        semaphore,
+    });
+    semaphore
+}
+
+/// Cancels a selector that was previously requested by [add_perform_request].
+/// The argument arg is compared via isEqual, [as documented by Apple]
+/// (<https://developer.apple.com/documentation/objectivec/nsobject/1410849-cancelpreviousperformrequestswit?language=objc>)
+pub(super) fn cancel_perform_requests(
+    env: &mut Environment,
+    run_loop: id,
+    target: id,
+    selector: SEL,
+    argument: id,
+) {
+    log_dbg!(
+        "Removing object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}",
+        selector.as_str(env.mem.as_mut())
+    );
+    let mut new_selector_objects = VecDeque::new();
+    let host_object = env.objc.borrow_mut::<NSRunLoopHostObject>(run_loop);
+    let mut selector_objects = std::mem::take(&mut host_object.selector_objects);
+    while let Some(obj) = selector_objects.pop_front() {
+        if obj.target != target || obj.selector != selector {
+            new_selector_objects.push_back(obj);
+            continue;
+        }
+        let curr_arg = obj.argument;
+        let arg_equal = if curr_arg.is_null() {
+            argument.is_null()
+        } else {
+            msg![env; curr_arg isEqual:argument]
+        };
+        if arg_equal {
+            let ObjectSelectorSource {
+                target,
+                argument,
+                semaphore,
+                ..
+            } = obj;
+            release(env, target);
+            release(env, argument);
+            if !semaphore.is_null() {
+                sem_post(env, semaphore);
+            }
+        } else {
+            new_selector_objects.push_back(obj);
+        }
+    }
+    env.objc
+        .borrow_mut::<NSRunLoopHostObject>(run_loop)
+        .selector_objects = new_selector_objects;
+}
+
 /// Run the run loop for just a single iteration. This is a special mode just
 /// for the app picker, since we don't have `runMode:beforeDate:` yet.
 /// (TODO: implement those to replace this.)
@@ -231,19 +343,14 @@ pub fn run_run_loop(
         //  "Implicit transactions are created automatically when the layer
         //  tree is modified by a thread without an active transaction and are
         //  committed automatically when the thread’s runloop next iterates."
-        ca_transaction::State::commit_implicit_transaction(env);
+        ca_transaction::ThreadLocalState::commit_implicit_transaction(env);
 
         // We want to process those only on the main run loop
         if is_main_run_loop {
-            env.window
-                .as_mut()
-                .expect("NSRunLoop not supported in headless mode")
-                .poll_for_events(&env.options);
-
             let next_due = uikit::handle_events(env);
             limit_sleep_time(&mut sleep_until, next_due);
 
-            let next_due = core_animation::recomposite_if_necessary(env, /* force: */ false);
+            let next_due = core_animation::recomposite_if_necessary(env, false);
             limit_sleep_time(&mut sleep_until, next_due);
         }
 
@@ -285,6 +392,52 @@ pub fn run_run_loop(
             render_audio_unit(env, audio_unit);
         }
 
+        loop {
+            let selector_objects = &mut env
+                .objc
+                .borrow_mut::<NSRunLoopHostObject>(run_loop)
+                .selector_objects;
+            let to_run = selector_objects
+                .iter()
+                .enumerate()
+                .find(|(_, oss)| oss.due_by.is_none_or(|due_by| Instant::now() >= due_by))
+                .map(|(index, _)| index);
+
+            match to_run {
+                Some(index) => {
+                    // TODO: remove() is linear here
+                    let ObjectSelectorSource {
+                        target,
+                        selector,
+                        argument,
+                        due_by: _,
+                        semaphore,
+                    } = selector_objects.remove(index).unwrap();
+                    log_dbg!("Running object selector request {target:?} {:?} {argument:?} on run loop {run_loop:?}", selector.as_str(env.mem.as_mut()));
+
+                    if selector.as_str(&env.mem).ends_with(':') {
+                        () = msg_send(env, (target, selector, argument));
+                    } else {
+                        assert!(argument.is_null());
+                        () = msg_send(env, (target, selector));
+                    }
+
+                    release(env, target);
+                    release(env, argument);
+
+                    if !semaphore.is_null() {
+                        sem_post(env, semaphore);
+                    }
+                }
+                None => {
+                    for oss in selector_objects {
+                        limit_sleep_time(&mut sleep_until, oss.due_by);
+                    }
+                    break;
+                }
+            }
+        }
+
         if is_main_run_loop {
             media_player::handle_players(env);
         }
@@ -304,10 +457,7 @@ pub fn run_run_loop(
         // or until the next scheduled event, whichever is sooner. iPhone OS
         // apps can't do more than 60fps so this should be fine.
         let limit = Duration::from_millis(1000 / 60);
-        env.sleep(
-            sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)),
-            false,
-        );
+        env.sleep(sleep_until.map_or(limit, |i| i.duration_since(Instant::now()).min(limit)));
 
         if single_iteration {
             break;
@@ -332,16 +482,17 @@ pub fn run_run_loop(
 
 /// Helper method for `mainRunLoop` and `currentRunLoop` NSThread class methods
 fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) -> id {
-    if let std::collections::hash_map::Entry::Vacant(e) = env
+    if env.threads[thread_id]
         .framework_state
         .foundation
         .ns_run_loop
-        .run_loops
-        .entry(thread_id)
+        .run_loop
+        == nil
     {
         let host_object = Box::new(NSRunLoopHostObject {
             audio_units: Vec::new(),
             audio_queues: Vec::new(),
+            selector_objects: VecDeque::new(),
             timers: Vec::new(),
         });
         // TODO: is it OK to allocate static object for all threads,
@@ -349,12 +500,15 @@ fn run_loop_for_thread(env: &mut Environment, this: Class, thread_id: ThreadId) 
         let new = env
             .objc
             .alloc_static_object(this, host_object, &mut env.mem);
-        e.insert(new);
+        env.threads[thread_id]
+            .framework_state
+            .foundation
+            .ns_run_loop
+            .run_loop = new;
     }
-    *env.framework_state
+    env.threads[thread_id]
+        .framework_state
         .foundation
         .ns_run_loop
-        .run_loops
-        .get(&thread_id)
-        .unwrap()
+        .run_loop
 }

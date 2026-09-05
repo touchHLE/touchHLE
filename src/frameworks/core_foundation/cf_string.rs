@@ -606,4 +606,12 @@ mod find_with_options_tests {
         assert_eq!(find_utf16_range(&source, &needle, 8), Some(0));
         assert_eq!(find_utf16_range(&source, &needle, 12), Some(6));
     }
+    #[test]
+    fn respects_case_and_missing_matches() {
+        let source: Vec<u16> = "Game Data".encode_utf16().collect();
+        let needle: Vec<u16> = "game".encode_utf16().collect();
+        assert_eq!(find_utf16_range(&source, &needle, 0), None);
+        assert_eq!(find_utf16_range(&source, &needle, 1), Some(0));
+        assert_eq!(find_utf16_range(&source, &[], 0), None);
+    }
 }

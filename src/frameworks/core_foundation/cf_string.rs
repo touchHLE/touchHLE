@@ -255,6 +255,7 @@ fn CFStringGetCharacterAtIndex(
     // renderer, but its return address differs between their iOS binaries.
     let wrapped_line_caller = match env.bundle.bundle_identifier() {
         "com.ea.sims3ambition.inc" => Some(0xc3cc4),
+        "com.ea.sims3wa.bv" => Some(0xae4d0),
         _ => None,
     };
     if let Some(wrapped_line_caller) = wrapped_line_caller {

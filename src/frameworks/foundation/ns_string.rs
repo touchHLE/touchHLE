@@ -648,7 +648,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     if other == nil
         && matches!(
             env.bundle.bundle_identifier(),
-            "com.ea.sims3ambition.inc"
+            "com.ea.sims3ambition.inc" | "com.ea.sims3wa.bv"
         )
     {
         let empty = env.objc.borrow::<StringHostObject>(this)

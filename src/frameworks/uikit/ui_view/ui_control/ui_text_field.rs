@@ -228,6 +228,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width
 }
 
+- (())setAdjustsFontSizeToFitWidth:(bool)adjusts {
+    // The text field uses a UILabel internally. Its current renderer does not
+    // implement text scaling yet, but retaining the UIKit flag avoids a missing
+    // selector and lets old apps create editable text fields.
+    env.objc.borrow_mut::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width = adjusts;
+}
+
 - (bool)isEditing {
     env.objc.borrow::<UITextFieldHostObject>(this).editing
 }

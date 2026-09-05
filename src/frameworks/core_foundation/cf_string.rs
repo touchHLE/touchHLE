@@ -614,4 +614,11 @@ mod find_with_options_tests {
         assert_eq!(find_utf16_range(&source, &needle, 1), Some(0));
         assert_eq!(find_utf16_range(&source, &[], 0), None);
     }
+    #[test]
+    fn searches_utf16_code_units() {
+        let source: Vec<u16> = "a😀b😀".encode_utf16().collect();
+        let needle: Vec<u16> = "😀".encode_utf16().collect();
+        assert_eq!(find_utf16_range(&source, &needle, 0), Some(1));
+        assert_eq!(find_utf16_range(&source, &needle, 4), Some(4));
+    }
 }

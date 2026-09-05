@@ -224,6 +224,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: bool = msg![env; this becomeFirstResponder];
 }
 
+- (bool)adjustsFontSizeToFitWidth {
+    env.objc.borrow::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width
+}
+
 - (bool)isEditing {
     env.objc.borrow::<UITextFieldHostObject>(this).editing
 }

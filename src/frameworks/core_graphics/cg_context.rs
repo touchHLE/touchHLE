@@ -68,6 +68,8 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: keep more states saved once they are implemented
 type ContextState = (
     (CGFloat, CGFloat, CGFloat, CGFloat), // RGB fill color
+    (CGFloat, CGFloat, CGFloat, CGFloat), // RGB stroke color
+    CGFloat,                              // line width
     CGAffineTransform,                    // transform
     CGFontRef,                            // font
     CGFloat,                              // font size
@@ -278,6 +280,8 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
     host_obj.state_stack.push((
         host_obj.rgb_fill_color,
+        host_obj.rgb_stroke_color,
+        host_obj.line_width,
         host_obj.transform,
         host_obj.font,
         host_obj.font_size,
@@ -296,10 +300,12 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
     let state = host_obj.state_stack.pop().unwrap();
     host_obj.rgb_fill_color = state.0;
-    host_obj.transform = state.1;
-    host_obj.font = state.2;
-    host_obj.font_size = state.3;
-    host_obj.blend_mode = state.4;
+    host_obj.rgb_stroke_color = state.1;
+    host_obj.line_width = state.2;
+    host_obj.transform = state.3;
+    host_obj.font = state.4;
+    host_obj.font_size = state.5;
+    host_obj.blend_mode = state.6;
 }
 
 fn CGContextSetInterpolationQuality(

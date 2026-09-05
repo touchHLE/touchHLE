@@ -42,6 +42,7 @@ struct UITextFieldHostObject {
     superclass: super::UIControlHostObject,
     delegate: id,
     editing: bool,
+    adjusts_font_size_to_fit_width: bool,
     text_label: id,
 }
 impl_HostObject_with_superclass!(UITextFieldHostObject);
@@ -51,6 +52,7 @@ impl Default for UITextFieldHostObject {
             superclass: Default::default(),
             delegate: nil,
             editing: false,
+            adjusts_font_size_to_fit_width: false,
             text_label: nil,
         }
     }

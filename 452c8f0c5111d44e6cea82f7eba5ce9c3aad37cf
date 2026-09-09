@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ceae617d_9d58171b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T19:34:06Z",
+      "side": 1,
+      "message": "Could you please elaborate on the motivation and/or use-case?",
+      "revId": "452c8f0c5111d44e6cea82f7eba5ce9c3aad37cf",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

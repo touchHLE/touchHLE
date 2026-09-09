@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f70dd43d_54d0b9e6",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 44
+      },
+      "lineNbr": 152,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T19:37:45Z",
+      "side": 1,
+      "message": "How was it validated?\n\nNot clear from the documentation if it\u0027s the same",
+      "revId": "4f532446b3390e114184609c648e5ec7b7b3e458",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28e20be1_c5890320",
+        "filename": "src/libc/stdio/printf.rs",
+        "patchSetId": 47
+      },
+      "lineNbr": 784,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T19:39:26Z",
+      "side": 1,
+      "message": "is it OK to compare this way? I would imagine wide string null to be 4 bytes long?",
+      "revId": "8e2d5c42cd3627ef57bbc593d5be64cc8509d496",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

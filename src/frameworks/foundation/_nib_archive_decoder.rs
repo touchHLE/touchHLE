@@ -322,7 +322,9 @@ pub fn decode_current_dict(env: &mut Environment, unarchiver: id) -> Vec<(id, id
         release(env, obj);
     }
     array
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|chunks| (chunks[0], chunks[1]))
         .collect()
 }

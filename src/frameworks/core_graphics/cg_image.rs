@@ -140,7 +140,7 @@ fn CGImageCreate(
         kCGImageByteOrder32Little => {
             // TODO: fix CGImageGetAlphaInfo()
             assert_eq!(alpha_info, kCGImageAlphaNoneSkipFirst); // TODO
-            for chunk in pixels.chunks_exact_mut(4) {
+            for chunk in pixels.as_chunks_mut::<4>().0 {
                 // XRGB in 32 little endian -> RGBX in 32 big endian
                 chunk.swap(0, 2);
                 // Assume opaque, even though it is undefined

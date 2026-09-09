@@ -494,7 +494,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)nextObject {
     let host_obj = env.objc.borrow_mut::<ObjectEnumeratorHostObject>(this);
-    host_obj.iterator.next().map_or(nil, |o| o)
+    host_obj.iterator.next().unwrap_or(nil)
 }
 
 - (())dealloc {

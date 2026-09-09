@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "af595249_19b13b42",
+        "filename": "src/libc/arpa/inet.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T22:43:17Z",
+      "side": 1,
+      "message": "could you please add some tests?\n\nyou could see how this is done for test_inet_ntop() or test_inet_pton() in cli_tests.m",
+      "revId": "cc82451e08af877f8ba6a222d6e3af1523082b56",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c1c6f35f_646a782e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 40
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T19:37:01Z",
+      "side": 1,
+      "message": "Could we please have an GUI test case and visual comparisons with real iOS?",
+      "revId": "6f6e7d6844af93d27f67ba39393f181b19c86483",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

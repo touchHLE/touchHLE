@@ -16,6 +16,23 @@
       "message": "Very tiny change!",
       "revId": "4443157515fe0d7f77b024f5bdd50e1e51797331",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b40bafd0_cece0e01",
+        "filename": "src/frameworks/uikit/ui_local_notification.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T22:53:26Z",
+      "side": 1,
+      "message": "arguments should follow Rust naming conventions, so it should be badge_number or application_icon_badge_number (i prefer shorter version)",
+      "revId": "4443157515fe0d7f77b024f5bdd50e1e51797331",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

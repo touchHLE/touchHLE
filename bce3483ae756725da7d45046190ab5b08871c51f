@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e97ba1a_a7979fa5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T22:50:42Z",
+      "side": 1,
+      "message": "I have a small concern here about cleaning of caches, i think it deserves at least a TODO comment somewhere",
+      "revId": "bce3483ae756725da7d45046190ab5b08871c51f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

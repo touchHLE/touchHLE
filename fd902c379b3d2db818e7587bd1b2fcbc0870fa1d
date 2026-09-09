@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f43d1528_5a4563a4",
+        "filename": "src/frameworks/uikit/ui_view/ui_image_view.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-09T22:49:22Z",
+      "side": 1,
+      "message": "the argument name should follow Rust conventions, so it should be repeat_count instead",
+      "revId": "fd902c379b3d2db818e7587bd1b2fcbc0870fa1d",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

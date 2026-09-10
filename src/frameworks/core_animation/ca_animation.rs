@@ -10,17 +10,22 @@ use crate::frameworks::core_animation::ca_media_timing_function::kCAMediaTimingF
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, todo_objc_setter, ClassExports,
-    HostObject, NSZonePtr,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use crate::{impl_HostObject_with_superclass, msg_class, msg_super};
 
-type CATransitionType = id; // NSString*
-const kCATransitionFade: &str = "fade";
-const kCATransitionMoveIn: &str = "moveIn";
-const kCATransitionPush: &str = "push";
-const kCATransitionReveal: &str = "reveal";
+pub type CATransitionType = id; // NSString*
+pub const kCATransitionFade: &str = "fade";
+pub const kCATransitionMoveIn: &str = "moveIn";
+pub const kCATransitionPush: &str = "push";
+pub const kCATransitionReveal: &str = "reveal";
+
+pub type CATransitionSubtype = id; // NSString*
+pub const kCATransitionFromRight: &str = "fromRight";
+pub const kCATransitionFromLeft: &str = "fromLeft";
+pub const kCATransitionFromTop: &str = "fromTop";
+pub const kCATransitionFromBottom: &str = "fromBottom";
 
 pub type CAMediaTimingFillMode = id; // NSString*
 pub const kCAFillModeBackwards: &str = "backwards";
@@ -45,6 +50,23 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_kCATransitionReveal",
         HostConstant::NSString(kCATransitionReveal),
+    ),
+    // `CATransitionSubtype` values.
+    (
+        "_kCATransitionFromRight",
+        HostConstant::NSString(kCATransitionFromRight),
+    ),
+    (
+        "_kCATransitionFromLeft",
+        HostConstant::NSString(kCATransitionFromLeft),
+    ),
+    (
+        "_kCATransitionFromTop",
+        HostConstant::NSString(kCATransitionFromTop),
+    ),
+    (
+        "_kCATransitionFromBottom",
+        HostConstant::NSString(kCATransitionFromBottom),
     ),
     // `CAMediaTimingFillMode` values.
     (
@@ -105,6 +127,26 @@ struct CABasicAnimationHostObject {
     by_value: id,
 }
 impl_HostObject_with_superclass!(CABasicAnimationHostObject);
+
+struct CATransitionHostObject {
+    superclass: CAAnimationHostObject,
+    start_progress: f32,
+    end_progress: f32,
+    transition_type: CATransitionType,
+    transition_subtype: CATransitionSubtype,
+}
+impl_HostObject_with_superclass!(CATransitionHostObject);
+impl Default for CATransitionHostObject {
+    fn default() -> Self {
+        CATransitionHostObject {
+            superclass: Default::default(),
+            start_progress: 0.0,
+            end_progress: 1.0,
+            transition_type: nil,
+            transition_subtype: nil
+        }
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -308,12 +350,47 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation CATransition : CAAnimation
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::<CABasicAnimationHostObject>::default();
-    env.objc.alloc_object(this, host_object, &mut env.mem)
+    env.objc.alloc_object(this, Box::<CATransitionHostObject>::default(), &mut env.mem)
+}
+
+- (id)init {
+    () = msg![env; this setType:(get_static_str(env, kCATransitionFade))];
+    msg_super![env; this init]
+}
+
+- (())setStartProgress:(f32)start_progress {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).start_progress = start_progress;
+}
+- (f32)startProgress {
+    env.objc.borrow::<CATransitionHostObject>(this).start_progress
+}
+
+- (())setEndProgress:(f32)end_progress {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).end_progress = end_progress;
+}
+- (f32)endProgress {
+    env.objc.borrow::<CATransitionHostObject>(this).end_progress
 }
 
 - (())setType:(CATransitionType)transitionType {
-    todo_objc_setter!(this, to_rust_string(env, transitionType));
+    assert!(transitionType != nil);
+    env.objc.borrow_mut::<CATransitionHostObject>(this).transition_type = msg![env; transitionType copy];
+}
+- (CATransitionType)type {
+    env.objc.borrow::<CATransitionHostObject>(this).transition_type
+}
+
+- (())setSubtype:(CATransitionSubtype)transitionSubtype {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).transition_subtype = msg![env; transitionSubtype copy];
+}
+- (CATransitionSubtype)subtype {
+    env.objc.borrow::<CATransitionHostObject>(this).transition_subtype
+}
+
+- (())dealloc {
+    let &CATransitionHostObject { transition_type, .. } = env.objc.borrow(this);
+    release(env, transition_type);
+    msg_super![env; this dealloc]
 }
 
 @end

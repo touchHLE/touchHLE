@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4a130146_f2fd64f6",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-09-10T23:30:41Z",
+      "side": 1,
+      "message": "This is a weird import, it\u0027s in the prelude isn\u0027t it? We use it all the time, right? IDE quirk???",
+      "revId": "e1c32da0275a5a243e029b97314d5ee8dd383c00",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

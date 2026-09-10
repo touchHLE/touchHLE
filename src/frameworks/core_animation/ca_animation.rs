@@ -10,17 +10,26 @@ use crate::frameworks::core_animation::ca_media_timing_function::kCAMediaTimingF
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::objc::{
-    autorelease, id, msg, nil, objc_classes, release, retain, todo_objc_setter, ClassExports,
-    HostObject, NSZonePtr,
+    autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use crate::{impl_HostObject_with_superclass, msg_class, msg_super};
 
-type CATransitionType = id; // NSString*
-const kCATransitionFade: &str = "fade";
-const kCATransitionMoveIn: &str = "moveIn";
-const kCATransitionPush: &str = "push";
-const kCATransitionReveal: &str = "reveal";
+pub type CATransitionType = id; // NSString*
+pub const kCATransitionFade: &str = "fade";
+pub const kCATransitionMoveIn: &str = "moveIn";
+pub const kCATransitionPush: &str = "push";
+pub const kCATransitionReveal: &str = "reveal";
+
+type CATransitionSubtype = id; // NSString*
+#[allow(unused)]
+const kCATransitionFromRight: &str = "fromRight";
+#[allow(unused)]
+const kCATransitionFromLeft: &str = "fromLeft";
+#[allow(unused)]
+const kCATransitionFromTop: &str = "fromTop";
+#[allow(unused)]
+const kCATransitionFromBottom: &str = "fromBottom";
 
 pub type CAMediaTimingFillMode = id; // NSString*
 pub const kCAFillModeBackwards: &str = "backwards";
@@ -105,6 +114,16 @@ struct CABasicAnimationHostObject {
     by_value: id,
 }
 impl_HostObject_with_superclass!(CABasicAnimationHostObject);
+
+#[derive(Default)]
+struct CATransitionHostObject {
+    superclass: CAAnimationHostObject,
+    start_progress: f32,
+    end_progress: f32,
+    transition_type: CATransitionType,
+    transition_subtype: CATransitionSubtype,
+}
+impl_HostObject_with_superclass!(CATransitionHostObject);
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -308,12 +327,37 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation CATransition : CAAnimation
 
 + (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::<CABasicAnimationHostObject>::default();
+    let mut host_object = Box::<CATransitionHostObject>::default();
+    host_object.transition_type = get_static_str(env, kCATransitionFade);
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
+- (())setStartProgress:(f32)start_progress {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).start_progress = start_progress;
+}
+- (f32)startProgress {
+    env.objc.borrow::<CATransitionHostObject>(this).start_progress
+}
+
+- (())setEndProgress:(f32)end_progress {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).end_progress = end_progress;
+}
+- (f32)endProgress {
+    env.objc.borrow::<CATransitionHostObject>(this).end_progress
+}
+
 - (())setType:(CATransitionType)transitionType {
-    todo_objc_setter!(this, to_rust_string(env, transitionType));
+    env.objc.borrow_mut::<CATransitionHostObject>(this).transition_type = transitionType;
+}
+- (CATransitionType)type {
+    env.objc.borrow::<CATransitionHostObject>(this).transition_type
+}
+
+- (())setSubtype:(CATransitionSubtype)transitionSubtype {
+    env.objc.borrow_mut::<CATransitionHostObject>(this).transition_subtype = transitionSubtype;
+}
+- (CATransitionSubtype)subtype {
+    env.objc.borrow::<CATransitionHostObject>(this).transition_subtype
 }
 
 @end

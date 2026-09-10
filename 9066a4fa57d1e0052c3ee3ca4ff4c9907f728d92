@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "318bb277_14fab9ff",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 262,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-09-10T23:28:58Z",
+      "side": 1,
+      "message": "Where is this marked? I was curious but they don\u0027t seem to document this on developer.apple.com?",
+      "revId": "9066a4fa57d1e0052c3ee3ca4ff4c9907f728d92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

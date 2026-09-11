@@ -20,6 +20,7 @@ use super::cg_image::{
     kCGImageAlphaPremultipliedFirst, kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
     kCGImageByteOrderDefault, CGBitmapInfo, CGImageAlphaInfo, CGImageRef,
 };
+use super::cg_path::kCGLineCapButt;
 use super::{CGFloat, CGPoint, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::image::{gamma_decode, gamma_encode, Image};
@@ -92,6 +93,7 @@ pub fn CGBitmapContextCreate(
         blend_mode: kCGBlendModeNormal,
         text_transform: None,
         state_stack: Vec::new(),
+        line_cap: kCGLineCapButt,
     };
     let isa = env
         .objc

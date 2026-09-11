@@ -13,6 +13,7 @@ use super::cg_color::CGColorRef;
 use super::cg_color_space::{
     kCGColorSpaceModelMonochrome, kCGColorSpaceModelRGB, CGColorSpaceGetModel, CGColorSpaceRef,
 };
+use super::cg_path::{CGLineCap, kCGLineCapButt, kCGLineCapRound, kCGLineCapSquare};
 use super::cg_font::{CGFontHostObject, CGFontRef, CGFontRelease, CGFontRetain, CGGlyph};
 use super::cg_geometry::CGPointZero;
 use super::cg_image::CGImageRef;
@@ -71,6 +72,7 @@ type ContextState = (
     CGFontRef,                            // font
     CGFloat,                              // font size
     CGBlendMode,                          // blend mode
+    CGLineCap,                            // line cap
 );
 
 pub(super) struct CGContextHostObject {
@@ -84,6 +86,8 @@ pub(super) struct CGContextHostObject {
     /// Text transform.
     pub(super) text_transform: Option<CGAffineTransform>,
     pub(super) state_stack: Vec<ContextState>,
+    /// Line cap
+    pub(super) line_cap: CGLineCap,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -276,6 +280,7 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
         host_obj.font,
         host_obj.font_size,
         host_obj.blend_mode,
+        host_obj.line_cap,
     ));
     CGFontRetain(env, env.objc.borrow::<CGContextHostObject>(context).font);
 }
@@ -294,6 +299,7 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     host_obj.font = state.2;
     host_obj.font_size = state.3;
     host_obj.blend_mode = state.4;
+    host_obj.line_cap = state.5;
 }
 
 fn CGContextSetInterpolationQuality(
@@ -428,6 +434,22 @@ fn CGContextShowGlyphsAtPositions(
     }
 }
 
+fn CGContextSetLineCap(
+    env: &mut Environment,
+    context: CGContextRef,
+    cap: CGLineCap
+) {
+    assert!(cap == kCGLineCapButt || cap == kCGLineCapRound || cap == kCGLineCapSquare);
+    log_dbg!(
+        "CGContextSetLineCap({:?}, {})",
+        context,
+        cap
+    );
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .line_cap = cap;
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -459,4 +481,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetTextMatrix(_, _)),
     export_c_func!(CGContextShowGlyphsAtPoint(_, _, _, _, _)),
     export_c_func!(CGContextShowGlyphsAtPositions(_, _, _, _)),
+    export_c_func!(CGContextSetLineCap(_, _)),
 ];

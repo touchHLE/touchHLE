@@ -16,6 +16,24 @@
       "message": "No export?",
       "revId": "ce8aa814c27c2019db30ac2edee1a11ed3923aea",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f3e40e4_1a460f4a",
+        "filename": "src/frameworks/core_animation/ca_animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-09-11T06:18:50Z",
+      "side": 1,
+      "message": "It\u0027s currently unused, but yeah, made it public",
+      "parentUuid": "e7473b0c_07a3b093",
+      "revId": "ce8aa814c27c2019db30ac2edee1a11ed3923aea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

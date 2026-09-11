@@ -16,6 +16,24 @@
       "message": "Where is this marked? I was curious but they don\u0027t seem to document this on developer.apple.com?",
       "revId": "9066a4fa57d1e0052c3ee3ca4ff4c9907f728d92",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe865ca9_084c935a",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 262,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-09-11T06:09:35Z",
+      "side": 1,
+      "message": "It\u0027s marked as such in the heeader",
+      "parentUuid": "318bb277_14fab9ff",
+      "revId": "9066a4fa57d1e0052c3ee3ca4ff4c9907f728d92",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

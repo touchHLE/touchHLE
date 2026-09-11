@@ -6362,6 +6362,83 @@ int test_malloc_zone_struct_dispatch() {
   return 0;
 }
 
+int test_fcvt() {
+  char *buf;
+  int dec, sign;
+
+  buf = fcvt(123.4567, 6, &dec, &sign);
+  if (strcmp(buf, "123456700") != 0 || dec != 3 || sign != 0) {
+    return -1;
+  }
+
+  buf = fcvt(123.4567, 2, &dec, &sign);
+  if (strcmp(buf, "12346") != 0 || dec != 3 || sign != 0) {
+    return -2;
+  }
+
+  buf = fcvt(0, 2, &dec, &sign);
+  if (strcmp(buf, "00") != 0 || dec != 0 || sign != 0) {
+    return -3;
+  }
+
+  buf = fcvt(6.491250038146973, 2, &dec, &sign);
+  if (strcmp(buf, "649") != 0 || dec != 1 || sign != 0) {
+    return -4;
+  }
+
+  buf = fcvt(-9.876, 10, &dec, &sign);
+  if (strcmp(buf, "98760000000") != 0 || dec != 1 || sign != 1) {
+    return -5;
+  }
+
+  buf = fcvt(0.125, 3, &dec, &sign);
+  if (strcmp(buf, "125") != 0 || dec != 0 || sign != 0) {
+    return -6;
+  }
+
+  buf = fcvt(0.00125, 5, &dec, &sign);
+  if (strcmp(buf, "125") != 0 || dec != -2 || sign != 0) {
+    return -7;
+  }
+
+  buf = fcvt(-0.00125, 5, &dec, &sign);
+  if (strcmp(buf, "125") != 0 || dec != -2 || sign != 1) {
+    return -8;
+  }
+
+  buf = fcvt(0.0001, 2, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -2 || sign != 0) {
+    return -9;
+  }
+
+  buf = fcvt(-0.0001, 2, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -2 || sign != 1) {
+    return -10;
+  }
+
+  buf = fcvt(1e-300, 5, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -5 || sign != 0) {
+    return -11;
+  }
+
+  buf = fcvt(0.004, 2, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -2 || sign != 0) {
+    return -12;
+  }
+
+  buf = fcvt(0.005, 2, &dec, &sign);
+  if (strcmp(buf, "1") != 0 || dec != -1 || sign != 0) {
+    return -13;
+  }
+
+  buf = fcvt(0.006, 2, &dec, &sign);
+  if (strcmp(buf, "1") != 0 || dec != -1 || sign != 0) {
+    return -14;
+  }
+
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -6476,6 +6553,7 @@ struct {
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_removeObserver),
     FUNC_DEF(test_malloc_zone_basic),
     FUNC_DEF(test_malloc_zone_struct_dispatch),
+    FUNC_DEF(test_fcvt),
 };
 // clang-format on
 

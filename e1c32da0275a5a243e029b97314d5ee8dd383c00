@@ -16,6 +16,24 @@
       "message": "This is a weird import, it\u0027s in the prelude isn\u0027t it? We use it all the time, right? IDE quirk???",
       "revId": "e1c32da0275a5a243e029b97314d5ee8dd383c00",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0a4217ce_8da90386",
+        "filename": "src/frameworks/core_animation/animation.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-09-11T06:18:54Z",
+      "side": 1,
+      "message": "Indeed IDE quirk, my bad",
+      "parentUuid": "4a130146_f2fd64f6",
+      "revId": "e1c32da0275a5a243e029b97314d5ee8dd383c00",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

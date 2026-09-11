@@ -46,8 +46,8 @@ pub use selectors::{selector, SEL};
 use crate::mem::ConstVoidPtr;
 use crate::Environment;
 use classes::{
-    class_getInstanceSize, class_getProperty, class_getSuperclass, objc_getClass, ClassHostObject,
-    FakeClass, UnimplementedClass,
+    class_getInstanceSize, class_getProperty, class_getSuperclass, class_replaceMethod,
+    objc_getClass, ClassHostObject, FakeClass, UnimplementedClass,
 };
 pub(crate) use messages::objc_msgSend;
 use messages::{objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature};
@@ -138,6 +138,7 @@ const FUNCTIONS: FunctionExports = &[
     export_c_func!(class_getInstanceSize(_)),
     export_c_func!(class_getSuperclass(_)),
     export_c_func!(class_getProperty(_, _)),
+    export_c_func!(class_replaceMethod(_, _, _, _)),
     export_c_func!(objc_msgSend(_, _)),
     export_c_func!(objc_msgSend_stret(_, _, _)),
     export_c_func!(objc_msgSendSuper2(_, _)),

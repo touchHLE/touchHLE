@@ -444,8 +444,10 @@ pub fn handle_return(env: &mut Environment, text_field: id) {
     let sel: SEL = env
         .objc
         .register_host_selector("textFieldShouldReturn:".to_string(), &mut env.mem);
-    if msg![env; delegate respondsToSelector:sel] {
-        log_dbg!("handle_return");
-        () = msg![env; delegate textFieldShouldReturn:text_field];
-    }
+    let accepts_return = if delegate != nil && msg![env; delegate respondsToSelector:sel] {
+        let accepted: bool = msg![env; delegate textFieldShouldReturn:text_field];
+        accepted
+    } else {
+        true
+    };
 }

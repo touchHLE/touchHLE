@@ -5,8 +5,8 @@
  */
 //! `UILocalNotification`.
 
-use crate::objc::{id, objc_classes, todo_objc_setter, ClassExports};
 use crate::frameworks::foundation::NSInteger;
+use crate::objc::{id, objc_classes, todo_objc_setter, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 

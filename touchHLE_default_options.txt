@@ -83,7 +83,7 @@ com.darxun.motoracinggp: --landscape-right --button-to-touch=A,25,295 --button-t
 com.bestsungame.warriornationblade:  --button-to-touch=DPadLeft,50,285 --button-to-touch=DPadRight,120,285 --button-to-touch=A,430,260 --button-to-touch=B,440,185 --button-to-touch=X,360,280 --button-to-touch=Y,230,270 --button-to-touch=LeftShoulder,270,30 --button-to-touch=Start,460,20
 
 # Resident Evil 4
-jp.co.capcom.res4: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=X,360,200 --button-to-touch=Y,440,150 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100
+jp.co.capcom.res4: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=X,360,200 --button-to-touch=Y,440,150 --dpad-to-touch=25,200,95,100 --left-stick-to-touch=25,200,95,100
 
 # Earthworm Jim
 # Dpad = Move, A = Jump, B = Whip, X = Fire
@@ -152,13 +152,13 @@ com.activision.CBNK2: --landscape-left
 
 # FIFA 10
 # Stick/Dpad = Move, A = Pass/Tackle, B,LeftShoulder = Shoot/Switch players, Start = Pause
-com.ea.fifa10.bv: --landscape-left --button-to-touch=A,450,206 --button-to-touch=B,430,270 --button-to-touch=LeftShoulder,430,270 --button-to-touch=Start,160,16 --dpad-to-touch=25,195,100,100 --stick-to-touch=25,195,100,100
-com.ea.fifa10inc: --landscape-left --button-to-touch=A,450,206 --button-to-touch=B,430,270 --button-to-touch=LeftShoulder,430,270 --button-to-touch=Start,160,16 --dpad-to-touch=25,195,100,100 --stick-to-touch=25,195,100,100
+com.ea.fifa10.bv: --landscape-left --button-to-touch=A,450,206 --button-to-touch=B,430,270 --button-to-touch=LeftShoulder,430,270 --button-to-touch=Start,160,16 --dpad-to-touch=25,195,100,100 --left-stick-to-touch=25,195,100,100
+com.ea.fifa10inc: --landscape-left --button-to-touch=A,450,206 --button-to-touch=B,430,270 --button-to-touch=LeftShoulder,430,270 --button-to-touch=Start,160,16 --dpad-to-touch=25,195,100,100 --left-stick-to-touch=25,195,100,100
 
 # FIFA 2010 WORLD CUP SOUTH AFRICA
 # Stick = Move, A,LeftShoulder = Pass/Tackle/Switch players, B = Shoot/Slide, X = Skill, Start = Pause
-com.ea.fifa10wc.bv: --landscape-left --button-to-touch=A,414,174 --button-to-touch=B,328,256 --button-to-touch=LeftShoulder,414,174 --button-to-touch=X,436,276 --button-to-touch=Start,160,16 --stick-to-touch=25,195,100,100
-com.ea.fifa10wc.inc: --landscape-left --button-to-touch=A,414,174 --button-to-touch=B,328,256 --button-to-touch=LeftShoulder,414,174 --button-to-touch=X,436,276 --button-to-touch=Start,160,16 --stick-to-touch=25,195,100,100
+com.ea.fifa10wc.bv: --landscape-left --button-to-touch=A,414,174 --button-to-touch=B,328,256 --button-to-touch=LeftShoulder,414,174 --button-to-touch=X,436,276 --button-to-touch=Start,160,16 --left-stick-to-touch=25,195,100,100
+com.ea.fifa10wc.inc: --landscape-left --button-to-touch=A,414,174 --button-to-touch=B,328,256 --button-to-touch=LeftShoulder,414,174 --button-to-touch=X,436,276 --button-to-touch=Start,160,16 --left-stick-to-touch=25,195,100,100
 
 # Real Racing
 com.firemint.realracing: --landscape-left
@@ -174,7 +174,7 @@ com.pangea.bug2: --ignore-gl-errors
 
 # Rayman 2
 # Stick = Move, A = Jump, X = Shoot/Skip cutscene, Y = First-person, B = Dive
-com.gameloft.Rayman2: --stick-to-touch=22,210,90,100 --button-to-touch=A,376,280 --button-to-touch=X,435,220 --button-to-touch=Y,22,88 --button-to-touch=B,448,144 --button-to-touch=Start,16,16
+com.gameloft.Rayman2: --left-stick-to-touch=22,210,90,100 --button-to-touch=A,376,280 --button-to-touch=X,435,220 --button-to-touch=Y,22,88 --button-to-touch=B,448,144 --button-to-touch=Start,16,16
 
 # Casper
 # (force composition fixes graphical issues)
@@ -190,7 +190,7 @@ com.gameloft.BIA: --landscape-left --zero-stack-after-guest-to-host-call=25
 
 # Hero of Sparta II
 # Stick = Move, A = Jump, B = Quick attack, X = Block, Y = Weapon select, LeftShoulder = Focus kill
-com.gameloft.HOS2: --stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 --button-to-touch=B,394,234 --button-to-touch=A,456,190 --button-to-touch=X,350,294 --button-to-touch=Y,434,22 --button-to-touch=LeftShoulder,446,286
+com.gameloft.HOS2: --left-stick-to-touch=28,206,84,84 --button-to-touch=Start,25,25 --button-to-touch=B,394,234 --button-to-touch=A,456,190 --button-to-touch=X,350,294 --button-to-touch=Y,434,22 --button-to-touch=LeftShoulder,446,286
 
 # Unity's 3D World demo
 com.unity3d.3Dworld: --landscape-left --force-composition
@@ -206,11 +206,11 @@ com.namconetworks.AceCombatXi: --landscape-left --y-tilt-offset=45 --button-to-t
 com.mrgoodliving.TikiTowers: --landscape-left
 
 # Resident Evil Degeneration
-jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --stick-to-touch=25,200,95,100
+jp.co.capcom.residentevil.en: --landscape-left --stabilize-virtual-cursor=0.1,10 --button-to-touch=A,430,280 --button-to-touch=B,440,200 --button-to-touch=Y,440,100 --button-to-touch=Start,30,30 --dpad-to-touch=25,200,95,100 --left-stick-to-touch=25,200,95,100
 
 # COD Zombies
 # DPad/Stick = Move, Left shoulder = Knife, A = Shoot, B = Aim, X = Reload, Y = Grenade, Start = Pause
-com.activision.callofduty: --x-tilt-offset=-10 --dpad-to-touch=30,215,80,80 --stick-to-touch=30,215,80,80 --button-to-touch=A,387,210 --button-to-touch=B,455,185 --button-to-touch=X,455,25 --button-to-touch=Y,440,95 --button-to-touch=LeftShoulder,240,310 --button-to-touch=Start,20,25
+com.activision.callofduty: --y-tilt-offset=45 --dpad-to-touch=30,215,80,80 --left-stick-to-touch=30,215,80,80 --button-to-touch=A,387,210 --button-to-touch=B,455,185 --button-to-touch=X,455,25 --button-to-touch=Y,440,95 --button-to-touch=LeftShoulder,240,310 --button-to-touch=Start,20,25
 
 # Pandemonium
 # DPad/Stick = Move, Up = Switch Character, X = Fargus Attack, A = Fire, B = Jump, LeftShoulder = Switch Camera, Start = Pause

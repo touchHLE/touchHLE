@@ -239,6 +239,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     true
 }
 
+- (bool)isFirstResponder {
+    env.framework_state.uikit.ui_responder.first_responder == this
+}
+
 - (bool)isEditing {
     env.objc.borrow::<UITextFieldHostObject>(this).editing
 }

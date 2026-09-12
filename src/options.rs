@@ -24,10 +24,13 @@ pub enum Button {
     DPadRight,
     DPadDown,
     Start,
+    Back,
     A,
     B,
     X,
     Y,
+    LeftStick,
+    RightStick,
     LeftShoulder,
 }
 
@@ -155,10 +158,13 @@ impl Options {
                 "DPadRight" => Ok(Button::DPadRight),
                 "DPadDown" => Ok(Button::DPadDown),
                 "Start" => Ok(Button::Start),
+                "Back" => Ok(Button::Back),
                 "A" => Ok(Button::A),
                 "B" => Ok(Button::B),
                 "X" => Ok(Button::X),
                 "Y" => Ok(Button::Y),
+                "LeftStick" => Ok(Button::LeftStick),
+                "RightStick" => Ok(Button::RightStick),
                 "LeftShoulder" => Ok(Button::LeftShoulder),
                 _ => Err("Invalid button for --button-to-touch=".to_string()),
             }?;

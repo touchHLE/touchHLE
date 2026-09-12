@@ -112,8 +112,8 @@ Game controller options:
         part of the screen.
 
         This is three parts separated by commas: the name of a button (DPadLeft,
-        DPadUp, DPadRight, DPadDown, Start, LeftShoulder or Xbox-like
-        A, B, X or Y), the X co-ordinate and the Y co-ordinate.
+        DPadUp, DPadRight, DPadDown, Start, Back, LeftStick, RightStick, LeftShoulder
+        or Xbox-like A, B, X or Y), the X co-ordinate and the Y co-ordinate.
         The co-ordinates are floating-point (decimal) numbers. 0,0 is the
         top-left corner. The bottom-right corner is 320,480 if the app is in
         portrait, and 480,320 if the app is in landscape.

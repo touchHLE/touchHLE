@@ -98,7 +98,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     () = msg![env; this setImage:first_image];
 }
 
-- (())setAnimationDuration:(NSTimeInterval)duration { // NSArray<UIImage *>*
+- (())setAnimationDuration:(NSTimeInterval)duration {
     todo_objc_setter!(this, duration);
 }
 

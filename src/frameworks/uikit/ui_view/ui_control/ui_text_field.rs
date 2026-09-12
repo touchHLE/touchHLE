@@ -235,6 +235,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width = adjusts;
 }
 
+- (bool)canBecomeFirstResponder {
+    true
+}
+
 - (bool)isEditing {
     env.objc.borrow::<UITextFieldHostObject>(this).editing
 }

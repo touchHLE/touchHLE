@@ -682,7 +682,7 @@ impl Window {
                     if axis == sdl2::controller::Axis::LeftX
                         || axis == sdl2::controller::Axis::LeftY
                     {
-                        let (stick_x, stick_y, _) = self.get_controller_stick(options, true);
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options.left_deadzone, true);
                         let coords = transform_input_coords(
                             self,
                             (
@@ -691,7 +691,7 @@ impl Window {
                             ),
                             true,
                         );
-                        if stick_x.abs() < options.deadzone && stick_y.abs() < options.deadzone {
+                        if stick_x.abs() < options.left_deadzone && stick_y.abs() < options.left_deadzone {
                             if !self.stick_active {
                                 // Ignore deadzone events when stick is inactive
                                 continue;
@@ -963,7 +963,7 @@ impl Window {
                 .unwrap()
         } else {
             // Get left analog stick input. The range is [-1, 1] on each axis.
-            let (x, y, _) = self.get_controller_stick(options, true);
+            let (x, y, _) = self.get_controller_stick(options.left_deadzone, true);
             (x, y)
         };
 
@@ -1022,7 +1022,7 @@ impl Window {
     /// and whether the cursor moved.
     fn update_virtual_cursor(&mut self, options: &Options) -> (f32, f32, bool, bool, bool) {
         // Get right analog stick input. The range is [-1, 1] on each axis.
-        let (x, y, pressed) = self.get_controller_stick(options, false);
+        let (x, y, pressed) = self.get_controller_stick(options.right_deadzone, false);
 
         // The cursor is intended to only show up once you move the analog stick
         // out of its deadzone, or while the button is held.
@@ -1108,7 +1108,7 @@ impl Window {
     /// Get the summed X and Y positions and button state of the left or right
     /// analog stick of the game controllers. Each axis value is in the range
     /// [-1, 1].
-    fn get_controller_stick(&self, options: &Options, left: bool) -> (f32, f32, bool) {
+    fn get_controller_stick(&self, deadzone: f32, left: bool) -> (f32, f32, bool) {
         fn convert_axis(axis: i16, deadzone: f32) -> f32 {
             assert!(deadzone >= 0.0);
             let axis = ((axis as f32) / (i16::MAX as f32)).clamp(-1.0, 1.0);
@@ -1135,8 +1135,8 @@ impl Window {
                     Button::RightShoulder,
                 )
             };
-            x += convert_axis(controller.axis(x_axis), options.deadzone);
-            y += convert_axis(controller.axis(y_axis), options.deadzone);
+            x += convert_axis(controller.axis(x_axis), deadzone);
+            y += convert_axis(controller.axis(y_axis), deadzone);
             pressed |= controller.button(button1);
             pressed |= controller.button(button2);
         }

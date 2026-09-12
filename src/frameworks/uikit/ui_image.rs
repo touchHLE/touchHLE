@@ -5,6 +5,7 @@
  */
 //! `UIImage`.
 
+use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
 use crate::frameworks::core_graphics::cg_image::{
     self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
@@ -15,9 +16,10 @@ use crate::frameworks::foundation::{ns_data, ns_string, NSInteger};
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
+use crate::mem::MutVoidPtr;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, msg_send, nil, objc_classes, release, retain, ClassExports,
+    HostObject, NSZonePtr, SEL,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -217,3 +219,120 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+fn UIImageWriteToSavedPhotosAlbum(
+    env: &mut Environment,
+    image: id,
+    completionTarget: id,
+    completionSelector: SEL,
+    contextInfo: MutVoidPtr,
+) {
+    log_dbg!(
+        "UIImageWriteToSavedPhotosAlbum image:{:?} completionTarget:{:?} completionSelector:{:?}",
+        image,
+        completionTarget,
+        completionSelector,
+    );
+
+    let cg_image = if image != nil {
+        msg![env; image CGImage]
+    } else {
+        nil
+    };
+
+    if cg_image != nil {
+        write_to_saved_photos_album_inner(env, cg_image);
+    } else {
+        log!("UIImageWriteToSavedPhotosAlbum: image has no CGImage, skipping save");
+    }
+
+    // Call completion handler
+    if completionTarget != nil && !completionSelector.is_null() {
+        let _: () = msg_send(
+            env,
+            (
+                completionTarget,
+                completionSelector,
+                image,
+                nil,
+                contextInfo,
+            ),
+        );
+    }
+}
+
+/// Helper function to simplify UIImageWriteToSavedPhotosAlbum
+/// Allows several failure points to do an early return
+fn write_to_saved_photos_album_inner(env: &mut Environment, cg_image: CGImageRef) {
+    let (w, h, rgba, stride) = {
+        let img = cg_image::borrow_image(&env.objc, cg_image);
+        let (w_u32, h_u32) = img.dimensions();
+        let stride = w_u32 as usize * 4;
+        let rgba = img.pixels().to_vec();
+        (w_u32 as i32, h_u32 as i32, rgba, stride as i32)
+    };
+
+    let mut png_data: Vec<u8> = Vec::new();
+    let ctx_ptr: *mut std::ffi::c_void = (&mut png_data as *mut Vec<u8>).cast();
+
+    let ok = crate::image::write_png(ctx_ptr, w, h, &rgba, stride);
+
+    if ok == 0 {
+        log!("Warning: UIImageWriteToSavedPhotosAlbum: stb_image_write failed to encode PNG");
+        return;
+    }
+    let base = crate::paths::user_data_base_path();
+    let album_dir = base.join(crate::paths::PHOTO_ALBUM_DIR);
+
+    if let Err(e) = std::fs::create_dir_all(&album_dir) {
+        log!(
+            "Warning: UIImageWriteToSavedPhotosAlbum failed to create {:?}: {:?}",
+            album_dir,
+            e
+        );
+        return;
+    }
+    // Find next IMG_####.PNG
+    let mut max_index: u32 = 0;
+    if let Ok(entries) = std::fs::read_dir(&album_dir) {
+        for entry_res in entries {
+            let Ok(entry) = entry_res else { continue };
+            let name_os = entry.file_name();
+            let Some(name) = name_os.to_str() else {
+                continue;
+            };
+
+            // Accept IMG_0001.PNG / IMG_0001.png etc
+            if name.starts_with("IMG_") {
+                if let Some(dot_idx) = name.rfind('.') {
+                    let num_str = &name[4..dot_idx];
+                    if let Ok(n) = num_str.parse::<u32>() {
+                        max_index = max_index.max(n);
+                    }
+                }
+            }
+        }
+    }
+
+    let next_index = max_index + 1;
+    let file_name = format!("IMG_{:04}.PNG", next_index);
+    let file_path = album_dir.join(file_name);
+
+    if let Err(e) = std::fs::write(&file_path, &png_data) {
+        log!(
+            "Warning: UIImageWriteToSavedPhotosAlbum failed to write {:?}: {:?}",
+            file_path,
+            e
+        );
+        return;
+    }
+    log_dbg!(
+        "UIImageWriteToSavedPhotosAlbum: wrote {:?} ({}×{})",
+        file_path,
+        w,
+        h
+    );
+}
+
+pub const FUNCTIONS: FunctionExports =
+    &[export_c_func!(UIImageWriteToSavedPhotosAlbum(_, _, _, _))];

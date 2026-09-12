@@ -34,11 +34,67 @@ pub type CGBlendMode = i32;
 pub const kCGBlendModeNormal: CGBlendMode = 0;
 pub const kCGBlendModeMultiply: CGBlendMode = 1;
 pub const kCGBlendModeScreen: CGBlendMode = 2;
-#[allow(unused)]
 pub const kCGBlendModeOverlay: CGBlendMode = 3;
 pub const kCGBlendModeDarken: CGBlendMode = 4;
 pub const kCGBlendModeLighten: CGBlendMode = 5;
+pub const kCGBlendModeColorDodge: CGBlendMode = 6;
+pub const kCGBlendModeColorBurn: CGBlendMode = 7;
+pub const kCGBlendModeSoftLight: CGBlendMode = 8;
+pub const kCGBlendModeHardLight: CGBlendMode = 9;
+pub const kCGBlendModeDifference: CGBlendMode = 10;
+pub const kCGBlendModeExclusion: CGBlendMode = 11;
+pub const kCGBlendModeHue: CGBlendMode = 12;
+pub const kCGBlendModeSaturation: CGBlendMode = 13;
+pub const kCGBlendModeColor: CGBlendMode = 14;
+pub const kCGBlendModeLuminosity: CGBlendMode = 15;
+pub const kCGBlendModeClear: CGBlendMode = 16;
 pub const kCGBlendModeCopy: CGBlendMode = 17;
+pub const kCGBlendModeSourceIn: CGBlendMode = 18;
+pub const kCGBlendModeSourceOut: CGBlendMode = 19;
+pub const kCGBlendModeSourceAtop: CGBlendMode = 20;
+pub const kCGBlendModeDestinationOver: CGBlendMode = 21;
+pub const kCGBlendModeDestinationIn: CGBlendMode = 22;
+pub const kCGBlendModeDestinationOut: CGBlendMode = 23;
+pub const kCGBlendModeDestinationAtop: CGBlendMode = 24;
+pub const kCGBlendModeXOR: CGBlendMode = 25;
+pub const kCGBlendModePlusDarker: CGBlendMode = 26;
+pub const kCGBlendModePlusLighter: CGBlendMode = 27;
+
+// Helper function for logging blend modes
+// It also allowes us to define blend mode conststs we are not using yet!
+pub(super) fn blend_mode_name(mode: CGBlendMode) -> &'static str {
+    match mode {
+        kCGBlendModeNormal => "Normal",
+        kCGBlendModeMultiply => "Multiply",
+        kCGBlendModeScreen => "Screen",
+        kCGBlendModeOverlay => "Overlay",
+        kCGBlendModeDarken => "Darken",
+        kCGBlendModeLighten => "Lighten",
+        kCGBlendModeColorDodge => "ColorDodge",
+        kCGBlendModeColorBurn => "ColorBurn",
+        kCGBlendModeSoftLight => "SoftLight",
+        kCGBlendModeHardLight => "HardLight",
+        kCGBlendModeDifference => "Difference",
+        kCGBlendModeExclusion => "Exclusion",
+        kCGBlendModeHue => "Hue",
+        kCGBlendModeSaturation => "Saturation",
+        kCGBlendModeColor => "Color",
+        kCGBlendModeLuminosity => "Luminosity",
+        kCGBlendModeClear => "Clear",
+        kCGBlendModeCopy => "Copy",
+        kCGBlendModeSourceIn => "SourceIn",
+        kCGBlendModeSourceOut => "SourceOut",
+        kCGBlendModeSourceAtop => "SourceAtop",
+        kCGBlendModeDestinationOver => "DestinationOver",
+        kCGBlendModeDestinationIn => "DestinationIn",
+        kCGBlendModeDestinationOut => "DestinationOut",
+        kCGBlendModeDestinationAtop => "DestinationAtop",
+        kCGBlendModeXOR => "XOR",
+        kCGBlendModePlusDarker => "PlusDarker",
+        kCGBlendModePlusLighter => "PlusLighter",
+        _ => "Unknown",
+    }
+}
 
 pub const CLASSES: ClassExports = objc_classes! {
 
@@ -238,6 +294,29 @@ pub fn CGContextGetCTM(env: &mut Environment, context: CGContextRef) -> CGAffine
     log_dbg!("CGContextGetCTM() => {:?}", res);
     res
 }
+pub fn CGContextGetUserSpaceToDeviceSpaceTransform(
+    env: &mut Environment,
+    context: CGContextRef,
+) -> CGAffineTransform {
+    let ctm = CGContextGetCTM(env, context);
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context);
+    #[allow(unreachable_patterns)]
+    match &host_obj.subclass {
+        CGContextSubclass::CGBitmapContext(_) => {
+            let height = CGBitmapContextGetHeight(env, context) as CGFloat;
+            let flip = CGAffineTransform {
+                a: 1.0,
+                b: 0.0,
+                c: 0.0,
+                d: -1.0,
+                tx: 0.0,
+                ty: height,
+            };
+            flip.concat(ctm)
+        }
+        _ => ctm,
+    }
+}
 pub fn CGContextRotateCTM(env: &mut Environment, context: CGContextRef, angle: CGFloat) {
     log_dbg!("CGContextRotateCTM({:?})", angle);
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
@@ -321,6 +400,13 @@ fn CGContextSetShouldSmoothFonts(_env: &mut Environment, context: CGContextRef, 
         context,
         should
     );
+}
+
+fn CGContextSetAlpha(_env: &mut Environment, context: CGContextRef, alpha: CGFloat) {
+    // Since 1.0 is the default value for alpha, we can just ignore it
+    if alpha != 1.0 {
+        log!("TODO: CGContextSetAlpha({:?}, {:?})", context, alpha);
+    }
 }
 
 fn CGContextSetFont(env: &mut Environment, context: CGContextRef, font: CGFontRef) {
@@ -444,6 +530,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextClipToRect(_, _)),
     export_c_func!(CGContextConcatCTM(_, _)),
     export_c_func!(CGContextGetCTM(_)),
+    export_c_func!(CGContextGetUserSpaceToDeviceSpaceTransform(_)),
     export_c_func!(CGContextRotateCTM(_, _)),
     export_c_func!(CGContextScaleCTM(_, _, _)),
     export_c_func!(CGContextTranslateCTM(_, _, _)),
@@ -453,6 +540,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetInterpolationQuality(_, _)),
     export_c_func!(CGContextSetAllowsAntialiasing(_, _)),
     export_c_func!(CGContextSetShouldSmoothFonts(_, _)),
+    export_c_func!(CGContextSetAlpha(_, _)),
     export_c_func!(CGContextSetFont(_, _)),
     export_c_func!(CGContextSetFontSize(_, _)),
     export_c_func!(CGContextSetTextDrawingMode(_, _)),

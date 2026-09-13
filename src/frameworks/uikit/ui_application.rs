@@ -394,6 +394,26 @@ pub(super) fn UIApplicationMain(
         let notif_name = get_static_str(env, UIApplicationDidBecomeActiveNotification);
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
 
+        if env
+            .framework_state
+            .uikit
+            .ui_device
+            .is_generating_device_orientation_notifications()
+        {
+            // This is a bit hacky...
+            //
+            // Some apps (e.g. "Dead Space") setup window and views only after
+            // receiving a device orientation change notification.
+            // Setup for this is usually done by calling
+            // `[UIDevice beginGeneratingDeviceOrientationNotifications]` and
+            // registering for UIDeviceOrientationDidChangeNotification
+            // notification in `application:didFinishLaunchingWithOptions:`.
+            //
+            // Here we're helping by seeding a first device orientation change
+            // just after the application becomes active.
+            generate_device_orientation_notification(env);
+        }
+
         let _: () = msg![env; pool drain];
     }
 

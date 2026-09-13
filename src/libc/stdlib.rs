@@ -490,6 +490,36 @@ fn strtol(env: &mut Environment, str: ConstPtr<u8>, endptr: MutPtr<MutPtr<u8>>, 
     }
 }
 
+fn wcstol(
+    env: &mut Environment,
+    nptr: ConstPtr<wchar_t>,
+    endptr: MutPtr<MutPtr<wchar_t>>,
+    base: i32,
+) -> i32 {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let w_string = env.mem.wcstr_at(nptr);
+    assert!(w_string.is_ascii()); // TODO
+
+    assert!(endptr.is_null()); // TODO
+
+    let c_string = env.mem.alloc_and_write_cstr(w_string.as_bytes());
+    // TODO: use str_to_int_inner_generic() instead
+    let (res, _) = strtol_inner(env, c_string.cast_const(), base as u32).unwrap();
+    env.mem.free(c_string.cast());
+    log_dbg!(
+        "wcstol({:?} ({:?}), {:?}, {}) -> {}",
+        nptr,
+        w_string,
+        endptr,
+        base,
+        res
+    );
+    res
+}
+
 fn realpath(
     env: &mut Environment,
     file_name: ConstPtr<u8>,
@@ -655,6 +685,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcstoul(_, _, _)),
     export_c_func!(strtoull(_, _, _)),
     export_c_func!(strtol(_, _, _)),
+    export_c_func!(wcstol(_, _, _)),
     export_c_func!(realpath(_, _)),
     export_c_func_aliased!("realpath$DARWIN_EXTSN", realpath(_, _)),
     export_c_func!(mbstowcs(_, _, _)),
@@ -794,7 +825,7 @@ where
 
 /// A simple wrapper around [str_to_int_inner_generic]
 /// for the case of C string and i32.
-fn strtol_inner(env: &mut Environment, str: ConstPtr<u8>, base: u32) -> Result<(i32, u32), ()> {
+pub fn strtol_inner(env: &mut Environment, str: ConstPtr<u8>, base: u32) -> Result<(i32, u32), ()> {
     str_to_int_inner_generic(
         env,
         |env, s, idx| Ok(env.mem.read(s + idx)),

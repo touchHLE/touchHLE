@@ -1235,6 +1235,31 @@ int test_strtol() {
   return 0;
 }
 
+// This is a simplified version of test_strtol()
+int test_wcstol() {
+  const wchar_t *subjects[] = {L"10", L"200000000000000000000000000000",
+                               L"  30", L"   -40"};
+  long res[] = {10, MAX_LONG, 30, -40};
+  int count = sizeof(res) / sizeof(long);
+  for (int i = 0; i < count; i++) {
+    long l = wcstol(subjects[i], NULL, 10);
+    if (res[i] != l) {
+      return -(i + 1);
+    }
+  }
+  long l;
+  const wchar_t *subjects2[] = {L"0x123", L"+0x123", L"-0x123"};
+  long res2[] = {291, 291, -291};
+  int count2 = sizeof(res2) / sizeof(long);
+  for (int i = 0; i < count2; i++) {
+    l = wcstol(subjects2[i], NULL, 16);
+    if (res2[i] != l) {
+      return -(count + 2 + i + 1);
+    }
+  }
+  return 0;
+}
+
 int test_getcwd_chdir() {
   char buf[256];
   char *buf2 = getcwd(buf, sizeof buf);
@@ -6473,6 +6498,7 @@ struct {
     FUNC_DEF(test_setlocale),
     FUNC_DEF(test_strtoul),
     FUNC_DEF(test_strtol),
+    FUNC_DEF(test_wcstol),
     FUNC_DEF(test_dirent),
     FUNC_DEF(test_scandir),
     FUNC_DEF(test_glob),

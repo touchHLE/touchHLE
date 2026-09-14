@@ -13,6 +13,7 @@
 use super::ca_eagl_layer::find_fullscreen_eagl_layer;
 use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_animation::animation;
+use crate::frameworks::core_animation::ca_animation::kCATransitionFade;
 use crate::frameworks::core_graphics::cg_color::CGColorHostObject;
 use crate::frameworks::core_graphics::{cg_bitmap_context, cg_image, CGFloat, CGRect};
 use crate::gles::gles11_raw as gles11; // constants only
@@ -31,10 +32,10 @@ pub(super) struct State {
     texture_framebuffer: Option<(GLuint, GLuint)>,
     recomposite_next: Option<Instant>,
     fps_counter: Option<FpsCounter>,
-    misc_gl_objects: Option<MiscGlObjects>,
+    pub(super) misc_gl_objects: Option<MiscGlObjects>,
 }
 
-struct MiscGlObjects {
+pub(super) struct MiscGlObjects {
     /// Texture containing a single rounded corner.
     rounded_corner_texture: GLuint,
     /// [BASIC_SQUARE_POINTS], used as both vertex and texture co-ords for
@@ -49,7 +50,7 @@ struct MiscGlObjects {
     /// radius to overall rectangle size).
     rounded_tex_coord_buffer: GLuint,
     /// Index buffer for 9-patch (first 6 elements can be used for square).
-    index_buffer: GLuint,
+    pub(super) index_buffer: GLuint,
 }
 
 unsafe fn load_matrix(gles: &mut dyn GLES, matrix: Matrix<4>) {
@@ -404,7 +405,7 @@ fn display_layers(env: &mut Environment, root_layer: id) {
 }
 
 /// Traverses the layer tree and draws each layer.
-unsafe fn composite_layer_recursive(
+pub unsafe fn composite_layer_recursive(
     env: &mut Environment,
     animation_state: &mut animation::State,
     layer: id,
@@ -417,7 +418,18 @@ unsafe fn composite_layer_recursive(
 
     // This is both acting as the presentationLayer and the private render layer
     // It might need to be reworked in the future into a guest presentationLayer
-    let host_obj = animation_state.create_presentation_layer(env, layer);
+    // The presentation layer is a copy of the layer with its properties set to
+    // its calculated in-flight animation values.
+    let presentation_host_obj = animation_state.create_presentation_layer(env, layer);
+    let layer_host_obj = env.objc.borrow::<CALayerHostObject>(layer);
+    // If there's an active transition, composite the layer with final values
+    // instead of the presentation layer. The transition effect is achieved by
+    // overlaying a texture rendered before the transition began on top.
+    let host_obj = if layer_host_obj.transition_state.is_some() {
+        layer_host_obj.clone()
+    } else {
+        presentation_host_obj
+    };
 
     if host_obj.hidden {
         return;
@@ -632,6 +644,8 @@ unsafe fn composite_layer_recursive(
     }
     std::mem::drop(gles);
 
+    let original_transform = cumulative_transform;
+
     // avoid holding mutable borrow while recursing
     let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
     for &child_layer in &original_host_obj.sublayers.clone() {
@@ -643,6 +657,78 @@ unsafe fn composite_layer_recursive(
             cumulative_transform,
             opacity,
         )
+    }
+
+    // If there's an active transition, render the snapshot from before the 
+    // transition began on top to achieve the transition effect.
+    if let Some((transition_type, progress)) = host_obj.transition_state {
+        // TODO: Support other transition types
+        assert_eq!(transition_type, kCATransitionFade);
+
+        let window = env.window.as_mut().unwrap();
+        let mut gles = window.make_internal_gl_ctx_current();
+
+        load_matrix(
+            gles.as_mut(),
+            Matrix::<4>::from(&Matrix::scale_2d(host_obj.bounds.size.width, host_obj.bounds.size.height))
+                .multiply(&Matrix::translate_3d(host_obj.bounds.origin.x, host_obj.bounds.origin.y, 0.0))
+                .multiply(&original_transform),
+        );
+
+        let misc = env
+            .framework_state
+            .core_animation
+            .composition
+            .misc_gl_objects
+            .as_ref()
+            .unwrap();
+
+        // Transition fade
+        let alpha = 1.0 - progress;
+        gles.Color4f(alpha, alpha, alpha, alpha);
+
+        gles.Enable(gles11::BLEND);
+        gles.BlendFunc(
+            gles11::ONE,
+            gles11::ONE_MINUS_SRC_ALPHA,
+        );
+
+        // Draw snapshot texture
+        gles.Enable(gles11::TEXTURE_2D);
+        gles.BindTexture(gles11::TEXTURE_2D, host_obj.transition_texture.unwrap());
+
+        gles.EnableClientState(gles11::VERTEX_ARRAY);
+        gles.BindBuffer(
+            gles11::ARRAY_BUFFER,
+            misc.basic_square_buffer,
+        );
+        gles.VertexPointer(
+            2,
+            gles11::FLOAT,
+            0,
+            0 as *const GLvoid,
+        );
+
+        gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
+        gles.BindBuffer(
+            gles11::ARRAY_BUFFER,
+            misc.flipped_square_buffer,
+        );
+        gles.TexCoordPointer(
+            2,
+            gles11::FLOAT,
+            0,
+            0 as *const GLvoid,
+        );
+
+        gles.DrawElements(
+            gles11::TRIANGLES,
+            SQUARE_INDICES.len() as _,
+            gles11::UNSIGNED_BYTE,
+            0 as *const GLvoid,
+        );
+
+        assert_eq!(gles.GetError(), 0);
     }
 }
 

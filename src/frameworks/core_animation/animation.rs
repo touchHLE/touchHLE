@@ -19,8 +19,7 @@
 use std::ops::Sub;
 
 use crate::frameworks::core_animation::ca_animation::{
-    get_animation_start_time, kCAFillModeBackwards, kCAFillModeBoth, kCAFillModeForwards,
-    CAMediaTimingFillMode,
+    CAMediaTimingFillMode, CATransitionSubtype, CATransitionType, get_animation_start_time, kCAFillModeBackwards, kCAFillModeBoth, kCAFillModeForwards, kCATransitionFade,
 };
 use crate::frameworks::core_animation::ca_layer::remove_anonymous_animation;
 use crate::frameworks::core_animation::{ca_layer::CALayerHostObject, CACurrentMediaTime};
@@ -56,6 +55,8 @@ impl State {
             .iter()
             .map(|anim| (None, *anim))
             .collect();
+        
+        let mut is_there_a_transition_already = false;
 
         for (key, animation) in
             Iterator::chain(named_animations.iter(), anonymous_animations.iter())
@@ -147,7 +148,11 @@ impl State {
                     apply_basic_animation(env, &mut presentation, animation, interpolation_amount)
                 }
                 "CATransition" => {
-                    log!("TODO: Implement CATransition animations");
+                    if is_there_a_transition_already {
+                        panic!("Layer {:?} has multiple CATransitions simultaneously", layer);
+                    }
+                    apply_transition(env, &mut presentation, animation, interpolation_amount);
+                    is_there_a_transition_already = true
                 }
                 _ => unimplemented!("Unsupported animation class {}", class_name),
             }
@@ -197,6 +202,38 @@ impl State {
             release(env, layer);
         }
     }
+}
+
+fn apply_transition(
+    env: &mut Environment,
+    presentation: &mut CALayerHostObject,
+    animation: id,
+    interpolation_amount: f32,
+) {
+    let start_progress: f32 = msg![env; animation startProgress];
+    let end_progress: f32 = msg![env; animation endProgress];
+    let progress_difference: f32 = end_progress - start_progress;
+    let progress = start_progress + progress_difference * interpolation_amount;
+
+    let transition_type: CATransitionType = msg![env; animation type];
+    let transition_type = to_rust_string(env, transition_type);
+    let transition_subtype: CATransitionSubtype = msg![env; animation subtype];
+    let transition_subtype = if transition_subtype == nil {
+        None
+    } else {
+        Some(to_rust_string(env, transition_subtype))
+    };
+
+    let transition_type = match &*transition_type {
+        kCATransitionFade => kCATransitionFade,
+        _ => unimplemented!(
+            "Unsupported transition type {} (subtype {:?})",
+            transition_type,
+            transition_subtype
+        ),
+    };
+
+    presentation.transition_state = Some((transition_type, progress));
 }
 
 fn apply_basic_animation(

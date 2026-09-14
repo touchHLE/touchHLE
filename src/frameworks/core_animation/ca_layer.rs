@@ -6,7 +6,8 @@
 //! `CALayer`.
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::core_animation::ca_transaction;
+use crate::frameworks::core_animation::{animation, ca_transaction};
+use crate::frameworks::core_animation::composition::composite_layer_recursive;
 use crate::frameworks::core_foundation::time::CFTimeInterval;
 use crate::frameworks::core_graphics::cg_affine_transform::{
     CGAffineTransform, CGAffineTransformIdentity,
@@ -24,12 +25,15 @@ use crate::frameworks::core_graphics::cg_image::{
 };
 use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{self, get_static_str, to_rust_string};
+use crate::matrix::Matrix;
 use crate::mem::{GuestUSize, Ptr};
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter,
     ClassExports, HostObject, ObjC,
 };
 use crate::Environment;
+use crate::gles::gles11_raw as gles11; // constants only
+use crate::gles::gles11_raw::types::GLsizei;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Clone)]
@@ -63,6 +67,10 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
     /// Internal state for compositor
     pub(super) gles_texture_is_up_to_date: bool,
+    /// Internal state for compositor
+    pub(super) transition_texture: Option<crate::gles::gles11_raw::types::GLuint>,
+    /// Internal state for compositor
+    pub(super) transition_state: Option<(&'static str, f32)>,
     pub(super) animations: HashMap<String, id>, // CAAnimation*
     pub(super) anonymous_animations: HashSet<id>, // CAAnimation*
 }
@@ -135,6 +143,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         cg_context: None,
         gles_texture: None,
         gles_texture_is_up_to_date: false,
+        transition_texture: None,
+        transition_state: None,
         animations: HashMap::new(),
         anonymous_animations: HashSet::new(),
     });
@@ -153,6 +163,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         superlayer,
         cg_context,
         ref mut sublayers,
+        transition_texture,
         ..
     } = env.objc.borrow_mut(this);
     let sublayers = std::mem::take(sublayers);
@@ -173,6 +184,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     for sublayer in sublayers {
         env.objc.borrow_mut::<CALayerHostObject>(sublayer).superlayer = nil;
         release(env, sublayer);
+    }
+
+    if let Some(transition_texture) = transition_texture {
+        let window = env.window.as_mut().unwrap();
+        let mut gles = window.make_internal_gl_ctx_current(); 
+        unsafe { gles.DeleteTextures(1, &transition_texture); }
     }
 
     env.objc.dealloc_object(this, &mut env.mem)
@@ -576,6 +593,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         () = msg![env; anim setDuration:duration];
     }
 
+    let class: id = msg![env; anim class];
+    let class_name = env.objc.get_class_name(class);
+    match class_name {
+        "CATransition" => prepare_for_transition(env, this),
+        _ => {},
+    }
+
     if key == nil {
         log_dbg!("[(CALayer*){:?} addAnimation:{:?} forKey:{:?}]", this, anim, key);
         let inserted = env.objc.borrow_mut::<CALayerHostObject>(this).anonymous_animations.insert(anim);
@@ -592,6 +616,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_string = to_rust_string(env, key);
     log_dbg!("[(CALayer*){:?} removeAnimationForKey:{:?} ({:?})]", this, key, key_string);
     if let Some(anim) = env.objc.borrow_mut::<CALayerHostObject>(this).animations.remove(&*key_string) {
+        let class: id = msg![env; anim class];
+        let class_name = env.objc.get_class_name(class);
+        match class_name {
+            "CATransition" => cleanup_after_transition(env, this),
+            _ => {},
+        }
+
         release(env, anim);
     };
 }
@@ -609,7 +640,130 @@ pub fn remove_anonymous_animation(env: &mut Environment, layer: id, animation: i
         .anonymous_animations
         .remove(&animation);
     assert!(removed);
+
+    let class: id = msg![env; animation class];
+    let class_name = env.objc.get_class_name(class);
+    match class_name {
+        "CATransition" => cleanup_after_transition(env, layer),
+        _ => {},
+    }
+
     release(env, animation);
+}
+
+// Composite into a snapshot texture of the current layer tree appearance
+fn prepare_for_transition(env: &mut Environment, layer: id) {
+    let host_obj = env.objc.borrow::<CALayerHostObject>(layer);
+    let bounds = host_obj.bounds;
+    let superlayer_to_layer_transform = host_obj.superlayer_to_layer_transform();
+
+    let mut transition_texture = 0;
+    let mut temporaryFboId = 0;
+    let window = env.window.as_mut().unwrap();
+    let mut gles = window.make_internal_gl_ctx_current();
+    unsafe {
+        gles.GenTextures(1, &mut transition_texture);
+        gles.BindTexture(gles11::TEXTURE_2D, transition_texture);
+        gles.TexImage2D(
+            gles11::TEXTURE_2D,
+            0,
+            gles11::RGBA as _,
+            bounds.size.width as GLsizei,
+            bounds.size.height as GLsizei,
+            0,
+            gles11::RGBA,
+            gles11::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        gles.TexParameteri(
+            gles11::TEXTURE_2D,
+            gles11::TEXTURE_MIN_FILTER,
+            gles11::LINEAR as _,
+        );
+        gles.TexParameteri(
+            gles11::TEXTURE_2D,
+            gles11::TEXTURE_MAG_FILTER,
+            gles11::LINEAR as _,
+        );
+        gles.BindTexture(gles11::TEXTURE_2D, 0);
+
+        gles.GenFramebuffersOES(1, &mut temporaryFboId);
+        gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, temporaryFboId);
+        gles.FramebufferTexture2DOES(
+            gles11::FRAMEBUFFER_OES,
+            gles11::COLOR_ATTACHMENT0_OES,
+            gles11::TEXTURE_2D,
+            transition_texture,
+            0,
+        );
+        assert_eq!(
+            gles.CheckFramebufferStatusOES(gles11::FRAMEBUFFER_OES),
+            gles11::FRAMEBUFFER_COMPLETE_OES
+        );
+        gles.Viewport(
+            0,
+            0,
+            bounds.size.width as GLsizei,
+            bounds.size.height as GLsizei,
+        );
+        gles.ClearColor(0.0, 0.0, 0.0, 0.0);
+        gles.Clear(gles11::COLOR_BUFFER_BIT);
+
+        // The same mapping recomposite_if_necessary sets up, over this layer's bounds
+        // instead of the screen's.
+        gles.MatrixMode(gles11::PROJECTION);
+        let projection = Matrix::<4>::from(&Matrix::scale_2d(
+            2.0 / bounds.size.width,
+            -2.0 / bounds.size.height,
+        ))
+        .multiply(&Matrix::translate_3d(-1.0, 1.0, 0.0));
+        gles.LoadMatrixf(projection.columns().as_ptr() as *const _);
+        gles.MatrixMode(gles11::MODELVIEW);
+        gles.LoadIdentity();
+
+        gles.BindBuffer(
+            gles11::ELEMENT_ARRAY_BUFFER,
+            env.framework_state
+                .core_animation
+                .composition
+                .misc_gl_objects
+                .as_ref()
+                .unwrap()
+                .index_buffer,
+        );
+        assert_eq!(gles.GetError(), 0);
+    }
+    std::mem::drop(gles);
+
+    // Invert the transform so the layer gets rendered in the FBO's origin
+    let cumulative_transform = <Matrix<4> as From<_>>::from(superlayer_to_layer_transform.invert());
+    let mut animation_state = animation::State::default();
+    unsafe {
+        composite_layer_recursive(env, &mut animation_state, layer, cumulative_transform, 1.0);
+    }
+
+    let window = env.window.as_mut().unwrap();
+    let mut gles = window.make_internal_gl_ctx_current();
+    unsafe {
+        gles.BindBuffer(gles11::ELEMENT_ARRAY_BUFFER, 0);
+        gles.DeleteFramebuffersOES(1, &temporaryFboId);
+        assert_eq!(gles.GetError(), 0);
+    }
+    std::mem::drop(gles);
+
+    let host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
+    assert!(host_obj.transition_state.is_none());
+    host_obj.transition_texture = Some(transition_texture);
+}
+
+fn cleanup_after_transition(env: &mut Environment, layer: id) {
+    let host_object = env.objc.borrow_mut::<CALayerHostObject>(layer);
+    let transition_texture = std::mem::take(&mut host_object.transition_texture).unwrap();
+    let mut gles = env.window.as_mut().unwrap().make_internal_gl_ctx_current();
+    unsafe { 
+        gles.DeleteTextures(1, &transition_texture); 
+        assert_eq!(gles.GetError(), 0);
+    }
 }
 
 fn transform_for_conversion(env: &mut Environment, this: id, other: id) -> CGAffineTransform {

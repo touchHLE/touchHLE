@@ -13,6 +13,8 @@
 use super::ca_eagl_layer::find_fullscreen_eagl_layer;
 use super::ca_layer::CALayerHostObject;
 use crate::frameworks::core_animation::animation;
+use crate::frameworks::core_animation::ca_animation::kCATransitionFade;
+use crate::frameworks::core_animation::ca_layer::TransitionSnapshot;
 use crate::frameworks::core_graphics::cg_color::CGColorHostObject;
 use crate::frameworks::core_graphics::{cg_bitmap_context, cg_image, CGFloat, CGRect};
 use crate::gles::gles11_raw as gles11; // constants only
@@ -22,7 +24,7 @@ use crate::gles::GLES; // constants only
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::mem::SafeWrite;
-use crate::objc::{id, msg, msg_class, nil, ObjC};
+use crate::objc::{id, msg, msg_class, nil, release, ObjC};
 use crate::Environment;
 use std::time::{Duration, Instant};
 
@@ -415,8 +417,151 @@ unsafe fn composite_layer_recursive(
     //       supported yet :)
     // TODO: back-to-front drawing is not efficient, could we use front-to-back?
 
+    // If the layer is in pretransition state, composite now the snapshot of
+    // the pretransition layer tree into a texture.
+    let pretransition_snapshot = match env
+        .objc
+        .borrow::<CALayerHostObject>(layer)
+        .transition_snapshot
+    {
+        Some(TransitionSnapshot::PreTransition(snapshot_layer)) => Some(snapshot_layer),
+        _ => None,
+    };
+    if let Some(snapshot_layer) = pretransition_snapshot {
+        let snapshot_host_obj = env.objc.borrow::<CALayerHostObject>(snapshot_layer);
+        let bounds = snapshot_host_obj.bounds;
+        let superlayer_to_layer_transform = snapshot_host_obj.superlayer_to_layer_transform();
+
+        let mut transition_texture = 0;
+        let mut old_fbo_id = 0;
+        let mut temporary_fbo_id = 0;
+        let mut old_viewport = [0; 4];
+        let mut old_projection = [0.0f32; 16];
+        let window = env.window.as_mut().unwrap();
+        let mut gles = window.make_internal_gl_ctx_current();
+        unsafe {
+            gles.GenTextures(1, &mut transition_texture);
+            gles.BindTexture(gles11::TEXTURE_2D, transition_texture);
+            gles.TexImage2D(
+                gles11::TEXTURE_2D,
+                0,
+                gles11::RGBA as _,
+                bounds.size.width as GLsizei,
+                bounds.size.height as GLsizei,
+                0,
+                gles11::RGBA,
+                gles11::UNSIGNED_BYTE,
+                std::ptr::null(),
+            );
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MIN_FILTER,
+                gles11::LINEAR as _,
+            );
+            gles.TexParameteri(
+                gles11::TEXTURE_2D,
+                gles11::TEXTURE_MAG_FILTER,
+                gles11::LINEAR as _,
+            );
+            gles.BindTexture(gles11::TEXTURE_2D, 0);
+
+            // This runs in the middle of compositing the screen, so everything it
+            // changes has to go back the way it was before it returns.
+            gles.GetIntegerv(gles11::FRAMEBUFFER_BINDING_OES, &mut old_fbo_id);
+            gles.GetIntegerv(gles11::VIEWPORT, old_viewport.as_mut_ptr());
+            gles.GetFloatv(gles11::PROJECTION_MATRIX, old_projection.as_mut_ptr());
+
+            gles.GenFramebuffersOES(1, &mut temporary_fbo_id);
+            gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, temporary_fbo_id);
+            gles.FramebufferTexture2DOES(
+                gles11::FRAMEBUFFER_OES,
+                gles11::COLOR_ATTACHMENT0_OES,
+                gles11::TEXTURE_2D,
+                transition_texture,
+                0,
+            );
+            assert_eq!(
+                gles.CheckFramebufferStatusOES(gles11::FRAMEBUFFER_OES),
+                gles11::FRAMEBUFFER_COMPLETE_OES
+            );
+            gles.Viewport(
+                0,
+                0,
+                bounds.size.width as GLsizei,
+                bounds.size.height as GLsizei,
+            );
+            gles.ClearColor(0.0, 0.0, 0.0, 0.0);
+            gles.Clear(gles11::COLOR_BUFFER_BIT);
+
+            // The same mapping recomposite_if_necessary sets up, over this layer's bounds
+            // instead of the screen's.
+            gles.MatrixMode(gles11::PROJECTION);
+            let projection = Matrix::<4>::from(&Matrix::scale_2d(
+                2.0 / bounds.size.width,
+                -2.0 / bounds.size.height,
+            ))
+            .multiply(&Matrix::translate_3d(-1.0, 1.0, 0.0));
+            gles.LoadMatrixf(projection.columns().as_ptr() as *const _);
+            gles.MatrixMode(gles11::MODELVIEW);
+            gles.LoadIdentity();
+
+            gles.BindBuffer(
+                gles11::ELEMENT_ARRAY_BUFFER,
+                env.framework_state
+                    .core_animation
+                    .composition
+                    .misc_gl_objects
+                    .as_ref()
+                    .unwrap()
+                    .index_buffer,
+            );
+            assert_eq!(gles.GetError(), 0);
+        }
+        std::mem::drop(gles);
+
+        // Invert the transform so the layer gets rendered in the FBO's origin
+        let cumulative_transform = <Matrix<4> as From<_>>::from(superlayer_to_layer_transform.invert());
+        let mut animation_state = animation::State::default();
+        unsafe {
+            composite_layer_recursive(
+                env,
+                &mut animation_state,
+                snapshot_layer,
+                cumulative_transform,
+                1.0,
+            );
+        }
+
+        let window = env.window.as_mut().unwrap();
+        let mut gles = window.make_internal_gl_ctx_current();
+        unsafe {
+            gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_fbo_id as GLuint);
+            gles.DeleteFramebuffersOES(1, &temporary_fbo_id);
+            gles.Viewport(
+                old_viewport[0],
+                old_viewport[1],
+                old_viewport[2],
+                old_viewport[3],
+            );
+            gles.MatrixMode(gles11::PROJECTION);
+            gles.LoadMatrixf(old_projection.as_ptr());
+            gles.MatrixMode(gles11::MODELVIEW);
+            assert_eq!(gles.GetError(), 0);
+        }
+        std::mem::drop(gles);
+
+        // Release layer tree copy now that we composited the snapshot
+        release(env, snapshot_layer);
+        env.objc
+            .borrow_mut::<CALayerHostObject>(layer)
+            .transition_snapshot =
+            Some(TransitionSnapshot::Transitioning(transition_texture));
+    }
+
     // This is both acting as the presentationLayer and the private render layer
     // It might need to be reworked in the future into a guest presentationLayer
+    // The presentation layer is a copy of the layer with its properties set to
+    // its calculated in-flight animation values.
     let host_obj = animation_state.create_presentation_layer(env, layer);
 
     if host_obj.hidden {
@@ -632,6 +777,8 @@ unsafe fn composite_layer_recursive(
     }
     std::mem::drop(gles);
 
+    let original_transform = cumulative_transform;
+
     // avoid holding mutable borrow while recursing
     let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
     for &child_layer in &original_host_obj.sublayers.clone() {
@@ -643,6 +790,83 @@ unsafe fn composite_layer_recursive(
             cumulative_transform,
             opacity,
         )
+    }
+
+    // If there's an active transition, render the snapshot from before the 
+    // transition began on top to achieve the transition effect.
+    if let Some((transition_type, progress)) = host_obj.transition_state {
+        match host_obj.transition_snapshot {
+            Some(TransitionSnapshot::Transitioning(texture)) => {
+                // TODO: Support other transition types
+                assert_eq!(transition_type, kCATransitionFade);
+
+                let window = env.window.as_mut().unwrap();
+                let mut gles = window.make_internal_gl_ctx_current();
+
+                load_matrix(
+                    gles.as_mut(),
+                    Matrix::<4>::from(&Matrix::scale_2d(host_obj.bounds.size.width, host_obj.bounds.size.height))
+                        .multiply(&Matrix::translate_3d(host_obj.bounds.origin.x, host_obj.bounds.origin.y, 0.0))
+                        .multiply(&original_transform),
+                );
+
+                let misc = env
+                    .framework_state
+                    .core_animation
+                    .composition
+                    .misc_gl_objects
+                    .as_ref()
+                    .unwrap();
+
+                // Transition fade
+                let alpha = 1.0 - progress;
+                gles.Color4f(alpha, alpha, alpha, alpha);
+
+                gles.Enable(gles11::BLEND);
+                gles.BlendFunc(
+                    gles11::ONE,
+                    gles11::ONE_MINUS_SRC_ALPHA,
+                );
+
+                // Draw snapshot texture
+                gles.Enable(gles11::TEXTURE_2D);
+                gles.BindTexture(gles11::TEXTURE_2D, texture);
+
+                gles.EnableClientState(gles11::VERTEX_ARRAY);
+                gles.BindBuffer(
+                    gles11::ARRAY_BUFFER,
+                    misc.basic_square_buffer,
+                );
+                gles.VertexPointer(
+                    2,
+                    gles11::FLOAT,
+                    0,
+                    0 as *const GLvoid,
+                );
+
+                gles.EnableClientState(gles11::TEXTURE_COORD_ARRAY);
+                gles.BindBuffer(
+                    gles11::ARRAY_BUFFER,
+                    misc.flipped_square_buffer,
+                );
+                gles.TexCoordPointer(
+                    2,
+                    gles11::FLOAT,
+                    0,
+                    0 as *const GLvoid,
+                );
+
+                gles.DrawElements(
+                    gles11::TRIANGLES,
+                    SQUARE_INDICES.len() as _,
+                    gles11::UNSIGNED_BYTE,
+                    0 as *const GLvoid,
+                );
+
+                assert_eq!(gles.GetError(), 0);
+            },
+            _ => panic!()
+        }
     }
 }
 

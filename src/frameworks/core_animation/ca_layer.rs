@@ -17,7 +17,8 @@ use crate::frameworks::core_graphics::cg_bitmap_context::{
 use crate::frameworks::core_graphics::cg_color::{CGColorHostObject, CGColorRef};
 use crate::frameworks::core_graphics::cg_color_space::CGColorSpaceCreateDeviceRGB;
 use crate::frameworks::core_graphics::cg_context::{
-    CGContextClearRect, CGContextRef, CGContextRelease, CGContextTranslateCTM,
+    CGContextClearRect, CGContextRef, CGContextRelease, CGContextRetain,
+    CGContextTranslateCTM,
 };
 use crate::frameworks::core_graphics::cg_image::{
     kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
@@ -31,6 +32,12 @@ use crate::objc::{
 };
 use crate::Environment;
 use std::collections::{HashMap, HashSet};
+
+#[derive(Clone)]
+pub(super) enum TransitionSnapshot {
+    PreTransition(id),
+    Transitioning(crate::gles::gles11_raw::types::GLuint),
+}
 
 #[derive(Clone)]
 pub(super) struct CALayerHostObject {
@@ -63,6 +70,10 @@ pub(super) struct CALayerHostObject {
     pub(super) gles_texture: Option<crate::gles::gles11_raw::types::GLuint>,
     /// Internal state for compositor
     pub(super) gles_texture_is_up_to_date: bool,
+    /// Internal state for compositor
+    pub(super) transition_snapshot: Option<TransitionSnapshot>,
+    /// Internal state for compositor
+    pub(super) transition_state: Option<(&'static str, f32)>,
     pub(super) animations: HashMap<String, id>, // CAAnimation*
     pub(super) anonymous_animations: HashSet<id>, // CAAnimation*
 }
@@ -135,6 +146,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         cg_context: None,
         gles_texture: None,
         gles_texture_is_up_to_date: false,
+        transition_snapshot: None,
+        transition_state: None,
         animations: HashMap::new(),
         anonymous_animations: HashSet::new(),
     });
@@ -152,10 +165,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         contents,
         superlayer,
         cg_context,
+        gles_texture,
         ref mut sublayers,
+        ref mut transition_snapshot,
         ..
     } = env.objc.borrow_mut(this);
     let sublayers = std::mem::take(sublayers);
+    let transition_snapshot = std::mem::take(transition_snapshot);
 
     if drawable_properties != nil {
         release(env, drawable_properties);
@@ -173,6 +189,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     for sublayer in sublayers {
         env.objc.borrow_mut::<CALayerHostObject>(sublayer).superlayer = nil;
         release(env, sublayer);
+    }
+
+    match transition_snapshot {
+        Some(TransitionSnapshot::Transitioning(texture)) => {
+            let window = env.window.as_mut().unwrap();
+            let mut gles = window.make_internal_gl_ctx_current(); 
+            unsafe { gles.DeleteTextures(1, &texture); }
+        },
+        Some(TransitionSnapshot::PreTransition(snapshot_layer)) => release(env, snapshot_layer),
+        _ => {},
+    }
+
+    if let Some(gles_texture) = gles_texture {
+        let window = env.window.as_mut().unwrap();
+        let mut gles = window.make_internal_gl_ctx_current();
+        unsafe { gles.DeleteTextures(1, &gles_texture) };
     }
 
     env.objc.dealloc_object(this, &mut env.mem)
@@ -576,6 +608,13 @@ pub const CLASSES: ClassExports = objc_classes! {
         () = msg![env; anim setDuration:duration];
     }
 
+    let class: id = msg![env; anim class];
+    let class_name = env.objc.get_class_name(class);
+    match class_name {
+        "CATransition" => prepare_for_transition(env, this),
+        _ => {},
+    }
+
     if key == nil {
         log_dbg!("[(CALayer*){:?} addAnimation:{:?} forKey:{:?}]", this, anim, key);
         let inserted = env.objc.borrow_mut::<CALayerHostObject>(this).anonymous_animations.insert(anim);
@@ -592,6 +631,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let key_string = to_rust_string(env, key);
     log_dbg!("[(CALayer*){:?} removeAnimationForKey:{:?} ({:?})]", this, key, key_string);
     if let Some(anim) = env.objc.borrow_mut::<CALayerHostObject>(this).animations.remove(&*key_string) {
+        let class: id = msg![env; anim class];
+        let class_name = env.objc.get_class_name(class);
+        match class_name {
+            "CATransition" => cleanup_after_transition(env, this),
+            _ => {},
+        }
+
         release(env, anim);
     };
 }
@@ -609,7 +655,100 @@ pub fn remove_anonymous_animation(env: &mut Environment, layer: id, animation: i
         .anonymous_animations
         .remove(&animation);
     assert!(removed);
+
+    let class: id = msg![env; animation class];
+    let class_name = env.objc.get_class_name(class);
+    match class_name {
+        "CATransition" => cleanup_after_transition(env, layer),
+        _ => {},
+    }
+
     release(env, animation);
+}
+
+/// Copy a layer and its sublayers into layers of their own.
+/// These copies don't copy the superlayer, delegate, or animations. All that
+/// gets copied are the fields useful for compositing.
+fn copy_layer_tree(env: &mut Environment, layer: id) -> id {
+    let host_obj = env.objc.borrow::<CALayerHostObject>(layer).clone();
+    let sublayers = host_obj.sublayers.clone();
+
+    let copy_host_obj = CALayerHostObject {
+        delegate: nil,
+        sublayers: Vec::new(),
+        superlayer: nil,
+        needs_display: false,
+        gles_texture: None,
+        gles_texture_is_up_to_date: false,
+        transition_snapshot: None,
+        transition_state: None,
+        animations: HashMap::new(),
+        anonymous_animations: HashSet::new(),
+        ..host_obj
+    };
+
+    // Shared with the layer this was copied from, and outliving it is the whole point
+    if copy_host_obj.contents != nil {
+        retain(env, copy_host_obj.contents);
+    }
+    if copy_host_obj.drawable_properties != nil {
+        retain(env, copy_host_obj.drawable_properties);
+    }
+    if let Some(cg_context) = copy_host_obj.cg_context {
+        CGContextRetain(env, cg_context);
+    }
+
+    let class = env.objc.get_known_class("CALayer", &mut env.mem);
+    let copy = env.objc.alloc_object(class, Box::new(copy_host_obj), &mut env.mem);
+
+    let sublayer_copies: Vec<id> = sublayers
+        .into_iter()
+        .map(|sublayer| copy_layer_tree(env, sublayer))
+        .collect();
+    for &sublayer_copy in &sublayer_copies {
+        env.objc
+            .borrow_mut::<CALayerHostObject>(sublayer_copy)
+            .superlayer = copy;
+    }
+    env.objc.borrow_mut::<CALayerHostObject>(copy).sublayers = sublayer_copies;
+
+    copy
+}
+
+// Keep how the layer tree looks now, for the compositor to turn into the texture the
+// transition fades out
+fn prepare_for_transition(env: &mut Environment, layer: id) {
+    let snapshot_layer = copy_layer_tree(env, layer);
+    let previous = std::mem::take(
+        &mut env
+            .objc
+            .borrow_mut::<CALayerHostObject>(layer)
+            .transition_snapshot,
+    );
+    drop_transition_snapshot(env, previous);
+    env.objc
+        .borrow_mut::<CALayerHostObject>(layer)
+        .transition_snapshot = Some(TransitionSnapshot::PreTransition(snapshot_layer));
+}
+
+fn cleanup_after_transition(env: &mut Environment, layer: id) {
+    let host_object = env.objc.borrow_mut::<CALayerHostObject>(layer);
+    let transition_snapshot = std::mem::take(&mut host_object.transition_snapshot);
+    drop_transition_snapshot(env, transition_snapshot);
+}
+
+fn drop_transition_snapshot(env: &mut Environment, snapshot: Option<TransitionSnapshot>) {
+    match snapshot {
+        Some(TransitionSnapshot::PreTransition(snapshot_layer)) => release(env, snapshot_layer),
+        Some(TransitionSnapshot::Transitioning(texture)) => {
+            let mut gles = env.window.as_mut().unwrap().make_internal_gl_ctx_current();
+            unsafe {
+                gles.DeleteTextures(1, &texture);
+                assert_eq!(gles.GetError(), 0);
+            }
+        }
+        None => (),
+    }
 }
 
 fn transform_for_conversion(env: &mut Environment, this: id, other: id) -> CGAffineTransform {

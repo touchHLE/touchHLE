@@ -237,3 +237,9 @@ com.ea.deadspace.bv: --force-composition
 com.ea.deadspace.inc: --force-composition
 com.ea.deadspace.ipad.bv: --force-composition
 com.ea.deadspace.ipad.inc: --force-composition
+
+# NFS Hot Pursuit
+com.ea.nfshp.bv: --force-composition
+com.ea.nfshp.inc: --force-composition
+com.ea.nfshp.ipad.bv: --force-composition
+com.ea.nfshp.ipad.inc: --force-composition

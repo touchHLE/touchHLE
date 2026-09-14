@@ -417,8 +417,40 @@ unsafe fn composite_layer_recursive(
 
     // This is both acting as the presentationLayer and the private render layer
     // It might need to be reworked in the future into a guest presentationLayer
-    let host_obj = animation_state.create_presentation_layer(env, layer);
+    let (presentation_layer, transition_layer) =
+        animation_state.create_presentation_layer(env, layer);
+    let cumulative_transform_clone = cumulative_transform;
+    composite_layer_recursive_inner(
+        env,
+        animation_state,
+        Some(layer),
+        presentation_layer,
+        cumulative_transform,
+        opacity,
+    );
+    if let Some(transition_layer) = transition_layer {
+        composite_layer_recursive_inner(
+            env,
+            animation_state,
+            Some(layer),
+            transition_layer,
+            cumulative_transform_clone,
+            opacity,
+        );
+    }
+}
 
+unsafe fn composite_layer_recursive_inner(
+    env: &mut Environment,
+    animation_state: &mut animation::State,
+    layer: Option<id>,
+    host_obj: CALayerHostObject,
+    cumulative_transform: Matrix<4>,
+    opacity: CGFloat,
+) {
+    // TODO: this can't handle zPosition among other things, but it is not
+    //       supported yet :)
+    // TODO: back-to-front drawing is not efficient, could we use front-to-back?
     if host_obj.hidden {
         return;
     }
@@ -540,26 +572,30 @@ unsafe fn composite_layer_recursive(
             gles.GenTextures(1, &mut texture);
             gles.BindTexture(gles11::TEXTURE_2D, texture);
             // Update original layer texture
-            env.objc.borrow_mut::<CALayerHostObject>(layer).gles_texture = Some(texture);
+            if let Some(layer) = layer {
+                env.objc.borrow_mut::<CALayerHostObject>(layer).gles_texture = Some(texture);
+            }
         }
     }
 
     // Update original layer texture with CAEAGLLayer pixels (slow path), if any
     if need_update {
-        let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
-        if let Some((ref mut pixels, width, height)) = original_host_obj.presented_pixels {
-            // The pixels are always RGBA, but if the layer is opaque then the
-            // alpha channel is meant to be ignored. glTexImage2D() has no
-            // option to ignore it, so let's manually set them to 255.
-            if original_host_obj.opaque {
-                let mut i = 3;
-                while i < pixels.len() {
-                    pixels[i] = 255;
-                    i += 4;
+        if let Some(layer) = layer {
+            let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
+            if let Some((ref mut pixels, width, height)) = original_host_obj.presented_pixels {
+                // The pixels are always RGBA, but if the layer is opaque then
+                // the alpha channel is meant to be ignored. glTexImage2D() has
+                // no option to ignore it, so let's manually set them to 255.
+                if original_host_obj.opaque {
+                    let mut i = 3;
+                    while i < pixels.len() {
+                        pixels[i] = 255;
+                        i += 4;
+                    }
                 }
-            }
 
-            upload_rgba8_pixels(gles.as_mut(), pixels, (width, height));
+                upload_rgba8_pixels(gles.as_mut(), pixels, (width, height));
+            }
         }
     }
 
@@ -579,13 +615,6 @@ unsafe fn composite_layer_recursive(
             let pixels = env.mem.bytes_at(data.cast(), size);
             upload_rgba8_pixels(gles.as_mut(), pixels, (width, height));
         }
-    }
-
-    if need_update {
-        // Update original layer field
-        env.objc
-            .borrow_mut::<CALayerHostObject>(layer)
-            .gles_texture_is_up_to_date = true;
     }
 
     // Draw texture, if any
@@ -633,16 +662,18 @@ unsafe fn composite_layer_recursive(
     std::mem::drop(gles);
 
     // avoid holding mutable borrow while recursing
-    let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
-    for &child_layer in &original_host_obj.sublayers.clone() {
-        // TODO: clipping/masksToBounds support
-        composite_layer_recursive(
-            env,
-            animation_state,
-            child_layer,
-            cumulative_transform,
-            opacity,
-        )
+    if let Some(layer) = layer {
+        let original_host_obj = env.objc.borrow_mut::<CALayerHostObject>(layer);
+        for &child_layer in &original_host_obj.sublayers.clone() {
+            // TODO: clipping/masksToBounds support
+            composite_layer_recursive(
+                env,
+                animation_state,
+                child_layer,
+                cumulative_transform,
+                opacity,
+            )
+        }
     }
 }
 

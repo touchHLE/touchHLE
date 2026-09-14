@@ -20,7 +20,7 @@ use std::ops::Sub;
 
 use crate::frameworks::core_animation::ca_animation::{
     get_animation_start_time, kCAFillModeBackwards, kCAFillModeBoth, kCAFillModeForwards,
-    CAMediaTimingFillMode,
+    kCATransitionFade, CAMediaTimingFillMode, CATransitionSubtype, CATransitionType,
 };
 use crate::frameworks::core_animation::ca_layer::remove_anonymous_animation;
 use crate::frameworks::core_animation::{ca_layer::CALayerHostObject, CACurrentMediaTime};
@@ -40,10 +40,11 @@ impl State {
         &mut self,
         env: &mut Environment,
         layer: id,
-    ) -> CALayerHostObject {
+    ) -> (CALayerHostObject, Option<CALayerHostObject>) {
         // Clone given layer
         let original = env.objc.borrow::<CALayerHostObject>(layer);
         let mut presentation = original.clone();
+        let mut transition = None;
 
         // Loop over all animations and set the presentation layer's values
         let named_animations: Vec<(Option<String>, id)> = presentation
@@ -147,13 +148,18 @@ impl State {
                     apply_basic_animation(env, &mut presentation, animation, interpolation_amount)
                 }
                 "CATransition" => {
-                    log!("TODO: Implement CATransition animations");
+                    transition = Some(apply_transition(
+                        env,
+                        &presentation,
+                        animation,
+                        interpolation_amount,
+                    ))
                 }
                 _ => unimplemented!("Unsupported animation class {}", class_name),
             }
         }
 
-        presentation
+        (presentation, transition)
     }
 
     pub fn update_started_and_finished_animations(self, env: &mut Environment) {
@@ -197,6 +203,35 @@ impl State {
             release(env, layer);
         }
     }
+}
+
+fn apply_transition(
+    env: &mut Environment,
+    presentation: &CALayerHostObject,
+    animation: id,
+    interpolation_amount: f32,
+) -> CALayerHostObject {
+    let mut transition = presentation.clone();
+
+    let transition_type: CATransitionType = msg![env; animation type];
+    let transition_type = to_rust_string(env, transition_type);
+    let transition_subtype: CATransitionSubtype = msg![env; animation subtype];
+    let transition_subtype = if transition_subtype == nil {
+        None
+    } else {
+        Some(to_rust_string(env, transition_subtype))
+    };
+
+    match &*transition_type {
+        kCATransitionFade => transition.opacity = interpolation_amount,
+        _ => unimplemented!(
+            "Unsupported transition type {} (subtype {:?}",
+            transition_type,
+            transition_subtype
+        ),
+    };
+
+    transition
 }
 
 fn apply_basic_animation(

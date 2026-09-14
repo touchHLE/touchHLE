@@ -19,8 +19,7 @@
 use std::ops::Sub;
 
 use crate::frameworks::core_animation::ca_animation::{
-    get_animation_start_time, kCAFillModeBackwards, kCAFillModeBoth, kCAFillModeForwards,
-    CAMediaTimingFillMode,
+    CAMediaTimingFillMode, CATransitionSubtype, CATransitionType, get_animation_start_time, kCAFillModeBackwards, kCAFillModeBoth, kCAFillModeForwards, kCATransitionFade,
 };
 use crate::frameworks::core_animation::ca_layer::remove_anonymous_animation;
 use crate::frameworks::core_animation::{ca_layer::CALayerHostObject, CACurrentMediaTime};
@@ -29,6 +28,8 @@ use crate::frameworks::core_graphics::cg_color::CGColorHostObject;
 use crate::frameworks::foundation::ns_string::{from_rust_string, to_rust_string};
 use crate::objc::{id, msg, nil, release, retain};
 use crate::Environment;
+use crate::gles::gles11_raw as gles11; // constants only
+use crate::gles::gles11_raw::types::GLsizei;
 
 #[derive(Default)]
 pub struct State {
@@ -56,6 +57,8 @@ impl State {
             .iter()
             .map(|anim| (None, *anim))
             .collect();
+        
+        let mut is_there_a_transition_already = false;
 
         for (key, animation) in
             Iterator::chain(named_animations.iter(), anonymous_animations.iter())
@@ -126,6 +129,7 @@ impl State {
             let timing_function: id = msg![env; animation timingFunction];
             let interpolation_amount: f32 = msg![env; timing_function _solveForInput: progress];
 
+            let mut animation_finished = false;
             if current_repeat >= effective_repeat_count {
                 let removed_on_completion: bool = msg![env; animation isRemovedOnCompletion];
                 self.finished_animations.push((
@@ -135,6 +139,7 @@ impl State {
                     removed_on_completion,
                     key.to_owned(),
                 ));
+                animation_finished = true;
                 if fill_mode != kCAFillModeForwards && fill_mode != kCAFillModeBoth {
                     continue;
                 }
@@ -147,7 +152,11 @@ impl State {
                     apply_basic_animation(env, &mut presentation, animation, interpolation_amount)
                 }
                 "CATransition" => {
-                    log!("TODO: Implement CATransition animations");
+                    if is_there_a_transition_already {
+                        panic!("Layer {:?} has multiple CATransitions simultaneously", layer);
+                    }
+                    apply_transition(env, layer, &mut presentation, animation, interpolation_amount, animation_finished);
+                    is_there_a_transition_already = true
                 }
                 _ => unimplemented!("Unsupported animation class {}", class_name),
             }
@@ -197,6 +206,71 @@ impl State {
             release(env, layer);
         }
     }
+}
+
+fn apply_transition(
+    env: &mut Environment,
+    layer: id,
+    presentation: &mut CALayerHostObject,
+    animation: id,
+    interpolation_amount: f32,
+    animation_finished: bool,
+) {
+    let start_progress: f32 = msg![env; animation startProgress];
+    let end_progress: f32 = msg![env; animation endProgress];
+    let progress_difference: f32 = end_progress - start_progress;
+    let progress = start_progress + progress_difference * interpolation_amount;
+
+    let transition_type: CATransitionType = msg![env; animation type];
+    let transition_type = to_rust_string(env, transition_type);
+    let transition_subtype: CATransitionSubtype = msg![env; animation subtype];
+    let transition_subtype = if transition_subtype == nil {
+        None
+    } else {
+        Some(to_rust_string(env, transition_subtype))
+    };
+
+    // TOOD: Support other transition types
+    assert!(matches!(&*transition_type, kCATransitionFade));
+
+    let original = env.objc.borrow_mut::<CALayerHostObject>(layer);
+    if animation_finished {
+        let transition_texture = std::mem::take(&mut original.transition_state).unwrap().0;
+        let mut gles = env.window.as_mut().unwrap().make_internal_gl_ctx_current();
+        unsafe { 
+            gles.DeleteTextures(1, &transition_texture); 
+            assert_eq!(gles.GetError(), 0);
+        }
+    } else if let Some(transition_state) = original.transition_state.as_mut() {
+        transition_state.2 = progress;
+    } else {
+        let mut transition_texture = 0;
+        let mut gles = env.window.as_mut().unwrap().make_internal_gl_ctx_current();
+        unsafe {
+            let mut fboId = 0;
+            gles.GenFramebuffersOES(1, &mut fboId);
+            gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, fboId);
+            gles.FramebufferTexture2DOES(gles11::FRAMEBUFFER_OES, gles11::COLOR_ATTACHMENT0_OES, gles11::TEXTURE_2D, original.last_composited_texture.unwrap(), 0);
+            gles.GenTextures(1, &mut transition_texture);
+            gles.Enable(gles11::TEXTURE_2D);
+            gles.BindTexture(gles11::TEXTURE_2D, transition_texture);
+            gles.CopyTexImage2D(gles11::TEXTURE_2D, 0, gles11::RGBA, 0, 0, original.bounds.size.width as GLsizei, original.bounds.size.height as GLsizei, 0);
+            gles.DeleteFramebuffersOES(1, &fboId);
+            assert_eq!(gles.GetError(), 0);
+        }
+
+        let transition_type = match &*transition_type {
+            kCATransitionFade => kCATransitionFade,
+            _ => unimplemented!(
+                "Unsupported transition type {} (subtype {:?})",
+                transition_type,
+                transition_subtype
+            ),
+        };
+
+        original.transition_state = Some((transition_texture, transition_type, progress));
+    }
+    presentation.transition_state = original.transition_state;
 }
 
 fn apply_basic_animation(

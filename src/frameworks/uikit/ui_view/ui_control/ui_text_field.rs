@@ -460,7 +460,10 @@ pub fn handle_return(env: &mut Environment, text_field: id) {
         true
     };
 
-    if matches!(env.bundle.bundle_identifier(), "com.ea.sims3ambition.inc") {
+    if matches!(
+        env.bundle.bundle_identifier(),
+        "com.ea.sims3ambition.inc" | "com.ea.sims3wa.bv"
+    ) {
         // Sims 3's iOS TextBoxDelegate has an endEditing method that saves the
         // entered name and returns to the game. The original interface exposes
         // a native keyboard's completion control, which touchHLE does not yet

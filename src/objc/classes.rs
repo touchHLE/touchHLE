@@ -1052,3 +1052,30 @@ pub(super) fn class_getProperty(
     }
     todo!()
 }
+
+pub(super) fn class_replaceMethod(
+    env: &mut Environment,
+    cls: Class,
+    name: SEL,
+    imp: IMP,
+    _types: ConstPtr<u8>,
+) -> IMP {
+    let &mut ClassHostObject {
+        ref mut methods, ..
+    } = env.objc.borrow_mut(cls);
+    if !methods.contains_key(&name) {
+        // TODO: use `class_addMethod` once implemented
+        unimplemented!("class_replaceMethod: support adding new method")
+    }
+    // TODO: use `method_setImplementation` once implemented
+    // Note: encoding types are ignored
+    let existing = methods.insert(name, imp.clone()).unwrap();
+    assert!(matches!(existing, IMP::Guest(_))); // TODO
+    log_dbg!(
+        "class_replaceMethod: existing {:?} replaced with {:?} for method {}",
+        existing,
+        imp,
+        name.as_str(&env.mem)
+    );
+    existing
+}

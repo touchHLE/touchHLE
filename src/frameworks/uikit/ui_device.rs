@@ -7,8 +7,13 @@
 
 use crate::dyld::ConstantExports;
 use crate::dyld::HostConstant;
+use crate::environment::Environment;
+use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_string, NSInteger};
-use crate::objc::{id, msg, objc_classes, todo_objc_setter, ClassExports, TrivialHostObject};
+use crate::msg_class;
+use crate::objc::{
+    id, msg, objc_classes, todo_objc_setter, ClassExports, NSZonePtr, TrivialHostObject,
+};
 use crate::window::{get_battery_status, BatteryState, DeviceFamily, DeviceOrientation};
 
 pub const UIDeviceOrientationDidChangeNotification: &str =
@@ -41,6 +46,12 @@ const UIUserInterfaceIdiomPad: UIUserInterfaceIdiom = 1;
 #[derive(Default)]
 pub struct State {
     current_device: Option<id>,
+    is_generating_device_orientation_notifications: bool,
+}
+impl State {
+    pub fn is_generating_device_orientation_notifications(&self) -> bool {
+        self.is_generating_device_orientation_notifications
+    }
 }
 
 pub const CONSTANTS: ConstantExports = &[(
@@ -58,25 +69,24 @@ pub const CLASSES: ClassExports = objc_classes! {
     if let Some(device) = env.framework_state.uikit.ui_device.current_device {
         device
     } else {
-        let new = env.objc.alloc_static_object(
-            this,
-            Box::new(TrivialHostObject),
-            &mut env.mem
-        );
+        let new = msg_class![env; _touchHLE_UIDevice_Static alloc];
         env.framework_state.uikit.ui_device.current_device = Some(new);
         new
     }
 }
 
 - (())beginGeneratingDeviceOrientationNotifications {
-    log_once!("TODO: beginGeneratingDeviceOrientationNotifications");
+    log_dbg!("[UIDevice beginGeneratingDeviceOrientationNotifications]");
+    env.framework_state.uikit.ui_device.is_generating_device_orientation_notifications = true;
 }
 - (())endGeneratingDeviceOrientationNotifications {
-    log_once!("TODO: endGeneratingDeviceOrientationNotifications");
+    log_dbg!("[UIDevice endGeneratingDeviceOrientationNotifications]");
+    env.framework_state.uikit.ui_device.is_generating_device_orientation_notifications = false;
 }
 - (bool)isGeneratingDeviceOrientationNotifications {
-    log_once!("TODO: isGeneratingDeviceOrientationNotifications");
-    false
+    let res = env.framework_state.uikit.ui_device.is_generating_device_orientation_notifications;
+    log_dbg!("[UIDevice isGeneratingDeviceOrientationNotifications] -> {}", res);
+    res
 }
 
 - (id)model {
@@ -121,6 +131,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 - (())setOrientation:(UIDeviceOrientation)orientation {
+    let prev_orientation = env.window().current_rotation();
     env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
         UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
@@ -128,6 +139,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
     })});
+    if prev_orientation != env.window().current_rotation() {
+        generate_device_orientation_notification(env);
+    }
 }
 
 - (bool)isBatteryMonitoringEnabled {
@@ -163,4 +177,28 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
+// Private static implementation of UIDevice, used for the current device
+@implementation _touchHLE_UIDevice_Static: UIDevice
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    env.objc.alloc_static_object(
+        this,
+        Box::new(TrivialHostObject),
+        &mut env.mem
+    )
+}
+
+- (id) retain { this }
+- (()) release {}
+- (id) autorelease { this }
+
+@end
+
 };
+
+pub fn generate_device_orientation_notification(env: &mut Environment) {
+    let center: id = msg_class![env; NSNotificationCenter defaultCenter];
+    let name = get_static_str(env, UIDeviceOrientationDidChangeNotification);
+    let device: id = msg_class![env; UIDevice currentDevice];
+    let _: () = msg![env; center postNotificationName:name object:device];
+}

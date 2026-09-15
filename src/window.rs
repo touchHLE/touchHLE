@@ -1502,6 +1502,16 @@ pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
 /// - status: [BatteryState] - the current status of the battery
 ///   (unplugged, charging, full, etc.)
 pub fn get_battery_status() -> (i32, BatteryState) {
+    if env::consts::OS == "android" {
+        log_once!(
+            "Warning: get_battery_status on Android, returning fully charged to avoid SDL crash"
+        );
+        // Android_JNI_GetPowerInfo is crashing with `JNI DETECTED ERROR IN
+        // APPLICATION: JNI ERROR (app bug): jobject is an invalid JNI
+        // transition frame reference: 0x7b1bc0c7a0 (use of invalid jobject)`
+        // TODO: See if updating SDL fixes that
+        return (100, BatteryState::Full);
+    }
     let mut pct = 0;
     // Unfortunately, Rust-SDL2 does not expose this function yet.
     // iPhoneOS does not measure the battery in seconds remaining,

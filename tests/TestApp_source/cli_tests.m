@@ -1235,6 +1235,31 @@ int test_strtol() {
   return 0;
 }
 
+// This is a simplified version of test_strtol()
+int test_wcstol() {
+  const wchar_t *subjects[] = {L"10", L"200000000000000000000000000000",
+                               L"  30", L"   -40"};
+  long res[] = {10, MAX_LONG, 30, -40};
+  int count = sizeof(res) / sizeof(long);
+  for (int i = 0; i < count; i++) {
+    long l = wcstol(subjects[i], NULL, 10);
+    if (res[i] != l) {
+      return -(i + 1);
+    }
+  }
+  long l;
+  const wchar_t *subjects2[] = {L"0x123", L"+0x123", L"-0x123"};
+  long res2[] = {291, 291, -291};
+  int count2 = sizeof(res2) / sizeof(long);
+  for (int i = 0; i < count2; i++) {
+    l = wcstol(subjects2[i], NULL, 16);
+    if (res2[i] != l) {
+      return -(count + 2 + i + 1);
+    }
+  }
+  return 0;
+}
+
 int test_getcwd_chdir() {
   char buf[256];
   char *buf2 = getcwd(buf, sizeof buf);
@@ -6362,6 +6387,83 @@ int test_malloc_zone_struct_dispatch() {
   return 0;
 }
 
+int test_fcvt() {
+  char *buf;
+  int dec, sign;
+
+  buf = fcvt(123.4567, 6, &dec, &sign);
+  if (strcmp(buf, "123456700") != 0 || dec != 3 || sign != 0) {
+    return -1;
+  }
+
+  buf = fcvt(123.4567, 2, &dec, &sign);
+  if (strcmp(buf, "12346") != 0 || dec != 3 || sign != 0) {
+    return -2;
+  }
+
+  buf = fcvt(0, 2, &dec, &sign);
+  if (strcmp(buf, "00") != 0 || dec != 0 || sign != 0) {
+    return -3;
+  }
+
+  buf = fcvt(6.491250038146973, 2, &dec, &sign);
+  if (strcmp(buf, "649") != 0 || dec != 1 || sign != 0) {
+    return -4;
+  }
+
+  buf = fcvt(-9.876, 10, &dec, &sign);
+  if (strcmp(buf, "98760000000") != 0 || dec != 1 || sign != 1) {
+    return -5;
+  }
+
+  buf = fcvt(0.125, 3, &dec, &sign);
+  if (strcmp(buf, "125") != 0 || dec != 0 || sign != 0) {
+    return -6;
+  }
+
+  buf = fcvt(0.00125, 5, &dec, &sign);
+  if (strcmp(buf, "125") != 0 || dec != -2 || sign != 0) {
+    return -7;
+  }
+
+  buf = fcvt(-0.00125, 5, &dec, &sign);
+  if (strcmp(buf, "125") != 0 || dec != -2 || sign != 1) {
+    return -8;
+  }
+
+  buf = fcvt(0.0001, 2, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -2 || sign != 0) {
+    return -9;
+  }
+
+  buf = fcvt(-0.0001, 2, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -2 || sign != 1) {
+    return -10;
+  }
+
+  buf = fcvt(1e-300, 5, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -5 || sign != 0) {
+    return -11;
+  }
+
+  buf = fcvt(0.004, 2, &dec, &sign);
+  if (strcmp(buf, "") != 0 || dec != -2 || sign != 0) {
+    return -12;
+  }
+
+  buf = fcvt(0.005, 2, &dec, &sign);
+  if (strcmp(buf, "1") != 0 || dec != -1 || sign != 0) {
+    return -13;
+  }
+
+  buf = fcvt(0.006, 2, &dec, &sign);
+  if (strcmp(buf, "1") != 0 || dec != -1 || sign != 0) {
+    return -14;
+  }
+
+  return 0;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -6396,6 +6498,7 @@ struct {
     FUNC_DEF(test_setlocale),
     FUNC_DEF(test_strtoul),
     FUNC_DEF(test_strtol),
+    FUNC_DEF(test_wcstol),
     FUNC_DEF(test_dirent),
     FUNC_DEF(test_scandir),
     FUNC_DEF(test_glob),
@@ -6476,6 +6579,7 @@ struct {
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_removeObserver),
     FUNC_DEF(test_malloc_zone_basic),
     FUNC_DEF(test_malloc_zone_struct_dispatch),
+    FUNC_DEF(test_fcvt),
 };
 // clang-format on
 

@@ -459,4 +459,18 @@ pub fn handle_return(env: &mut Environment, text_field: id) {
     } else {
         true
     };
+
+    if matches!(env.bundle.bundle_identifier(), "com.ea.sims3ambition.inc") {
+        // Sims 3's iOS TextBoxDelegate has an endEditing method that saves the
+        // entered name and returns to the game. The original interface exposes
+        // a native keyboard's completion control, which touchHLE does not yet
+        // render. Map the host Return key to that completion action for this
+        // specific game instead of changing general UIKit behavior.
+        if accepts_return && delegate != nil {
+            let class = msg![env; delegate class];
+            if env.objc.get_class_name(class) == "TextBoxDelegate" {
+                let _: () = msg![env; delegate endEditing];
+            }
+        }
+    }
 }

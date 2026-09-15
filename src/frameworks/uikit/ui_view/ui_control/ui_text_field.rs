@@ -385,7 +385,7 @@ pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
             ns_string::to_rust_string(env, new_text)
         );
         // TODO: refactor this to proper update() method
-        () = msg![env; text_label setText:new_text];
+        () = msg![env; text_field setText:new_text];
         () = msg![env; text_field setNeedsDisplay];
         release(env, new_text);
     }

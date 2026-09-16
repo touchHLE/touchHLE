@@ -705,10 +705,28 @@ fn add_default_implied_basic_animation(
 
 // TODO: Remove once CAActions are implemented
 fn is_implicit_animation_enabled(env: &mut Environment, layer: id) -> bool {
+    if !is_layer_in_tree(env, layer) {
+        return false;
+    }
     // CALayers have implicit animations enabled by default, but UIKit doesn't
     // unless there's an active UIView animation block.
     let delegate = msg![env; layer delegate];
     let uiview_class = env.objc.get_known_class("UIView", &mut env.mem);
     let delegate_is_uiview: bool = msg![env; delegate isKindOfClass:uiview_class];
     !delegate_is_uiview || env.framework_state.uikit.ui_view.animation_block_count > 0
+}
+
+fn is_layer_in_tree(env: &mut Environment, layer: id) -> bool {
+    let uiwindow_class = env.objc.get_known_class("UIWindow", &mut env.mem);
+    let mut current_layer = layer;
+    while current_layer != nil {
+        let superlayer = env.objc.borrow::<CALayerHostObject>(current_layer).superlayer;
+        let delegate = msg![env; current_layer delegate];
+        let delegate_is_uiwindow: bool = msg![env; delegate isKindOfClass:uiwindow_class];
+        if delegate_is_uiwindow {
+            return true
+        }
+        current_layer = superlayer
+    }
+    false
 }

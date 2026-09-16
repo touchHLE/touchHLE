@@ -371,6 +371,7 @@ CFTimeInterval CACurrentMediaTime();
 + (instancetype)functionWithName:(CAMediaTimingFunctionName)name;
 @end
 @interface CAAnimation : NSObject
++ (instancetype) animation;
 - (void)setTimingFunction:(CAMediaTimingFunction *)timingFunction;
 - (CFTimeInterval)duration;
 - (void)setDuration:(CFTimeInterval)duration;
@@ -384,6 +385,8 @@ CFTimeInterval CACurrentMediaTime();
 @interface CABasicAnimation : CAPropertyAnimation
 - (void)setFromValue:(id)value;
 - (void)setToValue:(id)value;
+@end
+@interface CATransition : CAAnimation
 @end
 @interface CALayer : NSObject
 - (void)setAffineTransform:(CGAffineTransform)transform;

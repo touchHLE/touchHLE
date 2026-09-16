@@ -9,7 +9,7 @@
 
 #include "GUITestsCALayerTestsView.h"
 
-#define NUM_TESTS 20
+#define NUM_TESTS 21
 
 @implementation GUITestsCALayerTestsView : UIView
 
@@ -64,7 +64,7 @@ CALayer *sublayer;
   // Don't display any test initially. The testing for convertPoint:toLayer: etc
   // won't produce the right results until this view has actually been added to
   // the window.
-  testNum = 0;
+  testNum = 20;
 
   return self;
 }
@@ -514,5 +514,33 @@ CALayer *sublayer;
 }
 - (void)test20ButtonClicked {
   [sublayer setBounds:CGRectMake(10, 10, 50, 10)];
+}
+
+// Test CATransition
+- (void)test21 {
+  UILabel *label = [self
+      addLabelWithFrame:CGRectMake(50, 50, 200, 200)
+                   text:[NSString stringWithUTF8String:"hello, transition!"]];
+  sublayer = [label layer];
+  [sublayer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.70, 0.0, 1.0)];
+  [sublayer setCornerRadius:32.0];
+
+  UIButton *button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+  [button setFrame:CGRectMake(40, 300, 240, 40)];
+  [button setTitle:[NSString stringWithUTF8String:"Click me too"]
+          forState:UIControlStateNormal];
+  [button addTarget:self
+                action:@selector(test21ButtonClicked)
+      forControlEvents:UIControlEventTouchUpInside];
+  [self addSubview:button];
+  [button layoutSubviews]; // FIXME: workaround for touchHLE not calling this
+}
+- (void)test21ButtonClicked {
+  CATransition *transition = [CATransition animation];
+  [transition setDuration:3.0];
+
+  [sublayer addAnimation:transition forKey:[NSString stringWithUTF8String:"fade"]];
+
+  [sublayer setBackgroundColor:CGColorCreateGenericRGB(0.0, 0.0, 0.70, 1.0)];
 }
 @end

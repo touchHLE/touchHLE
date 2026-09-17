@@ -20,6 +20,7 @@ use super::cg_image::{
     kCGImageAlphaPremultipliedFirst, kCGImageAlphaPremultipliedLast, kCGImageByteOrder32Big,
     kCGImageByteOrderDefault, CGBitmapInfo, CGImageAlphaInfo, CGImageRef,
 };
+use super::cg_path::{kCGLineCapButt, kCGLineCapRound, CGLineCap};
 use super::{CGFloat, CGPoint, CGRect};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::image::{gamma_decode, gamma_encode, Image};
@@ -86,12 +87,16 @@ pub fn CGBitmapContextCreate(
         }),
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
+        rgb_stroke_color: (0.0, 0.0, 0.0, 0.0),
         font: Ptr::null(),
         font_size: 14.0,
         transform: CGAffineTransformIdentity,
         blend_mode: kCGBlendModeNormal,
         text_transform: None,
         state_stack: Vec::new(),
+        line_cap: kCGLineCapButt,
+        line_width: 1.0,
+        path: Ptr::null(),
     };
     let isa = env
         .objc
@@ -407,6 +412,18 @@ fn put_pixel(
     }
 }
 
+pub fn draw_rect_with_line_cap(
+    env: &mut Environment,
+    context: CGContextRef,
+    line_cap: CGLineCap,
+    rect: CGRect,
+) {
+    match line_cap {
+        kCGLineCapRound => fill_ellipse(env, context, rect),
+        _ => unimplemented!(),
+    }
+}
+
 /// Abstract interface for use by host code that wants to draw in a bitmap
 /// context.
 pub struct CGBitmapContextDrawer<'a> {
@@ -635,6 +652,22 @@ pub(super) fn fill_rect(env: &mut Environment, context: CGContextRef, rect: CGRe
     // TODO: correct anti-aliasing
     for ((x, y), _) in drawer.iter_transformed_pixels(rect) {
         drawer.put_pixel((x, y), color, /* blend: */ !clear)
+    }
+}
+
+/// Implementation of `CGContextFillEllipseInRect`
+pub(super) fn fill_ellipse(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
+    let color = drawer.rgb_fill_color();
+
+    for ((x, y), (u, v)) in drawer.iter_transformed_pixels(rect) {
+        let dx_sqr = (2.0 * u - 1.0).powi(2);
+        let dy_sqr = (2.0 * v - 1.0).powi(2);
+
+        // TODO: correct anti-aliasing
+        if dx_sqr + dy_sqr <= 1.0 {
+            drawer.put_pixel((x, y), color, /* blend: */ true);
+        }
     }
 }
 

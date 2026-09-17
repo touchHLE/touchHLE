@@ -7,7 +7,8 @@
 
 use super::cg_affine_transform::{CGAffineTransform, CGAffineTransformIdentity};
 use super::cg_bitmap_context::{
-    CGBitmapContextDrawer, CGBitmapContextGetHeight, CGBitmapContextGetWidth,
+    draw_rect_with_line_cap, CGBitmapContextDrawer, CGBitmapContextGetHeight,
+    CGBitmapContextGetWidth,
 };
 use super::cg_color::CGColorRef;
 use super::cg_color_space::{
@@ -16,6 +17,11 @@ use super::cg_color_space::{
 use super::cg_font::{CGFontHostObject, CGFontRef, CGFontRelease, CGFontRetain, CGGlyph};
 use super::cg_geometry::CGPointZero;
 use super::cg_image::CGImageRef;
+use super::cg_path::{
+    kCGLineCapButt, kCGLineCapRound, kCGLineCapSquare, kCGPathElementAddLineToPoint,
+    kCGPathElementMoveToPoint, CGLineCap, CGMutablePathHostObject, CGMutablePathRef,
+    CGPathCreateMutable, CGPathElement,
+};
 use super::{cg_bitmap_context, cg_color, CGFloat, CGPoint, CGRect, CGSize};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
@@ -71,6 +77,9 @@ type ContextState = (
     CGFontRef,                            // font
     CGFloat,                              // font size
     CGBlendMode,                          // blend mode
+    CGLineCap,                            // line cap
+    (CGFloat, CGFloat, CGFloat, CGFloat), // RGB stroke color
+    CGMutablePathRef,                     // path
 );
 
 pub(super) struct CGContextHostObject {
@@ -83,7 +92,12 @@ pub(super) struct CGContextHostObject {
     pub(super) blend_mode: CGBlendMode,
     /// Text transform.
     pub(super) text_transform: Option<CGAffineTransform>,
+    /// Line/Path data
+    pub(super) line_cap: CGLineCap,
+    pub(super) line_width: CGFloat,
     pub(super) state_stack: Vec<ContextState>,
+    pub(super) rgb_stroke_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pub(super) path: CGMutablePathRef,
 }
 impl HostObject for CGContextHostObject {}
 
@@ -167,21 +181,17 @@ fn CGContextSetGrayStrokeColor(
     );
 }
 fn CGContextSetRGBStrokeColor(
-    _env: &mut Environment,
+    env: &mut Environment,
     context: CGContextRef,
     r: CGFloat,
     g: CGFloat,
     b: CGFloat,
     a: CGFloat,
 ) {
-    log!(
-        "TODO: CGContextSetRGBStrokeColor({:?}, {}, {}, {}, {})",
-        context,
-        r,
-        g,
-        b,
-        a
-    );
+    let color = (r, g, b, a);
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .rgb_stroke_color = color;
 }
 
 fn CGContextSetShadowWithColor(
@@ -206,6 +216,10 @@ pub fn CGContextFillRect(env: &mut Environment, context: CGContextRef, rect: CGR
 
 pub fn CGContextClearRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
     cg_bitmap_context::fill_rect(env, context, rect, /* clear: */ true);
+}
+
+pub fn CGContextFillEllipseInRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    cg_bitmap_context::fill_ellipse(env, context, rect);
 }
 
 fn CGContextClipToRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
@@ -276,6 +290,9 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
         host_obj.font,
         host_obj.font_size,
         host_obj.blend_mode,
+        host_obj.line_cap,
+        host_obj.rgb_stroke_color,
+        host_obj.path,
     ));
     CGFontRetain(env, env.objc.borrow::<CGContextHostObject>(context).font);
 }
@@ -294,6 +311,9 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     host_obj.font = state.2;
     host_obj.font_size = state.3;
     host_obj.blend_mode = state.4;
+    host_obj.line_cap = state.5;
+    host_obj.rgb_stroke_color = state.6;
+    host_obj.path = state.7;
 }
 
 fn CGContextSetInterpolationQuality(
@@ -428,6 +448,168 @@ fn CGContextShowGlyphsAtPositions(
     }
 }
 
+fn CGContextSetLineCap(env: &mut Environment, context: CGContextRef, cap: CGLineCap) {
+    log_dbg!("CGContextSetLineCap({:?}, {})", context, cap);
+
+    assert!(cap == kCGLineCapButt || cap == kCGLineCapRound || cap == kCGLineCapSquare);
+    env.objc.borrow_mut::<CGContextHostObject>(context).line_cap = cap;
+}
+
+fn CGContextSetLineWidth(env: &mut Environment, context: CGContextRef, width: CGFloat) {
+    log_dbg!("CGContextSetLineCap({:?}, {})", context, width,);
+
+    assert!(width > 0.0);
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .line_width = width;
+}
+
+fn CGContextSetStrokeColorWithColor(
+    env: &mut Environment,
+    context: CGContextRef,
+    color: CGColorRef,
+) {
+    let (r, g, b, a) = cg_color::to_rgba(&env.objc, color);
+    CGContextSetRGBStrokeColor(env, context, r, g, b, a)
+}
+
+fn CGContextMoveToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    log_dbg!("CGContextMoveToPoint({:?}, {}, {})", context, x, y);
+
+    let host_obj = if env
+        .objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .is_null()
+    {
+        CGPathCreateMutable(env)
+    } else {
+        env.objc.borrow_mut::<CGContextHostObject>(context).path
+    };
+
+    env.objc
+        .borrow_mut::<CGMutablePathHostObject>(host_obj)
+        .path_elements
+        .insert(
+            0,
+            CGPathElement {
+                points: vec![CGPoint { x, y }],
+                r#type: kCGPathElementMoveToPoint,
+            },
+        );
+
+    env.objc.borrow_mut::<CGContextHostObject>(context).path = host_obj;
+}
+
+fn CGContextAddLineToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    log_dbg!("CGContextAddLineToPoint({:?}, {}, {})", context, x, y);
+
+    let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context).path;
+
+    env.objc
+        .borrow_mut::<CGMutablePathHostObject>(host_obj)
+        .path_elements
+        .push(CGPathElement {
+            points: vec![CGPoint { x, y }],
+            r#type: kCGPathElementAddLineToPoint,
+        });
+
+    env.objc.borrow_mut::<CGContextHostObject>(context).path = host_obj;
+}
+
+// NOTE: We might be able to replace the drawing functionality here
+//       with a 3rd party 2D graphics lib
+fn CGContextStrokePath(env: &mut Environment, context: CGContextRef) {
+    log_dbg!("CGContextStrokePath({:?})", context);
+
+    let line_cap = env.objc.borrow::<CGContextHostObject>(context).line_cap;
+    let line_width = env.objc.borrow::<CGContextHostObject>(context).line_width;
+    let line_size = CGSize {
+        width: line_width,
+        height: line_width,
+    };
+
+    let (r, g, b, a) = env
+        .objc
+        .borrow::<CGContextHostObject>(context)
+        .rgb_stroke_color;
+    CGContextSetRGBFillColor(env, context, r, g, b, a);
+
+    let host_obj = env.objc.borrow::<CGContextHostObject>(context).path;
+    let path_elements = &env
+        .objc
+        .borrow_mut::<CGMutablePathHostObject>(host_obj)
+        .path_elements
+        .clone();
+
+    let mut subpath: Vec<&CGPathElement> = vec![];
+    let mut subpath_index = 0;
+
+    for elem in path_elements {
+        // NOTE: Arcs should have more than 1 point in the array,
+        //       but we don't support them yet
+        assert!(elem.points.len() < 2);
+
+        if elem.r#type == kCGPathElementMoveToPoint {
+            subpath.push(elem);
+            subpath_index += 1;
+        } else if elem.r#type == kCGPathElementAddLineToPoint {
+            subpath.push(elem);
+
+            let point_0 = subpath[subpath_index - 1].points.first().unwrap();
+            let point_1 = subpath[subpath_index].points.first().unwrap();
+
+            draw_rect_with_line_cap(
+                env,
+                context,
+                line_cap,
+                CGRect {
+                    origin: *point_0,
+                    size: line_size,
+                },
+            );
+
+            // Not sure if this is accurate
+            let step_limit = 25;
+
+            for step in 0..step_limit {
+                let t = step as f32 / step_limit as f32;
+                let bezier_curve_point = CGPoint {
+                    x: (1.0 - t) * point_0.x + t * point_1.x,
+                    y: (1.0 - t) * point_0.y + t * point_1.y,
+                };
+
+                draw_rect_with_line_cap(
+                    env,
+                    context,
+                    line_cap,
+                    CGRect {
+                        origin: bezier_curve_point,
+                        size: line_size,
+                    },
+                );
+            }
+
+            draw_rect_with_line_cap(
+                env,
+                context,
+                line_cap,
+                CGRect {
+                    origin: *point_1,
+                    size: line_size,
+                },
+            );
+
+            subpath_index += 1;
+        } else {
+            // TODO: Add the other drawing types
+            unimplemented!();
+        }
+    }
+
+    env.objc.borrow_mut::<CGContextHostObject>(context).path = CGPathCreateMutable(env);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextRetain(_)),
     export_c_func!(CGContextRelease(_)),
@@ -437,6 +619,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetRGBFillColor(_, _, _, _, _)),
     export_c_func!(CGContextSetGrayFillColor(_, _, _)),
     export_c_func!(CGContextSetGrayStrokeColor(_, _, _)),
+    export_c_func!(CGContextSetStrokeColorWithColor(_, _)),
     export_c_func!(CGContextSetRGBStrokeColor(_, _, _, _, _)),
     export_c_func!(CGContextSetShadowWithColor(_, _, _, _)),
     export_c_func!(CGContextFillRect(_, _)),
@@ -459,4 +642,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetTextMatrix(_, _)),
     export_c_func!(CGContextShowGlyphsAtPoint(_, _, _, _, _)),
     export_c_func!(CGContextShowGlyphsAtPositions(_, _, _, _)),
+    export_c_func!(CGContextSetLineCap(_, _)),
+    export_c_func!(CGContextSetLineWidth(_, _)),
+    export_c_func!(CGContextMoveToPoint(_, _, _)),
+    export_c_func!(CGContextAddLineToPoint(_, _, _)),
+    export_c_func!(CGContextStrokePath(_)),
+    export_c_func!(CGContextFillEllipseInRect(_, _)),
 ];

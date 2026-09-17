@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "407400df_d1062777",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-17T05:17:17Z",
+      "side": 1,
+      "message": "Tested with Scribble 1.1 (com.zintin.scribblepro)",
+      "revId": "b18194bd7dacc6d409672d3d4dac438a1fc77302",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

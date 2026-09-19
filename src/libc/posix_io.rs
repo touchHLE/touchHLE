@@ -398,6 +398,11 @@ pub fn write(
     // TODO: error handling for unknown fd?
     let file = env.libc_state.posix_io.file_for_fd(fd).unwrap();
 
+    if buffer.is_null() {
+        assert_eq!(size, 0);
+        return 0;
+    }
+
     let buffer_slice = env.mem.bytes_at(buffer.cast(), size);
     match file.file.write(buffer_slice) {
         Ok(bytes_written) => {

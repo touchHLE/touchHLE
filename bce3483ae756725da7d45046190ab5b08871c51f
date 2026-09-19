@@ -16,6 +16,24 @@
       "message": "I have a small concern here about cleaning of caches, i think it deserves at least a TODO comment somewhere",
       "revId": "bce3483ae756725da7d45046190ab5b08871c51f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9475ba0_2b1606d1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-19T14:22:49Z",
+      "side": 1,
+      "message": "i gonna merge it as is and add the TODO myself",
+      "parentUuid": "6e97ba1a_a7979fa5",
+      "revId": "bce3483ae756725da7d45046190ab5b08871c51f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

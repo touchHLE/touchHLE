@@ -14,9 +14,11 @@ use super::{
     id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
     IMP, SEL,
 };
+use crate::libc::string::strdup;
 use crate::mach_o::MachO;
 use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
 use crate::Environment;
+use std::collections::hash_map::Entry;
 use std::collections::{HashMap, VecDeque};
 
 /// Generic pointer to an Objective-C class or metaclass.
@@ -1058,15 +1060,27 @@ pub(super) fn class_replaceMethod(
     cls: Class,
     name: SEL,
     imp: IMP,
-    _types: ConstPtr<u8>,
+    types: ConstPtr<u8>,
 ) -> IMP {
+    // TODO: avoid unnecessary copy of types
+    let types_copy = strdup(env, types).cast_const();
     let &mut ClassHostObject {
-        ref mut methods, ..
+        ref mut methods,
+        ref mut guest_method_signatures,
+        ..
     } = env.objc.borrow_mut(cls);
-    if !methods.contains_key(&name) {
+    if let Entry::Vacant(e) = methods.entry(name) {
         // TODO: use `class_addMethod` once implemented
-        unimplemented!("class_replaceMethod: support adding new method")
+        log_dbg!(
+            "class_replaceMethod: adding new implementation {:?} for method {}",
+            imp,
+            name.as_str(&env.mem)
+        );
+        e.insert(imp);
+        guest_method_signatures.insert(name, types_copy);
+        return IMP::guest_null();
     }
+    env.mem.free(types_copy.cast().cast_mut());
     // TODO: use `method_setImplementation` once implemented
     // Note: encoding types are ignored
     let existing = methods.insert(name, imp.clone()).unwrap();

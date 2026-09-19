@@ -44,6 +44,11 @@ impl std::fmt::Debug for IMP {
         }
     }
 }
+impl IMP {
+    pub fn guest_null() -> IMP {
+        IMP::Guest(GuestIMP::from_addr_with_thumb_bit(0))
+    }
+}
 
 impl GuestArg for IMP {
     const REG_COUNT: usize = <GuestFunction as GuestArg>::REG_COUNT;

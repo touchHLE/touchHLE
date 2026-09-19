@@ -15,8 +15,8 @@ use crate::frameworks::foundation::ns_string::{
 };
 use crate::mem::{ConstVoidPtr, MutPtr, Ptr};
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
-    NSZonePtr,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, Class, ClassExports,
+    HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::collections::{HashMap, HashSet};
@@ -125,7 +125,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 
     let nib : id = msg_class![env; UINib nibWithNibName:name bundle:this];
-    msg![env; nib instantiateWithOwner:owner options:nil]
+    let arr = msg![env; nib instantiateWithOwner:owner options:nil];
+
+    // Need to filter out the File's Owner or any proxy objects
+    let ui_proxy_class: Class = msg_class![env; UIProxyObject class];
+    let res = msg_class![env; NSMutableArray new];
+    let count: NSUInteger = msg![env; arr count];
+    for i in 0..count {
+        let curr_object: id = msg![env; arr objectAtIndex:i];
+        if curr_object == owner || msg![env; curr_object isKindOfClass:ui_proxy_class] {
+            continue;
+        }
+        () = msg![env; res addObject:curr_object];
+    }
+    let res_imm = msg![env; res copy];
+    release(env, res);
+    autorelease(env, res_imm)
 }
 
 - (id)resourcePath {

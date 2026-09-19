@@ -41,6 +41,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         cf_uuid::CLASSES,
     ],
     constant_exports: &[
+        CONSTANTS,
         cf_allocator::CONSTANTS,
         cf_bundle::CONSTANTS,
         cf_dictionary::CONSTANTS,
@@ -77,7 +78,7 @@ pub type CFOptionFlags = u32;
 pub type CFComparisonResult = CFIndex;
 
 use crate::abi::GuestArg;
-use crate::dyld::FunctionExports;
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
 use crate::environment::Environment;
 use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::mem::SafeRead;
@@ -119,5 +120,16 @@ fn CFShow(env: &mut Environment, obj: CFTypeRef) {
     // so just logging with CF module prefix should be fine too.
     log!("{}", to_rust_string(env, description));
 }
+
+const CONSTANTS: ConstantExports = &[(
+    "_kCFCoreFoundationVersionNumber",
+    HostConstant::Custom(|env| {
+        let version_number_ptr = env.mem.alloc_and_write(478.26f64); // iPhoneOS 2.1
+        env.mem
+            .alloc_and_write(version_number_ptr)
+            .cast()
+            .cast_const()
+    }),
+)];
 
 const FUNCTIONS: FunctionExports = &[export_c_func!(CFShow(_))];

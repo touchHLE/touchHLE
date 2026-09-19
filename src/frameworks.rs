@@ -24,6 +24,7 @@
 pub mod audio_toolbox;
 pub mod avfoundation;
 pub mod carbon_core;
+pub mod cf_network;
 pub mod core_animation;
 pub mod core_audio_types;
 pub mod core_foundation;

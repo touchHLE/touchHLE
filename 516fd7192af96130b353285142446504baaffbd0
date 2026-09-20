@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "340ccdaf_a5db3fb2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-09-20T22:41:46Z",
+      "side": 1,
+      "message": "Just so you know, we also have `-[UIScreen applicationFrame]` which doesn\u0027t account for rotation currently and which also has to calculate how big the status bar is. I\u0027m not sure I recommend trying to refactor this further though, because eventually I am going to finish my patch to add an actual status bar, and I\u0027ll probably rewrite all of this anyway. So I\u0027m giving a weak +1 to the current patch.",
+      "revId": "516fd7192af96130b353285142446504baaffbd0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

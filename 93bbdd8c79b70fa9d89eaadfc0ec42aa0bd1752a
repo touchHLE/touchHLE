@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a79e460c_e9626b23",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-20T05:57:07Z",
+      "side": 1,
+      "message": "Tested with StickWars version 1.1 (com.johnehartzog.stickwars-siege)",
+      "revId": "93bbdd8c79b70fa9d89eaadfc0ec42aa0bd1752a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

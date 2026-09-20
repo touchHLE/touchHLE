@@ -33,6 +33,24 @@
       "message": "those values are not correct for the iPad case.\nyou need to read portrait size of the current device.",
       "revId": "93bbdd8c79b70fa9d89eaadfc0ec42aa0bd1752a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "75b45c95_cac5ee45",
+        "filename": "src/frameworks/uikit/ui_application.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-20T18:42:43Z",
+      "side": 1,
+      "message": "Updated!",
+      "parentUuid": "bc8dbe43_d79ccbac",
+      "revId": "93bbdd8c79b70fa9d89eaadfc0ec42aa0bd1752a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

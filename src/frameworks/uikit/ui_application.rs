@@ -7,6 +7,8 @@
 
 use super::ui_device::*;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
+use crate::frameworks::core_graphics::cg_geometry::CGRectZero;
+use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
 use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str};
 use crate::frameworks::foundation::{ns_array, ns_string, NSInteger, NSUInteger};
 use crate::mem::MutPtr;
@@ -151,6 +153,31 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setIdleTimerDisabled:(bool)disabled {
     env.on_parent_stack_in_coroutine(|window, _| window.set_screen_saver_enabled(!disabled))
+}
+
+- (CGRect)statusBarFrame {
+    if env.framework_state.uikit.ui_application.status_bar_hidden {
+        return CGRectZero;
+    }
+
+    let bar_height = 20.0;
+    let (width, height) = env.window.as_ref().unwrap().device_family().portrait_size();
+    let (portrait_length, landscape_length) = (width as f32, height as f32);
+    let current_rotation = env.window.as_ref().unwrap().current_rotation();
+
+    let size = match current_rotation {
+        DeviceOrientation::PortraitUpsideDown | DeviceOrientation::Portrait => CGSize { width: portrait_length, height: bar_height },
+        DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight => CGSize { width: landscape_length, height: bar_height },
+    };
+
+    let origin = match current_rotation {
+        DeviceOrientation::Portrait => CGPoint { x: 0.0, y: 0.0 },
+        DeviceOrientation::PortraitUpsideDown => CGPoint { x: 0.0, y: landscape_length - bar_height },
+        DeviceOrientation::LandscapeLeft => CGPoint { x: 0.0, y: 0.0 },
+        DeviceOrientation::LandscapeRight => CGPoint { x: 0.0, y: portrait_length - bar_height },
+    };
+
+    CGRect { origin, size }
 }
 
 - (bool)openURL:(id)url { // NSURL

@@ -15,8 +15,8 @@
 //!   [USER_OPTIONS_FILE], [WALLPAPER_FILES]. These are ordinary files and are
 //!   found in [user_data_base_path].
 //! * Files that touchHLE will create and modify, and the user may modify if
-//!   they want to: [SANDBOX_DIR]. These are ordinary files and are found in
-//!   [user_data_base_path].
+//!   they want to: [SANDBOX_DIR], [PHOTO_ALBUM_DIR].
+//!   These are ordinary files and are found in [user_data_base_path].
 //!
 //! See also [crate::fs], which provides a virtual filesystem for the guest app
 //! and defines path types.
@@ -109,6 +109,10 @@ pub const WALLPAPER_FILES: &[&str] = &[
 /// Name of the directory where touchHLE will store sandboxed app data, e.g.
 /// the `Documents` directory.
 pub const SANDBOX_DIR: &str = "touchHLE_sandbox";
+
+/// Name of the directory where touchHLE will store IMG_####.PNG files saved to
+/// the Photo Album.
+pub const PHOTO_ALBUM_DIR: &str = "DCIM/100APPLE";
 
 /// Get a platform-specific base path needed for accessing touchHLE's
 /// user-modifiable files. This is empty on platforms other than Android.

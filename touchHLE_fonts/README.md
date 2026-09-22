@@ -13,3 +13,7 @@ These are taken from the Noto Sans CJK release that was current as of 2023-01-28
 Specifically these are "Region-specific Subset OTFs" for Japan.
 
 See `LICENSE.noto` for the license details.
+
+## Caveat Brush fonts
+
+These are taken from the Caveat Brush release that was current as of 2026-09-22: https://github.com/googlefonts/caveat/tree/main/sources

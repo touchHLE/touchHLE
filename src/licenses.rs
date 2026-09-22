@@ -175,6 +175,11 @@ This distribution of touchHLE includes Noto Sans CJK fonts, available under the
 following license:
 ";
 
+const INTERNAL_CAVEATBRUSH_FONTS_DESCRIPTION: &str = "
+This distribution of touchHLE includes Caveat Brush fonts, available under the
+following license:
+";
+
 fn read_bundled_file(path: &str) -> String {
     use std::io::Read;
     let mut res = String::new();
@@ -272,6 +277,13 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
             out,
             "{}",
             read_bundled_file(&format!("{}/LICENSE.noto", crate::paths::FONTS_DIR))
+        )?;
+        divider(out)?;
+        writeln!(out, "{INTERNAL_CAVEATBRUSH_FONTS_DESCRIPTION}")?;
+        writeln!(
+            out,
+            "{}",
+            read_bundled_file(&format!("{}/LICENSE.caveatbrush", crate::paths::FONTS_DIR))
         )?;
     }
     Ok(())

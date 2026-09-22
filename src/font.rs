@@ -154,6 +154,10 @@ impl Font {
     pub fn sans_bold_ja() -> Font {
         Self::from_resource_file("NotoSansJP-Bold.otf")
     }
+    pub fn marker_felt() -> Font {
+        // NOTE: "MarkerFelt" is proprietary, so we need to use an alt here
+        Self::from_resource_file("CaveatBrush-Regular.ttf")
+    }
 
     pub fn units_per_em(&self) -> u16 {
         self.font.units_per_em()

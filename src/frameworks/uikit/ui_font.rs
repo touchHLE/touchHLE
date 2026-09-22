@@ -21,6 +21,7 @@ pub(super) struct State {
     fonts: HashMap<FontKind, Font>,
     sans_regular_ja: Option<Font>,
     sans_bold_ja: Option<Font>,
+    marker_felt: Option<Font>,
 }
 impl State {
     fn get_font_by_kind(&mut self, font_kind: FontKind) -> &Font {
@@ -39,6 +40,7 @@ impl State {
                 FontKind::SerifBold => Font::serif_bold(),
                 FontKind::SerifBoldItalic => Font::serif_bold_italic(),
                 FontKind::SerifItalic => Font::serif_italic(),
+                FontKind::MarkerFelt => Font::marker_felt(),
             })
     }
 }
@@ -57,6 +59,7 @@ enum FontKind {
     SerifBold,
     SerifBoldItalic,
     SerifItalic,
+    MarkerFelt,
 }
 
 struct UIFontHostObject {
@@ -216,6 +219,12 @@ fn get_font<'a>(state: &'a mut State, kind: FontKind, text: &str) -> &'a Font {
                     }
                     return state.sans_bold_ja.as_ref().unwrap();
                 },
+                FontKind::MarkerFelt => {
+                    if state.marker_felt.is_none() {
+                        state.marker_felt = Some(Font::marker_felt());
+                    }
+                    return state.marker_felt.as_ref().unwrap();
+                }
             }
         }
     }
@@ -459,7 +468,8 @@ fn get_equivalent_font(system_font: &str) -> Option<FontKind> {
         "Helvetica" => None,
         "Helvetica-Bold" => None,
         // Font Family: Marker Felt
-        "MarkerFelt-Thin" => None,
+        "Marker Felt" => Some(FontKind::MarkerFelt),
+        "MarkerFelt-Thin" => Some(FontKind::MarkerFelt),
         // Font Family: Helvetica Neue
         "HelveticaNeue" => None,
         "HelveticaNeue-Bold" => None,

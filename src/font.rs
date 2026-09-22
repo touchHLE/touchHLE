@@ -91,13 +91,15 @@ impl Font {
             panic!("Couldn't parse bundled font file {path:?}. This probably means the file is corrupt. Try re-downloading it.");
         };
 
+        let scale_factor = if filename.contains("CaveatBrush") { 1.35 } else { 1.125 };
+
         Font {
             font,
             // TODO: Make this a lookup based on the actual font
             // iPhone OS's interpretation of font size is slightly different,
             // when substituting Helvetica with our Liberation font.
             // This scale factor has been eyeball'd, it's not exact.
-            scale_factor: 1.125,
+            scale_factor,
         }
     }
 
@@ -153,6 +155,10 @@ impl Font {
     }
     pub fn sans_bold_ja() -> Font {
         Self::from_resource_file("NotoSansJP-Bold.otf")
+    }
+    pub fn marker_felt() -> Font {
+        // NOTE: "MarkerFelt" is proprietary, so we need to use an alt here
+        Self::from_resource_file("CaveatBrush-Regular.ttf")
     }
 
     pub fn units_per_em(&self) -> u16 {

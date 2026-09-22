@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "77b607c2_cb04b23f",
+        "filename": "src/font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-22T21:36:47Z",
+      "side": 1,
+      "message": "please add a comment precising how you figured that out",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ec248ea_19f1b0f6",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-09-22T21:36:47Z",
+      "side": 1,
+      "message": "there is no thin variant?",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

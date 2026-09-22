@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3d56ae1d_4513c5eb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-09-22T22:48:25Z",
+      "side": 1,
+      "message": "Also README in the fonts directory",
+      "parentUuid": "14abd47f_a225198f",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "77b607c2_cb04b23f",
         "filename": "src/font.rs",
         "patchSetId": 4

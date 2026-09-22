@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ed7a946b_fb6256f0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-22T20:26:33Z",
+      "side": 1,
+      "message": "Tested with StickWars v. 1.1 (com.johnehartzog.stickwars-siege). Will require a stub for statusBarFrame to get past the boot.",
+      "revId": "e62024808d7a346ca01c37055397893b94ad6b70",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

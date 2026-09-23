@@ -91,6 +91,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "19c524db_2fed679b",
+        "filename": "src/font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-09-23T01:33:24Z",
+      "side": 1,
+      "message": "It\u0027s not like we\u0027re using the original font for the other cases either ^^;",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7ec248ea_19f1b0f6",
         "filename": "src/frameworks/uikit/ui_font.rs",
         "patchSetId": 4

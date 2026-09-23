@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0a2aec2d_536a0960",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-23T00:12:10Z",
+      "side": 1,
+      "message": "Updated!",
+      "parentUuid": "3d56ae1d_4513c5eb",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "77b607c2_cb04b23f",
         "filename": "src/font.rs",
         "patchSetId": 4
@@ -55,6 +73,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e6830567_20eae20d",
+        "filename": "src/font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-23T00:12:10Z",
+      "side": 1,
+      "message": "Updated! I found it by just manually changing the value until it looked right.",
+      "parentUuid": "77b607c2_cb04b23f",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7ec248ea_19f1b0f6",
         "filename": "src/frameworks/uikit/ui_font.rs",
         "patchSetId": 4
@@ -66,6 +102,24 @@
       "writtenOn": "2026-09-22T21:36:47Z",
       "side": 1,
       "message": "there is no thin variant?",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecd56d74_02329b5b",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-23T00:12:10Z",
+      "side": 1,
+      "message": "Unfortunately no, this font doesn\u0027t have a thin or other type of variant. I noticed the `MarkerFelt-Thin` family was used in another app (CartoonWars), so I added it here just in case.",
+      "parentUuid": "7ec248ea_19f1b0f6",
       "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

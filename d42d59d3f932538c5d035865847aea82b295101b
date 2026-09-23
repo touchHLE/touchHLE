@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "02d996fd_eaef832a",
+        "filename": "src/frameworks/core_animation/ca_layer.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 654,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-09-23T16:08:10Z",
+      "side": 1,
+      "message": "All this GLES stuff belongs in `composition.rs`. I\u0027m not so keen on triggering drawing outside of a compositing pass, too. I think we should do all the render-to-texture stuff just prior to doing the screen composition. That is, we can do a tree traversal and find any cases where we will need render-to-texture, then prepare and cache those, immediately before actually drawing to the screen.\n\nIf you need to backup the layer state, I think the way to achieve that might be to clone the layer, though we\u0027ve never done something like that so far…",
+      "revId": "d42d59d3f932538c5d035865847aea82b295101b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -44,7 +44,8 @@ Device options:
         Accepted values are "iphone" and "ipad" respectively.
 
 Game controller options:
-    --deadzone=...
+    --left_deadzone=...
+    --right_deadzone=...
         Configures the size of the \"dead zone\" for analog stick inputs.
 
         The default value is 0.1, which means that 10% of the stick's range on

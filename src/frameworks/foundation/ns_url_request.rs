@@ -10,7 +10,7 @@ use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::objc::{
     autorelease, id, nil, objc_classes, release, ClassExports, HostObject, NSZonePtr,
 };
-use crate::{msg, msg_class};
+use crate::{msg, msg_class, todo_objc_setter};
 
 type NSURLRequestCachePolicy = NSUInteger;
 const NSURLRequestUseProtocolCachePolicy: NSURLRequestCachePolicy = 0;
@@ -160,6 +160,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 @implementation NSMutableURLRequest: NSURLRequest
+
+- (())setCachePolicy:(NSURLRequestCachePolicy)cache_policy {
+    todo_objc_setter!(this, cache_policy);
+}
 
 - (())setHTTPMethod:(id)http_method { // NSString *
     let http_method_copy = msg![env; http_method copy];

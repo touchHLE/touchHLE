@@ -153,6 +153,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.on_parent_stack_in_coroutine(|window, _| window.set_screen_saver_enabled(!disabled))
 }
 
+- (())setNetworkActivityIndicatorVisible:(bool)visible {
+    todo_objc_setter!(this, visible);
+}
+
 - (bool)openURL:(id)url { // NSURL
     let ns_string = msg![env; url absoluteString];
     let url_string = ns_string::to_rust_string(env, ns_string);

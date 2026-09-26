@@ -175,6 +175,24 @@
       "parentUuid": "ecd56d74_02329b5b",
       "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d7e54a1_b9dd4c5c",
+        "filename": "src/frameworks/uikit/ui_font.rs",
+        "patchSetId": 4
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-09-26T04:30:29Z",
+      "side": 1,
+      "message": "Updated, decided to add support for it by reusing the same font (since this font doesn\u0027t have a wide variant either). I couldn\u0027t test it though since I don\u0027t know of any apps that use it, but I was able to find proof that it exists in iOS 3 here: [ https://gist.github.com/soffes/289158/a6ca861447326845fffd47c30fc53ea0d9d52942 ]",
+      "parentUuid": "0e7c3353_8689e706",
+      "revId": "2073b2774de0e9de8ab6f8b6d1d1f67dff3e1a9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

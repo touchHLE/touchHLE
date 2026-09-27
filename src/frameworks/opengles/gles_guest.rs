@@ -1089,7 +1089,11 @@ fn glTexSubImage2D(
     with_ctx_and_mem(env, |gles, mem| unsafe {
         let pixel_count: GuestUSize = width.checked_mul(height).unwrap().try_into().unwrap();
         let size = image_size_estimate(pixel_count, format, type_);
-        let pixels = mem.ptr_at(pixels.cast::<u8>(), size).cast::<GLvoid>();
+        let pixels = if pixels.is_null() {
+            std::ptr::null()
+        } else {
+            mem.ptr_at(pixels.cast::<u8>(), size).cast::<GLvoid>()
+        };
         gles.TexSubImage2D(
             target, level, xoffset, yoffset, width, height, format, type_, pixels,
         )

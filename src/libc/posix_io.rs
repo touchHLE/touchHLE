@@ -10,6 +10,7 @@ pub mod statvfs;
 
 use crate::abi::DotDotDot;
 use crate::dyld::{export_c_func, FunctionExports};
+
 use crate::fs::{FsError, GuestFile, GuestOpenOptions, GuestPath};
 use crate::libc::errno::{
     set_errno, EACCES, EBADF, EEXIST, EFAULT, EINTR, EINVAL, EIO, EISDIR, ENOENT, ENOTDIR,
@@ -33,6 +34,25 @@ impl State {
         self.files
             .get_mut(fd_to_file_idx(fd))
             .and_then(|file_or_none| file_or_none.as_mut())
+    }
+
+    /// Read the entire contents of a file descriptor into a vector.
+    pub(crate) fn read_fd_all(&mut self, fd: FileDescriptor) -> Vec<u8> {
+        match self.file_for_fd(fd) {
+            Some(PosixFileHostObject { file, .. }) => {
+                let mut data = Vec::new();
+                let _ = file.read_to_end(&mut data);
+                data
+            }
+            None => Vec::new(),
+        }
+    }
+
+    /// Write an entire buffer to a file descriptor.
+    pub(crate) fn write_fd_all(&mut self, fd: FileDescriptor, data: &[u8]) {
+        if let Some(PosixFileHostObject { file, .. }) = self.file_for_fd(fd) {
+            let _ = file.write_all(data);
+        }
     }
 
     pub(crate) fn is_fd_open(&mut self, fd: FileDescriptor) -> bool {

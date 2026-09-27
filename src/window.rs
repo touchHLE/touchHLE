@@ -242,6 +242,7 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    virtual_key_held: bool,
     /// Whether or not we are on the "main" environment stack (rather than
     /// a coroutine stack). Checked in various functions to make sure that
     /// certain SDL functions (that call JNI functions) are on the main
@@ -397,6 +398,7 @@ impl Window {
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
             virtual_accelerometer_last: None,
+            virtual_key_held: false,
             on_main_stack: true,
         };
 
@@ -538,6 +540,37 @@ impl Window {
                 } => {
                     let (x, y) = transform_virt_accel_coords(self, (x, y));
                     self.virtual_accelerometer_last = Some((x, y, false));
+                }
+                E::KeyDown {
+                    keycode: Some(sdl2::keyboard::Keycode::P),
+                    ..
+                } => {
+                    // P = synthesize a 3-finger touch (the gesture JellyCar 1
+                    // uses to open its pause menu). Repeat while held.
+                    if !self.virtual_key_held {
+                        self.virtual_key_held = true;
+                        log!("P key: synthesizing 3-finger touch (pause gesture)");
+                        let (x, y) = transform_input_coords(self, (160.0, 240.0), false);
+                        self.event_queue.push_back(Event::TouchesDown(
+                            HashMap::from([
+                                (FingerId::Mouse, (x, y)),
+                                (FingerId::Touch(101), (x + 20.0, y)),
+                                (FingerId::Touch(102), (x - 20.0, y)),
+                            ]),
+                        ));
+                    }
+                }
+                E::KeyUp {
+                    keycode: Some(sdl2::keyboard::Keycode::P),
+                    ..
+                } => {
+                    self.virtual_key_held = false;
+                    let (x, y) = transform_input_coords(self, (160.0, 240.0), false);
+                    self.event_queue.push_back(Event::TouchesUp(HashMap::from([
+                        (FingerId::Mouse, (x, y)),
+                        (FingerId::Touch(101), (x + 20.0, y)),
+                        (FingerId::Touch(102), (x - 20.0, y)),
+                    ])));
                 }
                 _ => {}
             }
@@ -967,6 +1000,12 @@ impl Window {
             (x, y)
         };
 
+        log!(
+            "get_acceleration: virt={:?} raw=({},{})",
+            self.virtual_accelerometer_last,
+            x,
+            y
+        );
         // Correct for window rotation
         let [x, y] = self.rotation_matrix().inverse().unwrap().transform([x, y]);
         let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0)); // just in case

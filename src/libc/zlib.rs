@@ -7,29 +7,31 @@
 
 use std::collections::HashMap;
 
-use flate2::{Compression, read::MultiGzDecoder, write::GzEncoder};
+use flate2::{Compression, write::GzEncoder};
 
 use super::posix_io::{
     self, FileDescriptor, O_CREAT, O_RDONLY, O_TRUNC, O_WRONLY,
 };
 use crate::dyld::{export_c_func, FunctionExports};
-use std::io::{Read, Write};
+use std::io::Write;
 
 use crate::mem::{
-    ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr, SafeRead,
+    ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead,
 };
 use crate::Environment;
 
 const Z_OK: i32 = 0;
 const Z_ERRNO: i32 = -1;
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
-struct gzFileS {
+pub(crate) struct gzFileS {
     fd: FileDescriptor,
 }
 unsafe impl SafeRead for gzFileS {}
 
-pub type gzFile = MutPtr<gzFileS>;
+#[allow(non_camel_case_types)]
+pub(crate) type gzFile = MutPtr<gzFileS>;
 
 enum GzFileHostObject {
     /// A fully-buffered, decompressed gzip file for reading.
@@ -183,7 +185,7 @@ fn gzwrite(env: &mut Environment, file: gzFile, buf: ConstVoidPtr, len: GuestUSi
 fn gzflush(env: &mut Environment, file: gzFile, flush: i32) -> i32 {
     // TODO: proper support for flush levels. For now, only flush the pending
     // compressed output to the file descriptor.
-    assert!(flush >= 0 && flush <= 5, "gzflush() with invalid flush level {flush}");
+    assert!((0..=5).contains(&flush), "gzflush() with invalid flush level {flush}");
     let Some(GzFileHostObject::Write { fd, encoder, .. }) =
         env.libc_state.zlib.objects.get_mut(&file)
     else {

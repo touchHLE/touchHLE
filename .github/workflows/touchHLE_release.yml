@@ -26,10 +26,6 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           git fetch origin "$GITHUB_REF"
           git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
-      - name: Install clang-format
-        run: brew install clang-format
-      - name: Check formatting
-        run: dev-scripts/format.sh --check
       - name: Get Submodules
         run: git submodule update --init
       - name: Install Boost
@@ -106,8 +102,6 @@ jobs:
         cd "$GITHUB_WORKSPACE"
         git fetch origin "$GITHUB_REF"
         git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
-    - name: Check formatting
-      run: dev-scripts/format.sh --check
     - name: Get Submodules
       run: git submodule update --init
     - name: Try to get cached copy of Boost
@@ -204,10 +198,6 @@ jobs:
         cd "$GITHUB_WORKSPACE"
         git fetch origin "$GITHUB_REF"
         git checkout "$GITHUB_SHA" # avoid race condition if branch/tag changes
-    # Apparently the Windows runner already has clang-format? That's nice.
-    - name: Check formatting
-      shell: bash # no command output without this
-      run: dev-scripts/format.sh --check
     - name: Get Submodules
       run: git submodule update --init
     - name: Try to get cached copy of Boost

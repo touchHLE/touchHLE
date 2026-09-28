@@ -22,6 +22,7 @@ const kAudioSessionBadPropertySizeError: OSStatus = fourcc(b"!siz") as _;
 type AudioSessionPropertyID = u32;
 const kAudioSessionProperty_OtherAudioIsPlaying: AudioSessionPropertyID = fourcc(b"othr");
 const kAudioSessionProperty_AudioCategory: AudioSessionPropertyID = fourcc(b"acat");
+const kAudioSessionProperty_AudioInputAvailable: AudioSessionPropertyID = fourcc(b"aiav");
 const kAudioSessionProperty_CurrentHardwareSampleRate: AudioSessionPropertyID = fourcc(b"chsr");
 const kAudioSessionProperty_CurrentHardwareOutputNumberChannels: AudioSessionPropertyID =
     fourcc(b"choc");
@@ -106,6 +107,10 @@ fn AudioSessionGetProperty(
         }
         kAudioSessionProperty_AudioCategory => {
             let value: u32 = state.audio_session_category;
+            env.mem.write(out_data.cast(), value);
+        }
+        kAudioSessionProperty_AudioInputAvailable => {
+            let value: u32 = 1;
             env.mem.write(out_data.cast(), value);
         }
         kAudioSessionProperty_CurrentHardwareSampleRate => {
@@ -226,6 +231,7 @@ fn get_audio_session_property_size(in_ID: AudioSessionPropertyID) -> GuestUSize 
     match in_ID {
         kAudioSessionProperty_OtherAudioIsPlaying => guest_size_of::<u32>(),
         kAudioSessionProperty_AudioCategory => guest_size_of::<u32>(),
+        kAudioSessionProperty_AudioInputAvailable => guest_size_of::<u32>(),
         kAudioSessionProperty_CurrentHardwareSampleRate => guest_size_of::<f64>(),
         kAudioSessionProperty_CurrentHardwareOutputNumberChannels => guest_size_of::<u32>(),
         kAudioSessionProperty_CurrentHardwareOutputVolume => guest_size_of::<f32>(),

@@ -15,6 +15,7 @@ use std::time::Instant;
 pub mod ui_accelerometer;
 pub mod ui_activity_indicator_view;
 pub mod ui_application;
+pub mod ui_bar_button_item;
 pub mod ui_color;
 pub mod ui_device;
 pub mod ui_event;
@@ -28,6 +29,7 @@ pub mod ui_nib;
 pub mod ui_pasteboard;
 pub mod ui_responder;
 pub mod ui_screen;
+pub mod ui_toolbar;
 pub mod ui_touch;
 pub mod ui_view;
 pub mod ui_view_controller;
@@ -39,6 +41,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_accelerometer::CLASSES,
         ui_activity_indicator_view::CLASSES,
         ui_application::CLASSES,
+        ui_bar_button_item::CLASSES,
         ui_color::CLASSES,
         ui_device::CLASSES,
         ui_event::CLASSES,
@@ -51,6 +54,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ui_responder::CLASSES,
         ui_screen::CLASSES,
         ui_touch::CLASSES,
+        ui_toolbar::CLASSES,
         ui_view::CLASSES,
         ui_view::ui_alert_view::CLASSES,
         ui_view::ui_control::CLASSES,
@@ -110,8 +114,8 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     while let Some(event) = env.window_mut().pop_event() {
         match event {
             Event::Quit => {
-                echo!("User requested quit, exiting.");
-                ui_application::exit(env);
+                echo!("User requested quit, exiting without guest lifecycle callbacks.");
+                ui_application::exit_from_user_request(env);
             }
             Event::TouchesDown(..) | Event::TouchesMove(..) | Event::TouchesUp(..) => {
                 ui_touch::handle_event(env, event)

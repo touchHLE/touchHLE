@@ -16,12 +16,14 @@ use crate::objc::{
 };
 use crate::window::DeviceOrientation;
 use crate::Environment;
+use std::collections::HashSet;
 
 #[derive(Default)]
 pub struct State {
     /// [UIApplication sharedApplication]
     shared_application: Option<id>,
     pub(super) status_bar_hidden: bool,
+    opened_urls: HashSet<String>,
 }
 
 struct UIApplicationHostObject {
@@ -160,18 +162,35 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (bool)openURL:(id)url { // NSURL
     let ns_string = msg![env; url absoluteString];
     let url_string = ns_string::to_rust_string(env, ns_string);
-    if let Err(e) = crate::window::open_url(env, &url_string) {
-        echo!("App opened URL {:?} unsuccessfully ({}), exiting.", url_string, e);
-    } else {
-        echo!("App opened URL {:?}, exiting.", url_string);
+    if env
+        .framework_state
+        .uikit
+        .ui_application
+        .opened_urls
+        .contains(url_string.as_ref())
+    {
+        log!(
+            "Ignoring repeated UIApplication openURL: request for {:?}.",
+            url_string
+        );
+        return true;
     }
 
-    // iPhone OS doesn't really do multitasking, so the app expects to close
-    // when a URL is opened, e.g. Super Monkey Ball keeps opening the URL every
-    // frame! Super Monkey Ball also doesn't check whether opening failed, so
-    // it's probably best to always exit.
-    exit(env);
-    true
+    if let Err(e) = crate::window::open_url(env, &url_string) {
+        echo!(
+            "App opened URL {:?} unsuccessfully ({}), continuing.",
+            url_string, e
+        );
+        false
+    } else {
+        env.framework_state
+            .uikit
+            .ui_application
+            .opened_urls
+            .insert(url_string.to_string());
+        echo!("App opened URL {:?}, continuing.", url_string);
+        true
+    }
 }
 
 // TODO: ignore touches
@@ -432,8 +451,20 @@ pub(super) fn UIApplicationMain(
     let _: () = msg![env; run_loop run];
 }
 
+/// Exit in response to the host window's close button.
+///
+/// A desktop close is not an iOS lifecycle transition. In particular, sending
+/// both termination callbacks here lets old apps tear down audio and other
+/// guest objects twice; some of them then free stale pointers and crash while
+/// handling `applicationWillTerminate:`. The host process is already going
+/// away, so avoid entering guest code on this path.
+pub(super) fn exit_from_user_request(_env: &mut Environment) -> ! {
+    std::process::exit(0);
+}
+
 /// Tell the app it's about to quit and then exit.
 pub(super) fn exit(env: &mut Environment) {
+    log!("UIApplication exit: preparing termination callbacks.");
     let ui_application: id = msg_class![env; UIApplication sharedApplication];
 
     let center: id = msg_class![env; NSNotificationCenter defaultCenter];
@@ -457,13 +488,18 @@ pub(super) fn exit(env: &mut Environment) {
             .objc
             .object_has_method_named(&env.mem, delegate, "applicationWillResignActive:")
         {
+            log!("UIApplication exit: calling applicationWillResignActive:.");
             () = msg![env; delegate applicationWillResignActive:ui_application];
+            log!("UIApplication exit: returned from applicationWillResignActive:.");
         }
 
         let notif_name = get_static_str(env, UIApplicationWillResignActiveNotification);
+        log!("UIApplication exit: posting UIApplicationWillResignActiveNotification.");
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
+        log!("UIApplication exit: returned from UIApplicationWillResignActiveNotification.");
 
         let _: () = msg![env; pool drain];
+        log!("UIApplication exit: drained resign-active autorelease pool.");
     };
 
     {
@@ -473,15 +509,21 @@ pub(super) fn exit(env: &mut Environment) {
             .objc
             .object_has_method_named(&env.mem, delegate, "applicationWillTerminate:")
         {
+            log!("UIApplication exit: calling applicationWillTerminate:.");
             () = msg![env; delegate applicationWillTerminate:ui_application];
+            log!("UIApplication exit: returned from applicationWillTerminate:.");
         }
 
         let notif_name = get_static_str(env, UIApplicationWillTerminateNotification);
+        log!("UIApplication exit: posting UIApplicationWillTerminateNotification.");
         () = msg![env; center postNotificationName:notif_name object:ui_application userInfo:nil];
+        log!("UIApplication exit: returned from UIApplicationWillTerminateNotification.");
 
         let _: () = msg![env; pool drain];
+        log!("UIApplication exit: drained terminate autorelease pool.");
     };
 
+    log!("UIApplication exit: callbacks complete; exiting process.");
     std::process::exit(0);
 }
 

@@ -72,6 +72,15 @@ const kAudioFilePropertyMagicCookieData: AudioFilePropertyID = fourcc(b"mgic");
 const kAudioFilePropertyChannelLayout: AudioFilePropertyID = fourcc(b"cmap");
 const kAudioFilePropertyEstimatedDuration: AudioFilePropertyID = fourcc(b"edur");
 const kAudioFilePropertyPacketTableInfo: AudioFilePropertyID = fourcc(b"pnfo");
+const kAudioFilePropertyFrameToPacket: AudioFilePropertyID = fourcc(b"frpk");
+
+#[repr(C, packed)]
+struct AudioFileFramePacketTranslation {
+    frame: i64,
+    packet: i64,
+    frame_offset_in_packet: u32,
+}
+unsafe impl SafeRead for AudioFileFramePacketTranslation {}
 
 pub fn AudioFileOpenURL(
     env: &mut Environment,
@@ -230,6 +239,7 @@ pub(super) fn property_size(property_id: AudioFilePropertyID) -> GuestUSize {
         kAudioFilePropertyPacketSizeUpperBound => guest_size_of::<u32>(),
         kAudioFilePropertyEstimatedDuration => guest_size_of::<f64>(),
         kAudioFilePropertyPacketTableInfo => guest_size_of::<AudioFilePacketTableInfo>(),
+        kAudioFilePropertyFrameToPacket => guest_size_of::<AudioFileFramePacketTranslation>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(property_id)),
     }
 }
@@ -329,6 +339,18 @@ pub fn AudioFileGetProperty(
         kAudioFilePropertyPacketTableInfo => {
             log!("TODO: AudioFileGetProperty({:?}, kAudioFilePropertyPacketTableInfo, {:?}, {:?}) -> kAudioFileUnsupportedPropertyError", in_audio_file, io_data_size, out_property_data);
             return kAudioFileUnsupportedPropertyError;
+        }
+        kAudioFilePropertyFrameToPacket => {
+            let mut translation: AudioFileFramePacketTranslation =
+                env.mem.read(out_property_data.cast());
+            let frames_per_packet = host_object
+                .audio_file
+                .audio_description()
+                .frames_per_packet
+                .max(1) as i64;
+            translation.packet = translation.frame / frames_per_packet;
+            translation.frame_offset_in_packet = (translation.frame % frames_per_packet) as u32;
+            env.mem.write(out_property_data.cast(), translation);
         }
         _ => unreachable!(),
     }

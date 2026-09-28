@@ -5,14 +5,26 @@
  */
 //! `MPMediaPickerController`.
 
-use crate::objc::{objc_classes, ClassExports};
+use crate::frameworks::foundation::NSUInteger;
+use crate::objc::{id, nil, objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
 @implementation MPMediaPickerController: UIViewController
-// TODO
+
+// df.ipa's iPod Music feature is intentionally unsupported. Returning nil
+// makes the app's optional picker path a no-op instead of entering a modal
+// flow that cannot be completed without a host music library.
+- (id)initWithMediaTypes:(NSUInteger)media_types {
+    log!(
+        "Ignoring MPMediaPickerController initWithMediaTypes:{:?} (unsupported)",
+        media_types
+    );
+    nil
+}
+
 @end
 
 };

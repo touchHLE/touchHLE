@@ -274,7 +274,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     } = env.objc.borrow(this);
 
     let selector = to_rust_string(env, label);
-    let action = env.objc.lookup_selector(&selector).unwrap();
+    // IBAction names can appear only in a NIB, rather than in the app
+    // binary's Objective-C selector table.
+    let action = match env.objc.lookup_selector(&selector) {
+        Some(action) => action,
+        None => env
+            .objc
+            .register_host_selector(selector.into_owned(), &mut env.mem),
+    };
 
     () = msg![env; source addTarget:destination action:action forControlEvents:event_mask];
 }

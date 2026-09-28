@@ -66,6 +66,10 @@ struct AudioQueueHostObject {
     /// the nth item in this queue must also be the nth item in the OpenAL
     /// queue, though the OpenAL queue may be shorter.
     buffer_queue: VecDeque<AudioQueueBufferRef>,
+    offline_render_format: Option<AudioStreamBasicDescription>,
+    offline_render_source_buffer: Option<AudioQueueBufferRef>,
+    offline_render_source: Vec<u8>,
+    offline_render_source_offset: usize,
     is_running: AudioQueueIsRunning,
     al_source: Option<ALuint>,
     al_unused_buffers: Vec<ALuint>,
@@ -184,6 +188,10 @@ pub fn AudioQueueNewOutput(
         volume: 1.0,
         buffers: Vec::new(),
         buffer_queue: VecDeque::new(),
+        offline_render_format: None,
+        offline_render_source_buffer: None,
+        offline_render_source: Vec::new(),
+        offline_render_source_offset: 0,
         is_running: AudioQueueIsRunning::Stopped,
         al_source: None,
         al_unused_buffers: Vec::new(),
@@ -505,6 +513,134 @@ fn AudioQueueSetProperty(
     kAudioQueueErr_InvalidDevice
 }
 
+pub fn AudioQueueSetOfflineRenderFormat(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_format: ConstPtr<AudioStreamBasicDescription>,
+) -> OSStatus {
+    return_if_null!(in_aq);
+    return_if_null!(in_format);
+
+    let format = env.mem.read(in_format);
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+    else {
+        return kAudioQueueErr_InvalidDevice;
+    };
+
+    queue.offline_render_format = Some(format);
+    queue.offline_render_source_buffer = None;
+    queue.offline_render_source.clear();
+    queue.offline_render_source_offset = 0;
+    log_dbg!(
+        "AudioQueueSetOfflineRenderFormat({:?}, {:?}) -> 0",
+        in_aq,
+        format
+    );
+    0
+}
+
+pub fn AudioQueueOfflineRender(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    _in_timestamp: MutPtr<AudioTimeStamp>,
+    out_buffer: AudioQueueBufferRef,
+    in_number_frames: u32,
+) -> OSStatus {
+    return_if_null!(in_aq);
+    return_if_null!(out_buffer);
+
+    let Some((input_format, output_format)) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get(&in_aq)
+        .map(|queue| {
+            (
+                queue.format,
+                queue.offline_render_format.unwrap_or(queue.format),
+            )
+        })
+    else {
+        return kAudioQueueErr_InvalidDevice;
+    };
+
+    let mut buffer = env.mem.read(out_buffer);
+    let requested_bytes = in_number_frames.saturating_mul(output_format.bytes_per_frame) as usize;
+    let output_capacity = (buffer.audio_data_bytes_capacity as usize).min(requested_bytes);
+    let mut output = Vec::with_capacity(output_capacity);
+
+    while output.len() < output_capacity {
+        let source_empty = State::get(&mut env.framework_state)
+            .audio_queues
+            .get(&in_aq)
+            .is_none_or(|queue| {
+                queue.offline_render_source_offset >= queue.offline_render_source.len()
+            });
+
+        if source_empty {
+            let source_buffer = State::get(&mut env.framework_state)
+                .audio_queues
+                .get(&in_aq)
+                .and_then(|queue| queue.buffer_queue.front().copied());
+            let Some(source_buffer) = source_buffer else {
+                break;
+            };
+
+            let source = env.mem.read(source_buffer);
+            let (_, _, decoded) = decode_buffer(
+                &env.mem,
+                &input_format,
+                source.audio_data.cast(),
+                source.audio_data_byte_size,
+            );
+
+            let queue = State::get(&mut env.framework_state)
+                .audio_queues
+                .get_mut(&in_aq)
+                .unwrap();
+            queue.offline_render_source_buffer = Some(source_buffer);
+            queue.offline_render_source = decoded;
+            queue.offline_render_source_offset = 0;
+        }
+
+        let queue = State::get(&mut env.framework_state)
+            .audio_queues
+            .get_mut(&in_aq)
+            .unwrap();
+        let source_offset = queue.offline_render_source_offset;
+        let bytes_to_copy =
+            (output_capacity - output.len()).min(queue.offline_render_source.len() - source_offset);
+        output.extend_from_slice(
+            &queue.offline_render_source[source_offset..source_offset + bytes_to_copy],
+        );
+        queue.offline_render_source_offset += bytes_to_copy;
+
+        if queue.offline_render_source_offset >= queue.offline_render_source.len() {
+            let source_buffer = queue.offline_render_source_buffer.take();
+            queue.offline_render_source.clear();
+            queue.offline_render_source_offset = 0;
+            if source_buffer == queue.buffer_queue.front().copied() {
+                queue.buffer_queue.pop_front();
+            }
+        }
+    }
+
+    env.mem
+        .bytes_at_mut(buffer.audio_data.cast(), output.len().try_into().unwrap())
+        .copy_from_slice(&output);
+    buffer.audio_data_byte_size = output.len() as u32;
+    env.mem.write(out_buffer, buffer);
+
+    log_dbg!(
+        "AudioQueueOfflineRender({:?}, {:?}, {} frames) -> {} bytes",
+        in_aq,
+        out_buffer,
+        in_number_frames,
+        output.len()
+    );
+    0
+}
+
 pub fn log_if_broken_audio_format(format: &AudioStreamBasicDescription) {
     let bytes_per_channel = format.bits_per_channel / 8;
     let expected_bytes_per_packet = format.bytes_per_frame * format.frames_per_packet;
@@ -697,8 +833,21 @@ fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) -> Result<(), 
         let mut al_source = 0;
         unsafe {
             context.GenSources(1, &mut al_source);
+            if context.GetError() != 0 || al_source == 0 {
+                log!(
+                    "Warning: OpenAL failed to create a source for audio queue {:?}",
+                    in_aq
+                );
+                return Err(());
+            }
             context.Sourcef(al_source, al::AL_MAX_GAIN, volume);
-            assert!(context.GetError() == 0);
+            if context.GetError() != 0 {
+                log!(
+                    "Warning: OpenAL failed to set volume for audio queue {:?}",
+                    in_aq
+                );
+                return Err(());
+            }
         };
         host_object.al_source = Some(al_source);
     }
@@ -841,7 +990,10 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     // Push new buffers etc.
 
-    _ = prime_audio_queue(env, in_aq);
+    if prime_audio_queue(env, in_aq).is_err() {
+        log!("Warning: Cannot start audio queue {:?}.", in_aq);
+        return;
+    }
 
     let context = env
         .framework_state
@@ -937,19 +1089,24 @@ pub fn AudioQueueStart(
 
     assert!(in_device_start_time.is_null()); // TODO
 
-    _ = prime_audio_queue(env, in_aq);
+    if prime_audio_queue(env, in_aq).is_err() {
+        log!("Warning: Cannot start audio queue {:?}.", in_aq);
+        return kAudioQueueErr_CannotStart;
+    }
 
     let (state, context) =
         State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
-    host_object.is_running = AudioQueueIsRunning::Running;
-
     if is_supported_audio_format(&host_object.format) {
         let al_source = host_object.al_source.unwrap();
         unsafe { context.SourcePlay(al_source) };
-        assert!(unsafe { context.GetError() } == 0);
+        if unsafe { context.GetError() } != 0 {
+            log!("Warning: OpenAL failed to start audio queue {:?}.", in_aq);
+            return kAudioQueueErr_CannotStart;
+        }
+        host_object.is_running = AudioQueueIsRunning::Running;
     } else {
         log!(
             "AudioQueueStart: Unsupported format {:?}",
@@ -1136,6 +1293,8 @@ pub fn AudioQueueDispose(
                 host_object.al_unused_buffers.as_ptr(),
             );
             assert!(context.GetError() == 0);
+            context.DeleteSources(1, &al_source);
+            assert!(context.GetError() == 0);
         }
     }
 
@@ -1168,6 +1327,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueGetPropertySize(_, _, _)),
     export_c_func!(AudioQueueGetProperty(_, _, _, _)),
     export_c_func!(AudioQueueSetProperty(_, _, _, _)),
+    export_c_func!(AudioQueueSetOfflineRenderFormat(_, _)),
+    export_c_func!(AudioQueueOfflineRender(_, _, _, _)),
     export_c_func!(AudioQueuePrime(_, _, _)),
     export_c_func!(AudioQueueStart(_, _)),
     export_c_func!(AudioQueuePause(_)),

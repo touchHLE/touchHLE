@@ -145,8 +145,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         // FIXME: don't assume URL is already absolute
         NSURLHostObject::FileURL { ns_string, .. } => ns_string,
         NSURLHostObject::OtherURL { ns_string } => {
-            // TODO: full RFC 1808 resolution
-            assert!(to_rust_string(env, ns_string).starts_with("http"));
+            // TODO: full RFC 1808 resolution. The URL may use a non-HTTP
+            // scheme or be relative, but absoluteString must not panic.
             ns_string
         },
     }

@@ -194,6 +194,19 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())dismissModalViewControllerAnimated:(bool)animated {
     log!("TODO: [(UIViewController*){:?} dismissModalViewControllerAnimated:{}]", this, animated); // TODO
 }
+- (())presentModalViewController:(id)view_controller // UIViewController *
+                        animated:(bool)animated {
+    log!(
+        "TODO: [(UIViewController*){:?} presentModalViewController:{:?} animated:{}]",
+        this,
+        view_controller,
+        animated
+    );
+    if view_controller == nil {
+        log!("Deferring nil media picker completion until the next run-loop iteration.");
+        crate::frameworks::media_player::defer_media_picker_completion(env, this);
+    }
+}
 - (())dismissMoviePlayerViewControllerAnimated {
     log!("TODO: [(UIViewController*){:?} dismissMoviePlayerViewControllerAnimated]", this); // TODO
 }

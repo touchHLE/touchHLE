@@ -1441,6 +1441,49 @@ pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
     env.on_parent_stack_in_coroutine(|_, _| sdl2::url::open_url(url).map_err(|e| e.to_string()))
 }
 
+/// Show a native dialog for UIKit alerts and return the selected button index.
+///
+/// SDL reports closing the dialog as `-1`. The caller decides how that maps to
+/// the guest UIKit delegate, so this helper only handles SDL interaction.
+pub fn show_alert_messagebox(
+    window: Option<&Window>,
+    title: &str,
+    message: &str,
+    button_titles: &[String],
+    cancel_button_index: Option<usize>,
+) -> Result<i32, String> {
+    use sdl2::messagebox;
+
+    let buttons: Vec<_> = button_titles
+        .iter()
+        .enumerate()
+        .map(|(index, text)| messagebox::ButtonData {
+            flags: if Some(index) == cancel_button_index {
+                messagebox::MessageBoxButtonFlag::ESCAPEKEY_DEFAULT
+            } else {
+                messagebox::MessageBoxButtonFlag::NOTHING
+            },
+            button_id: index as i32,
+            text: text.as_str(),
+        })
+        .collect();
+
+    let clicked = messagebox::show_message_box(
+        messagebox::MessageBoxFlag::INFORMATION,
+        &buttons,
+        title,
+        message,
+        window.map(|win| &win.window),
+        None,
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(match clicked {
+        messagebox::ClickedButton::CloseButton => -1,
+        messagebox::ClickedButton::CustomButton(button) => button.button_id,
+    })
+}
+
 /// Show an SDL messagebox for an error (typically after a panic).
 ///
 /// The window argument allows for passing in the parent window for the

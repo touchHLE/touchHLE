@@ -66,6 +66,13 @@ const UIViewAnimationCurveEaseIn: UIViewAnimationCurve = 1;
 const UIViewAnimationCurveEaseOut: UIViewAnimationCurve = 2;
 const UIViewAnimationCurveLinear: UIViewAnimationCurve = 3;
 
+type UIViewAnimationTransition = NSInteger;
+const UIViewAnimationTransitionNone: UIViewAnimationTransition = 0;
+const UIViewAnimationTransitionFlipFromLeft: UIViewAnimationTransition = 1;
+const UIViewAnimationTransitionFlipFromRight: UIViewAnimationTransition = 2;
+const UIViewAnimationTransitionCurlUp: UIViewAnimationTransition = 3;
+const UIViewAnimationTransitionCurlDown: UIViewAnimationTransition = 4;
+
 #[derive(Default)]
 pub struct State {
     /// List of views for internal purposes. Non-retaining!
@@ -193,6 +200,36 @@ pub const CLASSES: ClassExports = objc_classes! {
         _ => panic!("Unknown UIViewAnimationCurve {:?}", curve),
     };
     () = msg_class![env; CATransaction setAnimationTimingFunction:timing_function];
+}
+
++ (())setAnimationTransition:(UIViewAnimationTransition)transition
+                     forView:(id)view
+                       cache:(bool)_cache {
+    match transition {
+        UIViewAnimationTransitionNone => return,
+        UIViewAnimationTransitionFlipFromLeft
+        | UIViewAnimationTransitionFlipFromRight
+        | UIViewAnimationTransitionCurlUp
+        | UIViewAnimationTransitionCurlDown => (),
+        _ => {
+            log!(
+                "Warning: unknown UIViewAnimationTransition {}, using fade fallback",
+                transition
+            );
+        }
+    }
+
+    // Core Animation's renderer currently supports basic property animations,
+    // but not CATransition. Use a fade rather than silently dropping the
+    // requested transition.
+    let layer: id = msg![env; view layer];
+    let key_path = get_static_str(env, "opacity");
+    let animation: id = msg_class![env; CABasicAnimation animationWithKeyPath:key_path];
+    let transparent: id = msg_class![env; NSNumber numberWithFloat:0.0f32];
+    let opaque: id = msg_class![env; NSNumber numberWithFloat:1.0f32];
+    () = msg![env; animation setFromValue:transparent];
+    () = msg![env; animation setToValue:opaque];
+    ca_transaction::ThreadLocalState::add_animation(env, layer, animation);
 }
 
 + (())setAnimationRepeatAutoreverses:(bool)repeat_autoreverses {

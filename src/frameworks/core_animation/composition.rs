@@ -341,6 +341,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
 
     // Re-borrow
     let window = env.window.as_mut().unwrap();
+    let pinch_visible_at = window.pinch_visible_at();
     let mut gles = window.make_internal_gl_ctx_current();
 
     // Clean up some GL state
@@ -367,6 +368,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
             present_frame_args.0,
             present_frame_args.1,
             present_frame_args.2,
+            pinch_visible_at,
         );
     }
     std::mem::drop(gles);

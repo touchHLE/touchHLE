@@ -49,6 +49,7 @@ pub unsafe fn present_frame(
     viewport: (u32, u32, u32, u32),
     rotation_matrix: Matrix<2>,
     virtual_cursor_visible_at: Option<(f32, f32, bool)>,
+    pinch_visible_at: Option<((f32, f32), (f32, f32))>,
 ) {
     // While this is a generic utility, it is closely tied to
     // crate::frameworks::opengles::eagl::present_renderbuffer, which handles
@@ -105,5 +106,33 @@ pub unsafe fn present_frame(
         }
         gles.VertexPointer(2, gles11::FLOAT, 0, vertices.as_ptr() as *const GLvoid);
         gles.DrawArrays(gles11::TRIANGLES, 0, 6);
+    }
+
+    if let Some((left, right)) = pinch_visible_at {
+        let (vx, vy, vw, vh) = viewport;
+        gles.DisableClientState(gles11::TEXTURE_COORD_ARRAY);
+        gles.Disable(gles11::TEXTURE_2D);
+        gles.Enable(gles11::BLEND);
+        gles.BlendFunc(gles11::ONE, gles11::ONE_MINUS_SRC_ALPHA);
+        gles.Color4f(0.1, 0.6, 1.0, 0.45);
+
+        for (x, y) in [left, right] {
+            let x = x - vx as f32;
+            let y = y - vy as f32;
+            const SEGMENTS: usize = 16;
+            const VERTEX_COUNT: usize = SEGMENTS + 2;
+            let radius = 14.0;
+            let mut circle = [0.0_f32; VERTEX_COUNT * 2];
+            circle[0] = x / (vw as f32 / 2.0) - 1.0;
+            circle[1] = 1.0 - y / (vh as f32 / 2.0);
+            for i in 0..=SEGMENTS {
+                let angle = i as f32 / SEGMENTS as f32 * std::f32::consts::TAU;
+                let index = (i + 1) * 2;
+                circle[index] = (x + angle.cos() * radius) / (vw as f32 / 2.0) - 1.0;
+                circle[index + 1] = 1.0 - (y + angle.sin() * radius) / (vh as f32 / 2.0);
+            }
+            gles.VertexPointer(2, gles11::FLOAT, 0, circle.as_ptr() as *const GLvoid);
+            gles.DrawArrays(gles11::TRIANGLE_FAN, 0, VERTEX_COUNT as _);
+        }
     }
 }

@@ -90,6 +90,72 @@ fn size_for_orientation(
         DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
     }
 }
+
+fn preserve_window_size_on_rotation(
+    size: (u32, u32),
+    old_orientation: DeviceOrientation,
+    new_orientation: DeviceOrientation,
+) -> (u32, u32) {
+    let old_is_landscape = matches!(
+        old_orientation,
+        DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight
+    );
+    let new_is_landscape = matches!(
+        new_orientation,
+        DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight
+    );
+    if old_is_landscape == new_is_landscape {
+        size
+    } else {
+        (size.1, size.0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{preserve_window_size_on_rotation, DeviceOrientation};
+
+    #[test]
+    fn rotation_preserves_size_within_same_orientation_axis() {
+        assert_eq!(
+            preserve_window_size_on_rotation(
+                (900, 600),
+                DeviceOrientation::LandscapeLeft,
+                DeviceOrientation::LandscapeRight,
+            ),
+            (900, 600)
+        );
+        assert_eq!(
+            preserve_window_size_on_rotation(
+                (600, 900),
+                DeviceOrientation::Portrait,
+                DeviceOrientation::PortraitUpsideDown,
+            ),
+            (600, 900)
+        );
+    }
+
+    #[test]
+    fn rotation_swaps_size_between_orientation_axes() {
+        assert_eq!(
+            preserve_window_size_on_rotation(
+                (900, 600),
+                DeviceOrientation::LandscapeLeft,
+                DeviceOrientation::Portrait,
+            ),
+            (600, 900)
+        );
+        assert_eq!(
+            preserve_window_size_on_rotation(
+                (600, 900),
+                DeviceOrientation::Portrait,
+                DeviceOrientation::LandscapeRight,
+            ),
+            (900, 600)
+        );
+    }
+}
+
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
     let (short_side, long_side) = if screen_size.0 < screen_size.1 {
         (screen_size.0, screen_size.1)
@@ -129,8 +195,16 @@ pub enum FingerId {
     ButtonToTouch(crate::options::Button),
     StickToTouch,
     DpadToTouch,
+    PinchAnchor,
+    PinchActive,
 }
 pub type Coords = (f32, f32);
+
+struct PinchState {
+    anchor: Coords,
+    axis: Coords,
+    active: Coords,
+}
 
 struct DpadState {
     left: bool,
@@ -229,6 +303,7 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
+    last_window_size: (u32, u32),
     internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
     device_family: DeviceFamily,
@@ -242,6 +317,10 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    pinch_modifier_down: bool,
+    pinch_mouse_button_active: bool,
+    pinch_state: Option<PinchState>,
+    rotation_modifier_down: bool,
     /// Whether or not we are on the "main" environment stack (rather than
     /// a coroutine stack). Checked in various functions to make sure that
     /// certain SDL functions (that call JNI functions) are on the main
@@ -322,12 +401,14 @@ impl Window {
         } else {
             let (width, height) =
                 size_for_orientation(device_family, device_orientation, scale_hack);
-            let window = video_ctx
+            let mut window = video_ctx
                 .window(title, width, height)
                 .position_centered()
+                .resizable()
                 .opengl()
                 .build()
                 .unwrap();
+            window.set_minimum_size(width, height).unwrap();
             window
         };
 
@@ -362,6 +443,7 @@ impl Window {
 
         #[cfg(target_os = "macos")]
         let max_height = window.size().1;
+        let initial_window_size = window.size();
 
         let mut window = Window {
             _sdl_ctx: sdl_ctx,
@@ -378,6 +460,7 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
+            last_window_size: initial_window_size,
             internal_gl_ins: None,
             splash_image: launch_image,
             device_family,
@@ -397,6 +480,10 @@ impl Window {
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
             virtual_accelerometer_last: None,
+            pinch_modifier_down: false,
+            pinch_mouse_button_active: false,
+            pinch_state: None,
+            rotation_modifier_down: false,
             on_main_stack: true,
         };
 
@@ -489,6 +576,19 @@ impl Window {
             let (screen_width, screen_height) = window.window.drawable_size();
             (screen_width as f32 * x, screen_height as f32 * y)
         }
+        let pinch_map = |window: &Window| {
+            let (anchor, active) = window.pinch_points().unwrap();
+            HashMap::from([
+                (
+                    FingerId::PinchAnchor,
+                    transform_input_coords(window, anchor, false),
+                ),
+                (
+                    FingerId::PinchActive,
+                    transform_input_coords(window, active, false),
+                ),
+            ])
+        };
 
         let mut controller_updated = false;
         // event_pump doesn't have a method to peek on events
@@ -542,8 +642,123 @@ impl Window {
                 _ => {}
             }
 
-            self.event_queue.push_back(match event {
+            match event {
+                E::Window {
+                    win_event:
+                        sdl2::event::WindowEvent::Resized(width, height)
+                        | sdl2::event::WindowEvent::SizeChanged(width, height),
+                    ..
+                } if !self.fullscreen && !Self::rotatable_fullscreen() => {
+                    self.constrain_window_size(width.max(1) as u32, height.max(1) as u32);
+                    continue;
+                }
+                _ => {}
+            }
+
+            use sdl2::keyboard::{Keycode, Mod, Scancode};
+            let keyboard_mod =
+                unsafe { Mod::from_bits(sdl2_sys::SDL_GetModState() as u16).unwrap_or(Mod::NOMOD) };
+            match event {
+                E::KeyDown {
+                    keycode: Some(Keycode::LGui | Keycode::RGui),
+                    ..
+                } => {
+                    self.rotation_modifier_down = true;
+                    continue;
+                }
+                E::KeyUp {
+                    keycode: Some(Keycode::LGui | Keycode::RGui),
+                    ..
+                } => {
+                    self.rotation_modifier_down = false;
+                    continue;
+                }
+                E::KeyDown {
+                    keycode: Some(Keycode::LAlt | Keycode::RAlt),
+                    ..
+                } => {
+                    self.pinch_modifier_down = true;
+                    if self.event_pump.mouse_state().left() && self.pinch_state.is_none() {
+                        let mouse_state = self.event_pump.mouse_state();
+                        self.start_pinch(mouse_state.x() as f32, mouse_state.y() as f32);
+                        self.event_queue
+                            .push_back(Event::TouchesDown(pinch_map(self)));
+                    }
+                    continue;
+                }
+                E::KeyUp {
+                    keycode: Some(Keycode::LAlt | Keycode::RAlt),
+                    ..
+                } => {
+                    self.pinch_modifier_down = false;
+                    if self.pinch_state.is_some() {
+                        let map = pinch_map(self);
+                        self.pinch_state = None;
+                        self.pinch_mouse_button_active = true;
+                        self.event_queue.push_back(Event::TouchesUp(map));
+                    }
+                    continue;
+                }
+                _ => {}
+            }
+
+            let touch_event = match event {
                 E::Quit { .. } => Event::Quit,
+                E::KeyDown {
+                    keycode,
+                    scancode,
+                    keymod,
+                    ..
+                } if (keycode == Some(Keycode::R) || scancode == Some(Scancode::R)) && {
+                    #[cfg(target_os = "macos")]
+                    {
+                        (keymod | keyboard_mod).intersects(Mod::LGUIMOD | Mod::RGUIMOD)
+                            || self.rotation_modifier_down
+                    }
+                    #[cfg(not(target_os = "macos"))]
+                    {
+                        (keymod | keyboard_mod).intersects(Mod::LALTMOD | Mod::RALTMOD)
+                    }
+                } =>
+                {
+                    self.rotate_clockwise();
+                    continue;
+                }
+                E::MouseButtonDown {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Left,
+                    ..
+                } if self.pinch_modifier_down => {
+                    if self.pinch_state.is_none() {
+                        self.start_pinch(x as f32, y as f32);
+                        self.event_queue
+                            .push_back(Event::TouchesDown(pinch_map(self)));
+                    }
+                    continue;
+                }
+                E::MouseMotion {
+                    x, y, mousestate, ..
+                } if mousestate.left() && self.pinch_state.is_some() => {
+                    self.update_pinch(x as f32, y as f32);
+                    Event::TouchesMove(pinch_map(self))
+                }
+                E::MouseButtonUp {
+                    mouse_btn: MouseButton::Left,
+                    ..
+                } if self.pinch_state.is_some() => {
+                    let map = pinch_map(self);
+                    self.pinch_state = None;
+                    self.pinch_mouse_button_active = false;
+                    Event::TouchesUp(map)
+                }
+                E::MouseButtonUp {
+                    mouse_btn: MouseButton::Left,
+                    ..
+                } if self.pinch_mouse_button_active => {
+                    self.pinch_mouse_button_active = false;
+                    continue;
+                }
                 E::MouseButtonDown {
                     x,
                     y,
@@ -843,7 +1058,8 @@ impl Window {
                     Event::TextInput(TextInputEvent::Text(text))
                 }
                 _ => continue,
-            })
+            };
+            self.event_queue.push_back(touch_event);
         }
 
         if controller_updated {
@@ -1015,6 +1231,92 @@ impl Window {
         } else {
             None
         }
+    }
+
+    pub fn pinch_visible_at(&self) -> Option<(Coords, Coords)> {
+        self.pinch_points()
+    }
+
+    fn pinch_points(&self) -> Option<(Coords, Coords)> {
+        let state = self.pinch_state.as_ref()?;
+        Some((state.anchor, state.active))
+    }
+
+    fn start_pinch(&mut self, x: f32, y: f32) {
+        let (viewport_x, viewport_y, viewport_width, viewport_height) = self.viewport();
+        let anchor = (
+            viewport_x as f32 + viewport_width as f32 / 2.0,
+            viewport_y as f32 + viewport_height as f32 / 2.0,
+        );
+        let dx = x - anchor.0;
+        let dy = y - anchor.1;
+        let distance = (dx * dx + dy * dy).sqrt();
+        let axis = if distance > 1.0 {
+            (dx / distance, dy / distance)
+        } else {
+            (1.0, 0.0)
+        };
+
+        self.pinch_mouse_button_active = true;
+        self.pinch_state = Some(PinchState {
+            anchor,
+            axis,
+            active: (x, y),
+        });
+    }
+
+    fn update_pinch(&mut self, x: f32, y: f32) {
+        let (_, _, viewport_width, viewport_height) = self.viewport();
+        let Some(state) = self.pinch_state.as_mut() else {
+            return;
+        };
+        let max_distance = viewport_width.min(viewport_height) as f32 / 2.0 - 10.0;
+        let distance = ((x - state.anchor.0) * state.axis.0 + (y - state.anchor.1) * state.axis.1)
+            .clamp(10.0, max_distance.max(10.0));
+        state.active = (
+            state.anchor.0 + state.axis.0 * distance,
+            state.anchor.1 + state.axis.1 * distance,
+        );
+    }
+
+    fn constrain_window_size(&mut self, requested_width: u32, requested_height: u32) {
+        let (app_width, app_height) =
+            size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
+        let old_size = self.last_window_size;
+        let horizontal_change = requested_width.abs_diff(old_size.0);
+        let vertical_change = requested_height.abs_diff(old_size.1);
+        let (width, height) = if horizontal_change >= vertical_change {
+            (
+                requested_width,
+                ((requested_width as f32 * app_height as f32) / app_width as f32).round() as u32,
+            )
+        } else {
+            (
+                ((requested_height as f32 * app_width as f32) / app_height as f32).round() as u32,
+                requested_height,
+            )
+        };
+        let size = (width.max(1), height.max(1));
+        self.last_window_size = size;
+        if self.window.size() != size {
+            self.window.set_size(size.0, size.1).unwrap();
+        }
+    }
+
+    fn rotate_clockwise(&mut self) {
+        let orientation = match self.device_orientation {
+            DeviceOrientation::Portrait => DeviceOrientation::LandscapeRight,
+            DeviceOrientation::LandscapeRight => DeviceOrientation::PortraitUpsideDown,
+            DeviceOrientation::PortraitUpsideDown => DeviceOrientation::LandscapeLeft,
+            DeviceOrientation::LandscapeLeft => DeviceOrientation::Portrait,
+        };
+        log!(
+            "Rotating device clockwise from {:?} to {:?} via keyboard shortcut.",
+            self.device_orientation,
+            orientation
+        );
+        self.rotate_device(orientation);
+        log!("Device rotation is now {:?}.", self.device_orientation);
     }
 
     /// Update the virtual cursor's position, click state and visibility, then
@@ -1252,6 +1554,7 @@ impl Window {
                 viewport,
                 matrix,
                 /* virtual_cursor_visible_at: */ None,
+                /* pinch_visible_at: */ None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);
@@ -1285,7 +1588,11 @@ impl Window {
                 set_sdl2_orientation(new_orientation);
                 rotate_fullscreen_size(new_orientation, self.window.size())
             } else {
-                size_for_orientation(self.device_family, new_orientation, self.scale_hack)
+                preserve_window_size_on_rotation(
+                    self.last_window_size,
+                    self.device_orientation,
+                    new_orientation,
+                )
             };
 
             // macOS quirk: when resizing the window, the new framebuffer's size
@@ -1302,7 +1609,9 @@ impl Window {
                 self.viewport_y_offset = self.max_height - height;
             }
 
+            self.window.set_minimum_size(width, height).unwrap();
             self.window.set_size(width, height).unwrap();
+            self.last_window_size = (width, height);
         }
 
         if Self::rotatable_fullscreen() {
@@ -1362,9 +1671,6 @@ impl Window {
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
         let (app_width, app_height) =
             size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
-        if !self.fullscreen && !Self::rotatable_fullscreen() {
-            return (0, 0, app_width, app_height);
-        }
 
         let (screen_width, screen_height) = self.window.drawable_size();
 

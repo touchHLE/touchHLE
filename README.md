@@ -32,11 +32,19 @@ Only use touchHLE to emulate software you have obtained legally.
 
 Input methods:
 
-- For simulated touch input, there are four options:
+- For simulated touch input, there are five options:
   - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
+  - Pinch gestures on non-touch devices (hold Option on macOS or Alt on Windows/Linux,
+    press the left mouse button, then move the active finger toward or away from the
+    screen centre along its initial axis; it cannot cross the anchor; release the
+    button or modifier to end the gesture)
   - Virtual cursor using a game controller (move the cursor with the right analog stick, and tap/hold/drag by pressing the stick or the right shoulder button)
   - Mapping of game controller buttons or the left analog stick to specific on-screen locations (see the descriptions of `--button-to-touch=`, `--dpad-to-touch=` and `--stick-to-touch=` in `OPTIONS_HELP.txt`)
   - Real touch input, if you're on a device that has a touch screen
+- On desktop platforms, the non-fullscreen window can be resized. The app
+  content keeps its aspect ratio and is letterboxed as necessary.
+- To rotate the device clockwise by 90 degrees, press `Cmd+R` on macOS or
+  `Alt+R` on Windows/Linux.
 - For simulated accelerometer input, there are three options:
   - Tilt control simulation using the left analog stick of a game controller
   - Tilt control simulation using a mouse (hold down the right mouse button)

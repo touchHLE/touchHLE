@@ -351,7 +351,8 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         let view = env.objc.borrow::<UITouchHostObject>(touch).view;
         let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
 
-        if host_object.location == location {
+        let pinch_touch = matches!(finger_id, FingerId::PinchAnchor | FingerId::PinchActive);
+        if host_object.location == location && !pinch_touch {
             continue;
         }
 

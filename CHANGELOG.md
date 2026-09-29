@@ -40,6 +40,8 @@ Compatibility:
   - [Ultimate Mortal Kombat 3](https://appdb.touchhle.org/apps/1348) (@ciciplusplus)
   - [Dead Space](https://appdb.touchhle.org/apps/1312) (@ciciplusplus)
   - [Spy Mouse HD](https://appdb.touchhle.org/apps/206) (@ciciplusplus)
+  - [Call of Duty World at War Zombies](https://appdb.touchhle.org/apps/1242) (@abnormalmaps, @alborrajo)
+  - [Resident Evil Degeneration](https://appdb.touchhle.org/apps/8) (@abnormalmaps, @alborrajo)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @ciciplusplus, @zazatree, @abnormalmaps, @alborrajo, @acieslewicz, @JCR64, @mcd-3, @apexad)
   - Fixed several issues related to apps that rely on UIKit to rotate their UI. (@hikari-no-yume)

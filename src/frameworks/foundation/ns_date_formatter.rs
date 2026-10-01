@@ -11,7 +11,9 @@
 
 use crate::frameworks::core_foundation::time::CFAbsoluteTimeGetGregorianDate;
 use crate::frameworks::foundation::{ns_string, NSTimeInterval};
-use crate::objc::{autorelease, id, msg, nil, objc_classes, ClassExports, HostObject, NSZonePtr};
+use crate::objc::{
+    autorelease, id, msg, nil, objc_classes, todo_objc_setter, ClassExports, HostObject, NSZonePtr,
+};
 
 struct NSDateFormatterHostObject {
     date_format: Option<id>,
@@ -34,6 +36,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setDateFormat:(id)format { // NSString *
     let date_format: id = msg![env; format copy];
     env.objc.borrow_mut::<NSDateFormatterHostObject>(this).date_format = Some(date_format);
+}
+
+- (())setTimeZone:(id)time_zone {
+    todo_objc_setter!(this, time_zone);
 }
 
 - (id)stringFromDate:(id)date {

@@ -1,6 +1,6 @@
 # Changelog
 
-This will list notable changes from release to release, and credit the people who contributed them. This mainly covers changes that are visible to end users, so please look at the commit history if you want to know all the details.
+This lists notable changes from release to release, and credits the people who contributed them. This mainly covers changes that are visible to end users, so please look at the commit history if you want to know all the details.
 
 Names preceded by an @ are GitHub usernames.
 
@@ -13,7 +13,7 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
-## NEXT
+## v0.3.0 (2026-10-01)
 
 Compatibility:
 
@@ -44,13 +44,14 @@ Compatibility:
   - [Resident Evil Degeneration](https://appdb.touchhle.org/apps/8) (@abnormalmaps, @alborrajo)
 - API support improvements:
   - Various small contributions. (@hikari-no-yume, @ciciplusplus, @zazatree, @abnormalmaps, @alborrajo, @acieslewicz, @JCR64, @mcd-3, @apexad)
-  - Fixed several issues related to apps that rely on UIKit to rotate their UI. (@hikari-no-yume)
-  - Support for iPad device family. Device family is deduced from the app bundle, but user can also override it with `--device-family=` option. (@ciciplusplus)
+  - Fixed several issues related to apps that rely on UIKit to rotate their UI. Previously these apps would appear cropped or stretched, and in the wrong orientation. (@hikari-no-yume)
   - [SQLite3](https://github.com/touchHLE/sqlite-dylib) and [libxml2](https://github.com/touchHLE/libxml2-dylib) dynamic libraries are now available, compiled from source using our [clean open-source toolchain](https://github.com/touchHLE/common-3.0-sdk). (@acieslewicz, @ciciplusplus)
-- Improved support for iOS 3.1+:
+- There is now support for running apps in iPad mode (768×1024 pixels). Previously, only iPhone mode (320×480 pixels) was supported, so apps designed exclusively for the iPad would not work. Universal apps (which can run on both) are also supported. Device family (iPhone or iPad) is deduced from the app bundle, but the user can also override it with `--device-family=` option. (@ciciplusplus)
+- There is now support for iOS 4.0.x and iPhone OS 3.2.x apps:
   - The bundled dynamic libraries, libgcc and libstdc++, have been updated to their iOS 4.0.1 versions. (@ciciplusplus)
   - Support for NIBArchive NIB file format decoding. (@ciciplusplus)
-- Switched to a coroutine-based threading system. This solves [some compatibility issues](https://github.com/touchHLE/touchHLE/issues/119) and improves performance in some games. (@abnormalmaps)
+  - touchHLE will no longer output a warning when trying to run an app with iOS 4.0.x as its minimum OS version. The warning now only appears for apps requiring iOS 4.1 and later. (@ciciplusplus)
+- touchHLE now uses coroutines to implement threads. This fixes the [deadlocks](https://github.com/touchHLE/touchHLE/issues/119) that plagued the old system and created compatibilty issues, and improves performance in some games. (@abnormalmaps)
 
 ## v0.2.3 (2026-01-02)
 

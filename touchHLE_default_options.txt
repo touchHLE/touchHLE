@@ -243,3 +243,10 @@ com.ea.nfshp.bv: --force-composition
 com.ea.nfshp.inc: --force-composition
 com.ea.nfshp.ipad.bv: --force-composition
 com.ea.nfshp.ipad.inc: --force-composition
+
+# Logo Quiz Free
+com.jinfra.logoquizfree --portrait left
+
+# eFootball 2027 Mobile
+jp.konami.pesam --landscape left --button-to-touch=A,427,274 --button-to-touch=X,380,254 --button-to-touch=Y,124,291 --button-to-touch=B,444,221 --button-to-touch=Start,444,20
+touch=Select,444,20

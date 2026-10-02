@@ -38,7 +38,8 @@ pub struct Options {
     pub device_family: Option<DeviceFamily>,
     pub initial_orientation: DeviceOrientation,
     pub scale_hack: NonZeroU32,
-    pub deadzone: f32,
+    pub left_deadzone: f32,
+    pub right_deadzone: f32,
     pub analog_stick_tilt_controls: bool,
     pub x_tilt_range: f32,
     pub y_tilt_range: f32,
@@ -72,7 +73,8 @@ impl Default for Options {
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
             analog_stick_tilt_controls: true,
-            deadzone: 0.1,
+            left_deadzone: 0.1,
+            right_deadzone: 0.1,
             x_tilt_range: 60.0,
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
@@ -132,8 +134,10 @@ impl Options {
                 .map_err(|_| "Invalid scale hack factor".to_string())?;
         } else if arg == "--disable-analog-stick-tilt-controls" {
             self.analog_stick_tilt_controls = false;
-        } else if let Some(value) = arg.strip_prefix("--deadzone=") {
-            self.deadzone = parse_degrees(value, "deadzone")?;
+        } else if let Some(value) = arg.strip_prefix("--left-deadzone=") {
+            self.left_deadzone = parse_degrees(value, "left stick deadzone")?;
+        } else if let Some(value) = arg.strip_prefix("--right-deadzone=") {
+            self.right_deadzone = parse_degrees(value, "right stick deadzone")?;
         } else if let Some(value) = arg.strip_prefix("--x-tilt-range=") {
             self.x_tilt_range = parse_degrees(value, "X tilt range")?;
         } else if let Some(value) = arg.strip_prefix("--y-tilt-range=") {

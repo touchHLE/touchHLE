@@ -13,7 +13,7 @@ use super::{
     _nib_archive_decoder, ns_keyed_unarchiver, ns_string, ns_url, NSComparisonResult, NSNotFound,
     NSRange, NSUInteger,
 };
-use crate::abi::{CallFromHost, GuestFunction};
+use crate::abi::{CallFromHost, DotDotDot, GuestFunction};
 use crate::frameworks::foundation::ns_keyed_archiver::{
     encode_object, get_value_to_encode_for_current_key,
 };
@@ -382,19 +382,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (id)initWithObjects:(id)firstObj, ...args {
-    retain(env, firstObj);
-    let mut objects = vec![firstObj];
-    let mut varargs = args.start();
-    loop {
-        let next_arg: id = varargs.next(env);
-        if next_arg.is_null() {
-            break;
-        }
-        retain(env, next_arg);
-        objects.push(next_arg);
-    }
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+- (id)initWithObjects:(id)first_obj, ...args {
+    init_with_objects_inner(env, this, first_obj, args);
     this
 }
 
@@ -518,6 +507,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithCapacity:(NSUInteger)capacity {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.reserve(capacity as usize);
+    this
+}
+
+- (id)initWithObjects:(id)first_obj, ...args {
+    init_with_objects_inner(env, this, first_obj, args);
     this
 }
 
@@ -868,4 +862,20 @@ fn encode_with_coder_inner(env: &mut Environment, arr: id, coder: id) {
 
     let scope = get_value_to_encode_for_current_key(env, coder);
     scope.insert("NS.objects".to_string(), plist::Value::Array(encoded_vals));
+}
+
+/// Helper for initWithObjects.
+fn init_with_objects_inner(env: &mut Environment, arr: id, first_obj: id, args: DotDotDot) {
+    retain(env, first_obj);
+    let mut objects = vec![first_obj];
+    let mut varargs = args.start();
+    loop {
+        let next_arg: id = varargs.next(env);
+        if next_arg.is_null() {
+            break;
+        }
+        retain(env, next_arg);
+        objects.push(next_arg);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(arr).array = objects;
 }

@@ -521,6 +521,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)initWithObjects:(id)firstObj, ...args {
+    retain(env, firstObj);
+    let mut objects = vec![firstObj];
+    let mut varargs = args.start();
+    loop {
+        let next_arg: id = varargs.next(env);
+        if next_arg.is_null() {
+            break;
+        }
+        retain(env, next_arg);
+        objects.push(next_arg);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+    this
+}
+
 - (id)initWithArray:(id)array { // NSArray*
     let mut objects = Vec::new();
     let enumerator: id = msg![env; array objectEnumerator];

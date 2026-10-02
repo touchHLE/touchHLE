@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "57d43485_d24172af",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-10-02T23:06:41Z",
+      "side": 1,
+      "message": "Tested with StickWars 1.1 (com.johnehartzog.stickwars-siege). Note: you will need to stub UIApplication\u0027s statusBarFrame to test this change, as this change opens the options menu.",
+      "revId": "b68d664ebf84487e1b0cb4d755344e72da5897e6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

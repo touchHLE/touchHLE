@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "18d269bc_553f7cc4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-03T20:36:08Z",
+      "side": 1,
+      "message": "It looks reasonable stub to me, but could you please first confirm that you read and agree on our contribution guide https://github.com/touchHLE/touchHLE/blob/trunk/CONTRIBUTING.md#copyright-and-reverse-engineering ?",
+      "revId": "ae2457766a0d0a62fb1c19dc25cc87d294b254ca",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -5478,6 +5478,34 @@ int test_strftime() {
   return 0;
 }
 
+int test_wcsftime() {
+  struct tm tm;
+  wchar_t buf[5];
+  memset(&tm, 0, sizeof(struct tm));
+  tm.tm_year = 2026 - 1900;
+
+  // The formatted year and its terminator fit exactly.
+  size_t res = wcsftime(buf, sizeof(buf) / sizeof(buf[0]), L"%Y", &tm);
+  if (res != 4) {
+    return -1;
+  }
+  if (wcscmp(buf, L"2026") != 0) {
+    return -2;
+  }
+
+  // Insufficient space must return zero, including when only the NUL won't fit.
+  res = wcsftime(buf, 4, L"%Y", &tm);
+  if (res != 0) {
+    return -3;
+  }
+  res = wcsftime(buf, 1, L"%Y", &tm);
+  if (res != 0) {
+    return -4;
+  }
+
+  return 0;
+}
+
 @interface InvocationTarget : NSObject {
 @public
   id receivedValue;
@@ -6691,6 +6719,7 @@ struct {
     FUNC_DEF(test_NSString_pathWithComponents),
     FUNC_DEF(test_strptime),
     FUNC_DEF(test_strftime),
+    FUNC_DEF(test_wcsftime),
     FUNC_DEF(test_RespondsToSelector),
     FUNC_DEF(test_NSKeyedArchiver_encodeIntForKey),
     FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),

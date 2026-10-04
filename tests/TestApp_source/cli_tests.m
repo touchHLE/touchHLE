@@ -5444,6 +5444,15 @@ int test_strftime() {
     return -4;
   }
 
+  // macOS treats the unsupported '#' conversion literally, dropping the '%'.
+  res = strftime(buf, sizeof(buf), "%#c", &tm);
+  if (res != 2) {
+    return -5;
+  }
+  if (strcmp(buf, "#c") != 0) {
+    return -6;
+  }
+
   return 0;
 }
 

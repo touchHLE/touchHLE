@@ -747,6 +747,10 @@ fn strftime(
                 // TODO: return the current timezone
                 res.extend_from_slice(b"GMT");
             }
+            b'#' => {
+                // macOS seems to skip that completly
+                res.extend_from_slice(b"#");
+            }
             _ => unimplemented!(
                 "Format character '{}'. Formatted up to index {}",
                 specifier as char,

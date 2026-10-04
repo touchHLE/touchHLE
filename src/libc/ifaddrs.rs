@@ -23,4 +23,11 @@ fn getifaddrs(env: &mut Environment, _ifap: MutPtr<MutPtr<ifaddrs>>) -> i32 {
     -1
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(getifaddrs(_))];
+fn freeifaddrs(_env: &mut Environment, _ifp: MutPtr<ifaddrs>) {
+    // TODO
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(getifaddrs(_)),
+    export_c_func!(freeifaddrs(_)),
+];

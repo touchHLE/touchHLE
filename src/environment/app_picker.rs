@@ -30,7 +30,7 @@ use crate::fs::BundleData;
 use crate::image::Image;
 use crate::mem::Ptr;
 use crate::objc::{id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject};
-use crate::options::Options;
+use crate::options::{Options, TiltControlsStick};
 use crate::paths;
 use crate::window::DeviceOrientation;
 use crate::Environment;
@@ -146,7 +146,9 @@ struct AppPickerDelegateHostObject {
     orientation_portrait_upside_down: bool,
     orientation_landscape_left: bool,
     orientation_landscape_right: bool,
-    analog_stick_tilt_controls: Option<bool>,
+    analog_stick_tilt_controls_none: bool,
+    analog_stick_tilt_controls_left: bool,
+    analog_stick_tilt_controls_right: bool,
     network: Option<bool>,
     fullscreen: Option<bool>,
 }
@@ -225,9 +227,14 @@ const CLASSES: ClassExports = objc_classes! {
 - (())orientationLandscapeRight {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_landscape_right = true;
 }
-- (())analogStickTiltControls:(id)switch { // UISwitch*
-    let switch_state: bool = msg![env; switch isOn];
-    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).analog_stick_tilt_controls = Some(switch_state);
+- (())analogStickTiltControlsNone {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).analog_stick_tilt_controls_none = true;
+}
+- (())analogStickTiltControlsLeft {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).analog_stick_tilt_controls_left = true;
+}
+- (())analogStickTiltControlsRight {
+    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).analog_stick_tilt_controls_right = true;
 }
 - (())network:(id)switch { // UISwitch*
     let switch_state: bool = msg![env; switch isOn];
@@ -530,7 +537,7 @@ fn app_picker_inner(
     let mut quick_options_scale_hack: Option<NonZeroU32> = None;
     let mut quick_options_fullscreen: Option<()> = None;
     let mut quick_options_orientation: Option<DeviceOrientation> = None;
-    let mut quick_options_analog_stick_tilt_controls = true;
+    let mut quick_options_analog_stick_tilt_controls: Option<TiltControlsStick> = None;
     let mut quick_options_network = false;
 
     fn update_quick_option_buttons(env: &mut Environment, buttons: &[id], selected_idx: usize) {
@@ -562,6 +569,13 @@ fn app_picker_inner(
             }),
         );
     }
+    fn update_analog_stick_tilt_controls_buttons(env: &mut Environment, buttons: &[id], value: Option<TiltControlsStick>) {
+        update_quick_option_buttons(env, buttons, value.map_or(1, |v| match v {
+            TiltControlsStick::None => 0,
+            TiltControlsStick::Left => 1,
+            TiltControlsStick::Right => 2,
+        }),);
+    }
     update_scale_hack_buttons(
         env,
         &quick_options_stuff.scale_hack_buttons,
@@ -571,6 +585,11 @@ fn app_picker_inner(
         env,
         &quick_options_stuff.orientation_buttons,
         quick_options_orientation,
+    );
+    update_analog_stick_tilt_controls_buttons(
+        env,
+        &quick_options_stuff.analog_stick_tilt_controls_buttons,
+        quick_options_analog_stick_tilt_controls
     );
 
     () = msg![env; window makeKeyAndVisible];
@@ -710,8 +729,27 @@ fn app_picker_inner(
                 &quick_options_stuff.orientation_buttons,
                 quick_options_orientation,
             );
-        } else if let Some(enabled) = std::mem::take(&mut host_obj.analog_stick_tilt_controls) {
-            quick_options_analog_stick_tilt_controls = enabled;
+        } else if std::mem::take(&mut host_obj.analog_stick_tilt_controls_none) {
+            quick_options_analog_stick_tilt_controls = Some(TiltControlsStick::None);
+            update_analog_stick_tilt_controls_buttons(
+                env,
+                &quick_options_stuff.analog_stick_tilt_controls_buttons,
+                quick_options_analog_stick_tilt_controls,
+            );
+        } else if std::mem::take(&mut host_obj.analog_stick_tilt_controls_left) {
+            quick_options_analog_stick_tilt_controls = Some(TiltControlsStick::Left);
+            update_analog_stick_tilt_controls_buttons(
+                env,
+                &quick_options_stuff.analog_stick_tilt_controls_buttons,
+                quick_options_analog_stick_tilt_controls,
+            );
+        } else if std::mem::take(&mut host_obj.analog_stick_tilt_controls_right) {
+            quick_options_analog_stick_tilt_controls = Some(TiltControlsStick::Right);
+            update_analog_stick_tilt_controls_buttons(
+                env,
+                &quick_options_stuff.analog_stick_tilt_controls_buttons,
+                quick_options_analog_stick_tilt_controls,
+            );
         } else if let Some(enabled) = std::mem::take(&mut host_obj.network) {
             quick_options_network = enabled;
         } else if let Some(fullscreen) = std::mem::take(&mut host_obj.fullscreen) {
@@ -737,11 +775,11 @@ fn app_picker_inner(
             .to_string(),
         );
     }
+    if let Some(analog_stick_tilt_controls) = quick_options_analog_stick_tilt_controls {
+        option_args.push(format!("--analog-stick-tilt-controls={}", analog_stick_tilt_controls.to_string().to_lowercase()));
+    }
     if let Some(()) = quick_options_fullscreen {
         option_args.push("--fullscreen".to_string());
-    }
-    if !quick_options_analog_stick_tilt_controls {
-        option_args.push("--disable-analog-stick-tilt-controls".to_string());
     }
     if quick_options_network {
         option_args.push("--allow-network-access".to_string());
@@ -1264,6 +1302,7 @@ struct QuickOptionsStuff {
     main_view: id,
     scale_hack_buttons: [id; 5],
     orientation_buttons: [id; 4],
+    analog_stick_tilt_controls_buttons: [id; 3],
 }
 
 fn setup_quick_options(
@@ -1343,10 +1382,14 @@ fn setup_quick_options(
             ("→", "orientationLandscapeRight"),
             ("↓", "orientationPortraitUpsideDown"),
         ]),
+        RowKind::Label("Use analog stick for tilt controls"),
+        RowKind::Buttons(&[
+            ("None", "analogStickTiltControlsNone"),
+            ("Left", "analogStickTiltControlsLeft"),
+            ("Right", "analogStickTiltControlsRight"),
+        ]),
         RowKind::Label("Network access"),
         RowKind::Switch("network:", false),
-        RowKind::Label("Use analog sticks for tilt controls"),
-        RowKind::Switch("analogStickTiltControls:", true),
         // ---- (divider for stuff skipped below)
         RowKind::Label("Fullscreen (override)"),
         RowKind::Switch("fullscreen:", false),
@@ -1421,5 +1464,6 @@ fn setup_quick_options(
         main_view,
         scale_hack_buttons: button_rows[0][..].try_into().unwrap(),
         orientation_buttons: button_rows[1][..].try_into().unwrap(),
+        analog_stick_tilt_controls_buttons: button_rows[2][..].try_into().unwrap(),
     }
 }

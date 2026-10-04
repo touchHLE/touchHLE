@@ -44,7 +44,8 @@ Device options:
         Accepted values are "iphone" and "ipad" respectively.
 
 Game controller options:
-    --deadzone=...
+    --left_deadzone=...
+    --right_deadzone=...
         Configures the size of the \"dead zone\" for analog stick inputs.
 
         The default value is 0.1, which means that 10% of the stick's range on
@@ -53,20 +54,21 @@ Game controller options:
 
         This is a floating-point (decimal) number between 0 and 1.
 
-    --disable-analog-stick-tilt-controls
-        Disables mapping of analog stick input to simulated rotation of the
-        device.
+    --analog-stick-tilt-controls=...
+        Configures which analog stick will be used for tilt controls.
 
-        By default, if touchHLE detects a game controller, its analog sticks
+        By default, if touchHLE detects a game controller, its left analog stick
         will be used for simulated accelerometer tilt controls. When this
         happens, the real accelerometer (e.g. on an Android phone), if present,
-        is ignored. By setting this option, the real accelerometer can be used
+        is ignored. By setting this option to none, the real accelerometer can be used
         even if a game controller is detected. This may be useful on a device
         that integrates both an accelerometer and a game controller, or if you
         do not want to disconnect your game controller.
 
         Note that touchHLE does not currently support accelerometers contained
         within game controllers.
+
+        Accepted values are "none", "left" and "right".
 
     --x-tilt-range=...
     --y-tilt-range=...
@@ -112,8 +114,8 @@ Game controller options:
         part of the screen.
 
         This is three parts separated by commas: the name of a button (DPadLeft,
-        DPadUp, DPadRight, DPadDown, Start, LeftShoulder or Xbox-like
-        A, B, X or Y), the X co-ordinate and the Y co-ordinate.
+        DPadUp, DPadRight, DPadDown, Start, LeftShoulder, RightShoulder,
+        or Xbox-like A, B, X or Y), the X co-ordinate and the Y co-ordinate.
         The co-ordinates are floating-point (decimal) numbers. 0,0 is the
         top-left corner. The bottom-right corner is 320,480 if the app is in
         portrait, and 480,320 if the app is in landscape.
@@ -147,8 +149,9 @@ Game controller options:
         right analog stick (tap/hold by pressing the stick or right shoulder
         button).
 
-    --stick-to-touch=...
-        Maps the left analog stick to simulated finger movement within a region
+    --left-stick-to-touch=...
+    --right-stick-to-touch=...
+        Maps the analog stick to simulated finger movement within a region
         of the simulated touch screen of the device. This is useful for games
         which use analog movement controls.
 
@@ -157,9 +160,12 @@ Game controller options:
         bottom-right corner is 320,480 if the app is in portrait, and 480,320
         if the app is in landscape.
 
-        For example, --stick-to-touch=10,10,100,100 will map the left analog
+        For example, --left-stick-to-touch=10,10,100,100 will map the left analog
         stick to control a touch within a 100x100 pixel region starting at
         (10,10) on the screen.
+
+        If --right-stick-to-touch is set, its virtual cursor function is disabled,
+        allowing for right analog stick to be mapped in twin-stick shooters.
 
         Except where specified in touchHLE_default_options.txt, this is not used
         by default. There is however a virtual cursor that is controlled by the

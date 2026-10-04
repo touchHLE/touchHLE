@@ -16,7 +16,7 @@ use crate::gles::present::present_frame;
 use crate::gles::{create_gles1_ctx_no_parent_stack, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
-use crate::options::Options;
+use crate::options::{Options, TiltControlsStick};
 use crate::Environment;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
@@ -127,7 +127,8 @@ pub enum FingerId {
     Touch(i64),
     VirtualCursor,
     ButtonToTouch(crate::options::Button),
-    StickToTouch,
+    LeftStickToTouch,
+    RightStickToTouch,
     DpadToTouch,
 }
 pub type Coords = (f32, f32);
@@ -236,7 +237,8 @@ pub struct Window {
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
     dpad_state: DpadState,
-    stick_active: bool,
+    left_stick_active: bool,
+    right_stick_active: bool,
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
@@ -391,7 +393,8 @@ impl Window {
                 down: false,
                 active: false,
             },
-            stick_active: false,
+            left_stick_active: false,
+            right_stick_active: false,
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
@@ -479,9 +482,8 @@ impl Window {
                 sdl2::controller::Button::B => Some(crate::options::Button::B),
                 sdl2::controller::Button::X => Some(crate::options::Button::X),
                 sdl2::controller::Button::Y => Some(crate::options::Button::Y),
-                sdl2::controller::Button::LeftShoulder => {
-                    Some(crate::options::Button::LeftShoulder)
-                }
+                sdl2::controller::Button::LeftShoulder => Some(crate::options::Button::LeftShoulder),
+                sdl2::controller::Button::RightShoulder => Some(crate::options::Button::RightShoulder),
                 _ => None,
             }
         }
@@ -676,13 +678,12 @@ impl Window {
                 }
                 E::ControllerAxisMotion { axis, .. } => {
                     controller_updated = true;
-                    let Some((x, y, w, h)) = options.stick_to_touch else {
-                        continue;
-                    };
-                    if axis == sdl2::controller::Axis::LeftX
-                        || axis == sdl2::controller::Axis::LeftY
-                    {
-                        let (stick_x, stick_y, _) = self.get_controller_stick(options, true);
+
+                    if axis == sdl2::controller::Axis::LeftX || axis == sdl2::controller::Axis::LeftY {
+                        let Some((x, y, w, h)) = options.left_stick_to_touch else {
+                            continue
+                        };
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options.left_deadzone, true);
                         let coords = transform_input_coords(
                             self,
                             (
@@ -691,22 +692,52 @@ impl Window {
                             ),
                             true,
                         );
-                        if stick_x.abs() < options.deadzone && stick_y.abs() < options.deadzone {
-                            if !self.stick_active {
+                        if stick_x.abs() < options.left_deadzone && stick_y.abs() < options.left_deadzone {
+                            if !self.left_stick_active {
                                 // Ignore deadzone events when stick is inactive
                                 continue;
                             } else {
                                 // Release touch when stick returns to deadzone
-                                self.stick_active = false;
-                                Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                                self.left_stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::LeftStickToTouch, coords)]))
                             }
-                        } else if !self.stick_active {
+                        } else if !self.left_stick_active {
                             // New touch
-                            self.stick_active = true;
-                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            self.left_stick_active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::LeftStickToTouch, coords)]))
                         } else {
                             // Move existing touch
-                            Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            Event::TouchesMove(HashMap::from([(FingerId::LeftStickToTouch, coords)]))
+                        }
+                    } else if axis == sdl2::controller::Axis::RightX || axis == sdl2::controller::Axis::RightY {
+                        let Some((x, y, w, h)) = options.right_stick_to_touch else {
+                            continue
+                        };
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options.right_deadzone, false);
+                        let coords = transform_input_coords(
+                            self,
+                            (
+                                x + ((stick_x + 1.0) / 2.0) * w,
+                                y + ((stick_y + 1.0) / 2.0) * h,
+                            ),
+                            true,
+                        );
+                        if stick_x.abs() < options.right_deadzone && stick_y.abs() < options.right_deadzone {
+                            if !self.right_stick_active {
+                                // Ignore deadzone events when stick is inactive
+                                continue;
+                            } else {
+                                // Release touch when stick returns to deadzone
+                                self.right_stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::RightStickToTouch, coords)]))
+                            }
+                        } else if !self.right_stick_active {
+                            // New touch
+                            self.right_stick_active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::RightStickToTouch, coords)]))
+                        } else {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(FingerId::RightStickToTouch, coords)]))
                         }
                     } else {
                         continue;
@@ -846,7 +877,7 @@ impl Window {
             })
         }
 
-        if controller_updated {
+        if controller_updated && !options.hide_cursor {
             let (new_x, new_y, pressed, pressed_changed, moved) =
                 self.update_virtual_cursor(options);
             self.event_queue
@@ -887,10 +918,7 @@ impl Window {
             log!("ignoring fingerprint device: {}", controller_name);
             return;
         }
-        log!(
-            "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
-            controller_name
-        );
+        log!("New controller connected: {}.", controller_name);
         self.controllers.push(controller);
     }
     fn controller_removed(&mut self, instance_id: u32) {
@@ -905,26 +933,28 @@ impl Window {
         log!("Warning: Controller disconnected: {}", controller.name());
     }
     pub fn print_accelerometer_notice(&self, options: &Options) {
+        let hasTiltStick = options.analog_stick_tilt_controls != TiltControlsStick::None;
+
         log!("This app uses the accelerometer.");
 
-        if !self.controllers.is_empty() && options.analog_stick_tilt_controls {
-            log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
+        if !self.controllers.is_empty() && hasTiltStick {
+            log!("Your connected controller's analog stick will be used for accelerometer simulation.");
             if self.accelerometer.is_some() {
                 log!("Disconnect the controller if you want to use your device's accelerometer.");
             }
         } else if self.accelerometer.is_some() {
             log!("Your device's accelerometer will be used for accelerometer simulation.");
-            if options.analog_stick_tilt_controls {
+            if hasTiltStick {
                 log!("Connect a controller if you would prefer to use an analog stick.");
             }
-        } else if self.controllers.is_empty() && options.analog_stick_tilt_controls {
+        } else if self.controllers.is_empty() && hasTiltStick {
             log!("Connect a controller to get accelerometer simulation.");
         }
 
         if self.accelerometer.is_none() {
             log!(
                 "You can {}hold right click and move the cursor to simulate the accelerometer.",
-                if options.analog_stick_tilt_controls {
+                if hasTiltStick {
                     "also "
                 } else {
                     ""
@@ -936,7 +966,7 @@ impl Window {
     /// Get the real or simulated accelerometer output.
     /// See also [crate::frameworks::uikit::ui_accelerometer].
     pub fn get_acceleration(&self, options: &Options) -> (f32, f32, f32) {
-        if self.controllers.is_empty() || !options.analog_stick_tilt_controls {
+        if self.controllers.is_empty() || options.analog_stick_tilt_controls == TiltControlsStick::None {
             if let Some(ref accelerometer) = self.accelerometer {
                 let data = accelerometer.get_data().unwrap();
                 let sdl2::sensor::SensorData::Accel(data) = data else {
@@ -952,6 +982,8 @@ impl Window {
                 let (x, y, z) = (x / gravity, y / gravity, z / gravity);
                 return (x, y, z);
             }
+
+            return (0.0, 0.0, -1.0);
         }
 
         let (x, y) = if self
@@ -962,8 +994,13 @@ impl Window {
                 .map(|(x, y, _right_click_hold)| (x, y))
                 .unwrap()
         } else {
-            // Get left analog stick input. The range is [-1, 1] on each axis.
-            let (x, y, _) = self.get_controller_stick(options, true);
+            // Get analog stick input. The range is [-1, 1] on each axis.
+            let isLeftStick = options.analog_stick_tilt_controls == TiltControlsStick::Left;
+            let (x, y, _) = self.get_controller_stick(if isLeftStick {
+                options.left_deadzone
+            } else {
+                options.right_deadzone
+            }, isLeftStick);
             (x, y)
         };
 
@@ -1022,7 +1059,7 @@ impl Window {
     /// and whether the cursor moved.
     fn update_virtual_cursor(&mut self, options: &Options) -> (f32, f32, bool, bool, bool) {
         // Get right analog stick input. The range is [-1, 1] on each axis.
-        let (x, y, pressed) = self.get_controller_stick(options, false);
+        let (x, y, pressed) = self.get_controller_stick(options.right_deadzone, false);
 
         // The cursor is intended to only show up once you move the analog stick
         // out of its deadzone, or while the button is held.
@@ -1108,7 +1145,7 @@ impl Window {
     /// Get the summed X and Y positions and button state of the left or right
     /// analog stick of the game controllers. Each axis value is in the range
     /// [-1, 1].
-    fn get_controller_stick(&self, options: &Options, left: bool) -> (f32, f32, bool) {
+    fn get_controller_stick(&self, deadzone: f32, left: bool) -> (f32, f32, bool) {
         fn convert_axis(axis: i16, deadzone: f32) -> f32 {
             assert!(deadzone >= 0.0);
             let axis = ((axis as f32) / (i16::MAX as f32)).clamp(-1.0, 1.0);
@@ -1135,8 +1172,8 @@ impl Window {
                     Button::RightShoulder,
                 )
             };
-            x += convert_axis(controller.axis(x_axis), options.deadzone);
-            y += convert_axis(controller.axis(y_axis), options.deadzone);
+            x += convert_axis(controller.axis(x_axis), deadzone);
+            y += convert_axis(controller.axis(y_axis), deadzone);
             pressed |= controller.button(button1);
             pressed |= controller.button(button2);
         }

@@ -29,6 +29,20 @@ pub enum Button {
     X,
     Y,
     LeftShoulder,
+    RightShoulder,
+}
+
+/// Game controller analog stick as tilt controls for `--analog-stick-tilt-controls=` option.
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
+pub enum TiltControlsStick {
+    None,
+    Left,
+    Right
+}
+impl std::fmt::Display for TiltControlsStick {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
 }
 
 /// Struct containing all user-configurable options.
@@ -38,15 +52,17 @@ pub struct Options {
     pub device_family: Option<DeviceFamily>,
     pub initial_orientation: DeviceOrientation,
     pub scale_hack: NonZeroU32,
-    pub deadzone: f32,
-    pub analog_stick_tilt_controls: bool,
+    pub left_deadzone: f32,
+    pub right_deadzone: f32,
+    pub analog_stick_tilt_controls: TiltControlsStick,
     pub x_tilt_range: f32,
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
     pub button_to_touch: HashMap<Button, (f32, f32)>,
     pub dpad_to_touch: Option<(f32, f32, f32, f32)>,
-    pub stick_to_touch: Option<(f32, f32, f32, f32)>,
+    pub left_stick_to_touch: Option<(f32, f32, f32, f32)>,
+    pub right_stick_to_touch: Option<(f32, f32, f32, f32)>,
     pub stabilize_virtual_cursor: Option<(f32, f32)>,
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
@@ -62,6 +78,7 @@ pub struct Options {
     pub dumping_file: PathBuf,
     pub ignore_gl_errors: bool,
     pub zero_stack_after_guest_to_host_call: Option<u32>,
+    pub hide_cursor: bool,
 }
 
 impl Default for Options {
@@ -71,15 +88,17 @@ impl Default for Options {
             device_family: None,
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
-            analog_stick_tilt_controls: true,
-            deadzone: 0.1,
+            analog_stick_tilt_controls: TiltControlsStick::Left,
+            left_deadzone: 0.1,
+            right_deadzone: 0.1,
             x_tilt_range: 60.0,
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
             button_to_touch: HashMap::new(),
             dpad_to_touch: None,
-            stick_to_touch: None,
+            left_stick_to_touch: None,
+            right_stick_to_touch: None,
             stabilize_virtual_cursor: None,
             gles1_implementation: None,
             direct_memory_access: true,
@@ -95,6 +114,7 @@ impl Default for Options {
             dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
             ignore_gl_errors: false,
             zero_stack_after_guest_to_host_call: None,
+            hide_cursor: false,
         }
     }
 }
@@ -130,10 +150,17 @@ impl Options {
             self.scale_hack = value
                 .parse()
                 .map_err(|_| "Invalid scale hack factor".to_string())?;
-        } else if arg == "--disable-analog-stick-tilt-controls" {
-            self.analog_stick_tilt_controls = false;
-        } else if let Some(value) = arg.strip_prefix("--deadzone=") {
-            self.deadzone = parse_degrees(value, "deadzone")?;
+        } else if let Some(value) = arg.strip_prefix("--analog-stick-tilt-controls=") {
+            self.analog_stick_tilt_controls = match value {
+                "none" => TiltControlsStick::None,
+                "right" => TiltControlsStick::Right,
+                _ => TiltControlsStick::Left
+            };
+            self.hide_cursor = self.analog_stick_tilt_controls == TiltControlsStick::Right;
+        } else if let Some(value) = arg.strip_prefix("--left-deadzone=") {
+            self.left_deadzone = parse_degrees(value, "left stick deadzone")?;
+        } else if let Some(value) = arg.strip_prefix("--right-deadzone=") {
+            self.right_deadzone = parse_degrees(value, "right stick deadzone")?;
         } else if let Some(value) = arg.strip_prefix("--x-tilt-range=") {
             self.x_tilt_range = parse_degrees(value, "X tilt range")?;
         } else if let Some(value) = arg.strip_prefix("--y-tilt-range=") {
@@ -160,6 +187,7 @@ impl Options {
                 "X" => Ok(Button::X),
                 "Y" => Ok(Button::Y),
                 "LeftShoulder" => Ok(Button::LeftShoulder),
+                "RightShoulder" => Ok(Button::RightShoulder),
                 _ => Err("Invalid button for --button-to-touch=".to_string()),
             }?;
             let x: f32 = x
@@ -169,16 +197,27 @@ impl Options {
                 .parse()
                 .map_err(|_| "Invalid Y co-ordinate for --button-to-touch=".to_string())?;
             self.button_to_touch.insert(button, (x, y));
-        } else if let Some(values) = arg.strip_prefix("--stick-to-touch=") {
+        } else if let Some(values) = arg.strip_prefix("--left-stick-to-touch=") {
             let nums: [f32; 4] = values
                 .split(',')
                 .map(|s| s.parse::<f32>())
                 .collect::<Result<Vec<_>, _>>()
-                .map_err(|_| "invalid --stick-to-touch".to_string())?
+                .map_err(|_| "invalid --left-stick-to-touch".to_string())?
                 .try_into()
-                .map_err(|_| "--stick-to-touch= requires four values".to_string())?;
+                .map_err(|_| "--left-stick-to-touch= requires four values".to_string())?;
 
-            self.stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
+            self.left_stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
+        } else if let Some(values) = arg.strip_prefix("--right-stick-to-touch=") {
+            let nums: [f32; 4] = values
+                .split(',')
+                .map(|s| s.parse::<f32>())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|_| "invalid --right-stick-to-touch".to_string())?
+                .try_into()
+                .map_err(|_| "--right-stick-to-touch= requires four values".to_string())?;
+
+            self.right_stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
+            self.hide_cursor = true;
         } else if let Some(values) = arg.strip_prefix("--dpad-to-touch=") {
             let nums: [f32; 4] = values
                 .split(',')

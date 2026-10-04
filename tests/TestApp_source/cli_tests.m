@@ -5453,6 +5453,28 @@ int test_strftime() {
     return -6;
   }
 
+  memset(&tm, 0, sizeof(struct tm));
+  tm.tm_year = 2026 - 1900;
+
+  // The formatted year and its terminator fit exactly.
+  res = strftime(buf, 5, "%Y", &tm);
+  if (res != 4) {
+    return -7;
+  }
+  if (strcmp(buf, "2026") != 0) {
+    return -8;
+  }
+
+  // Insufficient space must return zero, including when only the NUL won't fit.
+  res = strftime(buf, 4, "%Y", &tm);
+  if (res != 0) {
+    return -9;
+  }
+  res = strftime(buf, 1, "%Y", &tm);
+  if (res != 0) {
+    return -10;
+  }
+
   return 0;
 }
 

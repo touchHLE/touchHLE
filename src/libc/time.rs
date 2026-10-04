@@ -759,6 +759,10 @@ fn strftime(
         }
     }
 
+    if res.len() >= max_size as usize {
+        return 0;
+    }
+
     let middle = if ((max_size - 1) as usize) < res.len() {
         &res[..(max_size - 1) as usize]
     } else {

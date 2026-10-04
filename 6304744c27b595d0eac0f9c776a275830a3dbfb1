@@ -37,6 +37,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "828d5c3b_4b379c5c",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 513,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-10-04T21:35:23Z",
+      "side": 1,
+      "message": "Fixed!",
+      "parentUuid": "b2ee41b3_356f6b4a",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1eb3dc51_1dce1b46",
         "filename": "src/frameworks/foundation/ns_array.rs",
         "patchSetId": 2
@@ -82,6 +100,60 @@
       "writtenOn": "2026-10-04T19:37:43Z",
       "side": 1,
       "message": "firstObj -\u003e first_obj",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6b7df79_3ce1c3ec",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 868,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-10-04T21:35:23Z",
+      "side": 1,
+      "message": "Fixed!",
+      "parentUuid": "a0e5cbd0_1555ab3f",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8deec893_bd0b9e57",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 868,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-10-04T21:35:23Z",
+      "side": 1,
+      "message": "Fixed!",
+      "parentUuid": "1eb3dc51_1dce1b46",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "32edb955_5a6d4bc3",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 868,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-10-04T21:35:23Z",
+      "side": 1,
+      "message": "Fixed!",
+      "parentUuid": "f30c9a1f_49c9c72e",
       "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

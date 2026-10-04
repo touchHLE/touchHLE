@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89a16d0b_f11f7b42",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-04T19:37:43Z",
+      "side": 1,
+      "message": "small nitpicks about naming",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b2ee41b3_356f6b4a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 513,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-04T19:37:43Z",
+      "side": 1,
+      "message": "this is existing issue for other method, but it\u0027s need to be fixed: arguments should follow rust naming conventions, so it should be `first_obj` instead of `firstObj`. (this comment is valid for other method as well)",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1eb3dc51_1dce1b46",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 868,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-04T19:37:43Z",
+      "side": 1,
+      "message": "please also change `host` to `arr` and place it as a second argument (to be consistent with other helpers)",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0e5cbd0_1555ab3f",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 868,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-04T19:37:43Z",
+      "side": 1,
+      "message": "please suffix the name with `_inner` as for other helper functions above",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f30c9a1f_49c9c72e",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 2
+      },
+      "lineNbr": 868,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-04T19:37:43Z",
+      "side": 1,
+      "message": "firstObj -\u003e first_obj",
+      "revId": "6304744c27b595d0eac0f9c776a275830a3dbfb1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

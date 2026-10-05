@@ -92,6 +92,67 @@
             -->
         </activity>
 
+		<activity android:name=".FileCopyActivity"
+				  android:theme="@android:style/Theme.DeviceDefault.Light.Dialog.Alert"                  
+                  android:launchMode="singleTop"
+                  android:excludeFromRecents="true"
+                  android:noHistory = "true"
+                  android:exported="true">
+            <intent-filter>
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="file" />    
+                <data android:scheme="content" />
+          
+                <data android:mimeType="application/octet-stream" />
+				<data android:mimeType="application/vnd.iphone.ipa" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <intent-filter>
+
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="file" />      
+                <data android:scheme="content" />
+
+                <data android:host="*" />
+
+                <data android:pathPattern="/.*..*..*..*..*\\.ipa" />
+                <data android:pathPattern="/.*..*..*..*\\.ipa" />
+                <data android:pathPattern="/.*..*..*\\.ipa" />
+                <data android:pathPattern="/.*..*\\.ipa" />
+                <data android:pathPattern="/.*\\.ipa" />
+
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+				
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+				 
+                <data android:host="*" />
+                <data android:mimeType="*/*" />
+
+                <data android:pathPattern="/.*..*..*..*..*\\.ipa" />
+                <data android:pathPattern="/.*..*..*..*\\.ipa" />
+                <data android:pathPattern="/.*..*..*\\.ipa" />
+                <data android:pathPattern="/.*..*\\.ipa" />
+                <data android:pathPattern="/.*\\.ipa" />
+
+            </intent-filter>
+        </activity>
+
         <provider
             android:name="org.touchhle.android.DocumentsProvider"
             android:authorities="${applicationId}.provider"
@@ -104,5 +165,4 @@
             </intent-filter>
         </provider>
     </application>
-
 </manifest>

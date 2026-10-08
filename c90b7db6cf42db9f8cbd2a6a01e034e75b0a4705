@@ -22,6 +22,30 @@
       },
       "revId": "c90b7db6cf42db9f8cbd2a6a01e034e75b0a4705",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "54309404_6683f08c",
+        "filename": "src/frameworks/core_animation/ca_animation.rs",
+        "patchSetId": 6
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 1021822
+      },
+      "writtenOn": "2026-10-08T15:09:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5edc28ae_fc20b908",
+      "range": {
+        "startLine": 375,
+        "startChar": 32,
+        "endLine": 375,
+        "endChar": 46
+      },
+      "revId": "c90b7db6cf42db9f8cbd2a6a01e034e75b0a4705",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

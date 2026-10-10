@@ -613,6 +613,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this compare:other]
 }
 
+- (NSComparisonResult)localizedCaseInsensitiveCompare:(id)other  { // NSString*
+    // TODO: same as localizedCompare
+    assert!(to_rust_string(env, this).is_ascii());
+    assert!(to_rust_string(env, other).is_ascii());
+    msg![env; this caseInsensitiveCompare:other]
+}
+
 - (NSComparisonResult)compare:(id)other { // NSString*
     msg![env; this compare:other options:NSLiteralSearch]
 }

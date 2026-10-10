@@ -16,6 +16,57 @@
       "message": "Tested with Scribble 1.1 (com.zintin.scribblepro)",
       "revId": "b18194bd7dacc6d409672d3d4dac438a1fc77302",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e9febf97_c4aa3ab0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-10T08:34:47Z",
+      "side": 1,
+      "message": "Do you mind to write some GUI tests cases covering this? You could check existing examples of GUITests* in the TestApp.",
+      "revId": "b18194bd7dacc6d409672d3d4dac438a1fc77302",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd032918_bc942bd5",
+        "filename": "src/frameworks/core_graphics/cg_context.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 553,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-10T08:34:47Z",
+      "side": 1,
+      "message": "please use `match` on type instead, it\u0027s more idiomatic in Rust",
+      "revId": "b18194bd7dacc6d409672d3d4dac438a1fc77302",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "64c2f9bd_4a322354",
+        "filename": "src/frameworks/core_graphics/cg_path.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 43,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-10T08:34:47Z",
+      "side": 1,
+      "message": "we use `type_` as naming convention for such cases",
+      "revId": "b18194bd7dacc6d409672d3d4dac438a1fc77302",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3203d878_3fdd5722",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-10T22:02:56Z",
+      "side": 1,
+      "message": "Tested with DoodleJump 1.10 (com.yourcompany.DoodleJump), however it requires stubs to UIWebView before it can reach the point of calling the method.",
+      "revId": "37b8a0b6ed22bd090ac3178ff1166f6e69de36b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

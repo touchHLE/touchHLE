@@ -33,6 +33,24 @@
       "message": "@79484310+okzyrox@users.noreply.github.com congratulations on your second merged contribution!\n\nif you want to have access to dev only channels in our Discord, please mail me your Discord nickname :)",
       "revId": "37b8a0b6ed22bd090ac3178ff1166f6e69de36b6",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fe54bf10_61fe017f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-11T20:46:08Z",
+      "side": 1,
+      "message": "I have sent you the details!",
+      "parentUuid": "0241bfb3_bdf3c8e9",
+      "revId": "37b8a0b6ed22bd090ac3178ff1166f6e69de36b6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ],
   "submitRequirementResults": [

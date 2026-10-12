@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8cb0c727_1fea3707",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 2
+      },
+      "lineNbr": 6417,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-12T22:01:54Z",
+      "side": 1,
+      "message": "Added one just for that in the next patchset.",
+      "parentUuid": "0b3ae79f_eaf6ac15",
+      "revId": "c005b63ef5dd2d2bf647f2bc587192ac0cd8827f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "615a063d_1edf11b9",
@@ -31,6 +49,24 @@
       "writtenOn": "2026-10-12T21:14:03Z",
       "side": 1,
       "message": "NSMutableArray should inherit from NSArray (and you shall not redefine inherited methods)",
+      "revId": "c005b63ef5dd2d2bf647f2bc587192ac0cd8827f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "076dbe65_3c4c2554",
+        "filename": "tests/TestApp_source/system_headers.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-12T22:01:54Z",
+      "side": 1,
+      "message": "Fixed in the next patchset.",
+      "parentUuid": "615a063d_1edf11b9",
       "revId": "c005b63ef5dd2d2bf647f2bc587192ac0cd8827f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

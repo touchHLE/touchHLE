@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5608f846_d520be73",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-12T20:01:09Z",
+      "side": 1,
+      "message": "Tested with DoodleJump 1.10 (com.yourcompany.DoodleJump) again, and tested on official hardware with the included TestApp test for it (passed).",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

@@ -16,6 +16,57 @@
       "message": "Tested with DoodleJump 1.10 (com.yourcompany.DoodleJump) again, and tested on official hardware with the included TestApp test for it (passed).",
       "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6210866e_88ef849a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-12T20:55:37Z",
+      "side": 1,
+      "message": "this is a redundant check really, could be removed (sending count message to nil will return a 0)",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "61136ce5_a383b69b",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 1
+      },
+      "lineNbr": 6411,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-12T20:55:37Z",
+      "side": 1,
+      "message": "hhhm, i wonder if it compiles? i think we\u0027re using old version of Obj-C so shorthand notation for object number may not work... Has `cargo test` succeeded for you?",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f08de12_96567999",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 1
+      },
+      "lineNbr": 6421,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-12T20:55:37Z",
+      "side": 1,
+      "message": "Have you run the `clang-format` ?",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

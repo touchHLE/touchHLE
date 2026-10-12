@@ -707,6 +707,34 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array = Vec::new()
 }
 
+- (())removeObjectsInArray:(id)other { // NSArray*
+    let other_count: NSUInteger = msg![env; other count];
+    if other_count == 0 {
+        return;
+    }
+
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let array = std::mem::take(&mut host_object.array);
+
+    // Since removing objects individually has to iterate the whole array
+    // for each object (with [array removeObject:obj]), so this just saves some
+    // runtime costs.
+    let other_array_set: id = msg_class![env; NSSet alloc];
+    let other_array_set: id = msg![env; other_array_set initWithArray:other];
+    let mut new_array = Vec::with_capacity(array.len());
+    for object in array {
+        let contains: bool = msg![env; other_array_set containsObject:object];
+        if contains {
+            release(env, object);
+        } else {
+            new_array.push(object);
+        }
+    }
+
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = new_array;
+    release(env, other_array_set);
+}
+
 @end
 
 // Special variant for use by CFArray with NULL callbacks: objects aren't

@@ -6404,6 +6404,37 @@ int test_NSNotificationCenter_addObserver_nilName_removeObserver() {
   return 0;
 }
 
+int test_NSMutableArray_removeObjectsInArray_otherArray() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // Duplicate objects are removed as well.
+  NSMutableArray *array =
+      [[NSMutableArray alloc] initWithObjects:@1, @2, @3, @4, @5, @2, nil];
+  NSArray *otherArray = [[NSArray alloc] initWithObjects:@2, @4, @99, nil];
+  [array removeObjectsInArray:otherArray];
+  [otherArray release];
+
+  if ([array count] != 3) {
+    [array release];
+    [pool drain];
+    return -1;
+  }
+
+  // Expected: [1, 3, 5]
+  NSArray *expectedArray = [[NSArray alloc] initWithObjects:@1, @3, @5, nil];
+  if (![array isEqualToArray:expectedArray]) {
+    [expectedArray release];
+    [array release];
+    [pool drain];
+    return -2;
+  }
+
+  [expectedArray release];
+  [array release];
+  [pool drain];
+  return 0;
+}
+
 int test_malloc_zone_basic() {
   malloc_zone_t *zone = malloc_create_zone(0, 0);
   unsigned char *p = malloc_zone_malloc(zone, 128);
@@ -6735,6 +6766,7 @@ struct {
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName),
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_withObject),
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_removeObserver),
+    FUNC_DEF(test_NSMutableArray_removeObjectsInArray_otherArray),
     FUNC_DEF(test_malloc_zone_basic),
     FUNC_DEF(test_malloc_zone_struct_dispatch),
     FUNC_DEF(test_fcvt),

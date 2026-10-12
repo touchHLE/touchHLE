@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "615a063d_1edf11b9",
+        "filename": "tests/TestApp_source/system_headers.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1021821
+      },
+      "writtenOn": "2026-10-12T21:14:03Z",
+      "side": 1,
+      "message": "NSMutableArray should inherit from NSArray (and you shall not redefine inherited methods)",
+      "revId": "c005b63ef5dd2d2bf647f2bc587192ac0cd8827f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

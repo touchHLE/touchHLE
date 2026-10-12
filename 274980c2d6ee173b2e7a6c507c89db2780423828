@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6fd22d31_c285c57a",
+        "filename": "src/frameworks/foundation/ns_array.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 711,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-12T21:08:04Z",
+      "side": 1,
+      "message": "Removed in amended patchset.",
+      "parentUuid": "6210866e_88ef849a",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "61136ce5_a383b69b",
@@ -52,6 +70,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e0074978_7068d55e",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 1
+      },
+      "lineNbr": 6411,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-12T21:08:04Z",
+      "side": 1,
+      "message": "It did succeed! I did have to add the header for NSNumber\u0027s `numberWithInt` before it did though.",
+      "parentUuid": "61136ce5_a383b69b",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5f08de12_96567999",
@@ -65,6 +101,24 @@
       "writtenOn": "2026-10-12T20:55:37Z",
       "side": 1,
       "message": "Have you run the `clang-format` ?",
+      "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e8e8a8a_e4a0fff5",
+        "filename": "tests/TestApp_source/cli_tests.m",
+        "patchSetId": 1
+      },
+      "lineNbr": 6421,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-12T21:08:04Z",
+      "side": 1,
+      "message": "Forgot to, sorry. Fixed in amended patchset.",
+      "parentUuid": "5f08de12_96567999",
       "revId": "274980c2d6ee173b2e7a6c507c89db2780423828",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36ac254a_bafc323e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-13T17:24:56Z",
+      "side": 1,
+      "message": "Figured it out I believe! Whilst the missing definition in the header only throws a warning for the instance method, it actually prevents any varargs (not including the first object) from being sent to the method (from what I\u0027ve deduced) for the sanity check tests.\n\nIn future, if I do ever add more tests, I will definitely do more CI testing ahead of time. Sorry for the hassle.",
+      "revId": "ca1de89c578e79746f33c1332e28efd106c334ba",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}

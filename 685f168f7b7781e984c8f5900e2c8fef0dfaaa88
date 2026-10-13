@@ -33,6 +33,24 @@
       "message": "Why does this fix it? Is there a retain-release bug in the old code?",
       "revId": "685f168f7b7781e984c8f5900e2c8fef0dfaaa88",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "177c7bd6_dd8ee9ba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1040017
+      },
+      "writtenOn": "2026-10-13T15:43:12Z",
+      "side": 1,
+      "message": "Not really sure, since I was mainly changing it to how other tests create NSArray objects without thinking much of it. Although I am still looking through it for a whatever is causing this issue (where only the first element provided to the initWithObjects method is actually added to the array in the macOS sanity tests)",
+      "parentUuid": "9c9f8e62_9bf6690a",
+      "revId": "685f168f7b7781e984c8f5900e2c8fef0dfaaa88",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

@@ -16,6 +16,23 @@
       "message": "Verified with a CI run on my fork: https://github.com/okzyrox/touchHLE/actions/runs/38326499317.",
       "revId": "685f168f7b7781e984c8f5900e2c8fef0dfaaa88",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c9f8e62_9bf6690a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1021820
+      },
+      "writtenOn": "2026-10-13T00:38:32Z",
+      "side": 1,
+      "message": "Why does this fix it? Is there a retain-release bug in the old code?",
+      "revId": "685f168f7b7781e984c8f5900e2c8fef0dfaaa88",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }

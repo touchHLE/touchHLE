@@ -11,7 +11,7 @@ use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, SafeRea
 use crate::{export_c_func, Environment};
 
 use crate::dyld::FunctionExports;
-use std::net::Ipv4Addr;
+use std::net::{AddrParseError, Ipv4Addr};
 
 #[allow(non_camel_case_types)]
 type in_addr_t = u32;
@@ -30,6 +30,24 @@ fn inet_addr(env: &mut Environment, str: ConstPtr<u8>) -> in_addr_t {
     let res = u32::from_le_bytes(address.octets());
     log_dbg!("inet_addr({:?}) => {}", inet_addr_str, res);
     res
+}
+
+fn inet_aton(env: &mut Environment, cp: ConstPtr<u8>, pin: MutPtr<in_addr>) -> i32 {
+    let str = env.mem.cstr_at_utf8(cp.cast()).unwrap();
+    log_dbg!("inet_aton '{}'", str);
+    let tmp: Result<Ipv4Addr, AddrParseError> = str.parse();
+    let address: Ipv4Addr = match tmp {
+        Ok(adr) => adr,
+        Err(_err) => {
+            log_dbg!("inet_aton: '{}' is not a valid IP address", str);
+            return 0;
+        }
+    };
+    let addr = in_addr {
+        s_addr: u32::from_le_bytes(address.octets()),
+    };
+    env.mem.write(pin, addr);
+    1
 }
 
 fn inet_ntop(
@@ -68,6 +86,7 @@ fn inet_pton(env: &mut Environment, af: i32, src: ConstPtr<u8>, dst: MutVoidPtr)
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(inet_addr(_)),
+    export_c_func!(inet_aton(_, _)),
     export_c_func!(inet_ntop(_, _, _, _)),
     export_c_func!(inet_pton(_, _, _)),
 ];

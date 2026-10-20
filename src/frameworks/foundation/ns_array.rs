@@ -399,6 +399,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+        log!(
+            "Sims3 NSArray dealloc: object={:?}, LR={:#x}, PC={:#x}",
+            this,
+            env.cpu.regs()[crate::cpu::Cpu::LR],
+            env.cpu.regs()[crate::cpu::Cpu::PC]
+        );
+    }
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let array = std::mem::take(&mut host_object.array);
 
@@ -555,6 +563,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+        log!(
+            "Sims3 NSArray dealloc: object={:?}, LR={:#x}, PC={:#x}",
+            this,
+            env.cpu.regs()[crate::cpu::Cpu::LR],
+            env.cpu.regs()[crate::cpu::Cpu::PC]
+        );
+    }
     let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
     let array = std::mem::take(&mut host_object.array);
 

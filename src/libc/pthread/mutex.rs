@@ -112,6 +112,15 @@ pub fn pthread_mutex_init(
         mutex_id,
         mutex.to_bits()
     );
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+        log!(
+            "Sims3 pthread_mutex_init: address={:#x}, id={}, LR={:#x}, PC={:#x}",
+            mutex.to_bits(),
+            mutex_id,
+            env.cpu.regs()[crate::cpu::Cpu::LR],
+            env.cpu.regs()[crate::cpu::Cpu::PC]
+        );
+    }
     env.mem.write(
         mutex,
         pthread_mutex_t {
@@ -202,6 +211,14 @@ pub fn pthread_mutex_destroy(env: &mut Environment, mutex: MutPtr<pthread_mutex_
         }
     };
     let mutex_id = env.mem.read(mutex).mutex_id;
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+        log!(
+            "Sims3 pthread_mutex_destroy: address={:#x}, id={}, LR={:#x}",
+            mutex.to_bits(),
+            mutex_id,
+            env.cpu.regs()[crate::cpu::Cpu::LR]
+        );
+    }
     env.mem.write(
         mutex,
         pthread_mutex_t {

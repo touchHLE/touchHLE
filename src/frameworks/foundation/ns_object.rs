@@ -111,6 +111,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())release {
     log_dbg!("[{:?} release]", this);
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+        let class = ObjC::read_isa(this, &env.mem);
+        if env.objc.try_get_class_name(class).is_some_and(|name| name.contains("NSArray")) {
+            log!(
+                "Sims3 NSArray release: object={:?}, refcount={}, LR={:#x}, PC={:#x}",
+                this,
+                env.objc.get_refcount(this).get(),
+                env.cpu.regs()[crate::cpu::Cpu::LR],
+                env.cpu.regs()[crate::cpu::Cpu::PC]
+            );
+        }
+    }
     if env.objc.decrement_refcount(this) {
         () = msg![env; this dealloc];
     }

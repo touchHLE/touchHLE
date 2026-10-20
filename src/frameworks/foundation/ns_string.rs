@@ -483,7 +483,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         log_dbg!("[{:?} characterAtIndex:{:?}]: converted string to UTF-16", this, index);
     }
 
-    // TODO: raise exception instead of panicking?
+    if (index as usize) >= utf16.len() && env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+        let content = String::from_utf16_lossy(utf16);
+        let guest_r7 = env.cpu.regs()[7];
+        let saved_return: u32 = env.mem.read(crate::mem::ConstPtr::from_bits(guest_r7.wrapping_add(4)));
+        panic!(
+            "Sims3 NSString characterAtIndex out of bounds: object={:?}, index={}, utf16_length={}, text={:?}, PC={:#x}, LR={:#x}, guest_r7={:#x}, charAt_caller={:#x}",
+            this,
+            index,
+            utf16.len(),
+            content,
+            env.cpu.regs()[crate::cpu::Cpu::PC],
+            env.cpu.regs()[crate::cpu::Cpu::LR],
+            guest_r7,
+            saved_return
+        );
+    }
     utf16[index as usize]
 }
 
@@ -647,6 +662,32 @@ pub const CLASSES: ClassExports = objc_classes! {
         num
     }
 
+    // Sims 3 Ambitions occasionally compares against a missing optional UI
+    // string while populating its Goal Checklist / Create-a-Sim menus.
+    // Treat a missing comparator as the empty string for this title only.
+    // Keep the normal assertion for other apps rather than changing the
+    // Foundation behavior globally.
+    if other == nil && env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+        let empty = env.objc.borrow::<StringHostObject>(this)
+            .iter_code_units().next().is_none();
+        // This comparison can run for every visible UI label on every frame.
+        // Keep a few diagnostics without flooding the log or formatting strings
+        // thousands of times during gameplay.
+        static NIL_COMPARE_LOGS: std::sync::atomic::AtomicUsize =
+            std::sync::atomic::AtomicUsize::new(0);
+        let previous = NIL_COMPARE_LOGS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        if previous < 8 {
+            log!(
+                "Sims3 NSString compare:nil in UI text processing: string={:?}, mask={:#x}, LR={:#x}; treating nil as empty string",
+                to_rust_string(env, this),
+                mask,
+                env.cpu.regs()[crate::cpu::Cpu::LR]
+            );
+        } else if previous == 8 {
+            log!("Sims3: suppressing further repeated NSString compare:nil diagnostics");
+        }
+        return if empty { NSOrderedSame } else { NSOrderedDescending };
+    }
     assert_ne!(other, nil);
 
     // TODO: support foreign subclasses (perhaps via a helper function that

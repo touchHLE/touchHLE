@@ -299,8 +299,19 @@ pub fn AudioFileGetProperty(
             {
                 log!("Applying game-specific hack for Mirror's Edge: returning WAVE for kAudioFilePropertyFileFormat in AudioFileGetProperty()");
                 env.mem.write(out_property_data.cast(), fourcc(b"WAVE"));
+            } else if let Some(file_type) = host_object.audio_file.file_type() {
+                log!(
+                    "AudioFileGetProperty: file format {} for {:?}",
+                    debug_fourcc(file_type),
+                    in_audio_file
+                );
+                env.mem.write(out_property_data.cast(), file_type);
             } else {
-                todo!()
+                log!(
+                    "AudioFileGetProperty: unknown container type for {:?}",
+                    in_audio_file
+                );
+                return kAudioFileUnsupportedFileTypeError;
             }
         }
         kAudioFilePropertyDataFormat => {

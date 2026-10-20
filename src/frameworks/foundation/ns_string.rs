@@ -483,7 +483,18 @@ pub const CLASSES: ClassExports = objc_classes! {
         log_dbg!("[{:?} characterAtIndex:{:?}]: converted string to UTF-16", this, index);
     }
 
-    // TODO: raise exception instead of panicking?
+    if (index as usize) >= utf16.len() && env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+        let content = String::from_utf16_lossy(utf16);
+        panic!(
+            "Sims3 NSString characterAtIndex out of bounds: object={:?}, index={}, utf16_length={}, text={:?}, PC={:#x}, LR={:#x}",
+            this,
+            index,
+            utf16.len(),
+            content,
+            env.cpu.regs()[crate::cpu::Cpu::PC],
+            env.cpu.regs()[crate::cpu::Cpu::LR]
+        );
+    }
     utf16[index as usize]
 }
 

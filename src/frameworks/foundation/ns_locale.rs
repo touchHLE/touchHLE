@@ -112,6 +112,14 @@ pub const CLASSES: ClassExports = objc_classes! {
         let langs = get_preferred_languages(env);
         let lang_ns_strings = langs.into_iter().map(|lang| ns_string::from_rust_string(env, lang)).collect();
         let new = ns_array::from_vec(env, lang_ns_strings);
+        if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+            log!(
+                "Sims3 NSLocale preferredLanguages: array={:?}, registered={}, isa={:?}",
+                new,
+                env.objc.get_host_object(new).is_some(),
+                crate::objc::ObjC::read_isa(new, &env.mem)
+            );
+        }
         State::get(env).preferred_languages = Some(new);
         new
     }

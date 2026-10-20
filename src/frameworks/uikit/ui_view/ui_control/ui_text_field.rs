@@ -440,7 +440,8 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
         || !responds
         || msg![env; delegate textField:text_field shouldChangeCharactersInRange:range replacementString:empty];
     if should {
-        let new_text: id = msg![env; curr_text substringToIndex:range.location];
+        let end_index = range.location;
+        let new_text: id = msg![env; curr_text substringToIndex:end_index];
         log_dbg!(
             "handle_backspace, new_text: {}",
             ns_string::to_rust_string(env, new_text)

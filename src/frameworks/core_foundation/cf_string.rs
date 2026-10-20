@@ -272,6 +272,19 @@ fn CFStringGetCharacterAtIndex(
             }
 
             if caller == 0xc3cc4 {
+                // Sims 3 Ambitions v1.0.0: TextManager::drawWrappedStringLines
+                // (ARM 0xc3cc0) sometimes mistakes the terminal line-array
+                // sentinel (10) for a real final line boundary. By the time
+                // charAt() is called, the caller has already calculated a
+                // positive drawing length in r4. Returning a dummy character
+                // alone makes it try to draw that nonexistent line and can
+                // leave empty/flickering UI text. Skip that one bogus segment
+                // by clearing its caller-owned length, without altering valid
+                // string accesses or any other application.
+                env.cpu.regs_mut()[4] = 0;
+                if previous < 8 {
+                    log!("Sims3: suppressed terminal wrapped-line segment (guest r4 = 0)");
+                }
                 return 0;
             }
         }

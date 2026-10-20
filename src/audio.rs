@@ -116,7 +116,10 @@ impl AudioFile {
         // format, then recreating the reader if that works.
         if hound::WavReader::new(Cursor::new(&bytes)).is_ok() {
             let reader = hound::WavReader::new(Cursor::new(bytes)).unwrap();
-            Ok(AudioFile(AudioFileInner::Wave(reader), Some(u32::from_be_bytes(*b"WAVE"))))
+            Ok(AudioFile(
+                AudioFileInner::Wave(reader),
+                Some(u32::from_be_bytes(*b"WAVE")),
+            ))
         // TODO: Real MP3/MP4/Non-linear PCM container handling. Currently we
         // are immediately decoding the entire file to PCM and acting as if
         // it's a PCM file, simply because because this is easier. Full MP3

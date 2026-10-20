@@ -241,11 +241,16 @@ fn AudioQueueCreateTimeline(
     return_if_null!(in_aq);
     return_if_null!(out_timeline);
 
-    let Some(queue) = State::get(&mut env.framework_state).audio_queues.get_mut(&in_aq) else {
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+    else {
         return crate::frameworks::carbon_core::paramErr;
     };
 
-    let timeline = env.mem.alloc_and_write(OpaqueAudioQueueTimeline { _filler: 0 });
+    let timeline = env
+        .mem
+        .alloc_and_write(OpaqueAudioQueueTimeline { _filler: 0 });
     queue.timelines.push(timeline);
     env.mem.write(out_timeline, timeline);
     log_dbg!("AudioQueueCreateTimeline({:?}) => {:?}", in_aq, timeline);
@@ -260,7 +265,10 @@ fn AudioQueueDisposeTimeline(
     return_if_null!(in_aq);
     return_if_null!(in_timeline);
 
-    let Some(queue) = State::get(&mut env.framework_state).audio_queues.get_mut(&in_aq) else {
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+    else {
         return crate::frameworks::carbon_core::paramErr;
     };
     let Some(index) = queue.timelines.iter().position(|&t| t == in_timeline) else {
@@ -281,7 +289,10 @@ fn AudioQueueGetCurrentTime(
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    let Some(queue) = State::get(&mut env.framework_state).audio_queues.get(&in_aq) else {
+    let Some(queue) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get(&in_aq)
+    else {
         return crate::frameworks::carbon_core::paramErr;
     };
     if !in_timeline.is_null() && !queue.timelines.contains(&in_timeline) {
@@ -289,28 +300,34 @@ fn AudioQueueGetCurrentTime(
     }
 
     let elapsed = queue.clock_elapsed
-        + queue.clock_started.map(|start| start.elapsed()).unwrap_or(Duration::ZERO);
+        + queue
+            .clock_started
+            .map(|start| start.elapsed())
+            .unwrap_or(Duration::ZERO);
     let sample_time = elapsed.as_secs_f64() * queue.format.sample_rate;
     if !out_timestamp.is_null() {
-        env.mem.write(out_timestamp, AudioTimeStamp {
-            sample_time,
-            host_time: 0,
-            rate_scalar: 0.0,
-            world_clock_type: 0,
-            SMPTE_time: SMPTETime {
-                subframes: 0,
-                subframe_divisor: 0,
-                counter: 0,
-                type_: 0,
-                flags: 0,
-                hours: 0,
-                minutes: 0,
-                seconds: 0,
-                frames: 0,
+        env.mem.write(
+            out_timestamp,
+            AudioTimeStamp {
+                sample_time,
+                host_time: 0,
+                rate_scalar: 0.0,
+                world_clock_type: 0,
+                SMPTE_time: SMPTETime {
+                    subframes: 0,
+                    subframe_divisor: 0,
+                    counter: 0,
+                    type_: 0,
+                    flags: 0,
+                    hours: 0,
+                    minutes: 0,
+                    seconds: 0,
+                    frames: 0,
+                },
+                flags: 1,
+                _reserved: 0,
             },
-            flags: 1,
-            _reserved: 0,
-        });
+        );
     }
     if !out_discontinuity.is_null() {
         env.mem.write(out_discontinuity, 0u8);
@@ -536,7 +553,9 @@ fn AudioQueueRemovePropertyListener(
 
 fn property_size(property_id: AudioQueuePropertyID) -> GuestUSize {
     match property_id {
-        kAudioQueueProperty_IsRunning | kAudioQueueDeviceProperty_NumberChannels => guest_size_of::<u32>(),
+        kAudioQueueProperty_IsRunning | kAudioQueueDeviceProperty_NumberChannels => {
+            guest_size_of::<u32>()
+        }
         kAudioQueueDeviceProperty_SampleRate => guest_size_of::<f64>(),
         kAudioQueueProperty_StreamDescription => guest_size_of::<AudioStreamBasicDescription>(),
         _ => unimplemented!("Unimplemented property ID: {}", debug_fourcc(property_id)),
@@ -570,8 +589,16 @@ fn AudioQueueGetProperty(
         return kAudioQueueErr_InvalidPropertySize;
     }
 
-    let hardware_sample_rate = env.framework_state.audio_toolbox.audio_session.current_hardware_sample_rate;
-    let hardware_output_channels = env.framework_state.audio_toolbox.audio_session.current_hardware_output_number_channels;
+    let hardware_sample_rate = env
+        .framework_state
+        .audio_toolbox
+        .audio_session
+        .current_hardware_sample_rate;
+    let hardware_output_channels = env
+        .framework_state
+        .audio_toolbox
+        .audio_session
+        .current_hardware_output_number_channels;
     let host_object = State::get(&mut env.framework_state)
         .audio_queues
         .get_mut(&in_aq)
@@ -587,10 +614,12 @@ fn AudioQueueGetProperty(
             env.mem.write(out_property_data.cast(), is_running);
         }
         kAudioQueueDeviceProperty_SampleRate => {
-            env.mem.write(out_property_data.cast(), hardware_sample_rate);
+            env.mem
+                .write(out_property_data.cast(), hardware_sample_rate);
         }
         kAudioQueueDeviceProperty_NumberChannels => {
-            env.mem.write(out_property_data.cast(), hardware_output_channels);
+            env.mem
+                .write(out_property_data.cast(), hardware_output_channels);
         }
         kAudioQueueProperty_StreamDescription => {
             env.mem.write(out_property_data.cast(), host_object.format);
@@ -1112,7 +1141,9 @@ fn finish_stopping_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
         .unwrap()
         .is_running = AudioQueueIsRunning::Stopped;
     let host_object = State::get(&mut env.framework_state)
-        .audio_queues.get_mut(&in_aq).unwrap();
+        .audio_queues
+        .get_mut(&in_aq)
+        .unwrap();
     host_object.clock_started = None;
     host_object.clock_elapsed = Duration::ZERO;
     notify_aq_is_running(env, in_aq);

@@ -70,10 +70,10 @@ type ContextState = (
     (CGFloat, CGFloat, CGFloat, CGFloat), // RGB fill color
     (CGFloat, CGFloat, CGFloat, CGFloat),
     CGFloat,
-    CGAffineTransform,                    // transform
-    CGFontRef,                            // font
-    CGFloat,                              // font size
-    CGBlendMode,                          // blend mode
+    CGAffineTransform, // transform
+    CGFontRef,         // font
+    CGFloat,           // font size
+    CGBlendMode,       // blend mode
 );
 
 #[derive(Default)]
@@ -170,36 +170,61 @@ fn CGContextSetGrayFillColor(
 }
 
 fn CGContextSetGrayStrokeColor(
-    env: &mut Environment, context: CGContextRef, gray: CGFloat, alpha: CGFloat,
+    env: &mut Environment,
+    context: CGContextRef,
+    gray: CGFloat,
+    alpha: CGFloat,
 ) {
-    env.objc.borrow_mut::<CGContextHostObject>(context).rgb_stroke_color =
-        (gray, gray, gray, alpha);
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .rgb_stroke_color = (gray, gray, gray, alpha);
 }
 
 fn CGContextSetRGBStrokeColor(
-    env: &mut Environment, context: CGContextRef,
-    r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat,
+    env: &mut Environment,
+    context: CGContextRef,
+    r: CGFloat,
+    g: CGFloat,
+    b: CGFloat,
+    a: CGFloat,
 ) {
-    env.objc.borrow_mut::<CGContextHostObject>(context).rgb_stroke_color = (r, g, b, a);
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .rgb_stroke_color = (r, g, b, a);
 }
 
-fn CGContextSetStrokeColorWithColor(env: &mut Environment, context: CGContextRef, color: CGColorRef) {
+fn CGContextSetStrokeColorWithColor(
+    env: &mut Environment,
+    context: CGContextRef,
+    color: CGColorRef,
+) {
     let (r, g, b, a) = cg_color::to_rgba(&env.objc, color);
     CGContextSetRGBStrokeColor(env, context, r, g, b, a);
 }
 
 fn CGContextSetLineWidth(env: &mut Environment, context: CGContextRef, width: CGFloat) {
-    env.objc.borrow_mut::<CGContextHostObject>(context).line_width = width;
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .line_width = width;
 }
 
 fn CGContextBeginPath(env: &mut Environment, context: CGContextRef) {
-    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.clear();
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .clear();
 }
 
 fn CGContextMoveToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
-    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.push(
-        CGPathSubpath { points: vec![CGPoint { x, y }], closed: false }
-    );
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .push(CGPathSubpath {
+            points: vec![CGPoint { x, y }],
+            closed: false,
+        });
 }
 
 fn CGContextAddLineToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
@@ -215,12 +240,21 @@ fn CGContextAddLineToPoint(env: &mut Environment, context: CGContextRef, x: CGFl
             last.points.push(CGPoint { x, y });
         }
     } else {
-        path.subpaths.push(CGPathSubpath { points: vec![CGPoint { x, y }], closed: false });
+        path.subpaths.push(CGPathSubpath {
+            points: vec![CGPoint { x, y }],
+            closed: false,
+        });
     }
 }
 
 fn CGContextClosePath(env: &mut Environment, context: CGContextRef) {
-    if let Some(last) = env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.last_mut() {
+    if let Some(last) = env
+        .objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .last_mut()
+    {
         last.closed = true;
     }
 }
@@ -230,8 +264,11 @@ fn CGContextAddRect(env: &mut Environment, context: CGContextRef, rect: CGRect) 
     let y = rect.origin.y;
     let w = rect.size.width;
     let h = rect.size.height;
-    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.push(
-        CGPathSubpath {
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .push(CGPathSubpath {
             points: vec![
                 CGPoint { x, y },
                 CGPoint { x: x + w, y },
@@ -239,8 +276,7 @@ fn CGContextAddRect(env: &mut Environment, context: CGContextRef, rect: CGRect) 
                 CGPoint { x, y: y + h },
             ],
             closed: true,
-        }
-    );
+        });
 }
 
 fn CGContextAddEllipseInRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
@@ -248,51 +284,91 @@ fn CGContextAddEllipseInRect(env: &mut Environment, context: CGContextRef, rect:
     let cy = rect.origin.y + rect.size.height / 2.0;
     let rx = rect.size.width / 2.0;
     let ry = rect.size.height / 2.0;
-    let points = (0..64).map(|i| {
-        let theta = i as CGFloat * std::f32::consts::TAU / 64.0;
-        CGPoint { x: cx + rx * theta.cos(), y: cy + ry * theta.sin() }
-    }).collect();
-    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.push(
-        CGPathSubpath { points, closed: true }
-    );
+    let points = (0..64)
+        .map(|i| {
+            let theta = i as CGFloat * std::f32::consts::TAU / 64.0;
+            CGPoint {
+                x: cx + rx * theta.cos(),
+                y: cy + ry * theta.sin(),
+            }
+        })
+        .collect();
+    env.objc
+        .borrow_mut::<CGContextHostObject>(context)
+        .path
+        .subpaths
+        .push(CGPathSubpath {
+            points,
+            closed: true,
+        });
 }
 
 fn CGContextAddCurveToPoint(
-    env: &mut Environment, context: CGContextRef,
-    cp1x: CGFloat, cp1y: CGFloat, cp2x: CGFloat, cp2y: CGFloat, x: CGFloat, y: CGFloat,
+    env: &mut Environment,
+    context: CGContextRef,
+    cp1x: CGFloat,
+    cp1y: CGFloat,
+    cp2x: CGFloat,
+    cp2y: CGFloat,
+    x: CGFloat,
+    y: CGFloat,
 ) {
     let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
-    let Some(last) = path.subpaths.last_mut() else { return; };
-    let Some(start) = last.points.last().copied() else { return; };
+    let Some(last) = path.subpaths.last_mut() else {
+        return;
+    };
+    let Some(start) = last.points.last().copied() else {
+        return;
+    };
     for i in 1..=24 {
         let t = i as CGFloat / 24.0;
         let u = 1.0 - t;
         last.points.push(CGPoint {
-            x: u*u*u*start.x + 3.0*u*u*t*cp1x + 3.0*u*t*t*cp2x + t*t*t*x,
-            y: u*u*u*start.y + 3.0*u*u*t*cp1y + 3.0*u*t*t*cp2y + t*t*t*y,
+            x: u * u * u * start.x
+                + 3.0 * u * u * t * cp1x
+                + 3.0 * u * t * t * cp2x
+                + t * t * t * x,
+            y: u * u * u * start.y
+                + 3.0 * u * u * t * cp1y
+                + 3.0 * u * t * t * cp2y
+                + t * t * t * y,
         });
     }
 }
 
 fn CGContextAddQuadCurveToPoint(
-    env: &mut Environment, context: CGContextRef,
-    cpx: CGFloat, cpy: CGFloat, x: CGFloat, y: CGFloat,
+    env: &mut Environment,
+    context: CGContextRef,
+    cpx: CGFloat,
+    cpy: CGFloat,
+    x: CGFloat,
+    y: CGFloat,
 ) {
     let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
-    let Some(last) = path.subpaths.last_mut() else { return; };
-    let Some(start) = last.points.last().copied() else { return; };
+    let Some(last) = path.subpaths.last_mut() else {
+        return;
+    };
+    let Some(start) = last.points.last().copied() else {
+        return;
+    };
     for i in 1..=16 {
         let t = i as CGFloat / 16.0;
         let u = 1.0 - t;
         last.points.push(CGPoint {
-            x: u*u*start.x + 2.0*u*t*cpx + t*t*x,
-            y: u*u*start.y + 2.0*u*t*cpy + t*t*y,
+            x: u * u * start.x + 2.0 * u * t * cpx + t * t * x,
+            y: u * u * start.y + 2.0 * u * t * cpy + t * t * y,
         });
     }
 }
 
 fn CGContextDrawPath(env: &mut Environment, context: CGContextRef, mode: i32) {
-    let paths = std::mem::take(&mut env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths);
+    let paths = std::mem::take(
+        &mut env
+            .objc
+            .borrow_mut::<CGContextHostObject>(context)
+            .path
+            .subpaths,
+    );
     match mode {
         0 => cg_bitmap_context::draw_path(env, context, &paths, false, false),
         1 => cg_bitmap_context::draw_path(env, context, &paths, false, true),

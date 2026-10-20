@@ -421,7 +421,9 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
     // This matters for emoji and Android IME input, which can use surrogate
     // pairs in the NSString passed to the game.
     let last_char_units: NSUInteger = ns_string::to_rust_string(env, curr_text)
-        .chars().last().map_or(1, |ch| ch.len_utf16() as NSUInteger);
+        .chars()
+        .last()
+        .map_or(1, |ch| ch.len_utf16() as NSUInteger);
     let removed_units = last_char_units.min(len);
     let end_index = len - removed_units;
     let range = NSRange {

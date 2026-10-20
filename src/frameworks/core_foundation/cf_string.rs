@@ -251,6 +251,26 @@ fn CFStringGetCharacterAtIndex(
     the_string: CFStringRef,
     idx: CFIndex,
 ) -> unichar {
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+        let string_length = CFStringGetLength(env, the_string);
+        if idx < 0 || idx >= string_length {
+            let sp = env.cpu.regs()[crate::cpu::Cpu::SP];
+            let caller = env.mem.read(ConstPtr::<u32>::from_bits(sp.wrapping_add(4)));
+            log!(
+                "Sims3 CFStringGetCharacterAtIndex out of range: index={}, length={}, midp_caller={:#x}, LR={:#x}",
+                idx,
+                string_length,
+                caller,
+                env.cpu.regs()[crate::cpu::Cpu::LR]
+            );
+
+            if caller == 0xc3cc4 {
+                log!("Sims3: skipping invalid wrapped-line delimiter read");
+                return 0;
+            }
+        }
+    }
+
     let idx: NSUInteger = idx.try_into().unwrap();
     msg![env; the_string characterAtIndex:idx]
 }

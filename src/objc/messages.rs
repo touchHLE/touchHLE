@@ -193,6 +193,17 @@ fn objc_msgSend_inner(
 
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
+    if !skip_initialize && env.objc.get_host_object(receiver).is_none() {
+        panic!(
+            "objc_msgSend: unregistered receiver {:?}, class {:?} ({:?}), selector {:?}, PC {:#x}, LR {:#x}",
+            receiver,
+            orig_class,
+            env.objc.try_get_class_name(orig_class),
+            selector.as_str(&env.mem),
+            env.cpu.regs()[crate::cpu::Cpu::PC],
+            env.cpu.regs()[crate::cpu::Cpu::LR],
+        );
+    }
     if !skip_initialize {
         maybe_initialize_class(env, receiver);
     }

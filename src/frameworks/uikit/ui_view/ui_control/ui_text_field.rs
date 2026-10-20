@@ -421,8 +421,9 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
     let last_char_units: NSUInteger = ns_string::to_rust_string(env, curr_text)
         .chars().last().map_or(1, |ch| ch.len_utf16() as NSUInteger);
     let removed_units = last_char_units.min(len);
+    let end_index = len - removed_units;
     let range = NSRange {
-        location: len - removed_units,
+        location: end_index,
         length: removed_units,
     };
     let empty = ns_string::get_static_str(env, "");
@@ -440,7 +441,6 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
         || !responds
         || msg![env; delegate textField:text_field shouldChangeCharactersInRange:range replacementString:empty];
     if should {
-        let end_index = range.location;
         let new_text: id = msg![env; curr_text substringToIndex:end_index];
         log_dbg!(
             "handle_backspace, new_text: {}",

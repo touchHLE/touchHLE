@@ -415,9 +415,15 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
     if len == 0 {
         return;
     }
+    // Delete a Unicode scalar value, not just one UTF-16 code unit.
+    // This matters for emoji and Android IME input, which can use surrogate
+    // pairs in the NSString passed to the game.
+    let last_char_units: NSUInteger = ns_string::to_rust_string(env, curr_text)
+        .chars().last().map_or(1, |ch| ch.len_utf16() as NSUInteger);
+    let removed_units = last_char_units.min(len);
     let range = NSRange {
-        location: len - 1,
-        length: 1,
+        location: len - removed_units,
+        length: removed_units,
     };
     let empty = ns_string::get_static_str(env, "");
 
@@ -434,7 +440,7 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
         || !responds
         || msg![env; delegate textField:text_field shouldChangeCharactersInRange:range replacementString:empty];
     if should {
-        let new_text: id = msg![env; curr_text substringToIndex:(len-1)];
+        let new_text: id = msg![env; curr_text substringToIndex:range.location];
         log_dbg!(
             "handle_backspace, new_text: {}",
             ns_string::to_rust_string(env, new_text)

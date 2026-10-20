@@ -38,6 +38,7 @@ pub const kCGBlendModeScreen: CGBlendMode = 2;
 pub const kCGBlendModeOverlay: CGBlendMode = 3;
 pub const kCGBlendModeDarken: CGBlendMode = 4;
 pub const kCGBlendModeLighten: CGBlendMode = 5;
+pub const kCGBlendModeClear: CGBlendMode = 16;
 pub const kCGBlendModeCopy: CGBlendMode = 17;
 
 pub const CLASSES: ClassExports = objc_classes! {

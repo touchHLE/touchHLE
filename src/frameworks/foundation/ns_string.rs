@@ -485,14 +485,18 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     if (index as usize) >= utf16.len() && env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
         let content = String::from_utf16_lossy(utf16);
+        let guest_r7 = env.cpu.regs()[7];
+        let saved_return: u32 = env.mem.read(crate::mem::ConstPtr::from_bits(guest_r7.wrapping_add(4)));
         panic!(
-            "Sims3 NSString characterAtIndex out of bounds: object={:?}, index={}, utf16_length={}, text={:?}, PC={:#x}, LR={:#x}",
+            "Sims3 NSString characterAtIndex out of bounds: object={:?}, index={}, utf16_length={}, text={:?}, PC={:#x}, LR={:#x}, guest_r7={:#x}, charAt_caller={:#x}",
             this,
             index,
             utf16.len(),
             content,
             env.cpu.regs()[crate::cpu::Cpu::PC],
-            env.cpu.regs()[crate::cpu::Cpu::LR]
+            env.cpu.regs()[crate::cpu::Cpu::LR],
+            guest_r7,
+            saved_return
         );
     }
     utf16[index as usize]

@@ -181,6 +181,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: Support both Region-specific and Language-specific
     // localized resources
     let langs: id = msg_class![env; NSLocale preferredLanguages];
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+        log!(
+            "Sims3 NSBundle localizations: array={:?}, registered={}, isa={:?}",
+            langs,
+            env.objc.get_host_object(langs).is_some(),
+            crate::objc::ObjC::read_isa(langs, &env.mem)
+        );
+    }
     let lang_count: NSUInteger = msg![env; langs count];
     let mut unknown_codes = HashSet::new();
     for i in 0..lang_count {

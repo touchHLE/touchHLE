@@ -662,6 +662,22 @@ pub const CLASSES: ClassExports = objc_classes! {
         num
     }
 
+    // Sims 3 Ambitions occasionally compares against a missing optional UI
+    // string while populating its Goal Checklist / Create-a-Sim menus.
+    // Treat a missing comparator as the empty string for this title only.
+    // Keep the normal assertion for other apps rather than changing the
+    // Foundation behavior globally.
+    if other == nil && env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+        let empty = env.objc.borrow::<StringHostObject>(this)
+            .iter_code_units().next().is_none();
+        log!(
+            "Sims3 NSString compare:nil in UI text processing: string={:?}, mask={:#x}, LR={:#x}; treating nil as empty string",
+            to_rust_string(env, this),
+            mask,
+            env.cpu.regs()[crate::cpu::Cpu::LR]
+        );
+        return if empty { NSOrderedSame } else { NSOrderedDescending };
+    }
     assert_ne!(other, nil);
 
     // TODO: support foreign subclasses (perhaps via a helper function that

@@ -124,6 +124,7 @@ pub struct State {
     posix_io: posix_io::State,
     pub pthread: pthread::State,
     pub semaphore: semaphore::State,
+    setjmp: setjmp::State,
     pub socket: sys::socket::State,
     stdlib: stdlib::State,
     string: string::State,

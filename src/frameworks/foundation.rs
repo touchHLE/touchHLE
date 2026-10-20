@@ -15,6 +15,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::objc::id;
 use crate::Environment;
 
+pub mod _nib_archive_decoder;
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
@@ -29,10 +30,15 @@ pub mod ns_error;
 pub mod ns_exception;
 pub mod ns_file_handle;
 pub mod ns_file_manager;
+pub mod ns_garbage_collector;
+pub mod ns_index_path;
+pub mod ns_invocation;
+pub mod ns_keyed_archiver;
 pub mod ns_keyed_unarchiver;
 pub mod ns_locale;
 pub mod ns_lock;
 pub mod ns_log;
+pub mod ns_method_signature;
 pub mod ns_notification;
 pub mod ns_notification_center;
 pub mod ns_null;
@@ -41,25 +47,100 @@ pub mod ns_object;
 pub mod ns_process_info;
 pub mod ns_property_list_serialization;
 pub mod ns_run_loop;
+pub mod ns_scanner;
 pub mod ns_set;
 pub mod ns_string;
 pub mod ns_thread;
+pub mod ns_time_zone;
 pub mod ns_timer;
 pub mod ns_url;
+pub mod ns_url_connection;
+pub mod ns_url_request;
 pub mod ns_user_defaults;
 pub mod ns_value;
+pub mod ns_xml_parser;
+
+pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+    path: "/System/Library/Frameworks/Foundation.framework/Foundation",
+    aliases: &[],
+    class_exports: &[
+        _nib_archive_decoder::CLASSES,
+        ns_array::CLASSES,
+        ns_autorelease_pool::CLASSES,
+        ns_bundle::CLASSES,
+        ns_character_set::CLASSES,
+        ns_coder::CLASSES,
+        ns_data::CLASSES,
+        ns_date::CLASSES,
+        ns_date_formatter::CLASSES,
+        ns_dictionary::CLASSES,
+        ns_enumerator::CLASSES,
+        ns_error::CLASSES,
+        ns_file_handle::CLASSES,
+        ns_file_manager::CLASSES,
+        ns_garbage_collector::CLASSES,
+        ns_index_path::CLASSES,
+        ns_invocation::CLASSES,
+        ns_keyed_archiver::CLASSES,
+        ns_keyed_unarchiver::CLASSES,
+        ns_locale::CLASSES,
+        ns_lock::CLASSES,
+        ns_notification::CLASSES,
+        ns_notification_center::CLASSES,
+        ns_null::CLASSES,
+        ns_method_signature::CLASSES,
+        ns_object::CLASSES,
+        ns_process_info::CLASSES,
+        ns_property_list_serialization::CLASSES,
+        ns_run_loop::CLASSES,
+        ns_scanner::CLASSES,
+        ns_set::CLASSES,
+        ns_string::CLASSES,
+        ns_thread::CLASSES,
+        ns_timer::CLASSES,
+        ns_time_zone::CLASSES,
+        ns_url::CLASSES,
+        ns_url_connection::CLASSES,
+        ns_url_request::CLASSES,
+        ns_user_defaults::CLASSES,
+        ns_value::CLASSES,
+        ns_xml_parser::CLASSES,
+    ],
+    constant_exports: &[
+        ns_error::CONSTANTS,
+        ns_exception::CONSTANTS,
+        ns_file_manager::CONSTANTS,
+        ns_keyed_unarchiver::CONSTANTS,
+        ns_locale::CONSTANTS,
+        ns_run_loop::CONSTANTS,
+    ],
+    function_exports: &[
+        FUNCTIONS,
+        ns_exception::FUNCTIONS,
+        ns_file_manager::FUNCTIONS,
+        ns_log::FUNCTIONS,
+        ns_objc_runtime::FUNCTIONS,
+    ],
+};
 
 #[derive(Default)]
 pub struct State {
-    ns_autorelease_pool: ns_autorelease_pool::State,
     ns_bundle: ns_bundle::State,
     ns_file_manager: ns_file_manager::State,
     ns_locale: ns_locale::State,
     ns_notification_center: ns_notification_center::State,
     ns_null: ns_null::State,
-    ns_run_loop: ns_run_loop::State,
+    ns_process_info: ns_process_info::State,
     ns_string: ns_string::State,
+    ns_thread: ns_thread::State,
+    ns_time_zone: ns_time_zone::State,
     ns_user_defaults: ns_user_defaults::State,
+}
+
+#[derive(Default)]
+pub struct ThreadLocalState {
+    ns_autorelease_pool: ns_autorelease_pool::ThreadLocalState,
+    ns_run_loop: ns_run_loop::ThreadLocalState,
 }
 
 pub type NSInteger = i32;
@@ -94,7 +175,7 @@ impl crate::abi::GuestArg for NSRange {
 fn NSStringFromRange(env: &mut Environment, range: NSRange) -> id {
     let loc = range.location;
     let len = range.length;
-    let string = format!("{{{}, {}}}", loc, len);
+    let string = format!("{{{loc}, {len}}}");
     ns_string::from_rust_string(env, string)
 }
 
@@ -123,4 +204,4 @@ fn hash_helper<T: std::hash::Hash>(hashable: &T) -> NSUInteger {
     (hash_u64 as u32) ^ ((hash_u64 >> 32) as u32)
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSStringFromRange(_))];
+const FUNCTIONS: FunctionExports = &[export_c_func!(NSStringFromRange(_))];

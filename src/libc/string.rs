@@ -68,7 +68,53 @@ fn bzero(env: &mut Environment, dest: MutVoidPtr, count: GuestUSize) {
     memset(env, dest, 0, count);
 }
 fn memset(env: &mut Environment, dest: MutVoidPtr, ch: i32, count: GuestUSize) -> MutVoidPtr {
-    GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count).cast()
+    GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count, GuestUSize::MAX).cast()
+}
+fn __memset_chk(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    ch: i32,
+    count: GuestUSize,
+    dest_count: GuestUSize,
+) -> MutVoidPtr {
+    GenericChar::<u8>::memset(env, dest.cast(), ch as u8, count, dest_count).cast()
+}
+fn memset_pattern4(env: &mut Environment, b: MutVoidPtr, pattern4: ConstVoidPtr, len: GuestUSize) {
+    memset_pattern_inner(env, b, pattern4, len, 4)
+}
+fn memset_pattern8(env: &mut Environment, b: MutVoidPtr, pattern8: ConstVoidPtr, len: GuestUSize) {
+    memset_pattern_inner(env, b, pattern8, len, 8)
+}
+fn memset_pattern16(
+    env: &mut Environment,
+    b: MutVoidPtr,
+    pattern16: ConstVoidPtr,
+    len: GuestUSize,
+) {
+    memset_pattern_inner(env, b, pattern16, len, 16)
+}
+fn memset_pattern_inner(
+    env: &mut Environment,
+    b: MutVoidPtr,
+    pattern: ConstVoidPtr,
+    len: GuestUSize,
+    pattern_len: GuestUSize,
+) {
+    assert!(matches!(pattern_len, 4 | 8 | 16));
+    let mut tmp = [0; 16];
+    tmp[..pattern_len as usize].copy_from_slice(env.mem.bytes_at(pattern.cast(), pattern_len));
+    let mut target: MutPtr<u8> = b.cast();
+    for _ in 0..(len / pattern_len) {
+        env.mem
+            .bytes_at_mut(target, pattern_len)
+            .copy_from_slice(&tmp[..pattern_len as usize]);
+        target += pattern_len;
+    }
+    for i in 0..(len % pattern_len) {
+        let value = env.mem.read(pattern.cast() + i);
+        env.mem.write(target, value);
+        target += 1;
+    }
 }
 fn memcpy(
     env: &mut Environment,
@@ -76,7 +122,16 @@ fn memcpy(
     src: ConstVoidPtr,
     size: GuestUSize,
 ) -> MutVoidPtr {
-    GenericChar::<u8>::memcpy(env, dest.cast(), src.cast(), size).cast()
+    GenericChar::<u8>::memcpy(env, dest.cast(), src.cast(), size, GuestUSize::MAX).cast()
+}
+fn __memcpy_chk(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    src: ConstVoidPtr,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutVoidPtr {
+    GenericChar::<u8>::memcpy(env, dest.cast(), src.cast(), size, dest_size).cast()
 }
 fn memmove(
     env: &mut Environment,
@@ -84,7 +139,16 @@ fn memmove(
     src: ConstVoidPtr,
     size: GuestUSize,
 ) -> MutVoidPtr {
-    GenericChar::<u8>::memmove(env, dest.cast(), src.cast(), size).cast()
+    GenericChar::<u8>::memmove(env, dest.cast(), src.cast(), size, GuestUSize::MAX).cast()
+}
+fn __memmove_chk(
+    env: &mut Environment,
+    dest: MutVoidPtr,
+    src: ConstVoidPtr,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutVoidPtr {
+    GenericChar::<u8>::memmove(env, dest.cast(), src.cast(), size, dest_size).cast()
 }
 fn memchr(env: &mut Environment, string: ConstVoidPtr, c: i32, size: GuestUSize) -> ConstVoidPtr {
     GenericChar::<u8>::memchr(env, string.cast(), c as u8, size).cast()
@@ -92,7 +156,7 @@ fn memchr(env: &mut Environment, string: ConstVoidPtr, c: i32, size: GuestUSize)
 fn memcmp(env: &mut Environment, a: ConstVoidPtr, b: ConstVoidPtr, size: GuestUSize) -> i32 {
     GenericChar::<u8>::memcmp(env, a.cast(), b.cast(), size)
 }
-pub(super) fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
+pub(crate) fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strlen(env, s)
 }
 pub(super) fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
@@ -117,16 +181,28 @@ fn __strcat_chk(
 ) -> MutPtr<u8> {
     GenericChar::<u8>::strcat(env, dest, src, size)
 }
+fn strspn(env: &mut Environment, s: ConstPtr<u8>, charset: ConstPtr<u8>) -> GuestUSize {
+    GenericChar::<u8>::strspn(env, s, charset)
+}
 fn strcspn(env: &mut Environment, s: ConstPtr<u8>, charset: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strcspn(env, s, charset)
 }
-fn strncpy(
+pub(crate) fn strncpy(
     env: &mut Environment,
     dest: MutPtr<u8>,
     src: ConstPtr<u8>,
     size: GuestUSize,
 ) -> MutPtr<u8> {
-    GenericChar::<u8>::strncpy(env, dest, src, size)
+    GenericChar::<u8>::strncpy(env, dest, src, size, GuestUSize::MAX)
+}
+fn __strncpy_chk(
+    env: &mut Environment,
+    dest: MutPtr<u8>,
+    src: ConstPtr<u8>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<u8> {
+    GenericChar::<u8>::strncpy(env, dest, src, size, dest_size)
 }
 fn strsep(env: &mut Environment, stringp: MutPtr<MutPtr<u8>>, delim: ConstPtr<u8>) -> MutPtr<u8> {
     let orig = env.mem.read(stringp);
@@ -158,7 +234,7 @@ fn strsep(env: &mut Environment, stringp: MutPtr<MutPtr<u8>>, delim: ConstPtr<u8
     }
     orig
 }
-pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
+pub(crate) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
     GenericChar::<u8>::strdup(env, src)
 }
 pub fn strcmp(env: &mut Environment, a: ConstPtr<u8>, b: ConstPtr<u8>) -> i32 {
@@ -225,6 +301,9 @@ fn strchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
 fn strrchr(env: &mut Environment, path: ConstPtr<u8>, c: u8) -> ConstPtr<u8> {
     GenericChar::<u8>::strrchr(env, path, c)
 }
+fn strpbrk(env: &mut Environment, s: ConstPtr<u8>, charset: ConstPtr<u8>) -> ConstPtr<u8> {
+    GenericChar::<u8>::strpbrk(env, s, charset)
+}
 fn strlcpy(
     env: &mut Environment,
     dst: MutPtr<u8>,
@@ -239,17 +318,25 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(bzero(_, _)),
     // Functions shared with wchar.rs
     export_c_func!(memset(_, _, _)),
+    export_c_func!(__memset_chk(_, _, _, _)),
+    export_c_func!(memset_pattern4(_, _, _)),
+    export_c_func!(memset_pattern8(_, _, _)),
+    export_c_func!(memset_pattern16(_, _, _)),
     export_c_func!(memcpy(_, _, _)),
+    export_c_func!(__memcpy_chk(_, _, _, _)),
     export_c_func!(memmove(_, _, _)),
+    export_c_func!(__memmove_chk(_, _, _, _)),
     export_c_func!(memchr(_, _, _)),
     export_c_func!(memcmp(_, _, _)),
     export_c_func!(strlen(_)),
     export_c_func!(strcpy(_, _)),
     export_c_func!(__strcpy_chk(_, _, _)),
     export_c_func!(strcat(_, _)),
+    export_c_func!(strspn(_, _)),
     export_c_func!(strcspn(_, _)),
     export_c_func!(__strcat_chk(_, _, _)),
     export_c_func!(strncpy(_, _, _)),
+    export_c_func!(__strncpy_chk(_, _, _, _)),
     export_c_func!(strsep(_, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
@@ -260,5 +347,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strstr(_, _)),
     export_c_func!(strchr(_, _)),
     export_c_func!(strrchr(_, _)),
+    export_c_func!(strpbrk(_, _)),
     export_c_func!(strlcpy(_, _, _)),
 ];

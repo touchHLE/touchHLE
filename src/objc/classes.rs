@@ -10,15 +10,16 @@
 //! Resources:
 //! - [[objc explain]: Classes and metaclasses](http://www.sealiesoftware.com/blog/archive/2009/04/14/objc_explain_Classes_and_metaclasses.html), especially [the PDF diagram](http://www.sealiesoftware.com/blog/class%20diagram.pdf)
 
-mod class_lists;
-pub(super) use class_lists::CLASS_LISTS;
-
 use super::{
-    id, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC, IMP, SEL,
+    id, ivar_list_t, method_list_t, nil, objc_object, AnyHostObject, HostIMP, HostObject, ObjC,
+    IMP, SEL,
 };
+use crate::libc::string::strdup;
 use crate::mach_o::MachO;
-use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, Ptr, SafeRead};
-use std::collections::HashMap;
+use crate::mem::{guest_size_of, ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::Environment;
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, VecDeque};
 
 /// Generic pointer to an Objective-C class or metaclass.
 ///
@@ -38,15 +39,28 @@ pub(super) struct ClassHostObject {
     pub(super) is_metaclass: bool,
     pub(super) superclass: Class,
     pub(super) methods: HashMap<SEL, IMP>,
+    pub(super) guest_method_signatures: HashMap<SEL, ConstPtr<u8>>,
+    /// Maps ivar name to a tuple of an offset (as pointer) and an alignment.
+    /// (Alignment is used during ivar reconciliation.)
+    pub(super) ivars: HashMap<String, (ConstPtr<GuestUSize>, u32)>,
     /// Offset into the allocated memory for the object where the ivars of
     /// instances of this class or metaclass (respectively: normal objects or
     /// classes) should live. This is always >= the value in the superclass.
-    pub(super) _instance_start: GuestUSize,
+    pub(super) instance_start: GuestUSize,
     /// Size of the allocated memory for instances of this class or metaclass.
     /// This is always >= the value in the superclass.
     pub(super) instance_size: GuestUSize,
+    /// Checks if +initialize has been called yet.
+    pub(super) is_initialized: InitializationStatus,
 }
 impl HostObject for ClassHostObject {}
+
+#[derive(Clone, Copy, PartialEq)]
+pub(super) enum InitializationStatus {
+    NotInitialized,
+    Initializing,
+    Initialized,
+}
 
 /// Placeholder object for classes and metaclasses referenced by the app that
 /// we don't have an implementation for.
@@ -73,6 +87,7 @@ impl HostObject for FakeClass {}
 ///
 /// The name, field names and field layout are based on what Ghidra outputs.
 #[repr(C, packed)]
+#[allow(dead_code)]
 struct class_t {
     isa: Class, // note that this matches objc_object
     superclass: Class,
@@ -86,6 +101,7 @@ unsafe impl SafeRead for class_t {}
 ///
 /// The name, field names and field layout are based on what Ghidra's output.
 #[repr(C, packed)]
+#[allow(dead_code)]
 struct class_rw_t {
     _flags: u32,
     instance_start: GuestUSize,
@@ -94,7 +110,7 @@ struct class_rw_t {
     name: ConstPtr<u8>,
     base_methods: ConstPtr<method_list_t>,
     _base_protocols: ConstVoidPtr, // protocol list (TODO)
-    _ivars: ConstVoidPtr,          // ivar list (TODO)
+    ivars: ConstPtr<ivar_list_t>,
     _weak_ivar_layout: u32,
     _base_properties: ConstVoidPtr, // property list (TODO)
 }
@@ -114,6 +130,17 @@ struct category_t {
 }
 unsafe impl SafeRead for category_t {}
 
+#[repr(C, packed)]
+pub struct objc_property {
+    // TODO: define fields?
+    _pad: u8,
+}
+unsafe impl SafeRead for objc_property {}
+
+/// An opaque type that represents an Objective-C declared property.
+#[allow(non_camel_case_types)]
+type objc_property_t = MutPtr<objc_property>;
+
 /// A template for a class defined with [objc_classes].
 ///
 /// Host implementations of libraries can use these to expose classes to the
@@ -130,6 +157,9 @@ pub struct ClassTemplate {
 ///
 /// Each module that wants to expose functions to guest code should export a
 /// constant using this type. See [objc_classes] for an example.
+///
+/// All the constants like this can then be collected into a
+/// [crate::dyld::HostDylib].
 ///
 /// The strings are the class names.
 ///
@@ -154,6 +184,7 @@ macro_rules! _objc_method {
         $env:ident,
         $this:ident,
         $_cmd:ident,
+        $cmd_name:ident,
         $retty:ty,
         $block:block
         $(, $ty:ty, $arg:ident)*
@@ -171,7 +202,10 @@ macro_rules! _objc_method {
             $_cmd: $crate::objc::SEL,
             $($arg: $ty,)*
             $(#[allow(unused_mut)] mut $va_arg: $va_type,)?
-        | -> $retty {$block}) as fn(
+        | -> $retty {
+            const _OBJC_CURRENT_SELECTOR: &str = stringify!($cmd_name);
+            $block
+        }) as fn(
             &mut $crate::Environment,
             $crate::objc::id,
             $crate::objc::SEL,
@@ -254,13 +288,11 @@ macro_rules! objc_classes {
         $(
             @implementation $class_name:ident $(: $superclass_name:ident)?
 
-            $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident)?
-                              $($cm_namen:ident:($cm_typen:ty) $cm_argn:ident)*
+            $( + ($cm_type:ty) $cm_name:ident $(:($cm_type1:ty) $cm_arg1:ident $($($cm_namen:ident)?:($cm_typen:ty) $cm_argn:ident)*)?
                               $(, ...$cm_va_arg:ident)?
                  $cm_block:block )*
 
-            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident)?
-                              $($im_namen:ident:($im_typen:ty) $im_argn:ident)*
+            $( - ($im_type:ty) $im_name:ident $(:($im_type1:ty) $im_arg1:ident $($($im_namen:ident)?:($im_typen:ty) $im_argn:ident)*)?
                               $(, ...$im_va_arg:ident)?
                  $im_block:block )*
 
@@ -285,16 +317,16 @@ macro_rules! objc_classes {
                                 $crate::objc::selector!(
                                     $(($cm_type1);)?
                                     $cm_name
-                                    $(, $cm_namen)*
+                                    $($(, $($cm_namen)?)*)?
                                 ),
                                 $crate::_objc_method!(
                                     $env,
                                     $this,
                                     $_cmd,
+                                    $cm_name,
                                     $cm_type,
                                     { $cm_block }
-                                    $(, $cm_type1, $cm_arg1)?
-                                    $(, $cm_typen, $cm_argn)*
+                                    $(, $cm_type1, $cm_arg1 $(, $cm_typen, $cm_argn)*)?
                                     $(, ...$cm_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
@@ -306,16 +338,16 @@ macro_rules! objc_classes {
                                 $crate::objc::selector!(
                                     $(($im_type1);)?
                                     $im_name
-                                    $(, $im_namen)*
+                                    $($(, $($im_namen)?)*)?
                                 ),
                                 $crate::_objc_method!(
                                     $env,
                                     $this,
                                     $_cmd,
+                                    $im_name,
                                     $im_type,
                                     { $im_block }
-                                    $(, $im_type1, $im_arg1)?
-                                    $(, $im_typen, $im_argn)*
+                                    $(, $im_type1, $im_arg1 $(, $im_typen, $im_argn)*)?
                                     $(, ...$im_va_arg: $crate::abi::DotDotDot)?
                                 )
                             )
@@ -357,9 +389,12 @@ impl ClassHostObject {
                     (objc.selectors[name], IMP::Host(host_imp))
                 }),
             ),
+            guest_method_signatures: HashMap::default(),
             // maybe this should be 0 for NSObject? does it matter?
-            _instance_start: size,
+            instance_start: size,
             instance_size: size,
+            ivars: HashMap::default(),
+            is_initialized: InitializationStatus::NotInitialized,
         }
     }
 
@@ -372,6 +407,7 @@ impl ClassHostObject {
             instance_size,
             name,
             base_methods,
+            ivars,
             ..
         } = mem.read(data);
 
@@ -382,12 +418,19 @@ impl ClassHostObject {
             is_metaclass,
             superclass,
             methods: HashMap::new(),
-            _instance_start: instance_start,
+            guest_method_signatures: HashMap::new(),
+            instance_start,
             instance_size,
+            ivars: HashMap::new(),
+            is_initialized: InitializationStatus::NotInitialized,
         };
 
         if !base_methods.is_null() {
             host_object.add_methods_from_bin(base_methods, mem, objc);
+        }
+
+        if !ivars.is_null() {
+            host_object.add_ivars_from_bin(ivars, mem);
         }
 
         host_object
@@ -413,11 +456,19 @@ fn substitute_classes(
     let name = mem.cstr_at_utf8(name).unwrap();
 
     // Currently the only thing we try to substitute: classes that seem to be
-    // from various third-party advertising SDKs. Naturally it
-    // makes a lot of use of UIKit in ways we don't support yet, so it's easier
-    // to skip this. This isn't "ad blocking" because ads no longer work on real
-    // devices anyway :)
-    if !(name.starts_with("AdMob") || name.starts_with("AltAds") || name.starts_with("Mobclix")) {
+    // from various third-party advertising or social network SDKs.
+    // Naturally it makes a lot of use of UIKit and networking in ways we
+    // don't support yet. This isn't "ad blocking" because ads no longer work
+    // on real devices anyway :)
+    if !(name.starts_with("AdMob")
+        || name.starts_with("AdWhirl")
+        || name.starts_with("AltAds")
+        || name.starts_with("FB") // Facebook
+        || name.starts_with("Flurry")
+        || name.starts_with("Mobclix")
+        || name.starts_with("OpenFeint")
+        || name.starts_with("Tapjoy"))
+    {
         return None;
     }
 
@@ -448,6 +499,11 @@ fn substitute_classes(
 }
 
 impl ObjC {
+    /// Iterator over all known classes and their names.
+    pub fn all_classes(&self) -> impl Iterator<Item = (&String, &Class)> {
+        self.classes.iter()
+    }
+
     fn get_class(&self, name: &str, is_metaclass: bool, mem: &Mem) -> Option<Class> {
         let class = self.classes.get(name).copied()?;
         Some(if is_metaclass {
@@ -458,7 +514,8 @@ impl ObjC {
     }
 
     fn find_template(name: &str) -> Option<&'static ClassTemplate> {
-        crate::dyld::search_lists(CLASS_LISTS, name).map(|&(_name, ref template)| template)
+        crate::dyld::search_host_dylibs(|dylib| dylib.class_exports, name)
+            .map(|&(_name, ref template)| template)
     }
 
     /// For use by [crate::dyld]: get the class or metaclass referenced by an
@@ -528,7 +585,7 @@ impl ObjC {
             ));
         } else {
             if !use_placeholder {
-                panic!("Missing implementation for class {}!", name);
+                panic!("Missing implementation for class {name}!");
             }
 
             // We don't have a real implementation for this class, use a
@@ -614,6 +671,207 @@ impl ObjC {
 
             self.classes.insert(name.to_string(), class);
         }
+
+        let mut queue = VecDeque::<Class>::new();
+        let mut found_ns_object = false;
+        // Second pass to build an inverted inheritance graph
+        let mut inverted_inheritance = HashMap::<Class, Vec<Class>>::new();
+        for (name, class) in self.classes.iter() {
+            log_dbg!("class name {}", name);
+            if name == "NSObject" {
+                assert!(!found_ns_object);
+                found_ns_object = true;
+            }
+            let class_host_object = self
+                .get_host_object(*class)
+                .unwrap()
+                .as_any()
+                .downcast_ref();
+            let Some(ClassHostObject { superclass, .. }) = class_host_object else {
+                // Skip FakeClass or UnimplementedClass
+                continue;
+            };
+
+            if *superclass != nil {
+                inverted_inheritance
+                    .entry(*superclass)
+                    .and_modify(|v| v.push(*class))
+                    .or_insert(vec![*class]);
+            } else {
+                assert!(!queue.contains(class));
+                queue.push_back(*class);
+            }
+        }
+        // At least NSObject should be found as a root object
+        assert!(found_ns_object);
+
+        // Third pass to ensure no superclass has "grown into" any of its
+        // subclasses.
+        // (https://alwaysprocessing.blog/2023/03/12/objc-ivar-abi)
+
+        // BFS starting from root(s) for ivar reconciliation
+        //
+        // It is required to be traversed in this order,
+        // as one overgrown class potentially implies
+        // reconciliation for _all of subclasses_
+        while !queue.is_empty() {
+            let next = queue.pop_front().unwrap();
+            let (need, mut diff) = self.need_ivar_reconciliation(next);
+            if need {
+                let ClassHostObject {
+                    name, superclass, ..
+                } = self.borrow(next);
+                log_dbg!(
+                    "Class {} need ivar reconciliation with superclass {}!",
+                    name,
+                    &self.borrow::<ClassHostObject>(*superclass).name
+                );
+
+                let ClassHostObject {
+                    ref mut instance_start,
+                    ref mut instance_size,
+                    ref mut ivars,
+                    ..
+                } = self.borrow_mut(next);
+
+                if !ivars.is_empty() {
+                    let mut max_alignment: u32 = 1;
+                    for (offset, align) in ivars.values() {
+                        if offset.is_null() {
+                            // anonymous bitfield
+                            continue;
+                        }
+                        max_alignment = max_alignment.max(*align);
+                    }
+
+                    let align_mask = max_alignment - 1;
+                    diff = (diff + align_mask) & !align_mask;
+
+                    for (offset, _) in ivars.values_mut() {
+                        if offset.is_null() {
+                            // anonymous bitfield
+                            continue;
+                        }
+
+                        *offset = Ptr::from_bits((*offset).to_bits() + diff);
+                    }
+                }
+
+                *instance_start += diff;
+                *instance_size += diff;
+            }
+            if let Some(subclasses) = inverted_inheritance.get(&next) {
+                queue.extend(subclasses);
+            }
+        }
+    }
+
+    fn need_ivar_reconciliation(&mut self, class: Class) -> (bool, u32) {
+        let class_host_object = self.get_host_object(class).unwrap().as_any().downcast_ref();
+        let Some(ClassHostObject {
+            name,
+            superclass,
+            instance_start,
+            instance_size,
+            ..
+        }) = class_host_object
+        else {
+            // The class might be a FakeClass or UnimplementedClass
+            // In those cases we move on as they don't have ivars
+            return (false, 0);
+        };
+        log_dbg!(
+            "Checking need_ivar_reconciliation for {}, start {}, size {}",
+            name,
+            instance_start,
+            instance_size
+        );
+
+        if *superclass == nil {
+            return (false, 0);
+        }
+
+        let superclass_host_object = self
+            .get_host_object(*superclass)
+            .unwrap()
+            .as_any()
+            .downcast_ref();
+        let Some(ClassHostObject {
+            instance_size: superclass_instance_size,
+            ..
+        }) = superclass_host_object
+        else {
+            // Superclass could also be a FakeClass or UnimplementedClass
+            return (false, 0);
+        };
+
+        let need = instance_start < superclass_instance_size;
+        let diff = if need {
+            superclass_instance_size - instance_start
+        } else {
+            0
+        };
+        (need, diff)
+    }
+
+    /// Dumps all classes available to the emulator in JSON to stdout.
+    ///
+    /// The JSON has the following form:
+    /// ```json
+    /// {
+    ///     "object": "classes",
+    ///     "classes": [
+    ///         {
+    ///             "name": ((name of class)),
+    ///             "super": ((name of superclass, if available)),
+    ///             "class_type": (("normal" | "unimplemented" | "fake"))
+    ///         },
+    ///         ...
+    ///     ]
+    /// }
+    /// ```
+    pub fn dump_classes(&self, file: &mut std::fs::File) -> Result<(), std::io::Error> {
+        use std::io::Write;
+        writeln!(file, "{{\n    \"object\": \"classes\",\n    \"classes\": [")?;
+        for (i, (_, o)) in self.classes.iter().enumerate() {
+            // Why doesn't json allow trailing commas...
+            let comma = if i == self.classes.len() - 1 { "" } else { "," };
+
+            let host_obj = self.get_host_object(*o).unwrap();
+
+            if let Some(ClassHostObject {
+                name,
+                superclass: sup,
+                ..
+            }) = host_obj.as_any().downcast_ref()
+            {
+                if *sup == nil {
+                    writeln!(
+                        file,
+                        "        {{ \"name\": \"{name}\", \"class_type\": \"normal\" }}{comma}"
+                    )?;
+                } else {
+                    writeln!(
+                        file,
+                        "        {{ \"name\": \"{}\", \"super\": \"{}\", \"class_type\": \"normal\" }}{}",
+                        name, self.get_class_name(*sup), comma
+                    )?;
+                }
+            } else if let Some(UnimplementedClass { name, .. }) = host_obj.as_any().downcast_ref() {
+                writeln!(
+                    file,
+                    "        {{ \"name\": \"{name}\", \"class_type\": \"unimplemented\" }}{comma}"
+                )?;
+            } else if let Some(FakeClass { name, .. }) = host_obj.as_any().downcast_ref() {
+                writeln!(
+                    file,
+                    "        {{ \"name\": \"{name}\", \"class_type\": \"fake\" }}{comma}"
+                )?;
+            } else {
+                panic!("Unrecognized class type!");
+            }
+        }
+        writeln!(file, "    ]\n}}")
     }
 
     /// For use by [crate::dyld]: register all the categories from the
@@ -655,8 +913,11 @@ impl ObjC {
                         is_metaclass: Default::default(),
                         superclass: nil,
                         methods: Default::default(),
-                        _instance_start: Default::default(),
+                        guest_method_signatures: Default::default(),
+                        instance_start: Default::default(),
                         instance_size: Default::default(),
+                        ivars: Default::default(),
+                        is_initialized: InitializationStatus::NotInitialized,
                     },
                 );
                 log_dbg!(
@@ -703,15 +964,155 @@ impl ObjC {
     }
 
     pub fn get_class_name(&self, class: Class) -> &str {
-        let host_object = self.get_host_object(class).unwrap();
+        self.try_get_class_name(class)
+            .expect("Could not get class name!")
+    }
+
+    pub fn get_superclass(&self, class: Class) -> Class {
+        let &ClassHostObject { superclass, .. } = self.borrow(class);
+        superclass
+    }
+
+    pub fn try_get_class_name(&self, class: Class) -> Option<&str> {
+        let host_object = self.get_host_object(class)?;
         if let Some(ClassHostObject { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else if let Some(UnimplementedClass { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else if let Some(FakeClass { name, .. }) = host_object.as_any().downcast_ref() {
-            name
+            Some(name)
         } else {
-            panic!();
+            None
         }
+    }
+
+    pub fn is_unimplemented_class(&self, class: Class) -> bool {
+        if class == nil {
+            return false;
+        }
+        let host_object = self.get_host_object(class).unwrap();
+        matches!(
+            host_object.as_any().downcast_ref(),
+            Some(UnimplementedClass { .. })
+        )
+    }
+
+    pub fn is_fake_class(&self, class: Class) -> bool {
+        if class == nil {
+            return false;
+        }
+        let host_object = self.get_host_object(class).unwrap();
+        matches!(host_object.as_any().downcast_ref(), Some(FakeClass { .. }))
+    }
+}
+
+pub(super) fn objc_getClass(env: &mut Environment, name: ConstPtr<u8>) -> id {
+    let name_str = env.mem.cstr_at_utf8(name).unwrap();
+    env.objc
+        .get_class(name_str, false, &env.mem)
+        .unwrap_or_else(|| panic!("objc_getClass() for unimplemented class {name_str}"))
+}
+
+pub(super) fn class_getSuperclass(env: &mut Environment, cls: Class) -> Class {
+    if cls == nil {
+        nil
+    } else {
+        env.objc.borrow::<ClassHostObject>(cls).superclass
+    }
+}
+
+pub(super) fn class_getInstanceSize(env: &mut Environment, cls: Class) -> GuestUSize {
+    if cls == nil {
+        0
+    } else {
+        env.objc.borrow::<ClassHostObject>(cls).instance_size
+    }
+}
+
+pub(super) fn class_getProperty(
+    env: &mut Environment,
+    cls: Class,
+    name: ConstPtr<u8>,
+) -> objc_property_t {
+    if cls == nil {
+        return Ptr::null();
+    }
+    let c_name = env.mem.cstr_at_utf8(name).unwrap();
+    let class_name_string = env.objc.get_class_name(cls).to_owned();
+    if class_name_string == "UIScreen" && c_name == "scale" {
+        // Even if [UIScreen scale] is implemented, we're not yet having a
+        // proper support for `objc_property_t`, so we prefer to return a NULL
+        // here (e.g. property is not declared).
+        // Some games (such as Mirror's Edge) check for those to conditionally
+        // apply some parameters depending on the iOS version without actually
+        // using the property.
+        // We also prefer to not define this as a game-specific hack, because
+        // some other EA games may rely on the same logic.
+        // TODO: support `objc_property_t` properly
+        log!("TODO: class_getProperty(UIScreen, scale) -> NULL");
+        return Ptr::null();
+    }
+    todo!()
+}
+
+pub(super) fn class_replaceMethod(
+    env: &mut Environment,
+    cls: Class,
+    name: SEL,
+    imp: IMP,
+    types: ConstPtr<u8>,
+) -> IMP {
+    // TODO: avoid unnecessary copy of types
+    let types_copy = strdup(env, types).cast_const();
+    let &mut ClassHostObject {
+        ref mut methods,
+        ref mut guest_method_signatures,
+        ..
+    } = env.objc.borrow_mut(cls);
+    if let Entry::Vacant(e) = methods.entry(name) {
+        // TODO: use `class_addMethod` once implemented
+        log_dbg!(
+            "class_replaceMethod: adding new implementation {:?} for method {}",
+            imp,
+            name.as_str(&env.mem)
+        );
+        e.insert(imp);
+        guest_method_signatures.insert(name, types_copy);
+        return IMP::guest_null();
+    }
+    env.mem.free(types_copy.cast().cast_mut());
+    // TODO: use `method_setImplementation` once implemented
+    // Note: encoding types are ignored
+    let existing = methods.insert(name, imp.clone()).unwrap();
+    assert!(matches!(existing, IMP::Guest(_))); // TODO
+    log_dbg!(
+        "class_replaceMethod: existing {:?} replaced with {:?} for method {}",
+        existing,
+        imp,
+        name.as_str(&env.mem)
+    );
+    existing
+}
+
+pub(super) fn class_getMethodImplementation(env: &mut Environment, cls: Class, name: SEL) -> IMP {
+    if cls == nil {
+        return IMP::guest_null();
+    }
+    let mut class = cls;
+    loop {
+        let &ClassHostObject {
+            superclass: next,
+            ref methods,
+            ..
+        } = env.objc.borrow(class);
+        if methods.contains_key(&name) {
+            let method = methods.get(&name).unwrap().clone();
+            assert!(matches!(method, IMP::Guest(_))); // TODO
+            return method;
+        } else if next == nil {
+            // TODO: currently this returns NULL for unimplemented host methods
+            return IMP::guest_null();
+        }
+        class = next;
     }
 }

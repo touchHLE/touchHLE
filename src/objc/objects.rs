@@ -22,6 +22,7 @@
 
 use super::{Class, ClassHostObject};
 use crate::mem::{guest_size_of, GuestUSize, Mem, MutPtr, Ptr, SafeRead};
+use crate::Environment;
 use std::any::Any;
 use std::num::NonZeroU32;
 
@@ -130,6 +131,7 @@ pub use crate::impl_HostObject_with_superclass; // #[macro_export] is weird...
 pub trait AnyHostObject: HostObject {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static);
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static);
+    fn type_name(&self) -> &'static str;
 }
 impl<T: HostObject> AnyHostObject for T {
     fn as_any<'a>(&'a self) -> &'a (dyn Any + 'static) {
@@ -137,6 +139,9 @@ impl<T: HostObject> AnyHostObject for T {
     }
     fn as_any_mut<'a>(&'a mut self) -> &'a mut (dyn Any + 'static) {
         self
+    }
+    fn type_name(&self) -> &'static str {
+        std::any::type_name::<T>()
     }
 }
 
@@ -159,9 +164,6 @@ impl super::ObjC {
         refcount: Option<NonZeroU32>,
     ) -> id {
         let guest_object = objc_object { isa };
-        // FIXME: Apparently some classes have an instance size of 0?
-        //        Figure out what that actually means and remove this hack.
-        let instance_size = instance_size.max(guest_size_of::<objc_object>());
         assert!(instance_size >= guest_size_of::<objc_object>());
 
         let ptr: MutPtr<objc_object> = mem.alloc(instance_size).cast();
@@ -233,7 +235,7 @@ impl super::ObjC {
     }
 
     /// Get a reference to a host object, if the object exists.
-    pub(super) fn get_host_object(&self, object: id) -> Option<&dyn AnyHostObject> {
+    pub fn get_host_object(&self, object: id) -> Option<&dyn AnyHostObject> {
         self.objects.get(&object).map(|entry| &*entry.host_object)
     }
 
@@ -248,7 +250,11 @@ impl super::ObjC {
             } else if let Some(next) = host_object.as_superclass() {
                 host_object = next;
             } else {
-                panic!();
+                panic!(
+                    "Could not find host object with type {:?}, found {:?} for {object:?}",
+                    std::any::type_name::<T>(),
+                    host_object.type_name(),
+                );
             }
         }
     }
@@ -270,9 +276,28 @@ impl super::ObjC {
             } else if let Some(next) = host_object.as_superclass_mut() {
                 host_object = next;
             } else {
-                panic!();
+                let host_object: &Aho = &*self.objects.get(&object).unwrap().host_object;
+                panic!(
+                    "Could not find host object with type {:?}, found {:?} for {object:?}",
+                    std::any::type_name::<T>(),
+                    host_object.type_name(),
+                );
             }
         }
+    }
+
+    /// Getting a refcount of an object.
+    /// While Apple's docs advise to not relay on the returned value,
+    /// some games (like "Cut the Rope") does call `retainCount`.
+    pub fn get_refcount(&mut self, object: id) -> NonZeroU32 {
+        let Some(entry) = self.objects.get_mut(&object) else {
+            panic!("No entry found for object {object:?}, it may have already been deallocated");
+        };
+        let Some(refcount) = entry.refcount.as_mut() else {
+            // Might mean a missing `retain` override.
+            panic!("Attempt to get refcount on static-lifetime object {object:?}!");
+        };
+        *refcount
     }
 
     /// Increase the refcount of a reference-counted object. Do not call this
@@ -280,17 +305,11 @@ impl super::ObjC {
     /// may be overridden.
     pub fn increment_refcount(&mut self, object: id) {
         let Some(entry) = self.objects.get_mut(&object) else {
-            panic!(
-                "No entry found for object {:?}, it may have already been deallocated",
-                object
-            );
+            panic!("No entry found for object {object:?}, it may have already been deallocated");
         };
         let Some(refcount) = entry.refcount.as_mut() else {
             // Might mean a missing `retain` override.
-            panic!(
-                "Attempt to increment refcount on static-lifetime object {:?}!",
-                object
-            );
+            panic!("Attempt to increment refcount on static-lifetime object {object:?}!");
         };
         *refcount = refcount.checked_add(1).unwrap();
     }
@@ -304,17 +323,11 @@ impl super::ObjC {
     #[must_use]
     pub fn decrement_refcount(&mut self, object: id) -> bool {
         let Some(entry) = self.objects.get_mut(&object) else {
-            panic!(
-                "No entry found for object {:?}, it may have already been deallocated",
-                object
-            );
+            panic!("No entry found for object {object:?}, it may have already been deallocated");
         };
         let Some(refcount) = entry.refcount.as_mut() else {
             // Might mean a missing `release` override.
-            panic!(
-                "Attempt to decrement refcount on static-lifetime object {:?}!",
-                object
-            );
+            panic!("Attempt to decrement refcount on static-lifetime object {object:?}!");
         };
         if refcount.get() == 1 {
             entry.refcount = None;
@@ -347,5 +360,13 @@ impl super::ObjC {
         std::mem::drop(host_object);
 
         mem.free(object.cast());
+    }
+}
+
+pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
+    if obj == nil {
+        nil
+    } else {
+        super::ObjC::read_isa(obj, &env.mem)
     }
 }

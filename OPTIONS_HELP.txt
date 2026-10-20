@@ -8,11 +8,13 @@ View options:
         in use, the result may be a bit blurry. An internal resolution larger
         than your screen's is possible, in which case the output is downscaled.
 
+    --upside-down
     --landscape-left
     --landscape-right
         Changes the orientation the virtual device will have at startup.
         The default is portrait.
 
+        --upside-down means rotate 180° from portrait.
         --landscape-left means rotate 90° counterclockwise from portrait.
         --landscape-right means rotate 90° clockwise from portrait.
 
@@ -30,6 +32,17 @@ View options:
 
         This is a natural number that is at least 1.
 
+Device options:
+    --device-family=...
+        Specifies which device family should be emulated: iPhone or iPad.
+        This only work if running app does support selected family
+        (or the option will be ignored).
+
+        If omitted, suitable device family would be deduced from application
+        bundle itself, falling back to iPhone if needed.
+
+        Accepted values are "iphone" and "ipad" respectively.
+
 Game controller options:
     --deadzone=...
         Configures the size of the \"dead zone\" for analog stick inputs.
@@ -40,13 +53,29 @@ Game controller options:
 
         This is a floating-point (decimal) number between 0 and 1.
 
+    --disable-analog-stick-tilt-controls
+        Disables mapping of analog stick input to simulated rotation of the
+        device.
+
+        By default, if touchHLE detects a game controller, its analog sticks
+        will be used for simulated accelerometer tilt controls. When this
+        happens, the real accelerometer (e.g. on an Android phone), if present,
+        is ignored. By setting this option, the real accelerometer can be used
+        even if a game controller is detected. This may be useful on a device
+        that integrates both an accelerometer and a game controller, or if you
+        do not want to disconnect your game controller.
+
+        Note that touchHLE does not currently support accelerometers contained
+        within game controllers.
+
     --x-tilt-range=...
     --y-tilt-range=...
         Set the simulated rotation range of the device axis mapped to the analog
-        stick X or Y axis.
+        stick X or Y axis, or to the mouse cursor's X or Y position within the
+        window (when the right mouse button is held).
 
-        Positive X on the analog stick is mapped to tilting the device rightward
-        and positive Y is mapped to tilting the device forward.
+        Positive X and Y are mapped to tilting the device rightward and forward
+        respectively.
 
         By default, an analog stick's axis is mapped to a rotation range of 60°
         (30° in either direction). If you wanted a range of 90° on the X axis,
@@ -61,10 +90,11 @@ Game controller options:
     --x-tilt-offset=...
     --y-tilt-offset=...
         Offset the simulated angle of the device axis mapped to the analog stick
-        X or Y axis.
+        X or Y axis, or to the mouse cursor's X or Y position within the window
+        (when the right mouse button is held).
 
-        Positive X on the analog stick is mapped to tilting the device rightward
-        and positive Y is mapped to tilting the device forward.
+        Positive X and Y are mapped to tilting the device rightward and forward
+        respectively.
 
         By default, the device is simulated as being level with the ground when
         the stick is in the center/neutral position. This option is intended for
@@ -77,7 +107,7 @@ Game controller options:
         symbol. It may be negative.
 
     --button-to-touch=...
-        Maps a button on your game controller to a point on the simulated touch
+        Maps a button on a game controller to a point on the simulated touch
         screen of the device. Pressing the button will behave like touching that
         part of the screen.
 
@@ -90,6 +120,46 @@ Game controller options:
 
         For example, --button-to-touch=A,470,310 will make the A button simulate
         tapping in the bottom-right corner of the screen, for a landscape game.
+
+        Except where specified in touchHLE_default_options.txt, this is not used
+        by default. There is however a virtual cursor that is controlled by the
+        right analog stick (tap/hold by pressing the stick or right shoulder
+        button).
+
+    --dpad-to-touch=...
+        Maps a D-pad on a game controller to simulated finger movement within a
+        region of the simulated touch screen of the device. This is useful for
+        games where diagonals are used.
+
+        This is four parts separated by commas: x,y,w,h. The co-ordinates
+        are floating-point (decimal) numbers. 0,0 is the top-left corner. The
+        bottom-right corner is 320,480 if the app is in portrait, and 480,320
+        if the app is in landscape.
+
+        For example, --dpad-to-touch=10,10,50,50 will simulate an 8-directional
+        D-pad within a 50x50 pixel region starting at (10,10) on the screen.
+
+        Note that this option takes precedence over any D-pad buttons defined
+        with --button-to-touch.
+
+        Except where specified in touchHLE_default_options.txt, this is not used
+        by default. There is however a virtual cursor that is controlled by the
+        right analog stick (tap/hold by pressing the stick or right shoulder
+        button).
+
+    --stick-to-touch=...
+        Maps the left analog stick to simulated finger movement within a region
+        of the simulated touch screen of the device. This is useful for games
+        which use analog movement controls.
+
+        This is four parts separated by commas: x,y,w,h. The co-ordinates
+        are floating-point (decimal) numbers. 0,0 is the top-left corner. The
+        bottom-right corner is 320,480 if the app is in portrait, and 480,320
+        if the app is in landscape.
+
+        For example, --stick-to-touch=10,10,100,100 will map the left analog
+        stick to control a touch within a 100x100 pixel region starting at
+        (10,10) on the screen.
 
         Except where specified in touchHLE_default_options.txt, this is not used
         by default. There is however a virtual cursor that is controlled by the
@@ -145,6 +215,19 @@ Debugging options:
         host name or an IP address. IPv6 addresses should be enclosed in square
         brackets, e.g. --gdb=[::1]:9001 for IPv6 loopback device port 9001.
 
+    --no-error-popup
+        Disables the graphical error message box (outputs to terminal/log file
+        only).
+
+    --dump=...
+        Dumps some information about app/emulator to dump file. Check
+        src/options.rs:parse_dump_options for the currently available options.
+
+    --dump-file=...
+        Pick the file for information to be dumped to, relative to the user
+        data directory. Defaults to {user directory}/DUMP.txt. Note that this
+        file will get truncated (deleted) if it already exists!
+
 Other options:
     --preferred-languages=...
         Specifies a list of preferred languages to be reported to the app.
@@ -163,6 +246,12 @@ Other options:
     --headless
         Run in headless mode. touchHLE will not create a window, so there will
         be no graphical output and no input. Only useful for command-line apps.
+        Implies --no-error-popup.
+
+    --args
+        All arguments following this option will be passed to the app (via C's
+        argc/argv) rather than processed by touchHLE. This option can't be used
+        via touchHLE_options.txt or touchHLE_default_options.txt.
 
     --print-fps
         Logs the current framerate (FPS) to the console once per second.
@@ -180,3 +269,30 @@ Other options:
         Note that many apps have an internal timer that determines how often
         they present frames; increasing the limit will not increase their
         framerate, but may make it less consistent.
+
+    --force-composition
+        Forces presentation of renderbuffer as if no fullscreen EAGL layer is
+        present, i.e. renderbuffer will go through the compositor.
+
+        Enabling this option may solve some rendering issues, but implies
+        a performance hit which is undesirable in most of the cases.
+
+    --allow-network-access
+        Allow apps running in touchHLE to access the Internet and the local network.
+
+    --ignore-gl-errors
+        Ignore host OpenGL errors as queried by glGetError function.
+        This only affects return value of glGetError as seen by the guest
+        and nothing else. Should be enabled only for apps which really
+        need this behaviour.
+
+    --zero-stack-after-guest-to-host-call=<bytes>
+        After a guest-to-host call returns, zero out the given number of
+        bytes immediately below the current stack pointer (i.e. the unused
+        scratch region of the guest's full-descending stack).
+        This option exists because a guest-to-host call leaves that region
+        untouched, whereas a real call on iOS could leave it in a "dirty"
+        state. This can make a difference for apps that store data on the
+        stack and branch based on the stack's content. There is normally
+        no reason to enable this option. The number of bytes must be
+        chosen carefully on a per-app basis.

@@ -22,6 +22,8 @@ $ cd touchHLE
 
 touchHLE uses Gerrit for code review. [The touchHLE repo on GerritHub](https://review.gerrithub.io/admin/repos/touchHLE/touchHLE) is where you can submit patches.
 
+If you're unfamiliar with Gerrit or GerritHub, please read [Working with Gerrit: An example](https://gerrithub.io/Documentation/intro-gerrit-walkthrough.html) first to get an overview of the expected workflow.
+
 Log into GerritHub with your GitHub account. (If that fails with some server error, try again in a few hours; there are some reliability issues.) If it's your first time using GerritHub, you can then [go to “GitHub” &gt; “Profile” in the Gerrit UI](https://review.gerrithub.io/plugins/github-plugin/static/account.html) to set up your profile and import your SSH keys. It is recommended to provide a “Full name”, which is just a display name and does not have to be your legal name.
 
 You can then add GerritHub as a “remote” (replace `your-github-username-here` with your username):
@@ -36,7 +38,7 @@ Gerrit requires your commit messages to have a `Change-Id:` line in them. Gerrit
 $ (f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname $f) ; curl -Lo $f https://review.gerrithub.io/tools/hooks/commit-msg ; chmod +x $f)
 ```
 
-### Submitting changes
+### Pushing changes
 
 Make a local branch based on `trunk` with your changes. Try to avoid bundling unrelated changes in one commit. If you make a mistake in a commit that hasn't been merged yet, please fix it by modifying the original commit (e.g. using `git commit --amend --reset-author`), rather than by adding a separate commit.
 
@@ -46,11 +48,23 @@ Once you're happy with your changes, you can push them for review on Gerrit with
 $ git push gerrit HEAD:refs/for/trunk
 ```
 
-Then go to GerritHub, make sure you didn't push anything you didn't intend to, and add `hikari_no_yume` as a reviewer.
+Then go to GerritHub, make sure you didn't push anything you didn't intend to, and add `hikari_no_yume` and `ciciplusplus` as reviewers.
 
 If you're submitting a large number of changes with a common theme, e.g. improving compatibility with some app, it is recommended to _also_ create a GitHub pull request. This improves visibility and ensures your changes are tested by the GitHub CI. You can then tag the Gerrit reviews with a “topic” named like `touchHLE/pull/xxx` where xxx is the pull request number. You can bulk-tag things using the checkboxes on the GerritHub homepage.
 
 Please also see the following guidelines for what to do with code changes.
+
+### Submitting changes
+
+In order to submit a patch set (PS) on the GerritHub, following conditions should be met:
+
+- PS should receive a +2 code review
+- Verified +1 should be set (on practice this means that author checked that code compiles, tests passes and lint/clippy doesn't complain)
+- There are no merge conflicts with the trunk
+
+Once met, a `Submit` button should be visible in the GerritHub UI.
+On click, the changes would be accepted to the trunk of the repo and automatically synced to the GitHub as well.
+If you reached that stage - congrats! Your first contribution is accepted ;)
 
 ## Code contributions
 
@@ -58,9 +72,13 @@ The developer documentation can be found in [the `dev-docs` directory](dev-docs/
 
 Please run [`dev-scripts/format.sh`](dev-scripts/format.sh) and [`dev-scripts/lint.sh`](dev-scripts/lint.sh) on your changes before committing.
 
-You should also run `cargo test`. [Building the integration tests requires downloading LLVM](tests/README.md), so it's understandable if you want to skip them (`cargo test -- --skip run_test_app`) and let the GitHub Actions CI catch any issues when you submit your pull request. Alternatively, you can download a pre-built version of the integration tests app (TestApp) from GitHub Actions CI and run it in touchHLE.
+You should also run `cargo test`. [Building the integration tests requires downloading LLVM and a custom toolchain](tests/README.md), so it's understandable if you want to skip them (`cargo test -- --skip test_app`) and let the GitHub Actions CI catch any issues when you submit your pull request. Alternatively, you can download a pre-built version of the integration tests app (TestApp) from GitHub Actions CI and run it in touchHLE.
 
 If you're going to open a pull request with non-trivial changes, please talk to us first so we can figure out if we're likely to accept them. It would be a shame if your effort had to be wasted.
+
+Avoid sending everything as big commit(s) - we prefer to have smaller self-mergeable commits which could be reviewed and submitted independently.
+
+Please also understand that we maintain a certain code quality standards and your contribution would be accepted _only_ if it does meet them. If your don't have time or willingness to be involved in the review process to attain those, please avoid contributing. You could check [past merged patch sets](https://review.gerrithub.io/q/project:touchHLE/touchHLE+status:merged) to get an idea what is expected.
 
 ### Copyright and reverse engineering
 
@@ -70,8 +88,10 @@ If you're going to open a pull request with non-trivial changes, please talk to 
 
 * ⚠️ When implementing an API, rely firstly and primarily on public documentation.
 * ⚠️ Do not under any circumstances look at or rely on _leaked_ code, documentation, tools, etc. Material being available somewhere does not mean it is open-source.
-* ⚠️ Do not disassemble or decompile components of iPhone OS or other Apple platforms. If you can't figure out how else you would find out how an API should behave, please just don't try to implement it.
+* ⚠️ Do not disassemble or decompile components of iOS or other Apple platforms. If you can't figure out how else you would find out how an API should behave, please just don't try to implement it.
 * ⚠️ Looking at header files is occasionally necessary, but it should not be your first resort, and you must only use them as a source of simple facts (e.g. what value does a constant have, what type does a type alias resolve to). Do not copy their layout and organization. Do not copy anything you do not need to. Except where the name is part of the ABI or public API, do not copy names.
 * ⚠️ Bear in mind that open-source code is still covered by copyright, and so the same caution applies to consulting open-source code. Especially try to avoid looking at the implementation files, unless there is no other option, and do not copy algorithms. (Note however that if it's under a compatible license, we may be able to bring the open-source code into the project _under that license, as a dependency_.)
-* ⚠️ If you work or have worked at Apple, or NeXT, or various other organisations, then you may have seen the proprietary source code used in components of iPhone OS. If that's the case, please do not contribute to this project.
+* ⚠️ If you work or have worked at Apple, or NeXT, or various other organisations, then you may have seen the proprietary source code used in components of iOS. If that's the case, please do not contribute to this project.
 * ⚠️ If your employment contract or applicable law in your country means that you don't own the copyright on code you want to contribute to this project, or if for some other reason you may need permission from your employer to contribute to this project: please do obtain that permission before contributing.
+
+Because large language models have most likely "seen" things during their training process that would break these rules, and because they are impossible to audit, ⚠️ **use of AI assistants or AI code generation like ChatGPT, Copilot or similar is also forbidden**.

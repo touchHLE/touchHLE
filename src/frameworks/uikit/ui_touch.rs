@@ -71,18 +71,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (CGPoint)locationInView:(id)that_view { // UIView*
     let &UITouchHostObject { location, window, .. } = env.objc.borrow(this);
+    let location_in_window: CGPoint = msg![env; window convertPoint:location fromWindow:nil];
     if that_view == nil {
-        location // TODO: this should use convertPoint:fromView: too
+        location_in_window
     } else {
-        msg![env; that_view convertPoint:location fromView:window]
+        msg![env; that_view convertPoint:location_in_window fromView:window]
     }
 }
 - (CGPoint)previousLocationInView:(id)that_view { // UIView*
     let &UITouchHostObject { previous_location, window, .. } = env.objc.borrow(this);
+    let location_in_window: CGPoint = msg![env; window convertPoint:previous_location fromWindow:nil];
     if that_view == nil {
-        previous_location // TODO: this should use convertPoint:fromView: too
+        location_in_window
     } else {
-        msg![env; that_view convertPoint:previous_location fromView:window]
+        msg![env; that_view convertPoint:location_in_window fromView:window]
     }
 }
 
@@ -122,20 +124,6 @@ pub fn handle_event(env: &mut Environment, event: Event) {
 }
 
 fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
-    // Assumes the last window in the list is the one on top.
-    // TODO: this is not correct once we support zPosition.
-    let Some(&top_window) = env
-        .framework_state
-        .uikit
-        .ui_view
-        .ui_window
-        .visible_windows
-        .last()
-    else {
-        log!("No visible window, touch events ignored");
-        return;
-    };
-
     // UIKit creates and drains autorelease pools when handling events.
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
@@ -143,7 +131,10 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
     // to be far off from the truth, since it should represent the
     // time when the event actually happened, not the time when the
     // event was dispatched. Maybe we'll need to fix this eventually.
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
 
     let touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
 
@@ -192,7 +183,19 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         retain(env, new_touch);
     }
 
-    let event = ui_event::new_event(env, touches);
+    let all_touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+    for &touch in env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .clone()
+        .values()
+    {
+        let _: () = msg![env; all_touches addObject:touch];
+    }
+
+    let event = ui_event::new_event(env, all_touches);
     autorelease(env, event);
 
     // views with existing touches (see isMultipleTouchEnabled check below)
@@ -214,15 +217,31 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         let touch: id = msg![env; touches_arr objectAtIndex:i];
         let &UITouchHostObject { location, .. } = env.objc.borrow(touch);
 
-        // FIXME: handle non-fullscreen windows in hit testing and
-        //        co-ordinate space translation.
+        // Assumes the windows in the list are ordered back-to-front.
+        // TODO: this may not be correct once we support windowLevel.
+        let windows = env.framework_state.uikit.ui_view.ui_window.windows.clone();
+        let Some((window, location_in_window)) = windows.into_iter().rev().find_map(|window| {
+            let location_in_window: CGPoint =
+                msg![env; window convertPoint:location fromWindow:nil];
+            if msg![env; window pointInside:location_in_window withEvent:event] {
+                Some((window, location_in_window))
+            } else {
+                None
+            }
+        }) else {
+            log!(
+                "Couldn't find a window for touch at {:?}, discarding",
+                location,
+            );
+            continue;
+        };
 
-        let view: id = msg![env; top_window hitTest:location withEvent:event];
+        let view: id = msg![env; window hitTest:location_in_window withEvent:event];
         if view == nil {
             log!(
                 "Couldn't find a view for touch at {:?} in window {:?}, discarding",
-                location,
-                top_window,
+                location_in_window,
+                window,
             );
             continue;
         } else {
@@ -233,8 +252,8 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
                     let f: CGRect = msg![env; view frame];
                     f
                 },
-                location,
-                top_window,
+                location_in_window,
+                window,
             );
         }
 
@@ -275,11 +294,11 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         let _: () = msg![env; touches addObject:touch];
 
         retain(env, view);
-        retain(env, top_window);
+        retain(env, window);
         {
             let new_touch = env.objc.borrow_mut::<UITouchHostObject>(touch);
             new_touch.view = view;
-            new_touch.window = top_window;
+            new_touch.window = window;
         }
     }
 
@@ -299,7 +318,10 @@ fn handle_touches_down(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
 
     let touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
 
@@ -321,8 +343,6 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             continue;
         };
 
-        log_dbg!("Finger {:?} touch move: {:?}", finger_id, coords);
-
         let location = CGPoint {
             x: coords.0,
             y: coords.1,
@@ -330,6 +350,13 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 
         let view = env.objc.borrow::<UITouchHostObject>(touch).view;
         let host_object = env.objc.borrow_mut::<UITouchHostObject>(touch);
+
+        if host_object.location == location {
+            continue;
+        }
+
+        log_dbg!("Finger {:?} touch move: {:?}", finger_id, coords);
+
         host_object.previous_location = host_object.location;
         host_object.location = location;
         host_object.timestamp = timestamp;
@@ -346,7 +373,19 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
         let _: () = msg![env; touches addObject:touch];
     }
 
-    let event = ui_event::new_event(env, touches);
+    let all_touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+    for &touch in env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .clone()
+        .values()
+    {
+        let _: () = msg![env; all_touches addObject:touch];
+    }
+
+    let event = ui_event::new_event(env, all_touches);
     autorelease(env, event);
 
     for (view, touches) in view_touches {
@@ -365,9 +404,26 @@ fn handle_touches_move(env: &mut Environment, map: HashMap<FingerId, Coords>) {
 fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
 
     let touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+
+    // We need to construct all touches set _BEFORE_ removing touches!
+    // (as removed one are reported as the part of the event)
+    let all_touches: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
+    for &touch in env
+        .framework_state
+        .uikit
+        .ui_touch
+        .current_touches
+        .clone()
+        .values()
+    {
+        let _: () = msg![env; all_touches addObject:touch];
+    }
 
     // view to set of touches for this view
     let mut view_touches: HashMap<id, id> = HashMap::new();
@@ -417,10 +473,10 @@ fn handle_touches_up(env: &mut Environment, map: HashMap<FingerId, Coords>) {
             .ui_touch
             .current_touches
             .remove(&finger_id);
-        retain(env, touch); // only owner now should be the NSSet
+        release(env, touch); // only owner now should be the NSSet
     }
 
-    let event = ui_event::new_event(env, touches);
+    let event = ui_event::new_event(env, all_touches);
     autorelease(env, event);
 
     for (view, touches) in view_touches {

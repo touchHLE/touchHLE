@@ -13,11 +13,12 @@ fn link_search(path: &Path) {
     println!("cargo:rustc-link-search=native={}", path.to_str().unwrap());
 }
 fn link_lib(lib: &str) {
-    println!("cargo:rustc-link-lib=static={}", lib);
+    println!("cargo:rustc-link-lib=static={lib}");
 }
 
 fn build_type_windows() -> &'static str {
-    if cfg!(target_os = "windows") {
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
+    if os.eq_ignore_ascii_case("windows") {
         if cfg!(debug_assertions) {
             "Debug"
         } else {
@@ -31,27 +32,35 @@ fn build_type_windows() -> &'static str {
 fn main() {
     let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = package_root.join("../../..");
+    let dynarmic_root = workspace_root.join("vendor/dynarmic");
 
-    let mut build = cmake::Config::new(workspace_root.join("vendor/dynarmic"));
+    let mut build = cmake::Config::new(&dynarmic_root);
     build.define("DYNARMIC_FRONTENDS", "A32"); // We don't need 64-bit
     build.define("DYNARMIC_WARNINGS_AS_ERRORS", "OFF");
     build.define("DYNARMIC_TESTS", "OFF");
     build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
+    build.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+
     // This is Windows- and Android-specific because on macOS or Linux, you can
     // easily get Boost with a package manager.
     let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
-    if os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android") {
-        let boost_path = workspace_root.join("vendor/boost");
-        if !boost_path.is_dir() {
-            panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
-        }
+    let boost_path = workspace_root.join("vendor/boost");
+    if (os.eq_ignore_ascii_case("windows") || os.eq_ignore_ascii_case("android"))
+        && !boost_path.is_dir()
+    {
+        panic!("Could not find Boost. Download it from https://www.boost.org/users/download/ and put it at vendor/boost");
+    }
+    // Allow providing Boost manually regardless of what platform we're on
+    // (or whether the target platform was detected correctly…)
+    if boost_path.is_dir() {
         build.define("Boost_INCLUDE_DIR", boost_path);
     }
     // Prevent CMake from using macOS-only linker commands when cross-compiling
     // for Android.
     // https://stackoverflow.com/questions/69697715/cross-compiling-c-program-for-android-on-mac-failed-using-ndks-clang
     if os.eq_ignore_ascii_case("android") {
-        build.define("CMAKE_SYSTEM_NAME", "Linux");
+        build.define("CMAKE_SYSTEM_NAME", "Android");
+        build.define("CMAKE_SYSTEM_VERSION", "21");
         build.define("ANDROID", "ON");
     }
     // dynarmic can't be dynamically linked
@@ -113,7 +122,8 @@ fn main() {
     }
 
     // rerun-if-changed seems to not work if pointed to a directory :(
-    //rerun_if_changed(&workspace_root.join("vendor/dynarmic"));
+    //rerun_if_changed(&dynarmic_root);
+    rerun_if_changed(&workspace_root.join(".git/modules/dynarmic/HEAD"));
 
     cc::Build::new()
         .file(package_root.join("lib.cpp"))

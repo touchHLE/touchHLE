@@ -46,22 +46,27 @@ fn CFRunLoopTimerCreate(
     callout: CFRunLoopTimerCallBack,
     context_ptr: MutPtr<CFRunLoopTimerContext>,
 ) -> CFRunLoopTimerRef {
-    assert_eq!(allocator, kCFAllocatorDefault); // unimplemented
+    assert!(allocator == kCFAllocatorDefault || env.mem.read(allocator).is_system_default()); // unimplemented
     assert_eq!(flags, 0);
     assert_eq!(order, 0);
 
-    let context = env.mem.read(context_ptr);
-    let version = context.version;
-    assert_eq!(version, 0);
-    let info: MutVoidPtr = context.info;
+    let info: MutVoidPtr = if !context_ptr.is_null() {
+        let context = env.mem.read(context_ptr);
+        let version = context.version;
+        assert_eq!(version, 0);
 
-    // TODO: handle non-NULL callbacks
-    let retain_callback = context.release_callback;
-    assert!(retain_callback.to_ptr().is_null());
-    let release_callback = context.release_callback;
-    assert!(release_callback.to_ptr().is_null());
-    let copy_desc_callback = context.copy_desc_callback;
-    assert!(copy_desc_callback.to_ptr().is_null());
+        // TODO: handle non-NULL callbacks
+        let retain_callback = context.release_callback;
+        assert!(retain_callback.to_ptr().is_null());
+        let release_callback = context.release_callback;
+        assert!(release_callback.to_ptr().is_null());
+        let copy_desc_callback = context.copy_desc_callback;
+        assert!(copy_desc_callback.to_ptr().is_null());
+
+        context.info
+    } else {
+        MutVoidPtr::null()
+    };
 
     let target: id = msg_class![env; _touchHLE_CFTimerTarget alloc];
     let target: id = msg![env; target initWithCallout:callout info:info];
@@ -118,7 +123,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(CFTimerTargetHostObject {
-        callout: GuestFunction::from_addr_with_thumb_bit(0),
+        callout: GuestFunction::null_ptr(),
         info: MutVoidPtr::null()
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)

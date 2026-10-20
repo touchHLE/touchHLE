@@ -28,6 +28,51 @@ pub enum IMP {
     Host(&'static dyn HostIMP),
     Guest(GuestIMP),
 }
+impl Clone for IMP {
+    fn clone(&self) -> Self {
+        match self {
+            IMP::Guest(guest_imp) => IMP::Guest(*guest_imp),
+            IMP::Host(_) => unimplemented!(),
+        }
+    }
+}
+impl std::fmt::Debug for IMP {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            IMP::Guest(guest_imp) => write!(f, "guest method IMP at {:?}", guest_imp),
+            IMP::Host(_) => unimplemented!(),
+        }
+    }
+}
+impl IMP {
+    pub fn guest_null() -> IMP {
+        IMP::Guest(GuestIMP::from_addr_with_thumb_bit(0))
+    }
+}
+
+impl GuestArg for IMP {
+    const REG_COUNT: usize = <GuestFunction as GuestArg>::REG_COUNT;
+    fn from_regs(regs: &[u32]) -> Self {
+        IMP::Guest(<GuestFunction as GuestArg>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        match self {
+            IMP::Guest(guest_imp) => guest_imp.to_regs(regs),
+            IMP::Host(_) => unimplemented!(),
+        }
+    }
+}
+impl GuestRet for IMP {
+    fn from_regs(regs: &[u32]) -> Self {
+        IMP::Guest(<GuestFunction as GuestArg>::from_regs(regs))
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        match self {
+            IMP::Guest(guest_imp) => guest_imp.to_regs(regs),
+            IMP::Host(_) => unimplemented!(),
+        }
+    }
+}
 
 /// Type for any host function implementing a method (see also [IMP]).
 pub trait HostIMP: CallFromGuest {
@@ -126,17 +171,14 @@ impl ClassHostObject {
             let method_ptr: ConstPtr<method_t> =
                 Ptr::from_bits(methods_base_ptr.to_bits() + i * entsize);
 
-            // TODO: support type strings
-            let method_t {
-                name,
-                types: _,
-                imp,
-            } = mem.read(method_ptr);
+            let method_t { name, types, imp } = mem.read(method_ptr);
 
             // There is no guarantee this string is unique or known.
             // We must deduplicate it like any other.
             let sel = objc.register_bin_selector(name, mem);
             self.methods.insert(sel, IMP::Guest(imp));
+            // TODO: avoid storing duplicated signatures globally
+            self.guest_method_signatures.insert(sel, types);
         }
     }
 }
@@ -162,9 +204,34 @@ impl ObjC {
         }
     }
 
+    /// Variant of `class_has_method` which doesn't account for inheritance.
+    pub fn class_has_uninherited_method(&self, class: Class, sel: SEL) -> bool {
+        let ClassHostObject { methods, .. } = self.borrow(class);
+        methods.contains_key(&sel)
+    }
+
+    pub fn class_get_method_signature(&self, class: Class, sel: SEL) -> Option<&ConstPtr<u8>> {
+        // TODO: support `host` method signatures
+        let mut class = class;
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ref guest_method_signatures,
+                ..
+            } = self.borrow(class);
+            if methods.contains_key(&sel) {
+                return guest_method_signatures.get(&sel);
+            } else if superclass == nil {
+                return None;
+            } else {
+                class = superclass;
+            }
+        }
+    }
+
     /// Same as [Self::class_has_method], but using a named selector (rather
     /// than a pointer).
-    #[allow(dead_code)]
     pub fn class_has_method_named(&self, class: Class, sel_name: &str) -> bool {
         if let Some(sel) = self.lookup_selector(sel_name) {
             self.class_has_method(class, sel)
@@ -176,6 +243,21 @@ impl ObjC {
     /// Checks if a given object has a method (responds to a selector).
     pub fn object_has_method(&self, mem: &Mem, obj: id, sel: SEL) -> bool {
         self.class_has_method(ObjC::read_isa(obj, mem), sel)
+    }
+
+    /// Variant of `object_has_method` which doesn't account for inheritance.
+    pub fn object_has_uninherited_method(&self, mem: &Mem, obj: id, sel: SEL) -> bool {
+        self.class_has_uninherited_method(ObjC::read_isa(obj, mem), sel)
+    }
+
+    #[allow(dead_code)]
+    pub fn object_get_method_signature(
+        &self,
+        mem: &Mem,
+        obj: id,
+        sel: SEL,
+    ) -> Option<&ConstPtr<u8>> {
+        self.class_get_method_signature(ObjC::read_isa(obj, mem), sel)
     }
 
     /// Same as [Self::object_has_method], but using a named selector (rather
@@ -218,5 +300,28 @@ impl ObjC {
                 class = superclass;
             }
         }
+    }
+
+    pub fn debug_all_class_selectors_as_strings(&self, mem: &Mem, class: Class) -> Vec<String> {
+        let mut class = class;
+        let mut selector_strings = Vec::new();
+        loop {
+            let &ClassHostObject {
+                superclass,
+                ref methods,
+                ..
+            } = self.borrow(class);
+            let mut class_selector_strings = methods
+                .keys()
+                .map(|sel| sel.as_str(mem).to_string())
+                .collect();
+            selector_strings.append(&mut class_selector_strings);
+            if superclass == nil {
+                break;
+            } else {
+                class = superclass;
+            }
+        }
+        selector_strings
     }
 }

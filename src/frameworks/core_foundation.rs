@@ -21,21 +21,69 @@ pub mod cf_array;
 pub mod cf_bundle;
 pub mod cf_data;
 pub mod cf_dictionary;
+pub mod cf_locale;
+pub mod cf_number;
+pub mod cf_preferences;
 pub mod cf_run_loop;
 pub mod cf_run_loop_timer;
+pub mod cf_socket;
 pub mod cf_string;
 pub mod cf_type;
 pub mod cf_url;
+pub mod cf_uuid;
 pub mod time;
+
+pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+    path: "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation",
+    aliases: &[],
+    class_exports: &[
+        cf_run_loop_timer::CLASSES, // Special internal classes.
+        cf_uuid::CLASSES,
+    ],
+    constant_exports: &[
+        CONSTANTS,
+        cf_allocator::CONSTANTS,
+        cf_bundle::CONSTANTS,
+        cf_dictionary::CONSTANTS,
+        cf_locale::CONSTANTS,
+        cf_number::CONSTANTS,
+        cf_preferences::CONSTANTS,
+        cf_run_loop::CONSTANTS,
+    ],
+    function_exports: &[
+        FUNCTIONS,
+        cf_array::FUNCTIONS,
+        cf_dictionary::FUNCTIONS,
+        cf_bundle::FUNCTIONS,
+        cf_socket::FUNCTIONS,
+        cf_data::FUNCTIONS,
+        cf_locale::FUNCTIONS,
+        cf_number::FUNCTIONS,
+        cf_preferences::FUNCTIONS,
+        cf_run_loop::FUNCTIONS,
+        cf_run_loop_timer::FUNCTIONS,
+        cf_string::FUNCTIONS,
+        cf_type::FUNCTIONS,
+        cf_url::FUNCTIONS,
+        cf_uuid::FUNCTIONS,
+        time::FUNCTIONS,
+    ],
+};
 
 pub use cf_type::{CFRelease, CFRetain, CFTypeRef};
 
+pub type CFHashCode = u32;
 pub type CFIndex = i32;
 pub type CFOptionFlags = u32;
+pub type CFComparisonResult = CFIndex;
 
 use crate::abi::GuestArg;
-use crate::impl_GuestRet_for_large_struct;
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
+use crate::environment::Environment;
+use crate::frameworks::foundation::ns_string::to_rust_string;
 use crate::mem::SafeRead;
+use crate::objc::id;
+use crate::{export_c_func, impl_GuestRet_for_large_struct, msg};
 
 pub const kCFNotFound: CFIndex = -1;
 
@@ -62,3 +110,26 @@ impl GuestArg for CFRange {
         self.length.to_regs(&mut regs[1..2]);
     }
 }
+
+fn CFShow(env: &mut Environment, obj: CFTypeRef) {
+    // TODO: support opaque types
+    // TODO: use description callbacks if defined
+    let description: id = msg![env; obj description];
+    // The output should be printed to stderr without any prefix,
+    // but CFShow() is meant to be used for debugging purposes,
+    // so just logging with CF module prefix should be fine too.
+    log!("{}", to_rust_string(env, description));
+}
+
+const CONSTANTS: ConstantExports = &[(
+    "_kCFCoreFoundationVersionNumber",
+    HostConstant::Custom(|env| {
+        let version_number_ptr = env.mem.alloc_and_write(478.26f64); // iPhoneOS 2.1
+        env.mem
+            .alloc_and_write(version_number_ptr)
+            .cast()
+            .cast_const()
+    }),
+)];
+
+const FUNCTIONS: FunctionExports = &[export_c_func!(CFShow(_))];

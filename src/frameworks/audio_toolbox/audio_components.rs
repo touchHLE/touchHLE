@@ -6,15 +6,19 @@
 //! `AudioComponent.h` (Audio Component Services)
 
 use std::collections::HashMap;
+use std::time::Instant;
 
 use crate::abi::GuestFunction;
+use crate::audio::openal::al_types::ALuint;
 use crate::dyld::FunctionExports;
 use crate::environment::Environment;
 use crate::export_c_func;
 use crate::frameworks::carbon_core::{paramErr, OSStatus};
-use crate::frameworks::core_audio_types::fourcc;
+use crate::frameworks::core_audio_types::{
+    fourcc, kAudioFormatFlagIsAlignedHigh, kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked,
+    kAudioFormatFlagIsSignedInteger, kAudioFormatLinearPCM, AudioStreamBasicDescription,
+};
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, SafeRead};
-use crate::objc::nil;
 
 const kAudioUnitType_Output: u32 = fourcc(b"auou");
 const kAudioUnitSubType_RemoteIO: u32 = fourcc(b"rioc");
@@ -22,6 +26,7 @@ const kAudioUnitManufacturer_Apple: u32 = fourcc(b"appl");
 
 #[derive(Default)]
 pub struct State {
+    pub audio_component: AudioComponent,
     pub audio_component_instances:
         HashMap<AudioComponentInstance, AudioComponentInstanceHostObject>,
 }
@@ -31,11 +36,53 @@ impl State {
     }
 }
 
-#[derive(Default, Clone)]
-pub struct AudioComponentInstanceHostObject {}
-
 #[derive(Clone)]
+pub struct AudioComponentInstanceHostObject {
+    pub started: bool,
+    pub maximum_frames_per_slice: u32,
+    pub global_stream_format: AudioStreamBasicDescription,
+    pub input_stream_format: Option<AudioStreamBasicDescription>,
+    pub output_stream_format: Option<AudioStreamBasicDescription>,
+    pub render_callback: Option<AURenderCallbackStruct>,
+    pub last_render_time: Option<Instant>,
+    pub al_source: Option<ALuint>,
+    pub is_running_handler: bool,
+}
+impl Default for AudioComponentInstanceHostObject {
+    fn default() -> Self {
+        // Default values obtained from an iPod Touch 4 running iOS 6.1.6
+        // through a test app built targetting iOS 2.0
+        AudioComponentInstanceHostObject {
+            started: false,
+            // returning 1024 based on https://developer.apple.com/documentation/audiotoolbox/kaudiounitproperty_maximumframesperslice
+            maximum_frames_per_slice: 1024,
+            global_stream_format: AudioStreamBasicDescription {
+                sample_rate: 44100.0,
+                format_id: kAudioFormatLinearPCM,
+                format_flags: kAudioFormatFlagIsFloat
+                    | kAudioFormatFlagIsSignedInteger
+                    | kAudioFormatFlagIsPacked
+                    | kAudioFormatFlagIsAlignedHigh,
+                bytes_per_packet: 4,
+                frames_per_packet: 1,
+                bytes_per_frame: 4,
+                channels_per_frame: 2,
+                bits_per_channel: 32,
+                _reserved: 0,
+            },
+            input_stream_format: None,
+            output_stream_format: None,
+            render_callback: None,
+            last_render_time: None,
+            al_source: None,
+            is_running_handler: false,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
+#[allow(dead_code)]
 pub struct AURenderCallbackStruct {
     pub input_proc: AURenderCallback,
     pub input_proc_ref_con: ConstVoidPtr,
@@ -43,7 +90,9 @@ pub struct AURenderCallbackStruct {
 unsafe impl SafeRead for AURenderCallbackStruct {}
 
 #[repr(C, packed)]
-struct OpaqueAudioComponent {}
+pub struct OpaqueAudioComponent {
+    _pad: u8,
+}
 unsafe impl SafeRead for OpaqueAudioComponent {}
 
 type AudioComponent = MutPtr<OpaqueAudioComponent>;
@@ -73,12 +122,20 @@ fn AudioComponentFindNext(
     in_component: AudioComponent,
     in_desc: ConstPtr<AudioComponentDescription>,
 ) -> AudioComponent {
+    assert!(in_component.is_null());
+
     let audio_comp_descr = env.mem.read(in_desc);
     assert!(audio_comp_descr.component_type == kAudioUnitType_Output);
     assert!(audio_comp_descr.component_sub_type == kAudioUnitSubType_RemoteIO);
     assert!(audio_comp_descr.component_manufacturer == kAudioUnitManufacturer_Apple);
 
-    let out_component = nil.cast();
+    let state = State::get(&mut env.framework_state);
+    if state.audio_component.is_null() {
+        state.audio_component = env.mem.alloc_and_write(OpaqueAudioComponent { _pad: 0 });
+    }
+
+    let out_component: AudioComponent = state.audio_component;
+
     log!(
         "TODO: AudioComponentFindNext({:?}, {:?}) -> {:?}",
         in_component,

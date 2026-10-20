@@ -14,8 +14,10 @@ use crate::Environment;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C, packed)]
-/// 3-by-3 matrix type where the columns are `[a, c, tx]`, `[b, d, ty]`,
-/// `[0, 0, 1]`.
+/// Apple documents this as representing a 3-by-3 matrix type where the columns
+/// are `[a, c, tx]`, `[b, d, ty]`,`[0, 0, 1]`, and which can then be used to
+/// transform points with (p × M) where p is a row vector representing the
+/// point and M is the matrix.
 pub struct CGAffineTransform {
     pub a: CGFloat,
     pub b: CGFloat,
@@ -50,29 +52,48 @@ impl GuestArg for CGAffineTransform {
 impl_GuestRet_for_large_struct!(CGAffineTransform);
 
 // These conversions allow sharing code with the touchHLE Matrix type.
+// Note that they transpose the matrix relative to what Apple documents (see
+// the doc comment on the struct above), because our Matrix type is built on
+// OpenGL-style (M × v) column-vector multiplication for transformations, vs.
+// CGAffineTransform's (v × M) row-vector multiplication.
 impl TryFrom<Matrix<3>> for CGAffineTransform {
     type Error = ();
 
     fn try_from(value: Matrix<3>) -> Result<CGAffineTransform, ()> {
         let columns = value.columns();
-        if columns[2] == [0.0, 0.0, 1.0] {
-            Ok(CGAffineTransform {
-                a: columns[0][0],
-                b: columns[1][0],
-                c: columns[0][1],
-                d: columns[1][1],
-                tx: columns[0][2],
-                ty: columns[1][2],
-            })
+        if columns[0][2] == 0.0 && columns[1][2] == 0.0 && columns[2][2] == 1.0 {
+            Ok(affine_transform_from_matrix_unchecked(value))
         } else {
             Err(())
         }
     }
 }
+fn affine_transform_from_matrix_unchecked(matrix: Matrix<3>) -> CGAffineTransform {
+    let columns = matrix.columns();
+    CGAffineTransform {
+        a: columns[0][0],
+        b: columns[0][1],
+        c: columns[1][0],
+        d: columns[1][1],
+        tx: columns[2][0],
+        ty: columns[2][1],
+    }
+}
 impl From<CGAffineTransform> for Matrix<3> {
     fn from(value: CGAffineTransform) -> Matrix<3> {
         let CGAffineTransform { a, b, c, d, tx, ty } = value;
-        Matrix::<3>::from_columns([[a, c, tx], [b, d, ty], [0.0, 0.0, 1.0]])
+        Matrix::<3>::from_columns([[a, b, 0.0], [c, d, 0.0], [tx, ty, 1.0]])
+    }
+}
+impl From<CGAffineTransform> for Matrix<4> {
+    fn from(value: CGAffineTransform) -> Matrix<4> {
+        let CGAffineTransform { a, b, c, d, tx, ty } = value;
+        Matrix::<4>::from_columns([
+            [a, b, 0.0, 0.0],
+            [c, d, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [tx, ty, 0.0, 1.0],
+        ])
     }
 }
 
@@ -85,8 +106,9 @@ pub const CGAffineTransformIdentity: CGAffineTransform = CGAffineTransform {
 
 pub const CONSTANTS: ConstantExports = &[(
     "_CGAffineTransformIdentity",
-    HostConstant::Custom(|mem| {
-        mem.alloc_and_write(CGAffineTransformIdentity)
+    HostConstant::Custom(|env| {
+        env.mem
+            .alloc_and_write(CGAffineTransformIdentity)
             .cast()
             .cast_const()
     }),
@@ -114,7 +136,7 @@ impl CGAffineTransform {
         Matrix::<3>::translate_2d(x, y).try_into().unwrap()
     }
     pub fn concat(self, other: Self) -> Self {
-        Matrix::<3>::multiply(&other.into(), &self.into())
+        Matrix::<3>::multiply(&self.into(), &other.into())
             .try_into()
             .unwrap()
     }
@@ -128,8 +150,14 @@ impl CGAffineTransform {
         Self::make_translation(x, y).concat(self)
     }
     pub fn invert(self) -> Self {
-        if let Some(inverse) = Matrix::<3>::from(&self.into()).inverse() {
-            inverse.try_into().unwrap()
+        let self_3x3: Matrix<3> = self.into();
+        if let Some(inverse) = Matrix::<3>::from(&self_3x3).inverse() {
+            // Matrix inversion sometimes produces values in the last column
+            // that are slightly off due to accumulated floating-point error.
+            // The TryFrom check causes crashes in that case, and it is a waste
+            // of energy to begin with as the result of inverting an affine
+            // transformation matrix will also be affine.
+            affine_transform_from_matrix_unchecked(inverse)
         } else {
             self
         }

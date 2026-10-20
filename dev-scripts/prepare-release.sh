@@ -33,7 +33,7 @@ if [[ "$PHASE" = "--prepare-files" ]]; then
     cp ../OPTIONS_HELP.txt new_release/
     cp ../touchHLE_default_options.txt new_release/
     cp ../touchHLE_options.txt new_release/
-elif [[ "$PHASE" = "--create-zip-desktop" ]] || [[ "$PHASE" = "--create-zip-android" ]]; then
+elif [[ "$PHASE" = "--create-zip-windows" || "$PHASE" = "--create-zip-macos" || "$PHASE" = "--create-zip-android" ]]; then
     shift
 
     PATH_TO_BINARY="$1"
@@ -54,6 +54,7 @@ elif [[ "$PHASE" = "--create-zip-desktop" ]] || [[ "$PHASE" = "--create-zip-andr
         echo "Error! Output path must be provided"
     fi
     shift
+    OUTPUT_PATH=$(readlink -f $(dirname "$OUTPUT_PATH"))/$(basename "$OUTPUT_PATH")
     rm -f "$OUTPUT_PATH"
 
     if [[ $# != 0 ]]; then
@@ -69,7 +70,7 @@ elif [[ "$PHASE" = "--create-zip-desktop" ]] || [[ "$PHASE" = "--create-zip-andr
     zip -j "$OUTPUT_PATH" "$PATH_TO_BINARY"
 
     cd new_release/
-    if [[ "$PHASE" = "--create-zip-desktop" ]]; then
+    if [[ "$PHASE" = "--create-zip-windows" ]]; then
         zip -r "$OUTPUT_PATH" *
     else
         zip "$OUTPUT_PATH" CHANGELOG.html COPYING.txt README.html
@@ -83,8 +84,8 @@ else
     echo
     echo "Usage, phase 2:"
     echo
-    echo "  ./prepare-release.sh --create-zip-desktop path/to/touchHLE-macOS -o touchHLE_vX.Y.Z_macOS_x86_x64.zip"
-    echo "  ./prepare-release.sh --create-zip-desktop path/to/touchHLE.exe -o touchHLE_vX.Y.Z_Windows_x86_64.zip"
+    echo "  ./prepare-release.sh --create-zip-macos path/to/touchHLE.dmg -o touchHLE_vX.Y.Z_macOS_x86_x64.zip"
+    echo "  ./prepare-release.sh --create-zip-windows path/to/touchHLE.exe -o touchHLE_vX.Y.Z_Windows_x86_64.zip"
     echo "  ./prepare-release.sh --create-zip-android path/to/touchHLE.apk -o touchHLE_vX.Y.Z_Android_AArch64.zip"
     exit 1
 fi

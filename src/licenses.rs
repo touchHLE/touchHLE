@@ -3,10 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-/// Prints copyright, authorship and license information.
+//! Prints copyright, authorship and license information.
 
 const MAIN_COPYRIGHT: &str = "
-touchHLE © 2023–2024 touchHLE project contributors.
+touchHLE © 2023–2026 touchHLE project contributors.
 ";
 
 const MAIN_LICENSE: &str = "
@@ -127,14 +127,6 @@ const PVRTD_LICENSE: &str = include_str!(concat!(
     "/vendor/PVRTDecompress/LICENSE.md"
 ));
 
-const DR_MP3: &str = "
-touchHLE, and therefore this executable, incorporates the library dr_mp3,
-which is available either under The Unlicense (which is a public domain
-dedication) or under the terms of the MIT license. dr_mp3 is in turn derived
-from the library minimp3, which is licensed under the Creative Commons CC0 1.0
-Universal Public Domain Dedication.
-";
-
 // When resource files are bundled with touchHLE in such a way that the user can
 // read their license files directly, use this caveat.
 
@@ -151,9 +143,26 @@ information.
 
 // Apple is mentioned because the GPLv2 allows repeating the original source
 // code offer when non-commercially redistributing binaries.
-const INTERNAL_DYLIBS_DESCRIPTION: &str = "
+const INTERNAL_FSF_DYLIBS_DESCRIPTION: &str = "
 This distribution of touchHLE includes binaries for the libgcc and libstdc++
 libraries from the Free Software Foundation, as originally distributed by Apple:
+";
+
+const INTERNAL_ZLIB_DYLIB_DESCRIPTION: &str = "
+This distribution of touchHLE includes binaries for zlib (libz), available under
+the following license:
+";
+
+// We have a COPYING file for SQLite, but as the main source and resulting
+// binary are simply Public Domain, we can save some space here.
+const INTERNAL_SQLITE3_DYLIB_DESCRIPTION: &str = "
+This distribution of touchHLE includes binaries for SQLite (libsqlite3),
+available under Public Domain.
+";
+
+const INTERNAL_XML2_DYLIB_DESCRIPTION: &str = "
+This distribution of touchHLE includes binaries for libxml2, available under
+the following license:
 ";
 
 const INTERNAL_LIBERATION_FONTS_DESCRIPTION: &str = "
@@ -185,41 +194,39 @@ fn divider(out: &mut String) -> Result<(), std::fmt::Error> {
 fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std::fmt::Error> {
     use std::fmt::Write;
     if resources_are_external_files {
-        writeln!(out, "{}", EXTERNAL_FILES_CAVEAT)?;
+        writeln!(out, "{EXTERNAL_FILES_CAVEAT}")?;
         divider(out)?;
     }
-    writeln!(out, "{}", MAIN_COPYRIGHT)?;
+    writeln!(out, "{MAIN_COPYRIGHT}")?;
     divider(out)?;
-    writeln!(out, "{}", MAIN_LICENSE)?;
+    writeln!(out, "{MAIN_LICENSE}")?;
     divider(out)?;
     #[cfg(target_os = "android")]
     {
-        writeln!(out, "{}", SKYLINE)?;
+        writeln!(out, "{SKYLINE}")?;
         divider(out)?;
     }
-    writeln!(out, "{}", RUST_DESCRIPTION)?;
-    writeln!(out, "{}", RUST_DEPENDENCIES)?;
+    writeln!(out, "{RUST_DESCRIPTION}")?;
+    writeln!(out, "{RUST_DEPENDENCIES}")?;
     divider(out)?;
-    writeln!(out, "{}", DYNARMIC_DESCRIPTION)?;
-    writeln!(out, "{}", DYNARMIC_LICENSE)?;
+    writeln!(out, "{DYNARMIC_DESCRIPTION}")?;
+    writeln!(out, "{DYNARMIC_LICENSE}")?;
     divider(out)?;
-    writeln!(out, "{}", DYNARMIC_BOOST_DESCRIPTION)?;
-    writeln!(out, "{}", DYNARMIC_BOOST_LICENSE)?;
+    writeln!(out, "{DYNARMIC_BOOST_DESCRIPTION}")?;
+    writeln!(out, "{DYNARMIC_BOOST_LICENSE}")?;
     divider(out)?;
-    writeln!(out, "{}", SDL2_DESCRIPTION)?;
-    writeln!(out, "{}", SDL2_LICENSE)?;
+    writeln!(out, "{SDL2_DESCRIPTION}")?;
+    writeln!(out, "{SDL2_LICENSE}")?;
     divider(out)?;
-    writeln!(out, "{}", OPENAL_SOFT)?;
+    writeln!(out, "{OPENAL_SOFT}")?;
     divider(out)?;
-    writeln!(out, "{}", STB_IMAGE)?;
+    writeln!(out, "{STB_IMAGE}")?;
     divider(out)?;
-    writeln!(out, "{}", PVRTD_DESCRIPTION)?;
+    writeln!(out, "{PVRTD_DESCRIPTION}")?;
     writeln!(out, "{}", PVRTD_LICENSE.trim_end())?;
-    divider(out)?;
-    writeln!(out, "{}", DR_MP3)?;
     if !resources_are_external_files {
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_DYLIBS_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_FSF_DYLIBS_DESCRIPTION}")?;
         writeln!(
             out,
             "{}.",
@@ -237,14 +244,30 @@ fn print(out: &mut String, resources_are_external_files: bool) -> Result<(), std
                 .trim_start()
         )?;
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_LIBERATION_FONTS_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_ZLIB_DYLIB_DESCRIPTION}")?;
+        writeln!(
+            out,
+            "{}",
+            read_bundled_file(&format!("{}/COPYING.libz", crate::paths::DYLIBS_DIR))
+        )?;
+        divider(out)?;
+        writeln!(out, "{INTERNAL_SQLITE3_DYLIB_DESCRIPTION}")?;
+        divider(out)?;
+        writeln!(out, "{INTERNAL_XML2_DYLIB_DESCRIPTION}")?;
+        writeln!(
+            out,
+            "{}",
+            read_bundled_file(&format!("{}/COPYING.libxml2", crate::paths::DYLIBS_DIR))
+        )?;
+        divider(out)?;
+        writeln!(out, "{INTERNAL_LIBERATION_FONTS_DESCRIPTION}")?;
         writeln!(
             out,
             "{}",
             read_bundled_file(&format!("{}/LICENSE.liberation", crate::paths::FONTS_DIR))
         )?;
         divider(out)?;
-        writeln!(out, "{}", INTERNAL_NOTO_FONTS_DESCRIPTION)?;
+        writeln!(out, "{INTERNAL_NOTO_FONTS_DESCRIPTION}")?;
         writeln!(
             out,
             "{}",

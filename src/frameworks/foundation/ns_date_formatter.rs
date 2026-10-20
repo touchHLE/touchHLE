@@ -11,7 +11,9 @@
 
 use crate::frameworks::core_foundation::time::CFAbsoluteTimeGetGregorianDate;
 use crate::frameworks::foundation::{ns_string, NSTimeInterval};
-use crate::objc::{id, msg, nil, objc_classes, ClassExports, HostObject, NSZonePtr};
+use crate::objc::{
+    autorelease, id, msg, nil, objc_classes, todo_objc_setter, ClassExports, HostObject, NSZonePtr,
+};
 
 struct NSDateFormatterHostObject {
     date_format: Option<id>,
@@ -36,6 +38,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<NSDateFormatterHostObject>(this).date_format = Some(date_format);
 }
 
+- (())setTimeZone:(id)time_zone {
+    todo_objc_setter!(this, time_zone);
+}
+
 - (id)stringFromDate:(id)date {
     let &NSDateFormatterHostObject {
         date_format
@@ -52,13 +58,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     let minute = greg_date.minutes;
     let second = greg_date.seconds;
 
-    format = format.replace("yyyy", format!("{:04}", year).as_str());
-    format = format.replace("YYYY", format!("{:04}", year).as_str());
-    format = format.replace("MM", format!("{:02}", month).as_str());
-    format = format.replace("dd", format!("{}", day).as_str());
-    format = format.replace("HH", format!("{}", hour).as_str());
-    format = format.replace("mm", format!("{:02}", minute).as_str());
-    format = format.replace("ss", format!("{:02}", second).as_str());
+    format = format.replace("yyyy", format!("{year:04}").as_str());
+    format = format.replace("YYYY", format!("{year:04}").as_str());
+    format = format.replace("MM", format!("{month:02}").as_str());
+    format = format.replace("dd", format!("{day:02}").as_str());
+    format = format.replace("HH", format!("{hour:02}").as_str());
+    format = format.replace("mm", format!("{minute:02}").as_str());
+    format = format.replace("ss", format!("{second:02}").as_str());
 
     for c in format.chars() {
         if let pattern @ ('A'..='Z' | 'a'..='z') = c {
@@ -67,7 +73,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     log_dbg!("date_format after: {:?}", format);
 
-    ns_string::from_rust_string(env, format)
+    let res = ns_string::from_rust_string(env, format);
+    autorelease(env, res)
 }
 
 @end

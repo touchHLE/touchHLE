@@ -5,9 +5,31 @@
  */
 //! The Media Player framework.
 
-pub mod media_query;
-pub mod movie_player;
-pub mod music_player;
+mod media_entity;
+mod media_item_collection;
+mod media_library;
+mod media_picker_controller;
+mod media_playlist;
+mod media_query;
+mod movie_player;
+mod music_player;
+
+pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+    path: "/System/Library/Frameworks/MediaPlayer.framework/MediaPlayer",
+    aliases: &[],
+    class_exports: &[
+        movie_player::CLASSES,
+        music_player::CLASSES,
+        media_entity::CLASSES,
+        media_item_collection::CLASSES,
+        media_library::CLASSES,
+        media_picker_controller::CLASSES,
+        media_playlist::CLASSES,
+        media_query::CLASSES,
+    ],
+    constant_exports: &[movie_player::CONSTANTS, music_player::CONSTANTS],
+    function_exports: &[],
+};
 
 #[derive(Default)]
 pub struct State {

@@ -21,13 +21,13 @@ pub fn fixed_to_float(fixed: GLfixed) -> GLfloat {
 pub unsafe fn matrix_fixed_to_float(m: *const GLfixed) -> [GLfloat; 16] {
     let mut matrix = [0f32; 16];
     for (i, cell) in matrix.iter_mut().enumerate() {
-        *cell = fixed_to_float(*m.add(i));
+        *cell = fixed_to_float(m.add(i).read_unaligned());
     }
     matrix
 }
 
 /// Type of a parameter, used in [ParamTable].
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum ParamType {
     /// `GLboolean`
     Boolean,
@@ -58,7 +58,7 @@ impl ParamTable {
     pub fn get_type_info(&self, pname: GLenum) -> (ParamType, u8) {
         match self.0.iter().find(|&&(pname2, _, _)| pname == pname2) {
             Some(&(_, type_, count)) => (type_, count),
-            None => panic!("Unhandled parameter name: {:#x}", pname),
+            None => panic!("Unhandled parameter name: {pname:#x}"),
         }
     }
 
@@ -67,14 +67,17 @@ impl ParamTable {
         self.get_type_info(pname);
     }
 
+    pub fn contains(&self, pname: GLenum) -> bool {
+        self.0.iter().any(|(pname2, _, _)| pname == *pname2)
+    }
+
     /// Assert that a parameter name is recognized and that the parameter has a
     /// particular component count.
     pub fn assert_component_count(&self, pname: GLenum, provided_count: u8) {
         let (_type, actual_count) = self.get_type_info(pname);
         if actual_count != provided_count {
             panic!(
-                "Parameter {:#x} has component count {}, {} given.",
-                pname, actual_count, provided_count
+                "Parameter {pname:#x} has component count {actual_count}, {provided_count} given."
             );
         }
     }

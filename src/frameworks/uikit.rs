@@ -23,12 +23,65 @@ pub mod ui_geometry;
 pub mod ui_graphics;
 pub mod ui_image;
 pub mod ui_image_picker_controller;
+pub mod ui_local_notification;
 pub mod ui_nib;
+pub mod ui_pasteboard;
 pub mod ui_responder;
 pub mod ui_screen;
 pub mod ui_touch;
 pub mod ui_view;
 pub mod ui_view_controller;
+
+pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+    path: "/System/Library/Frameworks/UIKit.framework/UIKit",
+    aliases: &[],
+    class_exports: &[
+        ui_accelerometer::CLASSES,
+        ui_activity_indicator_view::CLASSES,
+        ui_application::CLASSES,
+        ui_color::CLASSES,
+        ui_device::CLASSES,
+        ui_event::CLASSES,
+        ui_font::CLASSES,
+        ui_image::CLASSES,
+        ui_image_picker_controller::CLASSES,
+        ui_local_notification::CLASSES,
+        ui_nib::CLASSES,
+        ui_pasteboard::CLASSES,
+        ui_responder::CLASSES,
+        ui_screen::CLASSES,
+        ui_touch::CLASSES,
+        ui_view::CLASSES,
+        ui_view::ui_alert_view::CLASSES,
+        ui_view::ui_control::CLASSES,
+        ui_view::ui_control::ui_button::CLASSES,
+        ui_view::ui_control::ui_segmented_control::CLASSES,
+        ui_view::ui_control::ui_slider::CLASSES,
+        ui_view::ui_control::ui_text_field::CLASSES,
+        ui_view::ui_control::ui_switch::CLASSES,
+        ui_view::ui_image_view::CLASSES,
+        ui_view::ui_label::CLASSES,
+        ui_view::ui_page_control::CLASSES,
+        ui_view::ui_picker_view::CLASSES,
+        ui_view::ui_scroll_view::CLASSES,
+        ui_view::ui_scroll_view::ui_text_view::CLASSES,
+        ui_view::ui_web_view::CLASSES,
+        ui_view::ui_window::CLASSES,
+        ui_view_controller::CLASSES,
+        ui_view_controller::ui_navigation_controller::CLASSES,
+    ],
+    constant_exports: &[
+        ui_application::CONSTANTS,
+        ui_device::CONSTANTS,
+        ui_view::ui_control::ui_text_field::CONSTANTS,
+        ui_view::ui_window::CONSTANTS,
+    ],
+    function_exports: &[
+        ui_application::FUNCTIONS,
+        ui_geometry::FUNCTIONS,
+        ui_graphics::FUNCTIONS,
+    ],
+};
 
 #[derive(Default)]
 pub struct State {
@@ -38,6 +91,7 @@ pub struct State {
     ui_device: ui_device::State,
     ui_font: ui_font::State,
     ui_graphics: ui_graphics::State,
+    ui_image: ui_image::State,
     ui_screen: ui_screen::State,
     ui_touch: ui_touch::State,
     pub ui_view: ui_view::State,
@@ -52,12 +106,8 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
     use crate::window::Event;
     use crate::window::TextInputEvent;
 
-    loop {
-        // NSRunLoop will never call this function in headless mode.
-        let Some(event) = env.window.as_mut().unwrap().pop_event() else {
-            break;
-        };
-
+    // NSRunLoop will never call this function in headless mode.
+    while let Some(event) = env.window_mut().pop_event() {
         match event {
             Event::Quit => {
                 echo!("User requested quit, exiting.");
@@ -92,8 +142,7 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
             Event::EnterDebugger => {
                 if env.is_debugging_enabled() {
                     log!("Handling EnterDebugger event: entering debugger.");
-                    let step = env.enter_debugger(/* reason: */ None);
-                    assert!(!step, "Can't step right now!"); // TODO?
+                    env.enter_debugger(/* reason: */ None);
                 } else {
                     log!("Ignoring EnterDebugger event: no debugger connected.");
                 }

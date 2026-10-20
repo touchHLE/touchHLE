@@ -6,11 +6,12 @@
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
 use crate::gles::GLESImplementation;
-use crate::window::DeviceOrientation;
+use crate::window::{DeviceFamily, DeviceOrientation};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::num::NonZeroU32;
+use std::path::PathBuf;
 
 pub const OPTIONS_HELP: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/OPTIONS_HELP.txt"));
@@ -31,16 +32,21 @@ pub enum Button {
 }
 
 /// Struct containing all user-configurable options.
+#[derive(Clone)]
 pub struct Options {
     pub fullscreen: bool,
+    pub device_family: Option<DeviceFamily>,
     pub initial_orientation: DeviceOrientation,
     pub scale_hack: NonZeroU32,
     pub deadzone: f32,
+    pub analog_stick_tilt_controls: bool,
     pub x_tilt_range: f32,
     pub y_tilt_range: f32,
     pub x_tilt_offset: f32,
     pub y_tilt_offset: f32,
     pub button_to_touch: HashMap<Button, (f32, f32)>,
+    pub dpad_to_touch: Option<(f32, f32, f32, f32)>,
+    pub stick_to_touch: Option<(f32, f32, f32, f32)>,
     pub stabilize_virtual_cursor: Option<(f32, f32)>,
     pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
@@ -49,20 +55,31 @@ pub struct Options {
     pub headless: bool,
     pub print_fps: bool,
     pub fps_limit: Option<f64>,
+    pub force_composition: bool,
+    pub network_access: bool,
+    pub popup_errors: bool,
+    pub dumping_options: DumpingOptions,
+    pub dumping_file: PathBuf,
+    pub ignore_gl_errors: bool,
+    pub zero_stack_after_guest_to_host_call: Option<u32>,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Options {
             fullscreen: false,
+            device_family: None,
             initial_orientation: DeviceOrientation::Portrait,
             scale_hack: NonZeroU32::new(1).unwrap(),
+            analog_stick_tilt_controls: true,
             deadzone: 0.1,
             x_tilt_range: 60.0,
             y_tilt_range: 60.0,
             x_tilt_offset: 0.0,
             y_tilt_offset: 0.0,
             button_to_touch: HashMap::new(),
+            dpad_to_touch: None,
+            stick_to_touch: None,
             stabilize_virtual_cursor: None,
             gles1_implementation: None,
             direct_memory_access: true,
@@ -70,7 +87,14 @@ impl Default for Options {
             preferred_languages: None,
             headless: false,
             print_fps: false,
-            fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync
+            fps_limit: Some(60.0), // Original iPhone is 60Hz and uses v-sync,
+            force_composition: false,
+            network_access: false,
+            popup_errors: true,
+            dumping_options: Default::default(),
+            dumping_file: crate::paths::user_data_base_path().join("DUMP.txt"),
+            ignore_gl_errors: false,
+            zero_stack_after_guest_to_host_call: None,
         }
     }
 }
@@ -83,23 +107,31 @@ impl Options {
         fn parse_degrees(arg: &str, name: &str) -> Result<f32, String> {
             let arg: f32 = arg
                 .parse()
-                .map_err(|_| format!("Value for {} is invalid", name))?;
+                .map_err(|_| format!("Value for {name} is invalid"))?;
             if !arg.is_finite() || !(-360.0..=360.0).contains(&arg) {
-                return Err(format!("Value for {} is out of range", name));
+                return Err(format!("Value for {name} is out of range"));
             }
             Ok(arg)
         }
 
         if arg == "--fullscreen" {
             self.fullscreen = true;
+        } else if arg == "--upside-down" {
+            self.initial_orientation = DeviceOrientation::PortraitUpsideDown;
         } else if arg == "--landscape-left" {
             self.initial_orientation = DeviceOrientation::LandscapeLeft;
         } else if arg == "--landscape-right" {
             self.initial_orientation = DeviceOrientation::LandscapeRight;
+        } else if let Some(value) = arg.strip_prefix("--device-family=") {
+            let parsed =
+                DeviceFamily::try_from(value).map_err(|_| "Invalid device family".to_string())?;
+            self.device_family = Some(parsed);
         } else if let Some(value) = arg.strip_prefix("--scale-hack=") {
             self.scale_hack = value
                 .parse()
                 .map_err(|_| "Invalid scale hack factor".to_string())?;
+        } else if arg == "--disable-analog-stick-tilt-controls" {
+            self.analog_stick_tilt_controls = false;
         } else if let Some(value) = arg.strip_prefix("--deadzone=") {
             self.deadzone = parse_degrees(value, "deadzone")?;
         } else if let Some(value) = arg.strip_prefix("--x-tilt-range=") {
@@ -137,6 +169,26 @@ impl Options {
                 .parse()
                 .map_err(|_| "Invalid Y co-ordinate for --button-to-touch=".to_string())?;
             self.button_to_touch.insert(button, (x, y));
+        } else if let Some(values) = arg.strip_prefix("--stick-to-touch=") {
+            let nums: [f32; 4] = values
+                .split(',')
+                .map(|s| s.parse::<f32>())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|_| "invalid --stick-to-touch".to_string())?
+                .try_into()
+                .map_err(|_| "--stick-to-touch= requires four values".to_string())?;
+
+            self.stick_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
+        } else if let Some(values) = arg.strip_prefix("--dpad-to-touch=") {
+            let nums: [f32; 4] = values
+                .split(',')
+                .map(|s| s.parse::<f32>())
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|_| "invalid --dpad-to-touch".to_string())?
+                .try_into()
+                .map_err(|_| "--dpad-to-touch= requires four values".to_string())?;
+
+            self.dpad_to_touch = Some((nums[0], nums[1], nums[2], nums[3]));
         } else if let Some(value) = arg.strip_prefix("--stabilize-virtual-cursor=") {
             let (smoothing_strength, sticky_radius) = value
                 .split_once(',')
@@ -144,14 +196,14 @@ impl Options {
             let smoothing_strength: f32 = smoothing_strength
                 .parse()
                 .ok()
-                .and_then(|s| if s < 0.0 { None } else { Some(s) })
+                .filter(|&s| s >= 0.0)
                 .ok_or_else(|| {
                     "Invalid smoothing strength for --stabilize-virtual-cursor=".to_string()
                 })?;
             let sticky_radius: f32 = sticky_radius
                 .parse()
                 .ok()
-                .and_then(|s| if s < 0.0 { None } else { Some(s) })
+                .filter(|&s| s >= 0.0)
                 .ok_or_else(|| {
                     "Invalid sticky radius for --stabilize-virtual-cursor=".to_string()
                 })?;
@@ -166,13 +218,15 @@ impl Options {
         } else if let Some(address) = arg.strip_prefix("--gdb=") {
             let addrs = address
                 .to_socket_addrs()
-                .map_err(|e| format!("Could not resolve GDB server listen address: {}", e))?
+                .map_err(|e| format!("Could not resolve GDB server listen address: {e}"))?
                 .collect();
             self.gdb_listen_addrs = Some(addrs);
         } else if let Some(value) = arg.strip_prefix("--preferred-languages=") {
             self.preferred_languages = Some(value.split(',').map(ToOwned::to_owned).collect());
         } else if arg == "--headless" {
             self.headless = true;
+            // Can't show the dialog box when headless!
+            self.popup_errors = false;
         } else if arg == "--print-fps" {
             self.print_fps = true;
         } else if let Some(value) = arg.strip_prefix("--fps-limit=") {
@@ -182,10 +236,26 @@ impl Options {
                 let limit: f64 = value
                     .parse()
                     .ok()
-                    .and_then(|v| if v <= 0.0 { None } else { Some(v) })
+                    .filter(|&v| v > 0.0)
                     .ok_or_else(|| "Invalid value for --fps-limit=".to_string())?;
                 self.fps_limit = Some(limit);
             }
+        } else if arg == "--force-composition" {
+            self.force_composition = true;
+        } else if arg == "--allow-network-access" {
+            self.network_access = true;
+        } else if arg == "--no-error-popup" {
+            self.popup_errors = false;
+        } else if let Some(values) = arg.strip_prefix("--dump=") {
+            self.dumping_options = parse_dump_options(values)?;
+        } else if let Some(path) = arg.strip_prefix("--dump-file=") {
+            self.dumping_file = crate::paths::user_data_base_path().join(path);
+        } else if arg == "--ignore-gl-errors" {
+            self.ignore_gl_errors = true;
+        } else if let Some(value) = arg.strip_prefix("--zero-stack-after-guest-to-host-call=") {
+            self.zero_stack_after_guest_to_host_call = Some(value.parse().map_err(|_| {
+                "Invalid value for --zero-stack-after-guest-to-host-call=".to_string()
+            })?);
         } else {
             return Ok(false);
         };
@@ -204,7 +274,7 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
         // Line numbering usually starts from 1
         let line_no = line_no + 1;
 
-        let line = line.map_err(|e| format!("Error while reading line {}: {}", line_no, e))?;
+        let line = line.map_err(|e| format!("Error while reading line {line_no}: {e}"))?;
 
         // # for single-line comments
         let line = if let Some((rest, _)) = line.split_once('#') {
@@ -219,7 +289,7 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
             continue;
         }
 
-        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {} is not a comment and is missing a colon (:) to separate the app ID from the options", line_no))?;
+        let (line_app_id, line_options) = line.split_once(':').ok_or_else(|| format!("Line {line_no} is not a comment and is missing a colon (:) to separate the app ID from the options"))?;
         let line_app_id = line_app_id.trim();
 
         if line_app_id != app_id {
@@ -234,4 +304,33 @@ pub fn get_options_from_file<F: Read>(file: F, app_id: &str) -> Result<Option<St
         }
     }
     Ok(None)
+}
+
+#[derive(Default, Clone)]
+pub struct DumpingOptions {
+    pub linking_info: bool,
+    pub symbols: bool,
+}
+
+impl DumpingOptions {
+    /// Check if any of the dumping options are active.
+    pub fn any(&self) -> bool {
+        self.linking_info || self.symbols
+    }
+}
+
+fn parse_dump_options(options: &str) -> Result<DumpingOptions, String> {
+    let mut dumping_options = DumpingOptions::default();
+    for opt in options.split(",") {
+        if opt == "linking-info" {
+            // Dumps linked symbols, classes and selectors for the given app
+            dumping_options.linking_info = true;
+        } else if opt == "symbols" {
+            // Dumps touchHLE provided symbols and exits
+            dumping_options.symbols = true;
+        } else {
+            return Err(format!("Unrecognized option {opt} for --dump=..."));
+        }
+    }
+    Ok(dumping_options)
 }

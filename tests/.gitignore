@@ -1,2 +1,8 @@
 /llvm
+/TestApp.app/*.o
 /TestApp.app/TestApp
+/TestApp_source/build
+/Payload
+/TestApp.ipa
+/stubs
+/common-3.0.sdk

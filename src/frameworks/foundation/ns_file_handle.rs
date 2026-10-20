@@ -69,6 +69,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (i32)fileDescriptor {
+    env.objc.borrow::<NSFileHandleHostObject>(this).fd
+}
+
 - (i64)offsetInFile {
     let fd = env.objc.borrow::<NSFileHandleHostObject>(this).fd;
     match posix_io::lseek(env, fd, 0, posix_io::SEEK_CUR) {
@@ -104,6 +108,20 @@ pub const CLASSES: ClassExports = objc_classes! {
             msg_class![env; NSData dataWithBytesNoCopy:buffer length:length]
         }
     }
+}
+
+- (id)readDataToEndOfFile {
+    let offset: i64 = msg![env; this offsetInFile];
+    let eof: i64 = msg![env; this seekToEndOfFile];
+    let _: () = msg![env; this seekToFileOffset:offset];
+    let length: NSUInteger = (eof - offset).try_into().unwrap();
+
+    msg![env; this readDataOfLength:length]
+}
+
+- (id)availableData {
+    // TODO: support non-files too
+    msg![env; this readDataToEndOfFile]
 }
 
 - (())writeData:(id)data { // NSData *

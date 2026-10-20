@@ -14,7 +14,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 @implementation MPMediaQuery: NSObject
 
 + (id)playlistsQuery {
-    log!("TODO: [MPMediaQuery playlistsQuery] (not implemented yet)");
+    log_once!("TODO: [MPMediaQuery playlistsQuery] (not implemented yet)");
     nil
 }
 

@@ -27,7 +27,11 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest: MutPtr<T>,
         ch: T,
         count: GuestUSize,
+        dest_count: GuestUSize,
     ) -> MutPtr<T> {
+        if count > dest_count {
+            panic!("buffer overflow!");
+        }
         for i in 0..count {
             env.mem.write(dest + i, ch);
         }
@@ -39,7 +43,11 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest: MutPtr<T>,
         src: ConstPtr<T>,
         size: GuestUSize,
+        dest_size: GuestUSize,
     ) -> MutPtr<T> {
+        if size > dest_size {
+            panic!("buffer overflow!");
+        }
         env.mem
             .memmove(dest.cast(), src.cast(), size * guest_size_of::<T>());
         dest
@@ -50,7 +58,11 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest: MutPtr<T>,
         src: ConstPtr<T>,
         size: GuestUSize,
+        dest_size: GuestUSize,
     ) -> MutPtr<T> {
+        if size > dest_size {
+            panic!("buffer overflow!");
+        }
         env.mem
             .memmove(dest.cast(), src.cast(), size * guest_size_of::<T>());
         dest
@@ -142,6 +154,33 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest
     }
 
+    pub(super) fn strspn(
+        env: &mut Environment,
+        s: ConstPtr<T>,
+        charset: ConstPtr<T>,
+    ) -> GuestUSize {
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(s + i);
+            if c == Self::null() {
+                break;
+            }
+            let mut j = 0;
+            loop {
+                let cc = env.mem.read(charset + j);
+                if c == cc {
+                    break;
+                }
+                if cc == Self::null() {
+                    return i;
+                }
+                j += 1;
+            }
+            i += 1;
+        }
+        i
+    }
+
     pub(super) fn strcspn(
         env: &mut Environment,
         s: ConstPtr<T>,
@@ -174,7 +213,11 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
         dest: MutPtr<T>,
         src: ConstPtr<T>,
         size: GuestUSize,
+        dest_size: GuestUSize,
     ) -> MutPtr<T> {
+        if dest_size < size {
+            panic!("Buffer overflow");
+        }
         let mut end = false;
         for i in 0..size {
             if !end {
@@ -315,6 +358,32 @@ impl<T: Copy + Default + Eq + Ord + SafeRead + Debug> GenericChar<T> {
                 return Ptr::null();
             }
             offset -= 1;
+        }
+    }
+
+    pub(super) fn strpbrk(
+        env: &mut Environment,
+        string: ConstPtr<T>,
+        charset: ConstPtr<T>,
+    ) -> ConstPtr<T> {
+        let mut i = 0;
+        loop {
+            let c = env.mem.read(string + i);
+            if c == Self::null() {
+                return Ptr::null();
+            }
+            let mut j = 0;
+            loop {
+                let cc = env.mem.read(charset + j);
+                if cc == Self::null() {
+                    break;
+                }
+                if c == cc {
+                    return string + i;
+                }
+                j += 1;
+            }
+            i += 1;
         }
     }
 

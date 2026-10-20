@@ -46,15 +46,17 @@ pub const CLASSES: ClassExports = objc_classes! {
 /// and present it directly from the app's context. This function is used to
 /// determine when that will happen.
 pub fn find_fullscreen_eagl_layer(env: &mut Environment) -> id {
-    // Assumes the last window in the list is the one on top.
-    // TODO: this is not correct once we support zPosition.
-    let Some(&top_window) = env
-        .framework_state
-        .uikit
-        .ui_view
-        .ui_window
-        .visible_windows
-        .last()
+    if env.options.force_composition {
+        return nil;
+    }
+
+    let windows = env.framework_state.uikit.ui_view.ui_window.windows.clone();
+    // Assumes the windows in the list are ordered back-to-front.
+    // TODO: this may not be correct once we support windowLevel.
+    let Some(top_window) = windows
+        .into_iter()
+        .rev()
+        .find(|&window| !msg![env; window isHidden])
     else {
         return nil;
     };
@@ -87,6 +89,9 @@ pub fn find_fullscreen_eagl_layer(env: &mut Environment) -> id {
                 })
             || layer_host_obj.hidden
             || layer_host_obj.opacity != 1.0
+            // TODO: support affine transforms that result in a full-screen
+            //       layer (typical example is 90° rotation).
+            || !layer_host_obj.affine_transform.is_identity()
         {
             return nil;
         }

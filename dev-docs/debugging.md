@@ -19,6 +19,13 @@ The `RUST_BACKTRACE=1` environment variable is always helpful. You'll probably w
 
 touchHLE will print the basic registers (r0-r13, SP, LR, PC) and a basic stack trace (using frame pointers) for the current thread when a panic occurs. To make sense of the result, you will probably want to open the app binary in Ghidra or another reverse-engineering tool.
 
+## Dumping classes/selectors/function symbols from binaries
+The `--dump=linking-info` flag dumps information about the classes, selectors, and lazy symbols (functions) that are requested by the binary, and how touchHLE is handling them. This is output to the file specified by `--dump-file=` (which defaults to the {running directory}/DUMP.txt.
+
+The most useful application for this is determining which classes/selectors/functions that (might) be needed by an application are not implemented by touchHLE. This can be checked with `dev-scripts/log_unimplemented.sh [name of app to check]` (make sure `jq` is installed!).
+
+The schemas for the JSON are described in `ObjC::dump_classes` (in `src/objc/classes.rs`), `ObjC::dump_selectors` (in `src/objc/selectors.rs`), and `Dyld::dump_lazy_symbols` (in `src/dyld.rs`).
+
 ### GDB Remote Serial Protocol server
 
 For more complex cases, you can use the `--gdb=` command-line argument to start touchHLE in debugging mode, where it will provide a GDB Remote Serial Protocol server. You can then connect to touchHLE with GDB. (In theory LLDB also should work, but it doesn't.)
@@ -51,6 +58,8 @@ GDB provides various services on top of this, for example:
 * `kill` will make touchHLE crash
 * `step` resumes execution for a single instruction
 * `continue` resumes execution indefinitely
+* `info threads` shows the list of running threads
+* `thread 1` switches to the first thread (GDB threads are 1-indexed)
 
 Beware that iPhone OS apps often contain a mix of Thumb functions and normal Arm functions. GDB usually won't know which kind of function it's dealing with:
 
@@ -61,6 +70,7 @@ GDB seems to [mostly](https://sourceware.org/bugzilla/show_bug.cgi?id=30385) und
 
 touchHLE only communicates with GDB while execution is paused. Beyond being paused when you initially connect, it is also paused when certain CPU errors occur, or after stepping (resuming execution for a single instruction). Breakpoints are a useful way to force execution to pause at convenient locations. Another option is to press the F12 key while you have the touchHLE window in focus, which will make touchHLE pause during the next NSRunLoop iteration. If the app fails to return to the NSRunLoop then this won't be useful.
 
+By default, GDB expects that other threads will also run while stepping/continuing, and touchHLE respects that behaviour. To it set it so that only the "focused" thread will run, use `set scheduler-locking off` or `set scheduler-locking step` (the latter will run all threads while continuing but not while stepping).
 ## Graphics debugging
 
 [apitrace](https://apitrace.github.io/) is invaluable for figuring out OpenGL-related issues.

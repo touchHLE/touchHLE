@@ -20,11 +20,11 @@
 
 use crate::abi::GuestFunction;
 use crate::fs::{Fs, GuestPath};
-use crate::mem::{Mem, Ptr};
+use crate::mem::{GuestUSize, Mem, Ptr};
 use mach_object::{
-    cpu_subtype_t, vm_prot_t, DyLib, LoadCommand, MachCommand, OFile, Symbol, SymbolIter,
-    ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS, S_MOD_INIT_FUNC_POINTERS,
-    S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
+    cpu_subtype_t, vm_prot_t, Bind, BindSymbolType, DyLib, LoadCommand, MachCommand, OFile, Rebase,
+    Symbol, SymbolIter, ThreadState, N_ARM_THUMB_DEF, S_LAZY_SYMBOL_POINTERS,
+    S_MOD_INIT_FUNC_POINTERS, S_NON_LAZY_SYMBOL_POINTERS, S_SYMBOL_STUBS,
 };
 use std::collections::HashMap;
 use std::io::{Cursor, Seek, SeekFrom};
@@ -36,21 +36,25 @@ const VM_PROT_EXECUTE: vm_prot_t = 4;
 
 #[derive(Debug)]
 pub struct MachO {
-    /// Name (for debugging purposes)
+    /// Name (for debugging purposes and sorting)
     pub name: String,
     /// Paths of dynamic libraries referenced by the binary.
     pub dynamic_libraries: Vec<String>,
     /// Metadata related to sections.
     pub sections: Vec<Section>,
-    /// Symbols exported by the binary. This is a hashmap so the dynamic linker
-    /// can look things up quickly. Thumb function symbols always have the Thumb
-    /// bit set.
+    /// Defined symbols in the binary (both external and local). This is a
+    /// hashmap so the dynamic linker can look things up quickly. Thumb function
+    /// symbols always have the Thumb bit set.
     pub exported_symbols: HashMap<String, u32>,
     /// List of addresses and names of external relocations for the dynamic
     /// linker to resolve.
     pub external_relocations: Vec<(u32, String)>,
     /// Address/program counter value for the entry point.
     pub entry_point_pc: Option<u32>,
+    /// End address of the highest-addressed segment.
+    /// This is used by get_end() to return the first address after the last
+    /// segment in the executable.
+    pub last_segment_end: u32,
 }
 
 #[derive(Debug)]
@@ -65,6 +69,13 @@ pub struct Section {
     pub type_: SectionType,
     /// Information specific to special dynamic linker sections, if this is one.
     pub dyld_indirect_symbol_info: Option<DyldIndirectSymbolInfo>,
+}
+
+impl Section {
+    /// Returns address of the next section.
+    pub fn next_section_addr(&self) -> u32 {
+        self.addr + self.size
+    }
 }
 
 /// Various kinds of sections. We're only interested in the ones used by the
@@ -225,7 +236,7 @@ fn cpu_subtype_to_str(ty: cpu_subtype_t) -> &'static str {
         mach_object::CPU_SUBTYPE_ARM_V7S => "armv7s",
         mach_object::CPU_SUBTYPE_ARM_V7K => "armv7k",
         mach_object::CPU_SUBTYPE_ARM_V8 => "armv8",
-        _ => panic!("Unexpected cpu subtype: {:?}", ty),
+        _ => panic!("Unexpected cpu subtype: {ty:?}"),
     }
 }
 
@@ -237,6 +248,7 @@ impl MachO {
         bytes: &[u8],
         into_mem: &mut Mem,
         name: String,
+        slide_to_address: u32,
     ) -> Result<MachO, &'static str> {
         log_dbg!("Reading {:?}", name);
 
@@ -265,7 +277,7 @@ impl MachO {
                     }
                 }
                 return if let Some(subslice) = best_subslice {
-                    MachO::load_from_bytes(subslice, into_mem, name)
+                    MachO::load_from_bytes(subslice, into_mem, name, slide_to_address)
                 } else {
                     Err("No supported architecture in the fat binary")
                 };
@@ -302,6 +314,8 @@ impl MachO {
         let mut text_segment_base: Option<u32> = None;
         let mut all_sections = Vec::new();
         let mut sym_tab_info: Option<(u32, u32, u32, u32)> = None;
+        let mut segment_offsets = Vec::new();
+        let mut last_segment_end: u32 = 0;
 
         // Info used for the result
         let mut dynamic_libraries = Vec::new();
@@ -309,6 +323,8 @@ impl MachO {
         let mut indirect_undef_symbols: Vec<Option<String>> = Vec::new();
         let mut external_relocations: Vec<(u32, String)> = Vec::new();
         let mut entry_point_pc: Option<u32> = None;
+
+        let slide = slide_to_address;
 
         for MachCommand(command, _size) in commands {
             match command {
@@ -327,13 +343,13 @@ impl MachO {
                     let filesize: u32 = filesize.try_into().unwrap();
 
                     if first_segment_base.is_none() {
-                        first_segment_base = Some(vmaddr);
+                        first_segment_base = Some(vmaddr + slide);
                     }
                     if first_read_write_segment_base.is_none()
                         && (initprot & VM_PROT_READ) != 0
                         && (initprot & VM_PROT_WRITE) != 0
                     {
-                        first_read_write_segment_base = Some(vmaddr);
+                        first_read_write_segment_base = Some(vmaddr + slide);
                     }
 
                     let load_me = match &*segname {
@@ -348,7 +364,7 @@ impl MachO {
                         }
                         "__TEXT" => {
                             assert!(text_segment_base.is_none());
-                            text_segment_base = Some(vmaddr);
+                            text_segment_base = Some(vmaddr + slide);
                             true
                         }
                         "__DATA" => true,
@@ -359,7 +375,13 @@ impl MachO {
                     };
 
                     if load_me {
-                        into_mem.reserve(vmaddr, vmsize);
+                        log_dbg!(
+                            "reserve {} addr {:#x} size {}",
+                            segname,
+                            vmaddr + slide,
+                            vmsize
+                        );
+                        into_mem.reserve(vmaddr + slide, vmsize);
 
                         // If filesize is less than vmsize, the rest of the
                         // segment should be filled with zeroes. We are assuming
@@ -368,12 +390,15 @@ impl MachO {
                             assert!(filesize <= vmsize);
 
                             let src = &bytes[fileoff..][..filesize as usize];
-                            let dst = into_mem.bytes_at_mut(Ptr::from_bits(vmaddr), filesize);
+                            let dst =
+                                into_mem.bytes_at_mut(Ptr::from_bits(vmaddr + slide), filesize);
                             dst.copy_from_slice(src);
                         }
                     }
 
                     all_sections.extend_from_slice(&sections);
+                    segment_offsets.push(vmaddr);
+                    last_segment_end = last_segment_end.max(vmaddr + vmsize + slide);
                 }
                 LoadCommand::SymTab {
                     symoff,
@@ -399,7 +424,6 @@ impl MachO {
                             }
                             if let Symbol::Defined {
                                 name: Some(name),
-                                external: true,
                                 entry,
                                 desc,
                                 ..
@@ -411,7 +435,7 @@ impl MachO {
                                 } else {
                                     entry
                                 };
-                                exported_symbols.insert(name.to_string(), entry);
+                                exported_symbols.insert(name.to_string(), slide + entry);
                             };
                         }
                     }
@@ -446,7 +470,7 @@ impl MachO {
                             // itself, e.g. to "__Znwm". might be a PIC thing
                             Some(Symbol::Defined { name: Some(n), .. }) => Some(String::from(n)),
                             None => None,
-                            _ => panic!("Unexpected symbol kind {:?}", sym),
+                            _ => panic!("Unexpected symbol kind {sym:?}"),
                         })
                     }
 
@@ -461,7 +485,7 @@ impl MachO {
                             type_: 0, // generic
                         } = reloc
                         else {
-                            panic!("Unhandled extrel: {:?}", reloc)
+                            panic!("Unhandled extrel: {reloc:?}")
                         };
                         let addr = if split_segs {
                             addr + first_read_write_segment_base.unwrap()
@@ -477,6 +501,7 @@ impl MachO {
                             is_64bit,
                             &mut cursor,
                         );
+                        assert_eq!(slide, 0); // TODO
                         match sym {
                             Some(Symbol::Undefined { name: Some(n), .. }) => {
                                 external_relocations.push((addr, String::from(n)));
@@ -489,29 +514,26 @@ impl MachO {
                                 // Resolve them immediately, there is no value
                                 // in passing these on to Dyld.
                                 let addr = Ptr::from_bits(addr);
+                                let addend: u32 = into_mem.read(addr);
                                 let entry = entry as u32;
                                 let entry = if desc & N_ARM_THUMB_DEF != 0 {
                                     entry | GuestFunction::THUMB_BIT
                                 } else {
                                     entry
                                 };
-                                into_mem.write(addr, entry);
+                                into_mem.write(addr, entry.wrapping_add(addend));
                             }
                             Some(Symbol::Prebound { name: Some(n), .. }) => {
                                 let ptr_ptr = Ptr::<u32, true>::from_bits(addr);
                                 into_mem.write(ptr_ptr, 0); // Clear prebinding.
                                 external_relocations.push((addr, String::from(n)));
                             }
-                            _ => panic!("Unexpected symbol kind {:?}", sym),
+                            _ => panic!("Unexpected symbol kind {sym:?}"),
                         };
                     }
                 }
-                LoadCommand::EncryptionInfo { id, .. } => {
-                    if id != 0 {
-                        return Err(
-                            "The executable is encrypted. touchHLE can't run encrypted apps!",
-                        );
-                    }
+                LoadCommand::EncryptionInfo { id, .. } if id != 0 => {
+                    return Err("The executable is encrypted. touchHLE can't run encrypted apps!");
                 }
                 LoadCommand::LoadDyLib(DyLib { name, .. }) => {
                     dynamic_libraries.push(String::from(&*name));
@@ -526,7 +548,7 @@ impl MachO {
                         __cpsr: 0,
                     } = state
                     else {
-                        panic!("Unexpected initial thread state in {:?}: {:?}", name, state);
+                        panic!("Unexpected initial thread state in {name:?}: {state:?}");
                     };
                     // There should only be a single initial thread state.
                     assert!(entry_point_pc.is_none());
@@ -546,10 +568,62 @@ impl MachO {
                     let entryoff: u32 = entryoff.try_into().unwrap();
                     entry_point_pc = Some(text_segment_base.unwrap() + entryoff);
                 }
-                // LoadCommand::DyldInfo is apparently a newer thing that 2008
-                // games don't have. Ignore for now? Unsure if/when iOS got it.
-                LoadCommand::DyldInfo { .. } => {
-                    log!("Warning! DyldInfo is not handled.");
+                // Used in iOS 3.1+ apps. Also contains info about
+                // weak and lazy binds, but we already handle those.
+                LoadCommand::DyldInfo {
+                    rebase_off,
+                    rebase_size,
+                    bind_off,
+                    bind_size,
+                    ..
+                } => {
+                    let rebase_opcodes = Rebase::parse(
+                        &bytes[rebase_off as usize..][..rebase_size as usize],
+                        size_of::<GuestUSize>(),
+                    );
+
+                    for symb in rebase_opcodes {
+                        match symb.symbol_type {
+                            BindSymbolType::Pointer => {
+                                let addr = segment_offsets[symb.segment_index]
+                                    + symb.symbol_offset as u32
+                                    + slide;
+                                let original_location = Ptr::from_bits(addr);
+                                let old: u32 = into_mem.read(original_location);
+                                log_dbg!(
+                                    "Pointer rebase at {:#x} from {:#x} to {:#x}",
+                                    addr,
+                                    old,
+                                    old + slide
+                                );
+                                into_mem.write(original_location, old + slide);
+                            }
+                            _ => unimplemented!(
+                                "Unhandled DyldInfo rebase symbol type: {:?}",
+                                symb.symbol_type
+                            ),
+                        }
+                    }
+
+                    let bind_opcodes = Bind::parse(
+                        &bytes[bind_off as usize..][..bind_size as usize],
+                        size_of::<GuestUSize>(),
+                    );
+                    for symb in bind_opcodes {
+                        match symb.symbol_type {
+                            BindSymbolType::Pointer => {
+                                let addr = segment_offsets[symb.segment_index]
+                                    + symb.symbol_offset as u32
+                                    + slide;
+                                log_dbg!("Pointer bind: {:#x} -> {}", addr, symb.name);
+                                external_relocations.push((addr, symb.name));
+                            }
+                            _ => unimplemented!(
+                                "Unhandled DyldInfo bind symbol type: {:?}",
+                                symb.symbol_type
+                            ),
+                        }
+                    }
                 }
                 _ => (),
             }
@@ -561,7 +635,7 @@ impl MachO {
                 let section = &**section;
 
                 let name = section.sectname.clone();
-                let addr: u32 = section.addr.try_into().unwrap();
+                let addr: u32 = TryInto::<u32>::try_into(section.addr).unwrap() + slide;
                 let size: u32 = section.size.try_into().unwrap();
                 let type_ = section.flags.sect_type();
 
@@ -586,7 +660,7 @@ impl MachO {
                 };
                 let dyld_indirect_symbol_info = dyld_entry_size.map(|entry_size| {
                     let indirect_start = section.reserved1 as usize;
-                    assert!(size % entry_size == 0);
+                    assert!(size.is_multiple_of(entry_size));
                     let indirect_count = (size / entry_size) as usize;
                     let indirects = &mut indirect_undef_symbols[indirect_start..][..indirect_count];
                     let syms = indirects.iter_mut().map(|sym| sym.take()).collect();
@@ -613,6 +687,7 @@ impl MachO {
             exported_symbols,
             external_relocations,
             entry_point_pc,
+            last_segment_end,
         })
     }
 
@@ -623,6 +698,7 @@ impl MachO {
         path: P,
         fs: &Fs,
         into_mem: &mut Mem,
+        slide_to_address: u32,
     ) -> Result<MachO, &'static str> {
         let name = path.as_ref().file_name().unwrap().to_string();
         Self::load_from_bytes(
@@ -630,6 +706,7 @@ impl MachO {
                 .map_err(|_| "Could not read executable file")?,
             into_mem,
             name,
+            slide_to_address,
         )
     }
 

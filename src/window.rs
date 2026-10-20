@@ -13,31 +13,81 @@
 //! will be needed for the runtime of the app.
 
 use crate::gles::present::present_frame;
-use crate::gles::{create_gles1_ctx, GLES};
+use crate::gles::{create_gles1_ctx_no_parent_stack, GLESContext, GLES};
 use crate::image::Image;
 use crate::matrix::Matrix;
 use crate::options::Options;
+use crate::Environment;
 use sdl2::mouse::MouseButton;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::surface::Surface;
+use sdl2_sys::SDL_PowerState;
 use std::collections::{HashMap, VecDeque};
 use std::env;
-use std::f32::consts::FRAC_PI_2;
+use std::f32::consts::{FRAC_PI_2, PI};
 use std::num::NonZeroU32;
+use std::ptr::null_mut;
 use std::time::{Duration, Instant};
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum DeviceFamily {
+    iPhone,
+    iPad,
+}
+impl std::fmt::Display for DeviceFamily {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
+    }
+}
+impl DeviceFamily {
+    pub fn portrait_size(&self) -> (u32, u32) {
+        match self {
+            DeviceFamily::iPhone => (320, 480),
+            DeviceFamily::iPad => (768, 1024),
+        }
+    }
+}
+impl TryFrom<u64> for DeviceFamily {
+    type Error = ();
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(DeviceFamily::iPhone),
+            2 => Ok(DeviceFamily::iPad),
+            _ => Err(()),
+        }
+    }
+}
+impl TryFrom<&str> for DeviceFamily {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "iphone" => Ok(DeviceFamily::iPhone),
+            "ipad" => Ok(DeviceFamily::iPad),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum DeviceOrientation {
     Portrait,
+    PortraitUpsideDown,
     LandscapeLeft,
     LandscapeRight,
 }
-fn size_for_orientation(orientation: DeviceOrientation, scale_hack: NonZeroU32) -> (u32, u32) {
+fn size_for_orientation(
+    family: DeviceFamily,
+    orientation: DeviceOrientation,
+    scale_hack: NonZeroU32,
+) -> (u32, u32) {
+    let (width, height) = family.portrait_size();
     let scale_hack = scale_hack.get();
     match orientation {
-        DeviceOrientation::Portrait => (320 * scale_hack, 480 * scale_hack),
-        DeviceOrientation::LandscapeLeft => (480 * scale_hack, 320 * scale_hack),
-        DeviceOrientation::LandscapeRight => (480 * scale_hack, 320 * scale_hack),
+        DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
+        DeviceOrientation::PortraitUpsideDown => (width * scale_hack, height * scale_hack),
+        DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
+        DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
     }
 }
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
@@ -47,7 +97,9 @@ fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32
         (screen_size.1, screen_size.0)
     };
     match orientation {
-        DeviceOrientation::Portrait => (short_side, long_side),
+        DeviceOrientation::Portrait | DeviceOrientation::PortraitUpsideDown => {
+            (short_side, long_side)
+        }
         DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight => {
             (long_side, short_side)
         }
@@ -62,6 +114,7 @@ fn set_sdl2_orientation(orientation: DeviceOrientation) {
             DeviceOrientation::Portrait => "Portrait",
             // The inversion is deliberate. These probably correspond to
             // iPhone OS content orientations?
+            DeviceOrientation::PortraitUpsideDown => "PortraitUpsideDown",
             DeviceOrientation::LandscapeLeft => "LandscapeRight",
             DeviceOrientation::LandscapeRight => "LandscapeLeft",
         },
@@ -74,8 +127,18 @@ pub enum FingerId {
     Touch(i64),
     VirtualCursor,
     ButtonToTouch(crate::options::Button),
+    StickToTouch,
+    DpadToTouch,
 }
 pub type Coords = (f32, f32);
+
+struct DpadState {
+    left: bool,
+    right: bool,
+    up: bool,
+    down: bool,
+    active: bool,
+}
 
 #[derive(Debug)]
 pub enum TextInputEvent {
@@ -103,6 +166,14 @@ pub enum Event {
     TextInput(TextInputEvent),
 }
 
+pub enum BatteryState {
+    Unknown,
+    OnBattery,
+    NoBattery,
+    Charging,
+    Full,
+}
+
 pub enum GLVersion {
     /// OpenGL ES 1.1
     GLES11,
@@ -112,7 +183,13 @@ pub enum GLVersion {
 
 pub struct GLContext(sdl2::video::GLContext);
 
-fn surface_from_image(image: &Image) -> Surface {
+impl GLContext {
+    pub fn is_current(&self) -> bool {
+        self.0.is_current()
+    }
+}
+
+fn surface_from_image(image: &Image) -> Surface<'_> {
     let src_pixels = image.pixels();
     let (width, height) = image.dimensions();
 
@@ -152,25 +229,33 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     scale_hack: NonZeroU32,
-    internal_gl_ctx: Option<Box<dyn GLES>>,
+    internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
+    device_family: DeviceFamily,
     device_orientation: DeviceOrientation,
-    app_gl_ctx_no_longer_current: bool,
     controller_ctx: sdl2::GameControllerSubsystem,
     controllers: Vec<sdl2::controller::GameController>,
+    dpad_state: DpadState,
+    stick_active: bool,
     _sensor_ctx: sdl2::SensorSubsystem,
     accelerometer: Option<sdl2::sensor::Sensor>,
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
+    virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    /// Whether or not we are on the "main" environment stack (rather than
+    /// a coroutine stack). Checked in various functions to make sure that
+    /// certain SDL functions (that call JNI functions) are on the main
+    /// stack on Android.
+    pub(super) on_main_stack: bool,
 }
+
 impl Window {
     /// Returns [true] if touchHLE is running on a device where we should always
     /// display fullscreen, but SDL2 will let us control the orientation, i.e.
     /// Android devices.
-    fn rotatable_fullscreen() -> bool {
+    pub fn rotatable_fullscreen() -> bool {
         env::consts::OS == "android"
     }
-
     pub fn new(
         title: &str,
         icon: Option<Image>,
@@ -209,6 +294,7 @@ impl Window {
         let scale_hack = options.scale_hack;
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
+        let device_family = options.device_family.unwrap_or(DeviceFamily::iPhone);
         let device_orientation = options.initial_orientation;
         let fullscreen = options.fullscreen;
 
@@ -234,7 +320,8 @@ impl Window {
                 .unwrap();
             window
         } else {
-            let (width, height) = size_for_orientation(device_orientation, scale_hack);
+            let (width, height) =
+                size_for_orientation(device_family, device_orientation, scale_hack);
             let window = video_ctx
                 .window(title, width, height)
                 .position_centered()
@@ -291,26 +378,38 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             scale_hack,
-            internal_gl_ctx: None,
+            internal_gl_ins: None,
             splash_image: launch_image,
+            device_family,
             device_orientation,
-            app_gl_ctx_no_longer_current: false,
             controller_ctx,
             controllers: Vec::new(),
+            dpad_state: DpadState {
+                left: false,
+                right: false,
+                up: false,
+                down: false,
+                active: false,
+            },
+            stick_active: false,
             _sensor_ctx: sensor_ctx,
             accelerometer,
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
+            virtual_accelerometer_last: None,
+            on_main_stack: true,
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
         // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
         // because SDL2 won't let us use more than one graphics API in the same
         // window, and we also need OpenGL ES for the app's own rendering.
-        let gl_ctx = create_gles1_ctx(&mut window, options);
-        gl_ctx.make_current(&window);
-        log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
-        window.internal_gl_ctx = Some(gl_ctx);
+        let mut gl_ins = create_gles1_ctx_no_parent_stack(&mut window, options);
+        {
+            let gl_ctx = gl_ins.make_current(&mut window);
+            log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
+        }
+        window.internal_gl_ins = Some(gl_ins);
 
         if window.splash_image.is_some() {
             window.display_splash();
@@ -327,6 +426,7 @@ impl Window {
     /// Since polling can be quite expensive, this function will skip it if it
     /// was called too recently.
     pub fn poll_for_events(&mut self, options: &Options) {
+        assert!(self.on_main_stack);
         let now = Instant::now();
         // poll roughly twice per frame to try to avoid missing frames sometimes
         if now.duration_since(self.last_polled) < Duration::from_secs_f64(1.0 / 120.0) {
@@ -340,8 +440,11 @@ impl Window {
             independent_of_viewport: bool,
         ) -> (f32, f32) {
             let (vx, vy, vw, vh) = if independent_of_viewport {
-                let (width, height) =
-                    size_for_orientation(window.device_orientation, NonZeroU32::new(1).unwrap());
+                let (width, height) = size_for_orientation(
+                    window.device_family,
+                    window.device_orientation,
+                    NonZeroU32::new(1).unwrap(),
+                );
                 (0, 0, width, height)
             } else {
                 window.viewport()
@@ -350,12 +453,19 @@ impl Window {
             let x = (in_x - vx as f32) / vw as f32 - 0.5;
             let y = (in_y - vy as f32) / vh as f32 - 0.5;
             // rotate
-            let matrix = window.rotation_matrix();
+            let matrix = window.rotation_matrix().inverse().unwrap();
             let [x, y] = matrix.transform([x, y]);
             // back to pixels
             let (out_w, out_h) = window.size_unrotated_unscaled();
             let out_x = (x + 0.5) * out_w as f32;
             let out_y = (y + 0.5) * out_h as f32;
+            // Round to match touch precision of official devices.
+            (out_x.round(), out_y.round())
+        }
+        fn transform_virt_accel_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
+            let (_, _, vw, vh) = window.viewport();
+            let out_x = ((in_x as f32 / vw as f32) * 2.0 - 1.0).clamp(-1.0, 1.0);
+            let out_y = ((in_y as f32 / vh as f32) * 2.0 - 1.0).clamp(-1.0, 1.0);
             (out_x, out_y)
         }
         fn translate_button(button: sdl2::controller::Button) -> Option<crate::options::Button> {
@@ -402,6 +512,36 @@ impl Window {
             } else {
                 break;
             };
+
+            // Virtual accelerometer
+            match event {
+                E::MouseButtonDown {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Right,
+                    ..
+                } => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, true));
+                }
+                E::MouseMotion {
+                    x, y, mousestate, ..
+                } if mousestate.right() => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, true));
+                }
+                E::MouseButtonUp {
+                    x,
+                    y,
+                    mouse_btn: MouseButton::Right,
+                    ..
+                } => {
+                    let (x, y) = transform_virt_accel_coords(self, (x, y));
+                    self.virtual_accelerometer_last = Some((x, y, false));
+                }
+                _ => {}
+            }
+
             self.event_queue.push_back(match event {
                 E::Quit { .. } => Event::Quit,
                 E::MouseButtonDown {
@@ -446,30 +586,131 @@ impl Window {
                     let Some(button) = translate_button(button) else {
                         continue;
                     };
-                    let Some(&(x, y)) = options.button_to_touch.get(&button) else {
-                        continue;
-                    };
-                    match event {
-                        E::ControllerButtonUp { .. } => {
-                            let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesUp(HashMap::from([(
-                                FingerId::ButtonToTouch(button),
-                                coords,
-                            )]))
+                    // Called whenever a DPad direction is pressed or released
+                    if (button == crate::options::Button::DPadLeft
+                        || button == crate::options::Button::DPadUp
+                        || button == crate::options::Button::DPadRight
+                        || button == crate::options::Button::DPadDown)
+                        && options.dpad_to_touch.is_some()
+                    {
+                        let Some((x, y, w, h)) = options.dpad_to_touch else {
+                            unreachable!();
+                        };
+
+                        // Update held state
+                        let pressed = matches!(event, E::ControllerButtonDown { .. });
+                        match button {
+                            crate::options::Button::DPadLeft => self.dpad_state.left = pressed,
+                            crate::options::Button::DPadRight => self.dpad_state.right = pressed,
+                            crate::options::Button::DPadUp => self.dpad_state.up = pressed,
+                            crate::options::Button::DPadDown => self.dpad_state.down = pressed,
+                            _ => unreachable!(),
                         }
-                        E::ControllerButtonDown { .. } => {
-                            let coords = transform_input_coords(self, (x, y), true);
-                            Event::TouchesDown(HashMap::from([(
-                                FingerId::ButtonToTouch(button),
-                                coords,
-                            )]))
+
+                        // Compute center
+                        let cx = x + w * 0.5;
+                        let cy = y + h * 0.5;
+
+                        // Compute combined delta
+                        let mut dx = 0.0;
+                        let mut dy = 0.0;
+
+                        if self.dpad_state.left {
+                            dx -= 0.5 * w;
                         }
-                        _ => unreachable!(),
+                        if self.dpad_state.right {
+                            dx += 0.5 * w;
+                        }
+                        if self.dpad_state.up {
+                            dy -= 0.5 * h;
+                        }
+                        if self.dpad_state.down {
+                            dy += 0.5 * h;
+                        }
+
+                        // Final coords: center + movement
+                        let coords = transform_input_coords(self, (cx + dx, cy + dy), true);
+
+                        // Send TouchDown if any dpad is held, TouchUp if none
+                        let any_held = self.dpad_state.left
+                            || self.dpad_state.right
+                            || self.dpad_state.up
+                            || self.dpad_state.down;
+
+                        if !self.dpad_state.active && any_held {
+                            // New touch
+                            self.dpad_state.active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::DpadToTouch, coords)]))
+                        } else if self.dpad_state.active && any_held {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(FingerId::DpadToTouch, coords)]))
+                        } else if self.dpad_state.active && !any_held {
+                            // Release touch
+                            self.dpad_state.active = false;
+                            Event::TouchesUp(HashMap::from([(FingerId::DpadToTouch, coords)]))
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        let Some(&(x, y)) = options.button_to_touch.get(&button) else {
+                            continue;
+                        };
+                        match event {
+                            E::ControllerButtonUp { .. } => {
+                                let coords = transform_input_coords(self, (x, y), true);
+                                Event::TouchesUp(HashMap::from([(
+                                    FingerId::ButtonToTouch(button),
+                                    coords,
+                                )]))
+                            }
+                            E::ControllerButtonDown { .. } => {
+                                let coords = transform_input_coords(self, (x, y), true);
+                                Event::TouchesDown(HashMap::from([(
+                                    FingerId::ButtonToTouch(button),
+                                    coords,
+                                )]))
+                            }
+                            _ => unreachable!(),
+                        }
                     }
                 }
-                E::ControllerAxisMotion { .. } => {
+                E::ControllerAxisMotion { axis, .. } => {
                     controller_updated = true;
-                    continue;
+                    let Some((x, y, w, h)) = options.stick_to_touch else {
+                        continue;
+                    };
+                    if axis == sdl2::controller::Axis::LeftX
+                        || axis == sdl2::controller::Axis::LeftY
+                    {
+                        let (stick_x, stick_y, _) = self.get_controller_stick(options, true);
+                        let coords = transform_input_coords(
+                            self,
+                            (
+                                x + ((stick_x + 1.0) / 2.0) * w,
+                                y + ((stick_y + 1.0) / 2.0) * h,
+                            ),
+                            true,
+                        );
+                        if stick_x.abs() < options.deadzone && stick_y.abs() < options.deadzone {
+                            if !self.stick_active {
+                                // Ignore deadzone events when stick is inactive
+                                continue;
+                            } else {
+                                // Release touch when stick returns to deadzone
+                                self.stick_active = false;
+                                Event::TouchesUp(HashMap::from([(FingerId::StickToTouch, coords)]))
+                            }
+                        } else if !self.stick_active {
+                            // New touch
+                            self.stick_active = true;
+                            Event::TouchesDown(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        } else {
+                            // Move existing touch
+                            Event::TouchesMove(HashMap::from([(FingerId::StickToTouch, coords)]))
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 E::AppWillEnterBackground { .. } => {
                     log!("Received app-will-resign-active event.");
@@ -640,9 +881,15 @@ impl Window {
             log!("Warning: A new controller was connected, but it couldn't be accessed!");
             return;
         };
+
+        let controller_name = controller.name();
+        if env::consts::OS == "android" && controller_name.starts_with("uinput-") {
+            log!("ignoring fingerprint device: {}", controller_name);
+            return;
+        }
         log!(
             "New controller connected: {}. Left stick = device tilt. Right stick = touch input (press the stick or shoulder button to tap/hold).",
-            controller.name()
+            controller_name
         );
         self.controllers.push(controller);
     }
@@ -657,25 +904,39 @@ impl Window {
         let controller = self.controllers.remove(idx);
         log!("Warning: Controller disconnected: {}", controller.name());
     }
-    pub fn print_accelerometer_notice(&self) {
+    pub fn print_accelerometer_notice(&self, options: &Options) {
         log!("This app uses the accelerometer.");
-        if !self.controllers.is_empty() {
+
+        if !self.controllers.is_empty() && options.analog_stick_tilt_controls {
             log!("Your connected controller's left analog stick will be used for accelerometer simulation.");
             if self.accelerometer.is_some() {
                 log!("Disconnect the controller if you want to use your device's accelerometer.");
             }
         } else if self.accelerometer.is_some() {
             log!("Your device's accelerometer will be used for accelerometer simulation.");
-            log!("Connect a controller if you would prefer to use an analog stick.");
-        } else if self.controllers.is_empty() {
+            if options.analog_stick_tilt_controls {
+                log!("Connect a controller if you would prefer to use an analog stick.");
+            }
+        } else if self.controllers.is_empty() && options.analog_stick_tilt_controls {
             log!("Connect a controller to get accelerometer simulation.");
+        }
+
+        if self.accelerometer.is_none() {
+            log!(
+                "You can {}hold right click and move the cursor to simulate the accelerometer.",
+                if options.analog_stick_tilt_controls {
+                    "also "
+                } else {
+                    ""
+                }
+            );
         }
     }
 
     /// Get the real or simulated accelerometer output.
     /// See also [crate::frameworks::uikit::ui_accelerometer].
     pub fn get_acceleration(&self, options: &Options) -> (f32, f32, f32) {
-        if self.controllers.is_empty() {
+        if self.controllers.is_empty() || !options.analog_stick_tilt_controls {
             if let Some(ref accelerometer) = self.accelerometer {
                 let data = accelerometer.get_data().unwrap();
                 let sdl2::sensor::SensorData::Accel(data) = data else {
@@ -693,11 +954,21 @@ impl Window {
             }
         }
 
-        // Get left analog stick input. The range is [-1, 1] on each axis.
-        let (x, y, _) = self.get_controller_stick(options, true);
+        let (x, y) = if self
+            .virtual_accelerometer_last
+            .is_some_and(|(_x, _y, right_click_hold)| right_click_hold)
+        {
+            self.virtual_accelerometer_last
+                .map(|(x, y, _right_click_hold)| (x, y))
+                .unwrap()
+        } else {
+            // Get left analog stick input. The range is [-1, 1] on each axis.
+            let (x, y, _) = self.get_controller_stick(options, true);
+            (x, y)
+        };
 
         // Correct for window rotation
-        let [x, y] = self.rotation_matrix().transform([x, y]);
+        let [x, y] = self.rotation_matrix().inverse().unwrap().transform([x, y]);
         let (x, y) = (x.clamp(-1.0, 1.0), y.clamp(-1.0, 1.0)); // just in case
 
         // Let's simulate tilting the device based on the analog stick inputs.
@@ -718,15 +989,10 @@ impl Window {
         // (x, y) are swapped because the controller Y axis usually corresponds
         // to forward/backward movement, but rotating about the Y axis means
         // tilting the device left/right.
-        // There used to be a bug in the matrix multiplication code that made it
-        // behave as if the matrix was transposed. This code was written before
-        // that was discovered, so it is probably incoherent. It might be worth
-        // rewriting it eventually (without changing how it behaves).
         let x_rotation = neutral_x - x_rotation_range * y;
         let y_rotation = neutral_y - y_rotation_range * x;
-        let matrix = Matrix::<3>::y_rotation(y_rotation)
-            .multiply(&Matrix::<3>::x_rotation(x_rotation))
-            .transpose();
+        let matrix =
+            Matrix::<3>::y_rotation(y_rotation).multiply(&Matrix::<3>::x_rotation(x_rotation));
         let [x, y, z] = matrix.transform(gravity);
 
         (x, y, z)
@@ -903,32 +1169,33 @@ impl Window {
         self.video_ctx.gl_get_proc_address(procname) as *const _
     }
 
+    pub fn set_share_with_current_context(&self, value: bool) {
+        self.video_ctx
+            .gl_attr()
+            .set_share_with_current_context(value)
+    }
+
     pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
         self.window.gl_make_current(&gl_ctx.0).unwrap();
     }
 
-    /// Retrieve and reset the flag that indicates if the current OpenGL context
-    /// was changed to one outside of the control of the guest app.
-    ///
-    /// This should be checked before making OpenGL calls on behalf of the guest
-    /// app, so its context can be restored.
-    pub fn is_app_gl_ctx_no_longer_current(&mut self) -> bool {
-        let value = self.app_gl_ctx_no_longer_current;
-        self.app_gl_ctx_no_longer_current = false;
-        value
-    }
-
     /// Make the internal OpenGL ES context (for splash screen and UI rendering)
     /// current.
-    pub fn make_internal_gl_ctx_current(&mut self) {
-        self.app_gl_ctx_no_longer_current = true;
-        self.internal_gl_ctx.as_ref().unwrap().make_current(self);
-    }
-
-    /// Get the internal OpenGL ES context (for splash screen and UI rendering).
-    /// This does not ensure the context is current.
-    pub fn get_internal_gl_ctx(&mut self) -> &mut dyn GLES {
-        self.internal_gl_ctx.as_deref_mut().unwrap()
+    #[must_use]
+    pub fn make_internal_gl_ctx_current<'win>(&'win mut self) -> Box<dyn GLES + 'win> {
+        // The invariant is held up here - since the instance we return is
+        // bound to the lifetime of window, it can't outlive the internal GL
+        // context and can't outlive the window.
+        let gl_ins = unsafe {
+            self.internal_gl_ins
+                .as_mut()
+                .unwrap()
+                .make_current_unchecked_for_window(
+                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
+                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                )
+        };
+        gl_ins
     }
 
     fn display_splash(&mut self) {
@@ -940,14 +1207,20 @@ impl Window {
         let (vx, vy, vw, vh) = self.viewport();
         let viewport = (vx, vy + self.viewport_y_offset(), vw, vh);
 
-        self.make_internal_gl_ctx_current();
-
         let image = self.splash_image.as_ref().unwrap();
-        let gl_ctx = self.internal_gl_ctx.as_deref_mut().unwrap();
-
-        use crate::gles::gles11_raw as gles11; // constants only
 
         unsafe {
+            let mut gl_ctx = self
+                .internal_gl_ins
+                .as_mut()
+                .unwrap()
+                .make_current_unchecked_for_window(
+                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
+                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                );
+
+            use crate::gles::gles11_raw as gles11; // constants only
+
             let mut texture = 0;
             gl_ctx.GenTextures(1, &mut texture);
             gl_ctx.BindTexture(gles11::TEXTURE_2D, texture);
@@ -975,7 +1248,10 @@ impl Window {
             );
 
             present_frame(
-                gl_ctx, viewport, matrix, /* virtual_cursor_visible_at: */ None,
+                gl_ctx.as_mut(),
+                viewport,
+                matrix,
+                /* virtual_cursor_visible_at: */ None,
             );
 
             gl_ctx.DeleteTextures(1, &texture);
@@ -999,6 +1275,7 @@ impl Window {
     /// content appears upright. On a mobile device, this might do something
     /// else, because the user can physically rotate the screen.
     pub fn rotate_device(&mut self, new_orientation: DeviceOrientation) {
+        assert!(self.on_main_stack);
         if new_orientation == self.device_orientation {
             return;
         }
@@ -1008,7 +1285,7 @@ impl Window {
                 set_sdl2_orientation(new_orientation);
                 rotate_fullscreen_size(new_orientation, self.window.size())
             } else {
-                size_for_orientation(new_orientation, self.scale_hack)
+                size_for_orientation(self.device_family, new_orientation, self.scale_hack)
             };
 
             // macOS quirk: when resizing the window, the new framebuffer's size
@@ -1056,6 +1333,10 @@ impl Window {
         }
     }
 
+    pub fn device_family(&self) -> DeviceFamily {
+        self.device_family
+    }
+
     /// Returns the current device orientation
     pub fn current_rotation(&self) -> DeviceOrientation {
         self.device_orientation
@@ -1066,16 +1347,11 @@ impl Window {
     /// The aspect ratio, scale and orientation reflect the guest app's view of
     /// the world.
     pub fn size_unrotated_unscaled(&self) -> (u32, u32) {
-        size_for_orientation(DeviceOrientation::Portrait, NonZeroU32::new(1).unwrap())
-    }
-
-    /// Get the size in pixels of the window without rotation but with the
-    /// scale hack. Scaling caused by fullscreen mode is not included.
-    ///
-    /// Only the aspect ratio and orientation reflect the guest app's view of
-    /// the world.
-    pub fn size_unrotated_scalehacked(&self) -> (u32, u32) {
-        size_for_orientation(DeviceOrientation::Portrait, self.scale_hack)
+        size_for_orientation(
+            self.device_family,
+            DeviceOrientation::Portrait,
+            NonZeroU32::new(1).unwrap(),
+        )
     }
 
     /// Get the region of the on-screen window (x, y, width, height) used to
@@ -1085,7 +1361,7 @@ impl Window {
     /// the world, but the scale and orientation might not.
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
         let (app_width, app_height) =
-            size_for_orientation(self.device_orientation, self.scale_hack);
+            size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
         if !self.fullscreen && !Self::rotatable_fullscreen() {
             return (0, 0, app_width, app_height);
         }
@@ -1118,13 +1394,15 @@ impl Window {
         return 0;
     }
 
-    /// Transformation matrix for texture co-ordinates when sampling the
-    /// framebuffer presented by the app and for touch inputs received by the
-    /// window. Rotates from the window co-ordinate space to the app co-ordinate
-    /// space. See [Self::rotate_device].
+    /// Transformation matrix for transforming between the window's co-ordinate
+    /// space and the app's original co-ordinate space when rotation is in use
+    /// (see [Self::rotate_device]). This returns a matrix appropriate for
+    /// rotating texture co-ordinates to display the image in the window; when
+    /// rotating input co-ordinates, invert the matrix.
     pub fn rotation_matrix(&self) -> Matrix<2> {
         match self.device_orientation {
             DeviceOrientation::Portrait => Matrix::identity(),
+            DeviceOrientation::PortraitUpsideDown => Matrix::z_rotation(PI),
             DeviceOrientation::LandscapeLeft => Matrix::z_rotation(-FRAC_PI_2),
             DeviceOrientation::LandscapeRight => Matrix::z_rotation(FRAC_PI_2),
         }
@@ -1134,13 +1412,135 @@ impl Window {
         self.video_ctx.is_screen_saver_enabled()
     }
     pub fn set_screen_saver_enabled(&mut self, enabled: bool) {
+        assert!(self.on_main_stack);
         match enabled {
             true => self.video_ctx.enable_screen_saver(),
             false => self.video_ctx.disable_screen_saver(),
         }
     }
+
+    pub fn start_text_input(&self) {
+        assert!(self.on_main_stack);
+        unsafe {
+            sdl2_sys::SDL_StartTextInput();
+        }
+    }
+    pub fn stop_text_input(&self) {
+        assert!(self.on_main_stack);
+        unsafe {
+            sdl2_sys::SDL_StopTextInput();
+        }
+    }
+
+    pub fn on_main_stack(&self) -> bool {
+        self.on_main_stack
+    }
 }
 
-pub fn open_url(url: &str) -> Result<(), String> {
-    sdl2::url::open_url(url).map_err(|e| e.to_string())
+pub fn open_url(env: &mut Environment, url: &str) -> Result<(), String> {
+    env.on_parent_stack_in_coroutine(|_, _| sdl2::url::open_url(url).map_err(|e| e.to_string()))
+}
+
+/// Show an SDL messagebox for an error (typically after a panic).
+///
+/// The window argument allows for passing in the parent window for the
+/// messagebox, which is not required but should be done if possible.
+pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
+    assert!(window.is_none_or(|win| win.on_main_stack));
+    use sdl2::messagebox;
+    let mbox = [
+        messagebox::ButtonData {
+            flags: messagebox::MessageBoxButtonFlag::NOTHING,
+            button_id: 0,
+            text: "Open touchHLE directory",
+        },
+        messagebox::ButtonData {
+            flags: messagebox::MessageBoxButtonFlag::NOTHING,
+            button_id: 1,
+            text: "Close",
+        },
+    ];
+
+    let Ok(clicked_button) = messagebox::show_message_box(
+        messagebox::MessageBoxFlag::ERROR,
+        &mbox,
+        "touchHLE crashed!",
+        &format!("touchHLE crashed with the following error: {error_message}"),
+        window.map(|win| &win.window),
+        None,
+    ) else {
+        panic!("Failed to show message box!");
+    };
+
+    match clicked_button {
+        messagebox::ClickedButton::CloseButton => {}
+        messagebox::ClickedButton::CustomButton(button) => {
+            match button.button_id {
+                // Open data directory (contains log file on android)
+                0 => match crate::paths::url_for_opening_user_data_dir() {
+                    Ok(url) => {
+                        if let Err(e) = sdl2::url::open_url(&url).map_err(|e| e.to_string()) {
+                            echo!("Couldn't open file manager at {:?}: {}", url, e);
+                        } else {
+                            echo!("Opened file manager at {:?}, exiting.", url);
+                        }
+                    }
+                    Err(e) => echo!("Couldn't open file manager: {}", e),
+                },
+                // Close
+                1 => {}
+                _ => unreachable!(),
+            }
+        }
+    }
+}
+
+/// Get current battery state from SDL2.
+///
+/// Returns:
+/// - pct: i32 - percentage of battery remaining.
+/// - status: [BatteryState] - the current status of the battery
+///   (unplugged, charging, full, etc.)
+pub fn get_battery_status() -> (i32, BatteryState) {
+    if env::consts::OS == "android" {
+        log_once!(
+            "Warning: get_battery_status on Android, returning fully charged to avoid SDL crash"
+        );
+        // Android_JNI_GetPowerInfo is crashing with `JNI DETECTED ERROR IN
+        // APPLICATION: JNI ERROR (app bug): jobject is an invalid JNI
+        // transition frame reference: 0x7b1bc0c7a0 (use of invalid jobject)`
+        // TODO: See if updating SDL fixes that
+        return (100, BatteryState::Full);
+    }
+    let mut pct = 0;
+    // Unfortunately, Rust-SDL2 does not expose this function yet.
+    // iPhoneOS does not measure the battery in seconds remaining,
+    // so we discard this argument.
+    let status = unsafe { sdl2_sys::SDL_GetPowerInfo(null_mut(), &mut pct) };
+    (
+        pct,
+        match status {
+            SDL_PowerState::SDL_POWERSTATE_UNKNOWN => BatteryState::Unknown,
+            SDL_PowerState::SDL_POWERSTATE_ON_BATTERY => BatteryState::OnBattery,
+            SDL_PowerState::SDL_POWERSTATE_NO_BATTERY => BatteryState::NoBattery,
+            SDL_PowerState::SDL_POWERSTATE_CHARGING => BatteryState::Charging,
+            SDL_PowerState::SDL_POWERSTATE_CHARGED => BatteryState::Full,
+        },
+    )
+}
+
+pub fn get_preferred_language_codes(env: &mut Environment) -> Vec<String> {
+    env.on_parent_stack_in_coroutine(|_, _| {
+        sdl2::locale::get_preferred_locales()
+            .map(|loc| loc.lang)
+            .collect()
+    })
+}
+
+pub fn get_preferred_country_codes(env: &mut Environment) -> Vec<String> {
+    env.on_parent_stack_in_coroutine(|_, _| {
+        sdl2::locale::get_preferred_locales()
+            .filter_map(|loc| loc.country)
+            .collect()
+    })
 }

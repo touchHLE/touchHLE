@@ -8,7 +8,7 @@
 use super::wchar::wchar_t;
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant};
-use crate::mem::{ConstVoidPtr, Mem, MutVoidPtr, Ptr, SafeRead};
+use crate::mem::{ConstVoidPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 
 /// Called by inlined `tolower()` on Darwin
@@ -26,6 +26,14 @@ fn __toupper(_env: &mut Environment, c: i32) -> i32 {
     } else {
         c
     }
+}
+
+fn __maskrune(env: &mut Environment, rune: i32, mask: u32) -> i32 {
+    // TODO: do not re-create rune table on each call
+    let default_rune_locale_ptr = get_default_rune_locale(env);
+    let rune_locale: RuneLocale = env.mem.read(default_rune_locale_ptr.cast());
+    env.mem.free(default_rune_locale_ptr.cast_mut());
+    (rune_locale.runetype[(rune & 0xFF) as usize] & mask) as i32
 }
 
 #[allow(non_camel_case_types)]
@@ -58,7 +66,7 @@ struct RuneLocale {
 }
 unsafe impl SafeRead for RuneLocale {}
 
-fn get_default_rune_locale(mem: &mut Mem) -> ConstVoidPtr {
+fn get_default_rune_locale(env: &mut Environment) -> ConstVoidPtr {
     let mut runetype = [0u32; LOOKUP_TABLE_SIZE];
     let mut map_lower = [0 as darwin_rune_t; LOOKUP_TABLE_SIZE];
     let mut map_upper = [0 as darwin_rune_t; LOOKUP_TABLE_SIZE];
@@ -118,26 +126,27 @@ fn get_default_rune_locale(mem: &mut Mem) -> ConstVoidPtr {
     let mut encoding = [0u8; 32];
     encoding[0..4].copy_from_slice(b"NONE"); // this is the real value!
 
-    mem.alloc_and_write(RuneLocale {
-        magic: *b"RuneMagA",
-        encoding,
+    env.mem
+        .alloc_and_write(RuneLocale {
+            magic: *b"RuneMagA",
+            encoding,
 
-        getrune: GuestFunction::from_addr_with_thumb_bit(0), // TODO
-        putrune: GuestFunction::from_addr_with_thumb_bit(0), // TODO
-        invalid_rune: -1,                                    // probably not correct
+            getrune: GuestFunction::null_ptr(), // TODO
+            putrune: GuestFunction::null_ptr(), // TODO
+            invalid_rune: -1,                   // probably not correct
 
-        runetype,
-        map_lower,
-        map_upper,
+            runetype,
+            map_lower,
+            map_upper,
 
-        variable: Ptr::null(),
-        variable_len: 0,
+            variable: Ptr::null(),
+            variable_len: 0,
 
-        ncharclasses: 0,
-        charclass: Ptr::null(),
-    })
-    .cast()
-    .cast_const()
+            ncharclasses: 0,
+            charclass: Ptr::null(),
+        })
+        .cast()
+        .cast_const()
 }
 
 pub const CONSTANTS: ConstantExports = &[(
@@ -145,5 +154,8 @@ pub const CONSTANTS: ConstantExports = &[(
     HostConstant::Custom(get_default_rune_locale),
 )];
 
-pub const FUNCTIONS: FunctionExports =
-    &[export_c_func!(__tolower(_)), export_c_func!(__toupper(_))];
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(__tolower(_)),
+    export_c_func!(__toupper(_)),
+    export_c_func!(__maskrune(_, _)),
+];

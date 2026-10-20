@@ -11,7 +11,7 @@
 use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
-    NSZonePtr, TrivialHostObject,
+    NSZonePtr, TrivialHostObject, SEL,
 };
 use crate::Environment;
 use std::time::{Duration, Instant};
@@ -72,8 +72,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     if delegate == nil {
         env.framework_state.uikit.ui_accelerometer.delegate = None;
     } else {
+        if env.framework_state.uikit.ui_accelerometer.delegate != Some(delegate) {
+            env.window().print_accelerometer_notice(&env.options);
+        }
         env.framework_state.uikit.ui_accelerometer.delegate = Some(delegate);
-        env.window().print_accelerometer_notice();
     }
 }
 
@@ -131,7 +133,7 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
     let rust_interval = Duration::from_secs_f64(ns_interval);
 
     let now = Instant::now();
-    let new_due_by = if let Some(due_by) = state.due_by {
+    if let Some(due_by) = state.due_by {
         if due_by > now {
             return Some(due_by);
         }
@@ -148,17 +150,28 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
             log_dbg!("Warning: Accelerometer is lagging. It is overdue by {}s and has missed {} interval(s)!", overdue_by.as_secs_f64(), advance_by - 1);
         }
         let advance_by = rust_interval.checked_mul(advance_by).unwrap();
-        Some(due_by.checked_add(advance_by).unwrap())
+        let new_due_by = due_by.checked_add(advance_by).unwrap();
+        state.due_by = Some(new_due_by);
     } else {
-        Some(now.checked_add(rust_interval).unwrap())
+        // In Resident Evil 4 the delegate is set before it fully initializes.
+        // If the first message is sent immediately, it crashes.
+        // This change prevents it by not sending the first message until the
+        // time interval first passes
+        let new_due_by = now.checked_add(rust_interval).unwrap();
+        state.due_by = Some(new_due_by);
+        if new_due_by > now {
+            return Some(new_due_by);
+        }
     };
-    state.due_by = new_due_by;
 
     // UIKit creates and drains autorelease pools when handling events.
     let pool: id = msg_class![env; NSAutoreleasePool new];
 
     let (x, y, z) = env.window().get_acceleration(&env.options);
-    let timestamp: NSTimeInterval = msg_class![env; NSProcessInfo systemUptime];
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
     let acceleration: id = msg_class![env; UIAcceleration alloc];
     *env.objc.borrow_mut(acceleration) = UIAccelerationHostObject {
         x: x.into(),
@@ -176,10 +189,16 @@ pub(super) fn handle_accelerometer(env: &mut Environment) -> Option<Instant> {
         accelerometer,
         acceleration,
     );
-    let _: () = msg![env; delegate accelerometer:accelerometer
-                                   didAccelerate:acceleration];
+    let sel: SEL = env
+        .objc
+        .register_host_selector("accelerometer:didAccelerate:".to_string(), &mut env.mem);
+    let responds: bool = msg![env; delegate respondsToSelector:sel];
+    if responds {
+        let _: () = msg![env; delegate accelerometer:accelerometer
+                                       didAccelerate:acceleration];
+    }
 
     release(env, pool);
 
-    new_due_by
+    env.framework_state.uikit.ui_accelerometer.due_by
 }

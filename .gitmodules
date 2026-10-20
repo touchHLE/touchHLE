@@ -8,9 +8,6 @@
 [submodule "openal-soft"]
 	path = vendor/openal-soft
 	url = https://github.com/kcat/openal-soft
-[submodule "vendor/dr_libs"]
-	path = vendor/dr_libs
-	url = https://github.com/mackron/dr_libs.git
 [submodule "vendor/SDL"]
 	path = vendor/SDL
 	url = https://github.com/libsdl-org/SDL.git

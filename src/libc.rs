@@ -11,19 +11,26 @@
 
 mod generic_char;
 
+pub mod arpa;
 pub mod clocale;
+pub mod crypto;
 pub mod ctype;
 pub mod cxxabi;
 pub mod dirent;
 pub mod dlfcn;
+pub mod dns_sd;
 pub mod errno;
+pub mod fnmatch;
+pub mod glob;
 pub mod ifaddrs;
 pub mod keymgr;
-pub mod mach_thread_info;
-pub mod mach_time;
+pub mod libkern;
+pub mod mach;
+pub mod mach_o;
+pub mod malloc;
 pub mod math;
-pub mod mmap;
 pub mod net;
+pub mod netdb;
 pub mod posix_io;
 pub mod pthread;
 pub mod sched;
@@ -39,17 +46,92 @@ pub mod time;
 pub mod unistd;
 pub mod wchar;
 
+pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
+    path: "/usr/lib/libSystem.B.dylib",
+    aliases: &["/usr/lib/libSystem.dylib"],
+    class_exports: &[],
+    constant_exports: &[ctype::CONSTANTS, stdio::CONSTANTS, mach::init::CONSTANTS],
+    function_exports: &[
+        arpa::inet::FUNCTIONS,
+        clocale::FUNCTIONS,
+        ctype::FUNCTIONS,
+        cxxabi::FUNCTIONS,
+        crypto::FUNCTIONS,
+        dirent::FUNCTIONS,
+        dlfcn::FUNCTIONS,
+        dns_sd::FUNCTIONS,
+        errno::FUNCTIONS,
+        fnmatch::FUNCTIONS,
+        glob::FUNCTIONS,
+        ifaddrs::FUNCTIONS,
+        keymgr::FUNCTIONS,
+        libkern::os_atomic::FUNCTIONS,
+        mach::arm::task::FUNCTIONS,
+        mach::arm::thread_act::FUNCTIONS,
+        libkern::task::FUNCTIONS,
+        mach::host::FUNCTIONS,
+        mach::init::FUNCTIONS,
+        mach::mach_port::FUNCTIONS,
+        mach::message::FUNCTIONS,
+        mach::semaphore::FUNCTIONS,
+        mach::thread_info::FUNCTIONS,
+        mach::time::FUNCTIONS,
+        mach::vm_map::FUNCTIONS,
+        mach_o::FUNCTIONS,
+        malloc::FUNCTIONS,
+        math::FUNCTIONS,
+        net::if_::FUNCTIONS,
+        netdb::FUNCTIONS,
+        posix_io::FUNCTIONS,
+        posix_io::stat::FUNCTIONS,
+        posix_io::statvfs::FUNCTIONS,
+        pthread::cond::FUNCTIONS,
+        pthread::key::FUNCTIONS,
+        pthread::mutex::FUNCTIONS,
+        pthread::once::FUNCTIONS,
+        pthread::thread::FUNCTIONS,
+        sched::FUNCTIONS,
+        semaphore::FUNCTIONS,
+        setjmp::FUNCTIONS,
+        signal::FUNCTIONS,
+        stdio::FUNCTIONS,
+        stdio::printf::FUNCTIONS,
+        stdlib::FUNCTIONS,
+        stdlib::qsort::FUNCTIONS,
+        string::FUNCTIONS,
+        sys::mman::FUNCTIONS,
+        sys::mount::FUNCTIONS,
+        sys::ptrace::FUNCTIONS,
+        sys::timeb::FUNCTIONS,
+        sys::socket::FUNCTIONS,
+        sys::uio::FUNCTIONS,
+        sys::utsname::FUNCTIONS,
+        sys::wait::FUNCTIONS,
+        sysctl::FUNCTIONS,
+        time::FUNCTIONS,
+        unistd::FUNCTIONS,
+        wchar::FUNCTIONS,
+    ],
+};
+
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
+    crypto: crypto::State,
     dirent: dirent::State,
     keymgr: keymgr::State,
+    math: math::State,
     posix_io: posix_io::State,
-    pthread: pthread::State,
+    pub pthread: pthread::State,
     pub semaphore: semaphore::State,
+    pub socket: sys::socket::State,
     stdlib: stdlib::State,
     string: string::State,
+    pub stdio: stdio::State,
     time: time::State,
     errno: errno::State,
     clocale: clocale::State,
+    mach_vm: mach::vm_map::State,
+    malloc: malloc::State,
+    mman: sys::mman::State,
 }

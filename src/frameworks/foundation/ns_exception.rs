@@ -4,7 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use crate::dyld::{ConstantExports, HostConstant};
+use crate::dyld::{ConstantExports, FunctionExports, HostConstant};
+use crate::mem::MutVoidPtr;
+use crate::{export_c_func, Environment};
 
 // All constants are NSExceptionName
 pub const CONSTANTS: ConstantExports = &[
@@ -273,3 +275,14 @@ pub const CONSTANTS: ConstantExports = &[
         HostConstant::NSString("UIApplicationInvalidInterfaceOrientationException"),
     ),
 ];
+
+/// This exception handler is supposed to do last-minute logging before the
+/// program terminates. For our purposes, it's completely safe to ignore that.
+fn NSSetUncaughtExceptionHandler(_env: &mut Environment, handler: MutVoidPtr) {
+    log!(
+        "TODO: Ignoring uncaught exception handler at address {:?}",
+        handler
+    );
+}
+
+pub const FUNCTIONS: FunctionExports = &[export_c_func!(NSSetUncaughtExceptionHandler(_))];

@@ -5,6 +5,7 @@
  */
 //! The Core Audio Types framework. (Yes, it's not part of Core Audio?)
 
+use crate::audio::{AudioDescription, AudioFormat};
 use crate::mem::SafeRead;
 
 // The audio frameworks love FourCC's, and we currently don't need these
@@ -17,9 +18,9 @@ pub const fn fourcc(fourcc: &[u8; 4]) -> u32 {
 /// Display a FourCC appropriately for debugging.
 pub fn debug_fourcc(fourcc: u32) -> String {
     if let Ok(utf8) = std::str::from_utf8(&fourcc.to_be_bytes()) {
-        format!("'{}'", utf8)
+        format!("'{utf8}'")
     } else {
-        format!("{:#x}", fourcc)
+        format!("{fourcc:#x}")
     }
 }
 
@@ -37,6 +38,22 @@ pub struct AudioStreamBasicDescription {
     pub bits_per_channel: u32,
     pub _reserved: u32,
 }
+
+impl PartialEq<AudioStreamBasicDescription> for AudioStreamBasicDescription {
+    fn eq(&self, other: &AudioStreamBasicDescription) -> bool {
+        // Comparasion for float sample rate has to allow some error
+        (self.sample_rate - other.sample_rate).abs() < 0.01
+            && self.format_id == other.format_id
+            && self.format_flags == other.format_flags
+            && self.bytes_per_packet == other.bytes_per_packet
+            && self.frames_per_packet == other.frames_per_packet
+            && self.bytes_per_frame == other.bytes_per_frame
+            && self.channels_per_frame == other.channels_per_frame
+            && self.bits_per_channel == other.bits_per_channel
+        // Don't care about reserved
+    }
+}
+
 unsafe impl SafeRead for AudioStreamBasicDescription {}
 impl std::fmt::Debug for AudioStreamBasicDescription {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -78,6 +95,70 @@ impl std::fmt::Debug for AudioStreamBasicDescription {
             .finish()
     }
 }
+impl AudioStreamBasicDescription {
+    pub fn from_audio_description(desc: AudioDescription) -> AudioStreamBasicDescription {
+        let AudioDescription {
+            sample_rate,
+            format,
+            bytes_per_packet,
+            frames_per_packet,
+            channels_per_frame,
+            bits_per_channel,
+        } = desc;
+
+        match format {
+            AudioFormat::LinearPcm {
+                is_float,
+                is_little_endian,
+            } => {
+                let is_packed = (bits_per_channel * channels_per_frame * frames_per_packet)
+                    == (bytes_per_packet * 8);
+                let format_flags = (u32::from(is_float) * kAudioFormatFlagIsFloat)
+                    | (u32::from((!is_float) && matches!(bits_per_channel, 16 | 24))
+                        * kAudioFormatFlagIsSignedInteger)
+                    | (u32::from(is_packed) * kAudioFormatFlagIsPacked)
+                    | (u32::from(!is_little_endian) * kAudioFormatFlagIsBigEndian);
+                AudioStreamBasicDescription {
+                    sample_rate,
+                    format_id: kAudioFormatLinearPCM,
+                    format_flags,
+                    bytes_per_packet,
+                    frames_per_packet,
+                    bytes_per_frame: bytes_per_packet / frames_per_packet,
+                    channels_per_frame,
+                    bits_per_channel,
+                    _reserved: 0,
+                }
+            }
+        }
+    }
+}
+
+#[repr(C, packed)]
+pub struct SMPTETime {
+    pub subframes: i16,
+    pub subframe_divisor: i16,
+    pub counter: u32,
+    pub type_: u32,
+    pub flags: u32,
+    pub hours: i16,
+    pub minutes: i16,
+    pub seconds: i16,
+    pub frames: i16,
+}
+unsafe impl SafeRead for SMPTETime {}
+
+#[repr(C, packed)]
+pub struct AudioTimeStamp {
+    pub sample_time: f64,
+    pub host_time: u64,
+    pub rate_scalar: f64,
+    pub world_clock_type: u64,
+    pub SMPTE_time: SMPTETime,
+    pub flags: u32,
+    pub _reserved: u32,
+}
+unsafe impl SafeRead for AudioTimeStamp {}
 
 /// Usually a FourCC.
 pub type AudioFormatID = u32;
@@ -89,3 +170,4 @@ pub const kAudioFormatFlagIsFloat: AudioFormatFlags = 1 << 0;
 pub const kAudioFormatFlagIsBigEndian: AudioFormatFlags = 1 << 1;
 pub const kAudioFormatFlagIsSignedInteger: AudioFormatFlags = 1 << 2;
 pub const kAudioFormatFlagIsPacked: AudioFormatFlags = 1 << 3;
+pub const kAudioFormatFlagIsAlignedHigh: AudioFormatFlags = 1 << 4;

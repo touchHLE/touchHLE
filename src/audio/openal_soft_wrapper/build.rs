@@ -14,20 +14,19 @@ fn link_search(path: &Path) {
 }
 fn link_lib(lib: &str) {
     if cfg!(feature = "static") {
-        println!("cargo:rustc-link-lib=static={}", lib);
+        println!("cargo:rustc-link-lib=static={lib}");
     } else {
-        println!("cargo:rustc-link-lib=dylib={}", lib);
+        println!("cargo:rustc-link-lib=dylib={lib}");
     }
 }
 
 fn link_framework(framework: &str) {
-    println!("cargo:rustc-link-lib=framework={}", framework);
+    println!("cargo:rustc-link-lib=framework={framework}");
 }
 
 fn main() {
+    let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
     if cfg!(feature = "static") {
-        let os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS was not set");
-
         let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
         let workspace_root = package_root.join("../../..");
 
@@ -71,7 +70,7 @@ fn main() {
     }
 
     // see also src/audio/openal.rs
-    link_lib(if cfg!(target_os = "windows") {
+    link_lib(if os.eq_ignore_ascii_case("windows") {
         "OpenAL32"
     } else {
         "openal"

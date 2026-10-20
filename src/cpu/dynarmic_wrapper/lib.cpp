@@ -8,7 +8,8 @@
 
 #include "dynarmic/interface/A32/a32.h"
 #include "dynarmic/interface/A32/config.h"
-#include "dynarmic/interface/A32/context.h"
+#include "dynarmic/interface/A32/coprocessor.h"
+#include "dynarmic/interface/exclusive_monitor.h"
 
 namespace touchHLE::cpu {
 
@@ -25,6 +26,12 @@ bool touchHLE_cpu_write_u8(touchHLE_Mem *mem, VAddr addr, std::uint8_t value);
 bool touchHLE_cpu_write_u16(touchHLE_Mem *mem, VAddr addr, std::uint16_t value);
 bool touchHLE_cpu_write_u32(touchHLE_Mem *mem, VAddr addr, std::uint32_t value);
 bool touchHLE_cpu_write_u64(touchHLE_Mem *mem, VAddr addr, std::uint64_t value);
+struct touchHLE_DynarmicContext {
+  std::array<std::uint32_t, 16> regs;
+  std::array<std::uint32_t, 64> extregs;
+  std::uint32_t cpsr;
+  std::uint32_t fpscr;
+};
 }
 
 const auto HaltReasonSvc = Dynarmic::HaltReason::UserDefined1;
@@ -103,6 +110,34 @@ private:
     }
   }
 
+  bool MemoryWriteExclusive8(VAddr, std::uint8_t, std::uint8_t) override {
+    std::fprintf(stderr, "MemoryWriteExclusive8: TODO");
+    abort();
+  }
+  bool MemoryWriteExclusive16(VAddr, std::uint16_t, std::uint16_t) override {
+    std::fprintf(stderr, "MemoryWriteExclusive16: TODO");
+    abort();
+  }
+  bool MemoryWriteExclusive32(VAddr addr, std::uint32_t value,
+                              std::uint32_t expected) override {
+    // As long as we stay single threaded on the host side,
+    // this implementation is OK
+    // TODO: revisit once (if) we switch to a host multi-threading
+    if (MemoryRead32(addr) != expected) {
+      // TODO: implement CAS mechanism or similar
+      // (be aware that implementation may need to be platform specific!)
+      std::fprintf(stderr, "MemoryWriteExclusive32: expected %u, got %u\n",
+                   expected, MemoryRead32(addr));
+      abort();
+    }
+    MemoryWrite32(addr, value);
+    return true;
+  }
+  bool MemoryWriteExclusive64(VAddr, std::uint64_t, std::uint64_t) override {
+    std::fprintf(stderr, "MemoryWriteExclusive64: TODO");
+    abort();
+  }
+
   void InterpreterFallback(std::uint32_t, size_t) override {
     abort(); // TODO
   }
@@ -134,9 +169,59 @@ private:
   std::uint64_t GetTicksRemaining() override { return ticks_remaining; }
 };
 
+class ArmDynarmicCP15 : public Dynarmic::A32::Coprocessor {
+  std::uint32_t addr = 0;
+
+public:
+  using CoprocReg = Dynarmic::A32::CoprocReg;
+
+  CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1,
+                                             CoprocReg CRn, CoprocReg CRm,
+                                             unsigned opc2) override {
+    // Corresponds to `coproc_moveto_Data_Memory_Barrier(0)` according
+    // to the Ghidra or `mcr p15,0x0,lr,cr7,cr10,0x5` in the assembly
+    if (!two && CRn == CoprocReg::C7 && opc1 == 0 && CRm == CoprocReg::C10 &&
+        opc2 == 5) {
+      // just return the address to be used as storage
+      return &addr;
+    }
+    return CallbackOrAccessOneWord{};
+  }
+
+  // TODO
+  std::optional<Callback> CompileInternalOperation(bool, unsigned, CoprocReg,
+                                                   CoprocReg, CoprocReg,
+                                                   unsigned) override {
+    return std::nullopt;
+  }
+  CallbackOrAccessTwoWords CompileSendTwoWords(bool, unsigned,
+                                               CoprocReg) override {
+    return CallbackOrAccessTwoWords{};
+  }
+  CallbackOrAccessOneWord CompileGetOneWord(bool, unsigned, CoprocReg,
+                                            CoprocReg, unsigned) override {
+    return CallbackOrAccessOneWord{};
+  }
+  CallbackOrAccessTwoWords CompileGetTwoWords(bool, unsigned,
+                                              CoprocReg) override {
+    return CallbackOrAccessTwoWords{};
+  }
+  std::optional<Callback>
+  CompileLoadWords(bool, bool, CoprocReg,
+                   std::optional<std::uint8_t>) override {
+    return std::nullopt;
+  }
+  std::optional<Callback>
+  CompileStoreWords(bool, bool, CoprocReg,
+                    std::optional<std::uint8_t>) override {
+    return std::nullopt;
+  }
+};
+
 class DynarmicWrapper {
   Environment env;
   std::unique_ptr<Dynarmic::A32::Jit> cpu;
+  std::unique_ptr<Dynarmic::ExclusiveMonitor> mon;
   std::array<std::uint8_t *, Dynarmic::A32::UserConfig::NUM_PAGE_TABLE_ENTRIES>
       page_table;
 
@@ -144,6 +229,9 @@ public:
   DynarmicWrapper(void *direct_memory_access_ptr, size_t null_page_count) {
     Dynarmic::A32::UserConfig user_config;
     user_config.callbacks = &env;
+    user_config.coprocessors[15] = std::make_shared<ArmDynarmicCP15>();
+    mon = std::make_unique<Dynarmic::ExclusiveMonitor>(1);
+    user_config.global_monitor = mon.get();
     // TODO: only do this in debug builds? it's probably expensive
     user_config.check_halt_on_memory_access = true;
     if (direct_memory_access_ptr) {
@@ -181,10 +269,14 @@ public:
     cpu->InvalidateCacheRange(start, size);
   }
 
-  void swap_context(void *context) {
-    Dynarmic::A32::Context tmp = cpu->SaveContext();
-    cpu->LoadContext(*(Dynarmic::A32::Context *)context);
-    *(Dynarmic::A32::Context *)context = tmp;
+  void swap_context(touchHLE_DynarmicContext *context) {
+    touchHLE_DynarmicContext tmp = {cpu->Regs(), cpu->ExtRegs(), cpu->Cpsr(),
+                                    cpu->Fpscr()};
+    cpu->Regs() = context->regs;
+    cpu->ExtRegs() = context->extregs;
+    cpu->SetCpsr(context->cpsr);
+    cpu->SetFpscr(context->fpscr);
+    *context = tmp;
   }
 
   std::int32_t run_or_step(touchHLE_Mem *mem, std::uint64_t *ticks) {
@@ -208,7 +300,7 @@ public:
     } else if (Dynarmic::Has(hr, HaltReasonSvc)) {
       res = std::int32_t(env.halting_svc);
     } else {
-      printf("unhandled halt reason %u\n", hr);
+      printf("unhandled halt reason %u\n", unsigned(hr));
       abort();
     }
     env.mem = nullptr;
@@ -244,7 +336,7 @@ void touchHLE_DynarmicWrapper_set_cpsr(DynarmicWrapper *cpu,
 }
 
 void touchHLE_DynarmicWrapper_swap_context(DynarmicWrapper *cpu,
-                                           void *context) {
+                                           touchHLE_DynarmicContext *context) {
   cpu->swap_context(context);
 }
 
@@ -258,13 +350,6 @@ std::int32_t touchHLE_DynarmicWrapper_run_or_step(DynarmicWrapper *cpu,
                                                   touchHLE_Mem *mem,
                                                   std::uint64_t *ticks) {
   return cpu->run_or_step(mem, ticks);
-}
-
-void *touchHLE_DynarmicWrapper_Context_new() {
-  return (void *)new Dynarmic::A32::Context();
-}
-void touchHLE_DynarmicWrapper_Context_delete(void *context) {
-  delete (Dynarmic::A32::Context *)context;
 }
 }
 

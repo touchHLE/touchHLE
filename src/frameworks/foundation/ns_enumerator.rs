@@ -15,8 +15,9 @@
 //! Resources:
 //! - The GCC documentation's [Fast Enumeration Protocol section](https://gcc.gnu.org/onlinedocs/gcc/Fast-enumeration-protocol.html)
 
-use crate::mem::{Mem, MutPtr, MutVoidPtr, SafeRead};
-use crate::objc::{id, objc_classes, ClassExports};
+use crate::mem::{MutPtr, MutVoidPtr, SafeRead};
+use crate::objc::{id, msg, nil, objc_classes, ClassExports};
+use crate::Environment;
 
 use super::NSUInteger;
 
@@ -33,41 +34,46 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-@implementation NSEnumerator: NSObject
 // Abstract class. Subclass must implement:
 // - (id)nextObject;
-// TODO: Provide NSFastEnumeration convenience implementation.
+@implementation NSEnumerator: NSObject
+
+// NSFastEnumeration (convenience) implementation
+- (NSUInteger)countByEnumeratingWithState:(MutPtr<NSFastEnumerationState>)state
+                                  objects:(MutPtr<id>)stackbuf
+                                    count:(NSUInteger)len {
+    fast_enumeration_helper(env, this, |env, _| {
+        msg![env; this nextObject]
+    }, state, stackbuf, len)
+}
+
 @end
 
 };
 
-pub fn fast_enumeration_helper(
-    mem: &mut Mem,
+pub fn fast_enumeration_helper<F: FnMut(&mut Environment, u32) -> id>(
+    env: &mut Environment,
     this: id,
-    iterator: &mut impl Iterator<Item = id>,
+    mut iter_fn: F,
     state: MutPtr<NSFastEnumerationState>,
     stackbuf: MutPtr<id>,
     len: NSUInteger,
 ) -> NSUInteger {
     let NSFastEnumerationState {
         state: start_index, ..
-    } = mem.read(state);
-
-    if start_index >= 1 {
-        // FIXME: linear time complexity
-        _ = iterator.nth((start_index - 1).try_into().unwrap());
-    }
+    } = env.mem.read(state);
 
     let mut batch_count = 0;
     while batch_count < len {
-        if let Some(object) = iterator.next() {
-            mem.write(stackbuf + batch_count, object);
+        let object = iter_fn(env, start_index + batch_count);
+        if object != nil {
+            env.mem.write(stackbuf + batch_count, object);
             batch_count += 1;
         } else {
             break;
-        }
+        };
     }
-    mem.write(
+    env.mem.write(
         state,
         NSFastEnumerationState {
             state: start_index + batch_count,

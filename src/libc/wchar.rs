@@ -6,7 +6,10 @@
 //! `wchar.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, GuestUSize, MutPtr};
+use crate::libc::clocale::{setlocale, LC_CTYPE};
+use crate::libc::stdlib::mbstowcs;
+use crate::libc::time::{strftime, tm};
+use crate::mem::{ConstPtr, GuestUSize, MutPtr, Ptr};
 use crate::Environment;
 
 use super::generic_char::GenericChar;
@@ -34,7 +37,7 @@ fn wctob(_env: &mut Environment, c: wint_t) -> i32 {
     if u32::try_from(c)
         .ok()
         .and_then(char::from_u32)
-        .map_or(false, |c| c.is_ascii())
+        .is_some_and(|c| c.is_ascii())
     {
         c
     } else {
@@ -50,7 +53,7 @@ fn wmemset(
     ch: wchar_t,
     count: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memset(env, dest, ch, count)
+    GenericChar::<wchar_t>::memset(env, dest, ch, count, GuestUSize::MAX)
 }
 fn wmemcpy(
     env: &mut Environment,
@@ -58,7 +61,16 @@ fn wmemcpy(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memcpy(env, dest, src, size)
+    GenericChar::<wchar_t>::memcpy(env, dest, src, size, GuestUSize::MAX)
+}
+fn __wmemcpy_chk(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memcpy(env, dest, src, size, dest_size)
 }
 fn wmemmove(
     env: &mut Environment,
@@ -66,7 +78,16 @@ fn wmemmove(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::memmove(env, dest, src, size)
+    GenericChar::<wchar_t>::memmove(env, dest, src, size, GuestUSize::MAX)
+}
+fn __wmemmove_chk(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::memmove(env, dest, src, size, dest_size)
 }
 fn wmemchr(
     env: &mut Environment,
@@ -93,6 +114,9 @@ fn wcscpy(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) 
 fn wcscat(env: &mut Environment, dest: MutPtr<wchar_t>, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
     GenericChar::<wchar_t>::strcat(env, dest, src, GuestUSize::MAX)
 }
+fn wcsspn(env: &mut Environment, s: ConstPtr<wchar_t>, charset: ConstPtr<wchar_t>) -> GuestUSize {
+    GenericChar::<wchar_t>::strspn(env, s, charset)
+}
 fn wcscspn(
     env: &mut Environment,
     str: ConstPtr<wchar_t>,
@@ -106,7 +130,16 @@ fn wcsncpy(
     src: ConstPtr<wchar_t>,
     size: GuestUSize,
 ) -> MutPtr<wchar_t> {
-    GenericChar::<wchar_t>::strncpy(env, dest, src, size)
+    GenericChar::<wchar_t>::strncpy(env, dest, src, size, GuestUSize::MAX)
+}
+fn __wcsncpy_chk(
+    env: &mut Environment,
+    dest: MutPtr<wchar_t>,
+    src: ConstPtr<wchar_t>,
+    size: GuestUSize,
+    dest_size: GuestUSize,
+) -> MutPtr<wchar_t> {
+    GenericChar::<wchar_t>::strncpy(env, dest, src, size, dest_size)
 }
 fn wcsdup(env: &mut Environment, src: ConstPtr<wchar_t>) -> MutPtr<wchar_t> {
     GenericChar::<wchar_t>::strdup(env, src)
@@ -143,6 +176,13 @@ fn wcschr(env: &mut Environment, wcsing: ConstPtr<wchar_t>, wchar: wchar_t) -> C
 fn wcsrchr(env: &mut Environment, wcsing: ConstPtr<wchar_t>, wchar: wchar_t) -> ConstPtr<wchar_t> {
     GenericChar::<wchar_t>::strrchr(env, wcsing, wchar)
 }
+fn wcspbrk(
+    env: &mut Environment,
+    s: ConstPtr<wchar_t>,
+    charset: ConstPtr<wchar_t>,
+) -> ConstPtr<wchar_t> {
+    GenericChar::<wchar_t>::strpbrk(env, s, charset)
+}
 fn wcslcpy(
     env: &mut Environment,
     dst: MutPtr<wchar_t>,
@@ -152,20 +192,52 @@ fn wcslcpy(
     GenericChar::<wchar_t>::strlcpy(env, dst, src, size)
 }
 
+// Other functions
+
+fn wcsftime(
+    env: &mut Environment,
+    wcs: MutPtr<wchar_t>,
+    max_size: GuestUSize,
+    format: ConstPtr<wchar_t>,
+    time_ptr: ConstPtr<tm>,
+) -> GuestUSize {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let format_string = env.mem.wcstr_at(format);
+    assert!(format_string.is_ascii()); // TODO
+
+    let c_string: MutPtr<u8> = env.mem.alloc(max_size).cast();
+    let c_format_string: ConstPtr<u8> = env
+        .mem
+        .alloc_and_write_cstr(format_string.as_bytes())
+        .cast_const();
+    let res = strftime(env, c_string, max_size, c_format_string, time_ptr);
+    env.mem.free(c_format_string.cast().cast_mut());
+    mbstowcs(env, wcs, c_string.cast_const(), max_size);
+    env.mem.free(c_string.cast());
+    res
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(btowc(_)),
     export_c_func!(wctob(_)),
     // Functions shared with string.rs
     export_c_func!(wmemset(_, _, _)),
     export_c_func!(wmemcpy(_, _, _)),
+    export_c_func!(__wmemcpy_chk(_, _, _, _)),
     export_c_func!(wmemmove(_, _, _)),
+    export_c_func!(__wmemmove_chk(_, _, _, _)),
     export_c_func!(wmemchr(_, _, _)),
     export_c_func!(wmemcmp(_, _, _)),
     export_c_func!(wcslen(_)),
     export_c_func!(wcscpy(_, _)),
     export_c_func!(wcscat(_, _)),
+    export_c_func!(wcsspn(_, _)),
     export_c_func!(wcscspn(_, _)),
     export_c_func!(wcsncpy(_, _, _)),
+    export_c_func!(__wcsncpy_chk(_, _, _, _)),
     export_c_func!(wcsdup(_)),
     export_c_func!(wcscmp(_, _)),
     export_c_func!(wcsncmp(_, _, _)),
@@ -173,5 +245,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcsstr(_, _)),
     export_c_func!(wcschr(_, _)),
     export_c_func!(wcsrchr(_, _)),
+    export_c_func!(wcspbrk(_, _)),
     export_c_func!(wcslcpy(_, _, _)),
+    // Other functions
+    export_c_func!(wcsftime(_, _, _, _)),
 ];

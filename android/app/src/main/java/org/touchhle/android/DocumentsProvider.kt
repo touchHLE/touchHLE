@@ -23,16 +23,12 @@ import android.webkit.MimeTypeMap
 //import emu.skyline.getPublicFilesDir
 import java.io.*
 
-fun getBaseDirectory() : File {
-    return touchHLEApplication.getContext().getExternalFilesDir(null)!!
-}
-
 class DocumentsProvider : DocumentsProvider() {
     //private val baseDirectory = File(SkylineApplication.instance.getPublicFilesDir().canonicalPath)
     //private val baseDirectory = Environment.getExternalStorageDirectory()
    // private val baseDirectory = touchHLEApplication.getContext().getExternalFilesDir(null)!!
     //private val applicationName = SkylineApplication.instance.applicationInfo.loadLabel(SkylineApplication.instance.packageManager).toString()
-    private val applicationName = "touchHLE"
+    private val applicationName = BuildConfig.APP_NAME
 
     companion object {
         private val DEFAULT_ROOT_PROJECTION : Array<String> = arrayOf(
@@ -55,10 +51,11 @@ class DocumentsProvider : DocumentsProvider() {
             DocumentsContract.Document.COLUMN_SIZE
         )
 
-        //const val AUTHORITY : String = BuildConfig.APPLICATION_ID + ".provider"
-        const val AUTHORITY : String = "org.touchhle.android.provider"
-
         const val ROOT_ID : String = "root"
+    }
+
+    private fun getBaseDirectory() : File {
+        return context!!.getExternalFilesDir(null)!!
     }
 
     override fun onCreate() : Boolean {
@@ -96,7 +93,7 @@ class DocumentsProvider : DocumentsProvider() {
             add(DocumentsContract.Root.COLUMN_DOCUMENT_ID, getDocumentId(getBaseDirectory()))
             add(DocumentsContract.Root.COLUMN_MIME_TYPES, "*/*")
             add(DocumentsContract.Root.COLUMN_AVAILABLE_BYTES, getBaseDirectory().freeSpace)
-            //add(DocumentsContract.Root.COLUMN_ICON, R.drawable.logo_skyline)
+            add(DocumentsContract.Root.COLUMN_ICON, BuildConfig.APP_ICON)
         }
 
         return cursor

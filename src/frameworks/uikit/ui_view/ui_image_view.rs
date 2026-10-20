@@ -7,9 +7,11 @@
 
 use crate::frameworks::core_graphics::cg_image::CGImageRef;
 use crate::frameworks::core_graphics::{CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string::get_static_str;
+use crate::frameworks::foundation::NSTimeInterval;
 use crate::objc::{
     id, impl_HostObject_with_superclass, msg, msg_super, objc_classes, release, retain,
-    ClassExports, NSZonePtr,
+    todo_objc_setter, ClassExports, NSZonePtr,
 };
 
 #[derive(Default)]
@@ -48,7 +50,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg_super![env; this dealloc]
 }
 
-// TODO: initWithCoder:
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let this: id = msg_super![env; this initWithCoder:coder];
+
+    let key_ns_string = get_static_str(env, "UIImage");
+    let image: id = msg![env; coder decodeObjectForKey:key_ns_string];
+
+    () = msg![env; this setImage:image];
+
+    this
+}
 
 - (id)initWithImage:(id)image { // UIImage*
     let size: CGSize = msg![env; image size];
@@ -75,19 +87,27 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, old_image);
 
     let layer: id = msg![env; this layer];
-    () = msg![env; layer setNeedsDisplay];
+    let cg_image: CGImageRef = msg![env; new_image CGImage];
+    () = msg![env; layer setContents:cg_image];
 }
 
-// Normally a UIKit view is drawn into a CGContextRef by drawRect:, which is
-// presumably called from drawLayer:inContext:. But for UIImageView, this would
-// be wasteful, we can tell Core Animation to display the image directly rather
-// than copying it to a (CGBitmapContext). If displayLayer: is defined, then
-// drawLayer:inContext: doesn't get called, so I assume this is what the real
-// UIKit does?
-- (())displayLayer:(id)layer {
-    let image: id = msg![env; this image];
-    let cg_image: CGImageRef = msg![env; image CGImage];
-    () = msg![env; layer setContents:cg_image];
+- (())setAnimationImages:(id)images { // NSArray<UIImage *>*
+    todo_objc_setter!(this, images);
+    // TODO: Use all images in the array instead of just the first one
+    let first_image: id = msg![env; images objectAtIndex:0u32];
+    () = msg![env; this setImage:first_image];
+}
+
+- (())setAnimationDuration:(NSTimeInterval)duration {
+    todo_objc_setter!(this, duration);
+}
+
+- (())startAnimating {
+    log!("TODO: [(UIImageView*) {:?} startAnimating]", this);
+}
+
+- (())stopAnimating {
+    log!("TODO: [(UIImageView*) {:?} stopAnimating]", this);
 }
 
 @end

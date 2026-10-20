@@ -18,7 +18,8 @@
 //! classes that are both (considering Objective-C's support for inheritance,
 //! categories and dynamic class editing).
 
-use crate::dyld::{export_c_func, FunctionExports};
+use crate::dyld::{export_c_func, ConstantExports, FunctionExports, HostConstant, HostDylib};
+use crate::objc::messages::ThreadInitializer;
 use crate::MutexId;
 use std::collections::HashMap;
 
@@ -32,21 +33,27 @@ mod synchronization;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
 pub use messages::{
-    autorelease, msg, msg_class, msg_send, msg_send_super2, msg_super, objc_super, release, retain,
+    autorelease, msg, msg_class, msg_send, msg_send_no_initialize, msg_send_no_type_checking,
+    msg_send_super2, msg_super, objc_super, release, retain,
 };
 pub use methods::{HostIMP, IMP};
 pub use objects::{
     id, impl_HostObject_with_superclass, nil, AnyHostObject, HostObject, TrivialHostObject,
 };
+pub use properties::todo_objc_setter;
 pub use selectors::{selector, SEL};
 
-use classes::{ClassHostObject, FakeClass, UnimplementedClass, CLASS_LISTS};
-use messages::{
-    objc_msgSend, objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature,
+use crate::mem::ConstVoidPtr;
+use crate::Environment;
+use classes::{
+    class_getInstanceSize, class_getMethodImplementation, class_getProperty, class_getSuperclass,
+    class_replaceMethod, objc_getClass, ClassHostObject, FakeClass, UnimplementedClass,
 };
+pub(crate) use messages::objc_msgSend;
+use messages::{objc_msgSendSuper2, objc_msgSend_stret, MsgSendSignature, MsgSendSuperSignature};
 use methods::method_list_t;
-use objects::{objc_object, HostObjectEntry};
-use properties::{objc_copyStruct, objc_setProperty};
+use objects::{objc_object, object_getClass, HostObjectEntry};
+use properties::{ivar_list_t, objc_copyStruct, objc_getProperty, objc_setProperty};
 use selectors::sel_registerName;
 use synchronization::{objc_sync_enter, objc_sync_exit};
 
@@ -74,6 +81,9 @@ pub struct ObjC {
     /// Mutexes used in @synchronized blocks (objc_sync_enter/exit).
     sync_mutexes: HashMap<id, MutexId>,
 
+    /// Mutexes for running the +initialize function.
+    initializer_threads: HashMap<id, ThreadInitializer>,
+
     /// Temporary storage for optional type information when sending a message.
     /// Type information isn't part of the `objc_msgSend` ABI, so an alternative
     /// channel is needed.
@@ -87,18 +97,59 @@ impl ObjC {
             objects: HashMap::new(),
             classes: HashMap::new(),
             sync_mutexes: HashMap::new(),
+            initializer_threads: HashMap::new(),
             message_type_info: None,
         }
     }
 }
 
-pub const FUNCTIONS: FunctionExports = &[
+pub const DYLIB: HostDylib = HostDylib {
+    path: "/usr/lib/libobjc.A.dylib",
+    aliases: &["/usr/lib/libobjc.dylib"],
+    class_exports: &[],
+    constant_exports: &[CONSTANTS],
+    function_exports: &[FUNCTIONS],
+};
+
+const CONSTANTS: ConstantExports = &[
+    // We don't use these in our Objective-C runtime, but exporting useless
+    // symbols for these silences the warning about the unhandled relocation,
+    // and avoids a linker error for the integration tests.
+    ("__objc_empty_vtable", HostConstant::NullPtr),
+    ("__objc_empty_cache", HostConstant::NullPtr),
+];
+
+/// Block support is iOS 4+, but it seems like Block Runtime Helpers
+/// could still be called on even if minimal iOS version is set to 3.x?
+///
+/// ref. <https://clang.llvm.org/docs/Block-ABI-Apple.html#runtime-helper-functions>
+fn _Block_object_dispose(_env: &mut Environment, object: ConstVoidPtr, flags: i32) {
+    // `BLOCK_FIELD_IS_BYREF` flag defines an on stack structure holding
+    // the __block variable. It is _probably_ safe to ignore.
+    // TODO: properly implement for block support
+    assert!(flags == 8); // BLOCK_FIELD_IS_BYREF
+    log!(
+        "Warning: Ignoring _Block_object_dispose({:?}, BLOCK_FIELD_IS_BYREF)",
+        object
+    );
+}
+
+const FUNCTIONS: FunctionExports = &[
+    export_c_func!(class_getInstanceSize(_)),
+    export_c_func!(class_getSuperclass(_)),
+    export_c_func!(class_getProperty(_, _)),
+    export_c_func!(class_getMethodImplementation(_, _)),
+    export_c_func!(class_replaceMethod(_, _, _, _)),
     export_c_func!(objc_msgSend(_, _)),
     export_c_func!(objc_msgSend_stret(_, _, _)),
     export_c_func!(objc_msgSendSuper2(_, _)),
+    export_c_func!(objc_getClass(_)),
+    export_c_func!(objc_getProperty(_, _, _, _)),
     export_c_func!(objc_setProperty(_, _, _, _, _, _)),
     export_c_func!(objc_copyStruct(_, _, _, _, _)),
     export_c_func!(objc_sync_enter(_)),
     export_c_func!(objc_sync_exit(_)),
+    export_c_func!(object_getClass(_)),
     export_c_func!(sel_registerName(_)),
+    export_c_func!(_Block_object_dispose(_, _)),
 ];

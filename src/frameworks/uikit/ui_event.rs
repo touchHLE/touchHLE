@@ -6,7 +6,7 @@
 //! `UIEvent`.
 
 use super::ui_touch::UITouchHostObject;
-use crate::frameworks::foundation::NSUInteger;
+use crate::frameworks::foundation::{NSTimeInterval, NSUInteger};
 use crate::mem::MutVoidPtr;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
@@ -16,6 +16,7 @@ use crate::Environment;
 pub(super) struct UIEventHostObject {
     /// `NSSet<UITouch*>*`
     touches: id,
+    timestamp: NSTimeInterval,
 }
 impl HostObject for UIEventHostObject {}
 
@@ -28,17 +29,22 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)allocWithZone:(NSZonePtr)_zone {
     let host_object = Box::new(UIEventHostObject {
         touches: nil,
+        timestamp: 0.0,
     });
     env.objc.alloc_object(this, host_object, &mut env.mem)
 }
 
 - (())dealloc {
-    let &UIEventHostObject { touches } = env.objc.borrow(this);
+    let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
     release(env, touches);
 }
 
+- (NSTimeInterval)timestamp {
+    env.objc.borrow::<UIEventHostObject>(this).timestamp
+}
+
 - (id)touchesForView:(id)view_ {
-    let &UIEventHostObject { touches } = env.objc.borrow(this);
+    let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
 
     let touches_for_view: id = msg_class![env; NSMutableSet allocWithZone:(MutVoidPtr::null())];
 
@@ -59,7 +65,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)allTouches {
-    let &UIEventHostObject { touches } = env.objc.borrow(this);
+    let &UIEventHostObject { touches, .. } = env.objc.borrow(this);
     touches
 }
 
@@ -73,7 +79,12 @@ pub const CLASSES: ClassExports = objc_classes! {
 pub(super) fn new_event(env: &mut Environment, touches: id) -> id {
     let event: id = msg_class![env; UIEvent alloc];
     retain(env, touches);
+    let timestamp: NSTimeInterval = {
+        let process_info = msg_class![env; NSProcessInfo processInfo];
+        msg![env; process_info systemUptime]
+    };
     let borrow = env.objc.borrow_mut::<UIEventHostObject>(event);
     borrow.touches = touches;
+    borrow.timestamp = timestamp;
     event
 }

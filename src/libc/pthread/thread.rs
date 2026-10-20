@@ -7,8 +7,10 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::libc::errno::{EDEADLK, EINVAL};
-use crate::mem::{ConstPtr, MutPtr, MutVoidPtr, SafeRead};
+use crate::libc::errno::{EDEADLK, EINVAL, ESRCH};
+use crate::mem::{
+    self, ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead, PAGE_SIZE,
+};
 use crate::{Environment, ThreadId};
 use std::collections::HashMap;
 
@@ -31,14 +33,23 @@ pub struct pthread_attr_t {
     /// Magic number (must be [MAGIC_ATTR])
     magic: u32,
     detachstate: i32,
-    _unused: [u32; 8],
+    stacksize: GuestUSize,
+    _unused: [u32; 7],
 }
 unsafe impl SafeRead for pthread_attr_t {}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C, packed)]
+struct sched_param {
+    sched_priority: i32,
+}
+unsafe impl SafeRead for sched_param {}
 
 const DEFAULT_ATTR: pthread_attr_t = pthread_attr_t {
     magic: MAGIC_ATTR,
     detachstate: PTHREAD_CREATE_JOINABLE,
-    _unused: [0; 8],
+    stacksize: mem::Mem::SECONDARY_THREAD_DEFAULT_STACK_SIZE,
+    _unused: [0; 7],
 };
 
 /// Apple's implementation is a 4-byte magic number followed by a massive
@@ -50,12 +61,13 @@ pub struct OpaqueThread {
 }
 unsafe impl SafeRead for OpaqueThread {}
 
+#[allow(non_camel_case_types)]
 pub type pthread_t = MutPtr<OpaqueThread>;
 
 struct ThreadHostObject {
     thread_id: ThreadId,
     joined_by: Option<ThreadId>,
-    _attr: pthread_attr_t,
+    attr: pthread_attr_t,
 }
 
 /// Arbitrarily-chosen magic number for `pthread_attr_t` (not Apple's).
@@ -68,8 +80,22 @@ type DetachState = i32;
 const PTHREAD_CREATE_JOINABLE: DetachState = 1;
 pub const PTHREAD_CREATE_DETACHED: DetachState = 2;
 
+/// Value taken from an iOS 2.0 simulator
+const PTHREAD_STACK_MIN: GuestUSize = 2 * PAGE_SIZE;
+
 pub fn pthread_attr_init(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     env.mem.write(attr, DEFAULT_ATTR);
+    0 // success
+}
+fn pthread_attr_getdetachstate(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    detachstate_ptr: MutPtr<DetachState>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    let detachstate = env.mem.read(attr).detachstate;
+    assert!(detachstate == PTHREAD_CREATE_JOINABLE || detachstate == PTHREAD_CREATE_DETACHED);
+    env.mem.write(detachstate_ptr, detachstate);
     0 // success
 }
 pub fn pthread_attr_setdetachstate(
@@ -84,6 +110,73 @@ pub fn pthread_attr_setdetachstate(
     env.mem.write(attr, attr_copy);
     0 // success
 }
+fn pthread_attr_getstacksize(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    stacksize: MutPtr<GuestUSize>,
+) -> i32 {
+    if attr.is_null() {
+        return EINVAL;
+    }
+    check_magic!(env, attr, MAGIC_THREAD);
+    let size = env.mem.read(attr).stacksize;
+    env.mem.write(stacksize, size);
+    0 // success
+}
+pub fn pthread_attr_setstacksize(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    stacksize: GuestUSize,
+) -> i32 {
+    if attr.is_null() || stacksize < PTHREAD_STACK_MIN || !stacksize.is_multiple_of(PAGE_SIZE) {
+        return EINVAL;
+    }
+    check_magic!(env, attr, MAGIC_ATTR);
+    let mut attr_copy = env.mem.read(attr);
+    attr_copy.stacksize = stacksize;
+    env.mem.write(attr, attr_copy);
+    0 // success
+}
+fn pthread_attr_setinheritsched(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    inheritsched: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    log!(
+        "TODO: pthread_attr_setinheritsched({:?}, {})",
+        attr,
+        inheritsched
+    );
+    0 // success
+}
+fn pthread_attr_setschedpolicy(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    policy: i32,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    log!(
+        "TODO: pthread_attr_setschedpolicy({:?}, {}) (ignored)",
+        attr,
+        policy
+    );
+    0 // success
+}
+fn pthread_attr_setschedparam(
+    env: &mut Environment,
+    attr: MutPtr<pthread_attr_t>,
+    param: ConstPtr<sched_param>,
+) -> i32 {
+    check_magic!(env, attr, MAGIC_ATTR);
+    let sched_param = env.mem.read(param);
+    log!(
+        "TODO: pthread_attr_setschedparam({:?}, {:?}) (ignored)",
+        attr,
+        sched_param
+    );
+    0 // success
+}
 fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> i32 {
     check_magic!(env, attr, MAGIC_ATTR);
     env.mem.write(
@@ -91,6 +184,7 @@ fn pthread_attr_destroy(env: &mut Environment, attr: MutPtr<pthread_attr_t>) -> 
         pthread_attr_t {
             magic: 0,
             detachstate: 0,
+            stacksize: 0,
             _unused: Default::default(),
         },
     );
@@ -111,7 +205,7 @@ pub fn pthread_create(
         DEFAULT_ATTR
     };
 
-    let thread_id = env.new_thread(start_routine, user_data);
+    let thread_id = env.new_thread(start_routine, user_data, attr.stacksize);
 
     let opaque = env.mem.alloc_and_write(OpaqueThread {
         magic: MAGIC_THREAD,
@@ -124,7 +218,7 @@ pub fn pthread_create(
         ThreadHostObject {
             thread_id,
             joined_by: None,
-            _attr: attr,
+            attr,
         },
     );
 
@@ -133,7 +227,17 @@ pub fn pthread_create(
     0 // success
 }
 
-fn pthread_self(env: &mut Environment) -> pthread_t {
+fn pthread_equal(env: &mut Environment, thread1: pthread_t, thread2: pthread_t) -> i32 {
+    if State::get(env).threads.get(&thread1).unwrap().thread_id
+        == State::get(env).threads.get(&thread2).unwrap().thread_id
+    {
+        1
+    } else {
+        0
+    }
+}
+
+pub fn pthread_self(env: &mut Environment) -> pthread_t {
     let current_thread = env.current_thread;
 
     // The main thread is a special case since it's not created via pthreads,
@@ -151,7 +255,7 @@ fn pthread_self(env: &mut Environment) -> pthread_t {
             ThreadHostObject {
                 thread_id: 0,
                 joined_by: None,
-                _attr: DEFAULT_ATTR,
+                attr: DEFAULT_ATTR,
             },
         );
         log_dbg!(
@@ -206,7 +310,7 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
 
     // Deattached threads cannot be joined with.
     let host_obj_joinee = State::get(env).threads.get_mut(&thread).unwrap();
-    if host_obj_joinee._attr.detachstate == PTHREAD_CREATE_DETACHED {
+    if host_obj_joinee.attr.detachstate == PTHREAD_CREATE_DETACHED {
         log_dbg!("Thread attempted join with deattached thread, returning EINVAL!");
         return EINVAL;
     }
@@ -217,27 +321,114 @@ fn pthread_join(env: &mut Environment, thread: pthread_t, retval: MutPtr<MutVoid
     env.join_with_thread(joinee_thread, retval);
     0
 }
-fn pthread_setcanceltype(_env: &mut Environment, _type: i32, _oldtype: MutPtr<i32>) -> i32 {
-    // TODO
+
+fn pthread_detach(env: &mut Environment, thread: pthread_t) -> i32 {
+    let Some(host_obj_joinee) = State::get(env).threads.get_mut(&thread) else {
+        // Defender Chronicles calls with non-existing threadid
+        log_dbg!("Thread attempted detach a thread that doesnt exist, returning ESRCH!");
+        return ESRCH;
+    };
+
+    if host_obj_joinee.attr.detachstate == PTHREAD_CREATE_DETACHED {
+        log_dbg!("Thread attempted detach with deattached thread, returning EINVAL!");
+        return EINVAL;
+    }
+
+    log!("TODO: pthread_detach({:?})", thread);
     0
 }
 
+fn pthread_setcanceltype(_env: &mut Environment, type_: i32, oldtype: MutPtr<i32>) -> i32 {
+    log!("TODO: pthread_setcanceltype({}, {:?})", type_, oldtype);
+    0
+}
+fn pthread_testcancel(_env: &mut Environment) {
+    log!("TODO: pthread_testcancel()");
+}
+
+#[allow(non_camel_case_types)]
 type mach_port_t = u32;
 
 /// Undocumented Darwin function that returns a `mach_port_t`, which in practice
 /// is used by apps as a unique thread ID.
 fn pthread_mach_thread_np(env: &mut Environment, thread: pthread_t) -> mach_port_t {
     let host_object = State::get(env).threads.get(&thread).unwrap();
-    host_object.thread_id.try_into().unwrap()
+    // Must return thread_id + 1 to match mach_thread_self()
+    // (Plus 1 is to avoid having MACH_PORT_NULL for the main thread)
+    (host_object.thread_id + 1).try_into().unwrap()
+}
+
+/// Undocumented Darwin function that returns stack's "bottom" address
+fn pthread_get_stackaddr_np(env: &mut Environment, thread: pthread_t) -> MutVoidPtr {
+    let thread_id = State::get(env).threads.get(&thread).unwrap().thread_id;
+    Ptr::from_bits(*env.threads[thread_id].stack.as_ref().unwrap().end())
+}
+/// Undocumented Darwin function that returns stack's size
+fn pthread_get_stacksize_np(env: &mut Environment, thread: pthread_t) -> GuestUSize {
+    let thread_id = State::get(env).threads.get(&thread).unwrap().thread_id;
+    let start_unadjusted = env.threads[thread_id].stack.as_ref().unwrap().start();
+    let start = if thread_id == 0 {
+        // As tested on iPhone 3GS with iOS 4.0.1, for the main thread
+        // the reported stack size is one short of a page size. Presumably,
+        // the first stack page is guarded and not reported as usable.
+        *start_unadjusted + PAGE_SIZE
+    } else {
+        *start_unadjusted
+    };
+    let end = env.threads[thread_id].stack.as_ref().unwrap().end();
+    end.wrapping_add(1).wrapping_sub(start)
+}
+
+fn pthread_getschedparam(
+    _env: &mut Environment,
+    thread: pthread_t,
+    policy: i32,
+    param: MutVoidPtr,
+) -> i32 {
+    log_dbg!(
+        "TODO: pthread_getschedparam({:?}, {}, {:?})",
+        thread,
+        policy,
+        param
+    );
+    0
+}
+
+fn pthread_setschedparam(
+    _env: &mut Environment,
+    thread: pthread_t,
+    policy: i32,
+    param: ConstVoidPtr,
+) -> i32 {
+    log_dbg!(
+        "TODO: pthread_setschedparam({:?}, {}, {:?})",
+        thread,
+        policy,
+        param
+    );
+    0
 }
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(pthread_attr_init(_)),
+    export_c_func!(pthread_attr_getdetachstate(_, _)),
     export_c_func!(pthread_attr_setdetachstate(_, _)),
+    export_c_func!(pthread_attr_getstacksize(_, _)),
+    export_c_func!(pthread_attr_setstacksize(_, _)),
+    export_c_func!(pthread_attr_setinheritsched(_, _)),
+    export_c_func!(pthread_attr_setschedpolicy(_, _)),
+    export_c_func!(pthread_attr_setschedparam(_, _)),
     export_c_func!(pthread_attr_destroy(_)),
     export_c_func!(pthread_create(_, _, _, _)),
+    export_c_func!(pthread_equal(_, _)),
     export_c_func!(pthread_self()),
     export_c_func!(pthread_join(_, _)),
+    export_c_func!(pthread_detach(_)),
     export_c_func!(pthread_setcanceltype(_, _)),
+    export_c_func!(pthread_testcancel()),
     export_c_func!(pthread_mach_thread_np(_)),
+    export_c_func!(pthread_get_stackaddr_np(_)),
+    export_c_func!(pthread_get_stacksize_np(_)),
+    export_c_func!(pthread_getschedparam(_, _, _)),
+    export_c_func!(pthread_setschedparam(_, _, _)),
 ];

@@ -12,8 +12,8 @@
 //!   the platform these may or may not be ordinary files, and must be accessed
 //!   through [ResourceFile].
 //! * Files the user is expected to modify, but not touchHLE: [APPS_DIR],
-//!   [USER_OPTIONS_FILE]. These are ordinary files and are found in
-//!   [user_data_base_path].
+//!   [USER_OPTIONS_FILE], [WALLPAPER_FILES]. These are ordinary files and are
+//!   found in [user_data_base_path].
 //! * Files that touchHLE will create and modify, and the user may modify if
 //!   they want to: [SANDBOX_DIR]. These are ordinary files and are found in
 //!   [user_data_base_path].
@@ -21,8 +21,9 @@
 //! See also [crate::fs], which provides a virtual filesystem for the guest app
 //! and defines path types.
 
+use std::borrow::Cow;
 use std::io::{Read, Seek};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Name of the directory containing ARMv6 dynamic libraries bundled with
 /// touchHLE.
@@ -33,6 +34,22 @@ pub const FONTS_DIR: &str = "touchHLE_fonts";
 
 /// Name of the file containing touchHLE's default options for various apps.
 pub const DEFAULT_OPTIONS_FILE: &str = "touchHLE_default_options.txt";
+
+/// macOS-only: If touchHLE is located in a .app bundle, return the path of the
+/// Resources directory. If touchHLE is not located in a .app bundle, return
+/// [None].
+#[allow(dead_code)]
+fn get_macos_bundled_resources_path() -> Option<PathBuf> {
+    if std::env::consts::OS != "macos" {
+        return None;
+    }
+    let base_path = PathBuf::from(sdl2::filesystem::base_path().ok()?);
+    if base_path.file_name().is_some_and(|p| p == "Resources") {
+        Some(base_path)
+    } else {
+        None
+    }
+}
 
 /// Abstraction over a platform-specific type for accessing a resource bundled
 /// with touchHLE.
@@ -49,10 +66,15 @@ impl ResourceFile {
             // APK. We access them via SDL2's wrapper of Android's assets API.
             #[cfg(target_os = "android")]
             file: sdl2::rwops::RWops::from_file(path, "r")?,
-            // On other OSes, resources are ordinary files in the current
-            // directory.
+
+            // On other OSes, resources are accessed as ordinary files.
             #[cfg(not(target_os = "android"))]
-            file: std::fs::File::open(path).map_err(|e| e.to_string())?,
+            file: {
+                let base_path = get_macos_bundled_resources_path();
+                // When not in a bundle, look in the current directory.
+                let path = base_path.as_deref().unwrap_or(Path::new(".")).join(path);
+                std::fs::File::open(path).map_err(|e| e.to_string())?
+            },
         })
     }
     pub fn get(&mut self) -> &mut (impl Read + Seek) {
@@ -76,13 +98,21 @@ pub const APPS_DIR: &str = "touchHLE_apps";
 /// Name of the file intended for the user's own options.
 pub const USER_OPTIONS_FILE: &str = "touchHLE_options.txt";
 
+/// Names of files the user can put a wallpaper image (for the app picker) in.
+#[allow(unused)]
+pub const WALLPAPER_FILES: &[&str] = &[
+    "touchHLE_wallpaper.png",
+    "touchHLE_wallpaper.jpg",
+    "touchHLE_wallpaper.jpeg",
+];
+
 /// Name of the directory where touchHLE will store sandboxed app data, e.g.
 /// the `Documents` directory.
 pub const SANDBOX_DIR: &str = "touchHLE_sandbox";
 
 /// Get a platform-specific base path needed for accessing touchHLE's
 /// user-modifiable files. This is empty on platforms other than Android.
-pub fn user_data_base_path() -> &'static Path {
+pub fn user_data_base_path() -> Cow<'static, Path> {
     #[cfg(target_os = "android")]
     unsafe {
         // This is an exception to the rule that SDL2 should only be used
@@ -102,23 +132,38 @@ pub fn user_data_base_path() -> &'static Path {
             log!("Couldn't get Android external storage path!");
             panic!();
         }
-        Path::new(std::ffi::CStr::from_ptr(path).to_str().unwrap())
+        Cow::from(Path::new(std::ffi::CStr::from_ptr(path).to_str().unwrap()))
     }
     #[cfg(not(target_os = "android"))]
-    Path::new("")
+    {
+        // When touchHLE is run from a .app bundle on macOS, the user might not
+        // be able to control the current directory, so user data needs to go in
+        // a standard location.
+        if get_macos_bundled_resources_path().is_some() {
+            return Cow::from(PathBuf::from(
+                sdl2::filesystem::pref_path("touchhle.org", "touchHLE").unwrap(),
+            ));
+        }
+        Cow::from(Path::new("."))
+    }
 }
 
 /// Get a URI that can be used to open a file manager or similar for the path
 /// that [user_data_base_path] represents.
 pub fn url_for_opening_user_data_dir() -> Result<String, String> {
     if std::env::consts::OS == "android" {
-        // See DocumentsProvider.kt and AndroidManifest.xml
-        Ok("content://org.touchhle.android.provider/root/root".to_string())
+        // See DocumentsProvider.kt, app/build.gradle and AndroidManifest.xml
+        let brand = crate::branding();
+        Ok(format!(
+            "content://org.touchhle.android{}{}.provider/root/root",
+            if brand.is_empty() { "" } else { "." },
+            brand.to_lowercase()
+        ))
     } else {
         let path = user_data_base_path()
             .join(".")
             .canonicalize()
-            .map_err(|e| format!("Can't canonicalize path to user data directory: {}", e))?;
+            .map_err(|e| format!("Can't canonicalize path to user data directory: {e}"))?;
         let path = path
             .to_str()
             .ok_or_else(|| "User data directory path is not UTF-8".to_string())?;
@@ -129,19 +174,23 @@ pub fn url_for_opening_user_data_dir() -> Result<String, String> {
         } else {
             path
         };
-        Ok(format!("file://{}", path))
+        Ok(format!("file://{path}"))
     }
 }
 
-/// Only meaningful on Android: create the user data directory if it doesn't
-/// exist, and populate it with templates or README files. (On other platforms
-/// these are simply bundled with touchHLE in a ZIP file.)
+/// Only meaningful on certain OSes: create the user data directory if it
+/// doesn't exist, and populate it with templates or README files. (On other
+/// platforms these are simply bundled with touchHLE in a ZIP file.)
 pub fn prepopulate_user_data_dir() {
-    if std::env::consts::OS != "android" {
+    if std::env::consts::OS != "android" && std::env::consts::OS != "macos" {
+        return;
+    }
+    let base_path = user_data_base_path();
+    if base_path == Path::new(".") {
         return;
     }
 
-    let apps_dir = user_data_base_path().join(APPS_DIR);
+    let apps_dir = base_path.join(APPS_DIR);
     if !apps_dir.is_dir() {
         match std::fs::create_dir(&apps_dir) {
             Ok(()) => {
@@ -173,13 +222,13 @@ pub fn prepopulate_user_data_dir() {
         create_file(&apps_dir_readme, content);
     }
 
-    let user_options = user_data_base_path().join(USER_OPTIONS_FILE);
+    let user_options = base_path.join(USER_OPTIONS_FILE);
     if !user_options.is_file() {
         let content = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/touchHLE_options.txt"));
         create_file(&user_options, content);
     }
 
-    let options_help = user_data_base_path().join("OPTIONS_HELP.txt");
+    let options_help = base_path.join("OPTIONS_HELP.txt");
     if !options_help.is_file() {
         create_file(&options_help, crate::options::OPTIONS_HELP);
     }

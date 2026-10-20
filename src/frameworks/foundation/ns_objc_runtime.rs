@@ -17,7 +17,7 @@ fn NSSelectorFromString(env: &mut Environment, string: id) -> SEL {
     env.objc.register_host_selector(string.into(), &mut env.mem)
 }
 
-fn NSStringFromClass(env: &mut Environment, class: Class) -> id {
+pub fn NSStringFromClass(env: &mut Environment, class: Class) -> id {
     if class.is_null() {
         return nil;
     }

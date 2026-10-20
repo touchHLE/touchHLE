@@ -9,16 +9,16 @@
 //! usage is to import `GLES` and `types` from this module, but get the
 //! constants from [super::gles11_raw].
 
+use crate::window::{GLContext, Window};
+
 use super::gles11_raw::types::*;
 
 /// Trait representing an OpenGL ES implementation and context.
 ///
-/// # Safety
-/// It is the caller's responsibility to make the context active before using
-/// any of the `unsafe` methods of this trait.
+/// The GL context is not necessarily active, so GL functions can't be called
+/// from this trait. It can be made active from [GLESContext::make_current].
 #[allow(clippy::upper_case_acronyms)]
-#[allow(clippy::too_many_arguments)] // not our fault :(
-pub trait GLES {
+pub trait GLESContext {
     /// Get a human-friendly description of this implementation.
     fn description() -> &'static str
     where
@@ -33,12 +33,47 @@ pub trait GLES {
 
     /// Make this context (and any underlying context) the active OpenGL
     /// context.
-    fn make_current(&self, window: &crate::window::Window);
+    ///
+    /// The lifetime ensures safety - the GLES object can't be destroyed while
+    /// the instance is active, so the OpenGL state remains valid, and the
+    /// window reference prevents the thread from yielding while the GLES
+    /// object is being used, and prevents multiple contexts from existing at
+    /// the same time (which can cause a UAF).
+    fn make_current<'gl_ctx, 'win: 'gl_ctx>(
+        &'gl_ctx mut self,
+        window: &'win mut Window,
+    ) -> Box<dyn GLES + 'gl_ctx>;
 
+    /// Make this context (and any underlying context) the active OpenGL
+    /// context, without checking if it is the only context. You shouldn't use
+    /// this outside of [crate::window::Window], as this is function exists to
+    /// work around lifetime splitting issues inside of it.
+    ///
+    /// SAFETY: Callers must ensure that this is the only active context,
+    /// that the GLES instance does not outlive the self or window
+    /// parameter, that make_current_fn makes the passed context current,
+    /// and that loader_fn properly loads the requested function.
+    unsafe fn make_current_unchecked_for_window<'gl_ctx>(
+        &'gl_ctx mut self,
+        make_current_fn: &mut dyn FnMut(&GLContext),
+        loader_fn: &mut dyn FnMut(&'static str) -> *const std::ffi::c_void,
+    ) -> Box<dyn GLES + 'gl_ctx>;
+}
+
+/// An active GLES context that can be used.
+///
+/// These are effectively direct wrappers around the raw OpenGL functions,
+/// but they make sure that the context is active while it is using it.
+/// # Safety
+/// These functions (should) act as documented by the OpenGL ES spec. Callers
+/// should ensure that all uses of raw pointers are verfied to be valid and
+/// of the correct size as documented in the OpenGL ES spec.
+#[allow(clippy::upper_case_acronyms)]
+#[allow(clippy::too_many_arguments)] // not our fault :(
+pub trait GLES {
     /// Get some string describing the underlying driver. For OpenGL this is
     /// `GL_VENDOR`, `GL_RENDERER` and `GL_VERSION`.
     unsafe fn driver_description(&self) -> String;
-
     // Generic state manipulation
     unsafe fn GetError(&mut self) -> GLenum;
     unsafe fn Enable(&mut self, cap: GLenum);
@@ -51,15 +86,19 @@ pub trait GLES {
     unsafe fn GetFloatv(&mut self, pname: GLenum, params: *mut GLfloat);
     unsafe fn GetIntegerv(&mut self, pname: GLenum, params: *mut GLint);
     unsafe fn GetTexEnviv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint);
+    unsafe fn GetTexEnvfv(&mut self, target: GLenum, pname: GLenum, params: *mut GLfloat);
     unsafe fn GetPointerv(&mut self, pname: GLenum, params: *mut *const GLvoid);
     unsafe fn Hint(&mut self, target: GLenum, mode: GLenum);
+    unsafe fn Finish(&mut self);
     unsafe fn Flush(&mut self);
+    #[allow(dead_code)]
     unsafe fn GetString(&mut self, name: GLenum) -> *const GLubyte;
 
     // Other state manipulation
     unsafe fn AlphaFunc(&mut self, func: GLenum, ref_: GLclampf);
     unsafe fn AlphaFuncx(&mut self, func: GLenum, ref_: GLclampx);
     unsafe fn BlendFunc(&mut self, sfactor: GLenum, dfactor: GLenum);
+    unsafe fn BlendEquationOES(&mut self, mode: GLenum);
     unsafe fn ColorMask(
         &mut self,
         red: GLboolean,
@@ -67,6 +106,8 @@ pub trait GLES {
         blue: GLboolean,
         alpha: GLboolean,
     );
+    unsafe fn ClipPlanef(&mut self, plane: GLenum, equation: *const GLfloat);
+    unsafe fn ClipPlanex(&mut self, plane: GLenum, equation: *const GLfixed);
     unsafe fn CullFace(&mut self, mode: GLenum);
     unsafe fn DepthFunc(&mut self, func: GLenum);
     unsafe fn DepthMask(&mut self, flag: GLboolean);
@@ -75,11 +116,17 @@ pub trait GLES {
     unsafe fn FrontFace(&mut self, mode: GLenum);
     unsafe fn PolygonOffset(&mut self, factor: GLfloat, units: GLfloat);
     unsafe fn PolygonOffsetx(&mut self, factor: GLfixed, units: GLfixed);
+    unsafe fn SampleCoverage(&mut self, value: GLclampf, invert: GLboolean);
+    unsafe fn SampleCoveragex(&mut self, value: GLclampx, invert: GLboolean);
     unsafe fn ShadeModel(&mut self, mode: GLenum);
     unsafe fn Scissor(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn Viewport(&mut self, x: GLint, y: GLint, width: GLsizei, height: GLsizei);
     unsafe fn LineWidth(&mut self, val: GLfloat);
     unsafe fn LineWidthx(&mut self, val: GLfixed);
+    unsafe fn StencilFunc(&mut self, func: GLenum, ref_: GLint, mask: GLuint);
+    unsafe fn StencilOp(&mut self, sfail: GLenum, dpfail: GLenum, dppass: GLenum);
+    unsafe fn StencilMask(&mut self, mask: GLuint);
+    unsafe fn LogicOp(&mut self, opcode: GLenum);
 
     // Points
     unsafe fn PointSize(&mut self, size: GLfloat);
@@ -99,13 +146,16 @@ pub trait GLES {
     unsafe fn Lightfv(&mut self, light: GLenum, pname: GLenum, params: *const GLfloat);
     unsafe fn Lightxv(&mut self, light: GLenum, pname: GLenum, params: *const GLfixed);
     unsafe fn LightModelf(&mut self, pname: GLenum, param: GLfloat);
+    unsafe fn LightModelx(&mut self, pname: GLenum, param: GLfixed);
     unsafe fn LightModelfv(&mut self, pname: GLenum, params: *const GLfloat);
+    unsafe fn LightModelxv(&mut self, pname: GLenum, params: *const GLfixed);
     unsafe fn Materialf(&mut self, face: GLenum, pname: GLenum, param: GLfloat);
     unsafe fn Materialx(&mut self, face: GLenum, pname: GLenum, param: GLfixed);
     unsafe fn Materialfv(&mut self, face: GLenum, pname: GLenum, params: *const GLfloat);
     unsafe fn Materialxv(&mut self, face: GLenum, pname: GLenum, params: *const GLfixed);
 
     // Buffers
+    unsafe fn IsBuffer(&mut self, buffer: GLuint) -> GLboolean;
     unsafe fn GenBuffers(&mut self, n: GLsizei, buffers: *mut GLuint);
     unsafe fn DeleteBuffers(&mut self, n: GLsizei, buffers: *const GLuint);
     unsafe fn BindBuffer(&mut self, target: GLenum, buffer: GLuint);
@@ -200,6 +250,7 @@ pub trait GLES {
     unsafe fn GenTextures(&mut self, n: GLsizei, textures: *mut GLuint);
     unsafe fn DeleteTextures(&mut self, n: GLsizei, textures: *const GLuint);
     unsafe fn ActiveTexture(&mut self, texture: GLenum);
+    unsafe fn IsTexture(&mut self, texture: GLuint) -> GLboolean;
     unsafe fn BindTexture(&mut self, target: GLenum, texture: GLuint);
     unsafe fn TexParameteri(&mut self, target: GLenum, pname: GLenum, param: GLint);
     unsafe fn TexParameterf(&mut self, target: GLenum, pname: GLenum, param: GLfloat);
@@ -271,6 +322,23 @@ pub trait GLES {
     unsafe fn TexEnvxv(&mut self, target: GLenum, pname: GLenum, params: *const GLfixed);
     unsafe fn TexEnviv(&mut self, target: GLenum, pname: GLenum, params: *const GLint);
 
+    unsafe fn MultiTexCoord4f(
+        &mut self,
+        target: GLenum,
+        s: GLfloat,
+        t: GLfloat,
+        r: GLfloat,
+        q: GLfloat,
+    );
+    unsafe fn MultiTexCoord4x(
+        &mut self,
+        target: GLenum,
+        s: GLfixed,
+        t: GLfixed,
+        r: GLfixed,
+        q: GLfixed,
+    );
+
     // Matrix stack operations
     unsafe fn MatrixMode(&mut self, mode: GLenum);
     unsafe fn LoadIdentity(&mut self);
@@ -326,6 +394,8 @@ pub trait GLES {
     // OES_framebuffer_object (incomplete)
     unsafe fn GenFramebuffersOES(&mut self, n: GLsizei, framebuffers: *mut GLuint);
     unsafe fn GenRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *mut GLuint);
+    unsafe fn IsFramebufferOES(&mut self, framebuffer: GLuint) -> GLboolean;
+    unsafe fn IsRenderbufferOES(&mut self, renderbuffer: GLuint) -> GLboolean;
     unsafe fn BindFramebufferOES(&mut self, target: GLenum, framebuffer: GLuint);
     unsafe fn BindRenderbufferOES(&mut self, target: GLenum, renderbuffer: GLuint);
     unsafe fn RenderbufferStorageOES(
@@ -350,6 +420,13 @@ pub trait GLES {
         texture: GLuint,
         level: i32,
     );
+    unsafe fn GetFramebufferAttachmentParameterivOES(
+        &mut self,
+        target: GLenum,
+        attachment: GLenum,
+        pname: GLenum,
+        params: *mut GLint,
+    );
     unsafe fn GetRenderbufferParameterivOES(
         &mut self,
         target: GLenum,
@@ -360,4 +437,7 @@ pub trait GLES {
     unsafe fn DeleteFramebuffersOES(&mut self, n: GLsizei, framebuffers: *const GLuint);
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
+    unsafe fn GetBufferParameteriv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint);
+    unsafe fn MapBufferOES(&mut self, target: GLenum, access: GLenum) -> *mut GLvoid;
+    unsafe fn UnmapBufferOES(&mut self, target: GLenum) -> GLboolean;
 }

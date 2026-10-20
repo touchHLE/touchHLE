@@ -6,12 +6,13 @@
 //! `UIButton`.
 
 use super::{UIControlState, UIControlStateNormal};
-use crate::frameworks::core_graphics::{CGPoint, CGRect};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect};
+use crate::frameworks::foundation::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use crate::frameworks::foundation::NSInteger;
 use crate::frameworks::uikit::ui_font::UITextAlignmentCenter;
 use crate::objc::{
     autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
-    release, retain, ClassExports, NSZonePtr,
+    release, retain, todo_objc_setter, ClassExports, HostObject, NSZonePtr,
 };
 use crate::Environment;
 use std::collections::HashMap;
@@ -27,6 +28,17 @@ const UIButtonTypeInfoLight: UIButtonType = 3;
 const UIButtonTypeInfoDark: UIButtonType = 4;
 #[allow(dead_code)]
 const UIButtonTypeContactAdd: UIButtonType = 5;
+
+// Host object for an intermediate object
+// used for decoding of UIButton from a NIB
+#[derive(Default)]
+struct UIButtonContentHostObject {
+    /// `NSString*`
+    title: id,
+    /// `UIColor*`
+    title_color: id,
+}
+impl HostObject for UIButtonContentHostObject {}
 
 pub struct UIButtonHostObject {
     superclass: super::UIControlHostObject,
@@ -79,46 +91,9 @@ fn update(env: &mut Environment, this: id) {
     () = msg![env; background_image_view setImage:background_image];
 }
 
-pub const CLASSES: ClassExports = objc_classes! {
-
-(env, this, _cmd);
-
-@implementation UIButton: UIControl
-
-+ (id)allocWithZone:(NSZonePtr)_zone {
-    let host_object = Box::<UIButtonHostObject>::default();
-    env.objc.alloc_object(this, host_object, &mut env.mem)
-}
-
-+ (id)buttonWithType:(UIButtonType)type_ {
-    let button: id = msg![env; this new];
-    match type_ {
-        UIButtonTypeCustom => (),
-        UIButtonTypeRoundedRect => {
-            let bg_color: id = msg_class![env; UIColor whiteColor];
-            // TODO: set blue background image in highlighted state
-            // TODO: image highlighting?
-            () = msg![env; button setBackgroundColor:bg_color];
-            // On the real iPhone OS, this is a semi-dark, desaturated blue.
-            // Should we match it?
-            let text_color: id = msg_class![env; UIColor blackColor];
-            () = msg![env; button setTitleColor:text_color
-                                       forState:UIControlStateNormal];
-            // TODO: set border and corner rounding, once supported
-        },
-        _ => {
-            log!("TODO: UIButtonType {}", type_);
-        }
-    }
-    autorelease(env, button)
-}
-
-- (id)initWithFrame:(CGRect)frame {
-    let this: id = msg_super![env; this initWithFrame:frame];
-
+fn init_common(env: &mut Environment, this: id) -> id {
     () = msg![env; this setOpaque:false];
     let bg_color: id = msg_class![env; UIColor clearColor];
-    () = msg![env; this setBackgroundColor:bg_color];
 
     let title_label: id = msg_class![env; UILabel new];
     () = msg![env; title_label setBackgroundColor:bg_color];
@@ -134,9 +109,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     host_obj.image_view = image_view;
     host_obj.background_image_view = background_image_view;
     host_obj.titles_for_states.insert(UIControlStateNormal, nil);
-    host_obj.title_colors_for_states.insert(UIControlStateNormal, text_color);
+    host_obj
+        .title_colors_for_states
+        .insert(UIControlStateNormal, text_color);
     host_obj.images_for_states.insert(UIControlStateNormal, nil);
-    host_obj.background_images_for_states.insert(UIControlStateNormal, nil);
+    host_obj
+        .background_images_for_states
+        .insert(UIControlStateNormal, nil);
 
     () = msg![env; this addSubview:background_image_view];
     () = msg![env; this addSubview:title_label];
@@ -145,8 +124,99 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     this
 }
+// TODO: refactor this to be a part of common init
+fn set_type(env: &mut Environment, button: id, type_: UIButtonType) {
+    match type_ {
+        UIButtonTypeCustom => (),
+        UIButtonTypeRoundedRect => {
+            let bg_color: id = msg_class![env; UIColor whiteColor];
+            // TODO: set blue background image in highlighted state
+            // TODO: image highlighting?
+            () = msg![env; button setBackgroundColor:bg_color];
+            // On the real iPhone OS, this is a semi-dark, desaturated blue.
+            // Should we match it?
+            let text_color: id = msg_class![env; UIColor blackColor];
+            () = msg![env; button setTitleColor:text_color
+                                       forState:UIControlStateNormal];
+            let layer: id = msg![env; button layer];
+            () = msg![env; layer setCornerRadius:(10.0 as CGFloat)];
+            // TODO: set border, once supported
+        }
+        _ => {
+            log!("TODO: UIButtonType {}", type_);
+        }
+    }
+}
 
-// TODO: initWithCoder:
+pub const CLASSES: ClassExports = objc_classes! {
+
+(env, this, _cmd);
+
+@implementation UIButton: UIControl
+
++ (id)allocWithZone:(NSZonePtr)_zone {
+    let host_object = Box::<UIButtonHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
++ (id)buttonWithType:(UIButtonType)type_ {
+    let button: id = msg![env; this new];
+    set_type(env, button, type_);
+    autorelease(env, button)
+}
+
+- (id)initWithFrame:(CGRect)frame {
+    let this: id = msg_super![env; this initWithFrame:frame];
+
+    let bg_color: id = msg_class![env; UIColor clearColor];
+    () = msg![env; this setBackgroundColor:bg_color];
+
+    let this: id = init_common(env, this);
+    // TODO: check which type is a default one
+    set_type(env, this, UIButtonTypeCustom);
+    this
+}
+
+- (id)initWithCoder:(id)coder {
+    let this: id = msg_super![env; this initWithCoder:coder];
+
+    let this = init_common(env, this);
+
+    let key_ns_string = get_static_str(env, "UIButtonType");
+    let type_: i32 = msg![env; coder decodeIntForKey:key_ns_string];
+    set_type(env, this, type_);
+
+    let key_ns_string = get_static_str(env, "UIButtonStatefulContent");
+    let dict: id = msg![env; coder decodeObjectForKey:key_ns_string];
+    assert!(dict != nil);
+    log_dbg!("UIButtonStatefulContent dict: {}", {
+        let desc: id = msg![env; dict description];
+        to_rust_string(env, desc)
+    });
+
+    // It's not entirely clear how the state information is encoded
+    // in this dict.
+    // TODO: support decoding properties of other states
+    let key_idx: id = msg_class![env; NSNumber numberWithLongLong:0i64];
+    let button_content: id = msg![env; dict objectForKey:key_idx];
+
+    let title: id = msg![env; button_content title];
+    if title != nil {
+        log_dbg!("UIButton initWithCoder: title {}", to_rust_string(env, title));
+        () = msg![env; this setTitle:title forState:UIControlStateNormal];
+    }
+
+    let title_color: id = msg![env; button_content titleColor];
+    if title_color != nil {
+        log_dbg!("UIButton initWithCoder: title_color {}", to_rust_string(env, title_color));
+        () = msg![env; this setTitleColor:title_color forState:UIControlStateNormal];
+    }
+
+    // TODO: decode other properties
+    update(env, this);
+
+    this
+}
 
 - (())dealloc {
     let UIButtonHostObject {
@@ -215,6 +285,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setHighlighted:(bool)highlighted {
     () = msg_super![env; this setHighlighted:highlighted];
+    update(env, this);
+}
+- (())setAdjustsImageWhenHighlighted:(bool)adjusts {
+    todo_objc_setter!(this, adjusts);
+}
+- (())setAdjustsImageWhenDisabled:(bool)adjusts {
+    todo_objc_setter!(this, adjusts);
+}
+- (())setShowsTouchWhenHighlighted:(bool)shows {
+    todo_objc_setter!(this, shows);
+}
+- (())setFont:(id)font { // UIFont*
+    let label = env.objc.borrow_mut::<UIButtonHostObject>(this).title_label;
+    () = msg![env; label setFont:font];
     update(env, this);
 }
 // TODO: observe focussing somehow
@@ -308,6 +392,70 @@ pub const CLASSES: ClassExports = objc_classes! {
     } else {
         nil
     }
+}
+
+@end
+
+// Undocumented classes used by NIBs
+
+@implementation UIRoundedRectButton: UIButton
+// TODO: rendering of round corners
+@end
+
+@implementation UIButtonContent: NSObject
+
++ (id)alloc {
+    let host_object = Box::<UIButtonContentHostObject>::default();
+    env.objc.alloc_object(this, host_object, &mut env.mem)
+}
+
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    let title_key = get_static_str(env, "UITitle");
+    let title: id = msg![env; coder decodeObjectForKey:title_key];
+    log_dbg!("UIButtonContent: UITitle -> {}", to_rust_string(env, title));
+
+    let title_color_key = get_static_str(env, "UITitleColor");
+    let title_color: id = msg![env; coder decodeObjectForKey:title_color_key];
+    log_dbg!("UIButtonContent: UITitleColor -> {:?}", title_color);
+
+    // TODO: decode other properties
+
+    retain(env, title);
+    retain(env, title_color);
+    let host_obj = env.objc.borrow_mut::<UIButtonContentHostObject>(this);
+    host_obj.title = title;
+    host_obj.title_color = title_color;
+
+    this
+}
+
+- (id)title {
+    env.objc.borrow::<UIButtonContentHostObject>(this).title
+}
+- (id)titleColor {
+    env.objc.borrow::<UIButtonContentHostObject>(this).title_color
+}
+
+- (id)description {
+    let title = env.objc.borrow::<UIButtonContentHostObject>(this).title;
+    let title_color = env.objc.borrow::<UIButtonContentHostObject>(this).title_color;
+    let desc_str = format!(
+        "UIButtonContent({this:?}, title {title:?}, title_color {title_color:?})"
+    );
+    let desc = from_rust_string(env, desc_str);
+    autorelease(env, desc)
+}
+
+- (())dealloc {
+    let &UIButtonContentHostObject {
+        title,
+        title_color
+    } = env.objc.borrow(this);
+    release(env, title);
+    release(env, title_color);
+
+    env.objc.dealloc_object(this, &mut env.mem)
 }
 
 @end

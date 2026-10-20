@@ -51,10 +51,7 @@ fn _keymgr_get_and_lock_processwide_ptr_2(
 }
 
 fn _keymgr_get_and_lock_processwide_ptr(env: &mut Environment, key: i32) -> MutVoidPtr {
-    match get_and_lock_processwide_ptr_inner(env, key) {
-        Ok(ptr) => ptr,
-        Err(_) => Ptr::null(),
-    }
+    get_and_lock_processwide_ptr_inner(env, key).unwrap_or_default()
 }
 
 fn _keymgr_set_and_unlock_processwide_ptr(env: &mut Environment, key: i32, ptr: MutVoidPtr) -> i32 {

@@ -54,9 +54,9 @@ You need three additional things for Android:
 3. The Android SDK and NDK. There's two options:
     - Install Android Studio (recommended): https://developer.android.com/
     - Install "Command line tools only": https://developer.android.com/studio/index.html#command-line-tools-only
-      - You might also need to install Gradle (suggested version: 7.3)
+      - You might also need to install Gradle (check the version in `android/gradle/wrapper/gradle-wrapper.properties`)
 
-We've tested this on macOS 12.6 with Android Studio 2022.1.1 Patch 2 and NDK version 25.2.9519653.
+This has been tested on macOS 12.7.6 with Android Studio 2024.3.2 Patch 1 and NDK version 25.2.9519653.
 
 ## Building
 

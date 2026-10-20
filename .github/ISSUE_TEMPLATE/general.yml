@@ -1,0 +1,16 @@
+name: Request a feature or report a general bug
+description: This is for emulator features, not for supporting a specific app.
+body:
+  - type: textarea
+    attributes:
+      label: Describe the feature or issue.
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: By submitting this issue, I certify that…
+      options:
+        - label: I understand that linking to, discussing or asking for pirated content is not permitted, and will lead to an immediate ban.
+          required: true
+        - label: I understand that “Abandonware” and illegal copies of free games are also pirated content.
+          required: true

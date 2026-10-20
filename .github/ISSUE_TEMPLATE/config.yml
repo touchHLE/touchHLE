@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: File an app compatibility report
+    about: The app compatibility database tracks which apps do and don't work in touchHLE.
+    url: https://appdb.touchhle.org/

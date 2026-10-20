@@ -12,13 +12,13 @@ use crate::abi::{CallFromHost, GuestFunction};
 use crate::audio::decode_ima4;
 use crate::audio::openal as al;
 use crate::audio::openal::al_types::*;
+use crate::audio::openal::{OpenAL, OpenALManager};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::audio_toolbox::ContextManager;
 use crate::frameworks::carbon_core::OSStatus;
 use crate::frameworks::core_audio_types::{
     debug_fourcc, fourcc, kAudioFormatAppleIMA4, kAudioFormatFlagIsBigEndian,
-    kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatLinearPCM,
-    AudioStreamBasicDescription,
+    kAudioFormatFlagIsFloat, kAudioFormatFlagIsPacked, kAudioFormatFlagIsSignedInteger,
+    kAudioFormatLinearPCM, AudioStreamBasicDescription, AudioTimeStamp,
 };
 use crate::frameworks::core_foundation::cf_run_loop::{
     kCFRunLoopCommonModes, CFRunLoopGetMain, CFRunLoopMode, CFRunLoopRef,
@@ -40,6 +40,18 @@ impl State {
     fn get(framework_state: &mut crate::frameworks::State) -> &mut Self {
         &mut framework_state.audio_toolbox.audio_queue
     }
+    fn get_with_context<'s, 'm: 's>(
+        framework_state: &'s mut crate::frameworks::State,
+        manager: &'m mut OpenALManager,
+    ) -> (&'s mut Self, OpenAL<'s>) {
+        (
+            &mut framework_state.audio_toolbox.audio_queue,
+            framework_state
+                .audio_toolbox
+                .al_context
+                .make_al_context_current(manager),
+        )
+    }
 }
 
 struct AudioQueueHostObject {
@@ -59,6 +71,7 @@ struct AudioQueueHostObject {
     al_unused_buffers: Vec<ALuint>,
     aq_is_running_proc: Option<AudioQueuePropertyListenerProc>,
     aq_is_running_user_data: Option<MutVoidPtr>,
+    is_running_handler: bool,
 }
 
 /// Track whether the audio queue is meant to be running, in order to handle
@@ -86,7 +99,7 @@ pub struct AudioQueueBuffer {
     pub audio_data: MutVoidPtr,
     pub audio_data_byte_size: u32,
     user_data: MutVoidPtr,
-    _packet_description_capacity: u32,
+    packet_description_capacity: u32,
     /// Should be a `MutPtr<AudioStreamPacketDescription>`, but that's not
     /// implemented yet.
     _packet_descriptions: MutVoidPtr,
@@ -112,6 +125,8 @@ type AudioQueuePropertyListenerProc = GuestFunction;
 
 const kAudioQueueErr_InvalidBuffer: OSStatus = -66687;
 const kAudioQueueErr_InvalidPropertySize: OSStatus = -66683;
+const kAudioQueueErr_CannotStart: OSStatus = -66681;
+const kAudioQueueErr_InvalidDevice: OSStatus = -66680;
 const kAudioQueueErr_BufferInQueue: OSStatus = -66679;
 
 pub fn AudioQueueNewOutput(
@@ -130,7 +145,7 @@ pub fn AudioQueueNewOutput(
     assert!(
         in_callback_run_loop_mode.is_null() || {
             let common_modes = get_static_str(env, kCFRunLoopCommonModes);
-            msg![env; in_callback_run_loop_mode isEqualTo:common_modes]
+            msg![env; in_callback_run_loop_mode isEqual:common_modes]
         }
     );
 
@@ -143,7 +158,23 @@ pub fn AudioQueueNewOutput(
         in_callback_run_loop
     };
 
-    let format = env.mem.read(in_format);
+    let mut format = env.mem.read(in_format);
+    if env.bundle.bundle_identifier().starts_with("com.ea.candcra")
+        && format.format_id == fourcc(b".mp3")
+    {
+        log!("Applying game-specific hack for C&C Red Alert: Fixing hardcoded audio format from .mp3 to PCM.");
+        format = AudioStreamBasicDescription {
+            sample_rate: 44100.0,
+            format_id: kAudioFormatLinearPCM,
+            format_flags: 12,
+            bytes_per_packet: 4,
+            frames_per_packet: 1,
+            bytes_per_frame: 4,
+            channels_per_frame: 2,
+            bits_per_channel: 16,
+            _reserved: 0,
+        }
+    }
 
     let host_object = AudioQueueHostObject {
         format,
@@ -158,6 +189,7 @@ pub fn AudioQueueNewOutput(
         al_unused_buffers: Vec::new(),
         aq_is_running_proc: None,
         aq_is_running_user_data: None,
+        is_running_handler: false,
     };
 
     let aq_ref = env.mem.alloc_and_write(OpaqueAudioQueue { _filler: 0 });
@@ -167,6 +199,8 @@ pub fn AudioQueueNewOutput(
     env.mem.write(out_aq, aq_ref);
 
     ns_run_loop::add_audio_queue(env, in_callback_run_loop, aq_ref);
+
+    log_if_broken_audio_format(&format);
 
     if !is_supported_audio_format(&format) {
         log_dbg!("Warning: Audio queue {:?} will be ignored because its format is not yet supported: {:#?}", aq_ref, format);
@@ -181,7 +215,7 @@ pub fn AudioQueueNewOutput(
     0 // success
 }
 
-fn AudioQueueGetParameter(
+pub fn AudioQueueGetParameter(
     env: &mut Environment,
     in_aq: AudioQueueRef,
     in_param_id: AudioQueueParameterID,
@@ -213,15 +247,40 @@ pub fn AudioQueueSetParameter(
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     host_object.volume = in_value;
+    log_dbg!(
+        "AudioQueueSetParameter kAudioQueueParam_Volume is set to {}",
+        host_object.volume
+    );
     if let Some(al_source) = host_object.al_source {
-        let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+        let context = env
+            .framework_state
+            .audio_toolbox
+            .make_al_context_current(&mut env.openal_manager);
+
+        // If not clamped, OpenAL generates an error.
+        // While Apple's docs states that this range is expected,
+        // setting outside of range values do not generate errors
+        // (tested on both macOS and iOS).
+        let in_value = in_value.clamp(0.0, 1.0);
+
         unsafe {
-            al::alSourcef(al_source, al::AL_MAX_GAIN, in_value);
-            assert!(al::alGetError() == 0);
+            context.Sourcef(al_source, al::AL_MAX_GAIN, in_value);
+            assert!(context.GetError() == 0);
         }
     }
 
     0 // success
+}
+
+fn AudioQueueAllocateBufferWithPacketDescriptions(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_buffer_byte_size: GuestUSize,
+    _in_number_packet_desc: GuestUSize,
+    out_buffer: MutPtr<AudioQueueBufferRef>,
+) -> OSStatus {
+    // TODO: support packet descriptions
+    AudioQueueAllocateBuffer(env, in_aq, in_buffer_byte_size, out_buffer)
 }
 
 pub fn AudioQueueAllocateBuffer(
@@ -237,13 +296,24 @@ pub fn AudioQueueAllocateBuffer(
         .get_mut(&in_aq)
         .unwrap();
 
+    let packet_description_capacity = if env
+        .bundle
+        .bundle_identifier()
+        .starts_with("com.ea.candcra")
+    {
+        log!("Applying game-specific hack for C&C Red Alert: Setting packet description capacity to 1024.");
+        1024
+    } else {
+        0
+    };
+
     let audio_data = env.mem.alloc(in_buffer_byte_size);
     let buffer_ptr = env.mem.alloc_and_write(AudioQueueBuffer {
         audio_data_bytes_capacity: in_buffer_byte_size,
         audio_data,
         audio_data_byte_size: 0,
         user_data: Ptr::null(),
-        _packet_description_capacity: 0,
+        packet_description_capacity,
         _packet_descriptions: Ptr::null(),
         _packet_description_count: 0,
     });
@@ -251,6 +321,29 @@ pub fn AudioQueueAllocateBuffer(
     env.mem.write(out_buffer, buffer_ptr);
 
     0 // success
+}
+
+fn AudioQueueEnqueueBufferWithParameters(
+    env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_buffer: AudioQueueBufferRef,
+    in_num_packet_descs: u32,
+    in_packet_descs: MutVoidPtr,
+    in_trim_frames_at_start: u32,
+    in_trim_frames_at_end: u32,
+    in_num_param_values: u32,
+    in_param_values: MutVoidPtr,
+    in_start_time: ConstPtr<AudioTimeStamp>,
+    out_actual_start_time: MutPtr<AudioTimeStamp>,
+) -> OSStatus {
+    // TODO
+    assert_eq!(in_trim_frames_at_start, 0);
+    assert_eq!(in_trim_frames_at_end, 0);
+    assert_eq!(in_num_param_values, 0);
+    assert!(in_param_values.is_null());
+    assert!(in_start_time.is_null());
+    assert!(out_actual_start_time.is_null());
+    AudioQueueEnqueueBuffer(env, in_aq, in_buffer, in_num_packet_descs, in_packet_descs)
 }
 
 pub fn AudioQueueEnqueueBuffer(
@@ -392,9 +485,43 @@ fn AudioQueueGetProperty(
     0 // success
 }
 
+fn AudioQueueSetProperty(
+    _env: &mut Environment,
+    in_aq: AudioQueueRef,
+    in_property_id: AudioQueuePropertyID,
+    in_property_data: ConstVoidPtr,
+    io_data_size: MutPtr<u32>,
+) -> OSStatus {
+    log!(
+        "TODO: AudioQueueSetProperty({:?}, {}, {:?}, {:?}) -> kAudioQueueErr_InvalidDevice",
+        in_aq,
+        debug_fourcc(in_property_id),
+        in_property_data,
+        io_data_size
+    );
+
+    // Error value shouldn't matter that much,
+    // this one is closest to a notion of "unsupported"
+    kAudioQueueErr_InvalidDevice
+}
+
+pub fn log_if_broken_audio_format(format: &AudioStreamBasicDescription) {
+    let bytes_per_channel = format.bits_per_channel / 8;
+    let expected_bytes_per_packet = format.bytes_per_frame * format.frames_per_packet;
+    let expected_bytes_per_frame = format.channels_per_frame * bytes_per_channel;
+    if format.bytes_per_packet < expected_bytes_per_packet
+        || format.bytes_per_frame < expected_bytes_per_frame
+    {
+        log!(
+            "Warning: Stream format has non-sensical values: {:?}",
+            format
+        );
+    }
+}
+
 /// Check if the format of an audio queue is one we currently support.
 /// If not, we should skip trying to play it rather than crash.
-fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
+pub fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
     let &AudioStreamBasicDescription {
         format_id,
         format_flags,
@@ -408,7 +535,7 @@ fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
         kAudioFormatLinearPCM => {
             // TODO: support more PCM formats
             (channels_per_frame == 1 || channels_per_frame == 2)
-                && (bits_per_channel == 8 || bits_per_channel == 16)
+                && (bits_per_channel == 8 || bits_per_channel == 16 || bits_per_channel == 32)
                 && ((format_flags & kAudioFormatFlagIsPacked) != 0
                     || ((bits_per_channel / 8) * channels_per_frame) == bytes_per_frame)
                 && (format_flags & kAudioFormatFlagIsBigEndian) == 0
@@ -418,20 +545,21 @@ fn is_supported_audio_format(format: &AudioStreamBasicDescription) -> bool {
     }
 }
 
-/// Decode an [AudioQueueBuffer]'s content to raw PCM suitable for an OpenAL
-/// buffer.
-fn decode_buffer(
+/// Decode an [AudioQueueBuffer] or [super::audio_unit::AudioBuffer]'s content
+/// to raw PCM suitable for an OpenAL buffer.
+pub fn decode_buffer(
     mem: &Mem,
     format: &AudioStreamBasicDescription,
-    buffer: &AudioQueueBuffer,
+    audio_data: MutPtr<u8>,
+    audio_data_byte_size: GuestUSize,
 ) -> (ALenum, ALsizei, Vec<u8>) {
-    let data_slice = mem.bytes_at(buffer.audio_data.cast(), buffer.audio_data_byte_size);
+    let data_slice = mem.bytes_at(audio_data, audio_data_byte_size);
 
     assert!(is_supported_audio_format(format));
 
     match format.format_id {
         kAudioFormatAppleIMA4 => {
-            assert!(data_slice.len() % 34 == 0);
+            assert!(data_slice.len().is_multiple_of(34));
             let mut out_pcm = Vec::<u8>::with_capacity((data_slice.len() / 34) * 64 * 2);
             let packets = data_slice.chunks(34);
 
@@ -475,14 +603,74 @@ fn decode_buffer(
                 data_slice
             };
 
-            let f = match (format.channels_per_frame, format.bits_per_channel) {
+            let bytes_per_channel = format.bits_per_channel / 8;
+            let actual_bytes_per_frame = format.channels_per_frame * bytes_per_channel;
+            let actual_channels_per_frame = format.bytes_per_frame / bytes_per_channel;
+
+            // In case the audio format has inconsistent values, we apply some
+            // processing before passing it to OpenAL.
+            // This is the case in Resident Evil 4
+            let processed_data: Vec<u8> = if actual_bytes_per_frame == format.bytes_per_frame {
+                data_slice.to_owned()
+            } else {
+                let actual_frame_count = data_slice.len() / actual_bytes_per_frame as usize;
+                let processed_frame_count = format.bytes_per_frame as usize * actual_frame_count;
+                let mut processed_data = Vec::<u8>::with_capacity(processed_frame_count);
+                for frame in data_slice.chunks(actual_bytes_per_frame as usize) {
+                    // Fetch only frame bytes
+                    let frame_bytes = &frame[frame.len() - format.bytes_per_frame as usize..];
+                    // Change from big to little endian
+                    // It's been observed in Resident Evil 4 that, although the
+                    // audio format doesn't say anything about it being in big
+                    // endian, the data in the buffer has their values in big
+                    // endian and must be converted to little endian before
+                    // passing them to OpenAL.
+                    match format.bytes_per_frame {
+                        1 => processed_data.extend(
+                            &u8::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        2 => processed_data.extend_from_slice(
+                            &u16::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        4 => processed_data.extend_from_slice(
+                            &u32::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        8 => processed_data.extend_from_slice(
+                            &u64::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        16 => processed_data.extend_from_slice(
+                            &u128::from_be_bytes(frame_bytes.try_into().unwrap()).to_le_bytes(),
+                        ),
+                        _ => unimplemented!(),
+                    };
+                }
+                processed_data
+            };
+
+            let f = match (actual_channels_per_frame, format.bits_per_channel) {
                 (1, 8) => al::AL_FORMAT_MONO8,
                 (1, 16) => al::AL_FORMAT_MONO16,
                 (2, 8) => al::AL_FORMAT_STEREO8,
                 (2, 16) => al::AL_FORMAT_STEREO16,
+                (2, 32) => {
+                    assert!((format.format_flags & kAudioFormatFlagIsSignedInteger) != 0);
+                    assert!(processed_data.len().is_multiple_of(4));
+                    let new_size = (processed_data.len() / 4) * 2; // size from 32-bit to 16-bit
+                    let mut new_processed_data = Vec::<u8>::with_capacity(new_size);
+                    for chunk in processed_data.chunks(4) {
+                        let val: i32 = i32::from_le_bytes(chunk.try_into().unwrap());
+                        let new_val: i16 = (val >> 16) as i16;
+                        new_processed_data.extend(new_val.to_le_bytes());
+                    }
+                    return (
+                        al::AL_FORMAT_STEREO16,
+                        format.sample_rate as ALsizei,
+                        new_processed_data,
+                    );
+                }
                 _ => unreachable!(),
             };
-            (f, format.sample_rate as ALsizei, data_slice.to_owned())
+            (f, format.sample_rate as ALsizei, processed_data)
         }
         _ => unreachable!(),
     }
@@ -490,27 +678,27 @@ fn decode_buffer(
 
 /// Ensure an audio queue has an OpenAL source and at least one queued OpenAL
 /// buffer.
-fn prime_audio_queue(
-    env: &mut Environment,
-    in_aq: AudioQueueRef,
-    context_manager: Option<ContextManager>,
-) -> ContextManager {
-    let context_manager = context_manager
-        .unwrap_or_else(|| env.framework_state.audio_toolbox.make_al_context_current());
+fn prime_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) -> Result<(), ()> {
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
-    let state = State::get(&mut env.framework_state);
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     if !is_supported_audio_format(&host_object.format) {
-        return context_manager;
+        return Err(());
     }
 
     if host_object.al_source.is_none() {
+        // If not clamped, OpenAL generates an error.
+        // While Apple's docs states that this range is expected,
+        // setting outside of range values do not generate errors
+        // (tested on both macOS and iOS).
+        let volume = host_object.volume.clamp(0.0, 1.0);
         let mut al_source = 0;
         unsafe {
-            al::alGenSources(1, &mut al_source);
-            al::alSourcef(al_source, al::AL_MAX_GAIN, host_object.volume);
-            assert!(al::alGetError() == 0);
+            context.GenSources(1, &mut al_source);
+            context.Sourcef(al_source, al::AL_MAX_GAIN, volume);
+            assert!(context.GetError() == 0);
         };
         host_object.al_source = Some(al_source);
     }
@@ -520,13 +708,13 @@ fn prime_audio_queue(
         let mut al_buffers_queued = 0;
         let mut al_buffers_processed = 0;
         unsafe {
-            al::alGetSourcei(al_source, al::AL_BUFFERS_QUEUED, &mut al_buffers_queued);
-            al::alGetSourcei(
+            context.GetSourcei(al_source, al::AL_BUFFERS_QUEUED, &mut al_buffers_queued);
+            context.GetSourcei(
                 al_source,
                 al::AL_BUFFERS_PROCESSED,
                 &mut al_buffers_processed,
             );
-            assert!(al::alGetError() == 0);
+            assert!(context.GetError() == 0);
         }
         let al_buffers_queued: usize = al_buffers_queued.try_into().unwrap();
         let al_buffers_processed: usize = al_buffers_processed.try_into().unwrap();
@@ -550,15 +738,19 @@ fn prime_audio_queue(
 
         let next_al_buffer = host_object.al_unused_buffers.pop().unwrap_or_else(|| {
             let mut al_buffer = 0;
-            unsafe { al::alGenBuffers(1, &mut al_buffer) };
-            assert!(unsafe { al::alGetError() } == 0);
+            unsafe { context.GenBuffers(1, &mut al_buffer) };
+            assert!(unsafe { context.GetError() } == 0);
             al_buffer
         });
 
-        let (al_format, al_frequency, data) =
-            decode_buffer(&env.mem, &host_object.format, &next_buffer);
+        let (al_format, al_frequency, data) = decode_buffer(
+            &env.mem,
+            &host_object.format,
+            next_buffer.audio_data.cast(),
+            next_buffer.audio_data_byte_size,
+        );
         unsafe {
-            al::alBufferData(
+            context.BufferData(
                 next_al_buffer,
                 al_format,
                 data.as_ptr() as *const ALvoid,
@@ -566,23 +758,22 @@ fn prime_audio_queue(
                 al_frequency,
             )
         };
-        unsafe { al::alSourceQueueBuffers(al_source, 1, &next_al_buffer) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe { context.SourceQueueBuffers(al_source, 1, &next_al_buffer) };
+        assert!(unsafe { context.GetError() } == 0);
     }
-
-    context_manager
+    Ok(())
 }
 
-fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, mut callback: F) {
+fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, context: &OpenAL<'_>, mut callback: F) {
     loop {
         let mut al_buffers_processed = 0;
         unsafe {
-            al::alGetSourcei(
+            context.GetSourcei(
                 al_source,
                 al::AL_BUFFERS_PROCESSED,
                 &mut al_buffers_processed,
             );
-            assert!(al::alGetError() == 0);
+            assert!(context.GetError() == 0);
         }
         if al_buffers_processed == 0 {
             break;
@@ -590,8 +781,8 @@ fn unqueue_buffers<F: FnMut(ALuint)>(al_source: ALuint, mut callback: F) {
 
         let mut al_buffer = 0;
         unsafe {
-            al::alSourceUnqueueBuffers(al_source, 1, &mut al_buffer);
-            assert!(al::alGetError() == 0);
+            context.SourceUnqueueBuffers(al_source, 1, &mut al_buffer);
+            assert!(context.GetError() == 0);
         }
 
         callback(al_buffer);
@@ -604,9 +795,8 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     // Collect used buffers and call the user callback so the app can provide
     // new buffers.
 
-    let context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     let Some(al_source) = host_object.al_source else {
@@ -615,10 +805,16 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     if !is_supported_audio_format(&host_object.format) {
         return;
     }
+    if host_object.is_running_handler {
+        // Already running, prevent infinite loop from reentrancy
+        return;
+    }
+
+    host_object.is_running_handler = true;
 
     let mut buffers_to_reuse = Vec::new();
 
-    unqueue_buffers(al_source, |al_buffer| {
+    unqueue_buffers(al_source, &context, |al_buffer| {
         host_object.al_unused_buffers.push(al_buffer);
         let buffer_ref = host_object.buffer_queue.pop_front().unwrap();
         buffers_to_reuse.push(buffer_ref);
@@ -645,20 +841,25 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
 
     // Push new buffers etc.
 
-    let _context_manager = prime_audio_queue(env, in_aq, Some(context_manager));
+    _ = prime_audio_queue(env, in_aq);
+
+    let context = env
+        .framework_state
+        .audio_toolbox
+        .make_al_context_current(&mut env.openal_manager);
 
     if is_running != AudioQueueIsRunning::Stopped {
         unsafe {
             let mut al_source_state = 0;
-            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
-            assert!(al::alGetError() == 0);
+            context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(context.GetError() == 0);
             // Source probably ran out data and needs restarting
             // TODO: We currently have to do this even when touchHLE is not
             // lagging, because we're not ensuring OpenAL always has at least
             // one buffer it hasn't processed yet. We need to change our queue
             // handling.
             if al_source_state == al::AL_STOPPED {
-                al::alSourcePlay(al_source);
+                context.SourcePlay(al_source);
                 log_dbg!("Restarted OpenAL source for queue {:?}", in_aq);
             }
         }
@@ -667,8 +868,8 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
     if is_running == AudioQueueIsRunning::Stopping {
         let mut al_source_state = 0;
         unsafe {
-            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
-            assert!(al::alGetError() == 0);
+            context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(context.GetError() == 0);
         }
 
         // If OpenAL still says the source is stopped, it must have run out of
@@ -681,6 +882,13 @@ pub fn handle_audio_queue(env: &mut Environment, in_aq: AudioQueueRef) {
             finish_stopping_audio_queue(env, in_aq);
         }
     }
+
+    if let Some(host_object) = State::get(&mut env.framework_state)
+        .audio_queues
+        .get_mut(&in_aq)
+    {
+        host_object.is_running_handler = false;
+    }
 }
 
 fn AudioQueuePrime(
@@ -691,9 +899,16 @@ fn AudioQueuePrime(
 ) -> OSStatus {
     return_if_null!(in_aq);
 
-    assert!(out_number_of_frames_prepared.is_null()); // TODO
-    let _context_manager = prime_audio_queue(env, in_aq, None);
-    0 // success
+    match prime_audio_queue(env, in_aq) {
+        Ok(_) => {
+            assert!(out_number_of_frames_prepared.is_null()); // TODO
+            0 // success
+        }
+        Err(_) => {
+            log!("Warning: Cannot prime audio queue!");
+            kAudioQueueErr_CannotStart
+        }
+    }
 }
 
 fn notify_aq_is_running(env: &mut Environment, in_aq: AudioQueueRef) {
@@ -716,25 +931,25 @@ fn notify_aq_is_running(env: &mut Environment, in_aq: AudioQueueRef) {
 pub fn AudioQueueStart(
     env: &mut Environment,
     in_aq: AudioQueueRef,
-    in_device_start_time: ConstVoidPtr, // should be `const AudioTimeStamp*`
+    in_device_start_time: ConstPtr<AudioTimeStamp>,
 ) -> OSStatus {
     return_if_null!(in_aq);
 
     assert!(in_device_start_time.is_null()); // TODO
 
-    let _context_manager = prime_audio_queue(env, in_aq, None);
+    _ = prime_audio_queue(env, in_aq);
 
-    let host_object = State::get(&mut env.framework_state)
-        .audio_queues
-        .get_mut(&in_aq)
-        .unwrap();
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
+
+    let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
 
     host_object.is_running = AudioQueueIsRunning::Running;
 
     if is_supported_audio_format(&host_object.format) {
         let al_source = host_object.al_source.unwrap();
-        unsafe { al::alSourcePlay(al_source) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe { context.SourcePlay(al_source) };
+        assert!(unsafe { context.GetError() } == 0);
     } else {
         log!(
             "AudioQueueStart: Unsupported format {:?}",
@@ -750,16 +965,15 @@ pub fn AudioQueueStart(
 pub fn AudioQueuePause(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     return_if_null!(in_aq);
 
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
     // FIXME: is this correct? is it notifiable?
     host_object.is_running = AudioQueueIsRunning::Stopped;
     if let Some(al_source) = host_object.al_source {
-        unsafe { al::alSourcePause(al_source) };
-        assert!(unsafe { al::alGetError() } == 0);
+        unsafe { context.SourcePause(al_source) };
+        assert!(unsafe { context.GetError() } == 0);
     }
 
     0 // success
@@ -784,13 +998,13 @@ pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate:
     if in_immediate {
         log_dbg!("Performing immediate AudioQueueStop for {:?}.", in_aq);
 
-        let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
+        let (state, context) =
+            State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
-        let state = State::get(&mut env.framework_state);
         let host_object = state.audio_queues.get_mut(&in_aq).unwrap();
         if let Some(al_source) = host_object.al_source {
-            unsafe { al::alSourceStop(al_source) };
-            assert!(unsafe { al::alGetError() } == 0);
+            unsafe { context.SourceStop(al_source) };
+            assert!(unsafe { context.GetError() } == 0);
         };
 
         finish_stopping_audio_queue(env, in_aq);
@@ -814,9 +1028,8 @@ pub fn AudioQueueStop(env: &mut Environment, in_aq: AudioQueueRef, in_immediate:
 fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     return_if_null!(in_aq);
 
-    let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     log_dbg!("Resetting queue {:?}.", in_aq);
 
@@ -825,18 +1038,18 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
     if let Some(al_source) = host_object.al_source {
         unsafe {
             let mut al_source_state = 0;
-            al::alGetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
-            assert!(al::alGetError() == 0);
+            context.GetSourcei(al_source, al::AL_SOURCE_STATE, &mut al_source_state);
+            assert!(context.GetError() == 0);
             if al_source_state != al::AL_STOPPED {
                 // If the source is not already stopped, it must be stopped in
                 // order to be able to clear its buffer queue. Note that the
                 // audio queue may still be considered "running".
-                al::alSourceStop(al_source);
-                assert!(al::alGetError() == 0);
+                context.SourceStop(al_source);
+                assert!(context.GetError() == 0);
             }
         }
 
-        unqueue_buffers(al_source, |al_buffer| {
+        unqueue_buffers(al_source, &context, |al_buffer| {
             host_object.al_unused_buffers.push(al_buffer);
             host_object.buffer_queue.pop_front().unwrap();
         });
@@ -844,6 +1057,12 @@ fn AudioQueueReset(env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
 
     host_object.buffer_queue.clear();
 
+    0 // success
+}
+
+fn AudioQueueFlush(_env: &mut Environment, in_aq: AudioQueueRef) -> OSStatus {
+    return_if_null!(in_aq);
+    // TODO
     0 // success
 }
 
@@ -887,7 +1106,8 @@ pub fn AudioQueueDispose(
 
     assert!(in_immediate); // TODO
 
-    let state = State::get(&mut env.framework_state);
+    let (state, context) =
+        State::get_with_context(&mut env.framework_state, &mut env.openal_manager);
 
     let mut host_object = state.audio_queues.remove(&in_aq).unwrap();
     log_dbg!("Disposing of audio queue {:?}", in_aq);
@@ -901,23 +1121,21 @@ pub fn AudioQueueDispose(
     }
 
     if let Some(al_source) = host_object.al_source {
-        let _context_manager = env.framework_state.audio_toolbox.make_al_context_current();
-
         unsafe {
-            al::alSourceStop(al_source);
-            assert!(al::alGetError() == 0);
+            context.SourceStop(al_source);
+            assert!(context.GetError() == 0);
         }
 
-        unqueue_buffers(al_source, |al_buffer| {
+        unqueue_buffers(al_source, &context, |al_buffer| {
             host_object.al_unused_buffers.push(al_buffer)
         });
 
         unsafe {
-            al::alDeleteBuffers(
+            context.DeleteBuffers(
                 host_object.al_unused_buffers.len().try_into().unwrap(),
                 host_object.al_unused_buffers.as_ptr(),
             );
-            assert!(al::alGetError() == 0);
+            assert!(context.GetError() == 0);
         }
     }
 
@@ -930,17 +1148,32 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(AudioQueueNewOutput(_, _, _, _, _, _, _)),
     export_c_func!(AudioQueueGetParameter(_, _, _)),
     export_c_func!(AudioQueueSetParameter(_, _, _)),
+    export_c_func!(AudioQueueAllocateBufferWithPacketDescriptions(_, _, _, _)),
     export_c_func!(AudioQueueAllocateBuffer(_, _, _)),
     export_c_func!(AudioQueueEnqueueBuffer(_, _, _, _)),
+    export_c_func!(AudioQueueEnqueueBufferWithParameters(
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _
+    )),
     export_c_func!(AudioQueueAddPropertyListener(_, _, _, _)),
     export_c_func!(AudioQueueRemovePropertyListener(_, _, _, _)),
     export_c_func!(AudioQueueGetPropertySize(_, _, _)),
     export_c_func!(AudioQueueGetProperty(_, _, _, _)),
+    export_c_func!(AudioQueueSetProperty(_, _, _, _)),
     export_c_func!(AudioQueuePrime(_, _, _)),
     export_c_func!(AudioQueueStart(_, _)),
     export_c_func!(AudioQueuePause(_)),
     export_c_func!(AudioQueueStop(_, _)),
     export_c_func!(AudioQueueReset(_)),
+    export_c_func!(AudioQueueFlush(_)),
     export_c_func!(AudioQueueFreeBuffer(_, _)),
     export_c_func!(AudioQueueDispose(_, _)),
 ];

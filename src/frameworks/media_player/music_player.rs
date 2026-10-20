@@ -5,7 +5,27 @@
  */
 //! `MPMusicPlayerController` etc.
 
-use crate::objc::{id, nil, objc_classes, ClassExports};
+use crate::{
+    dyld::{ConstantExports, HostConstant},
+    objc::{id, nil, objc_classes, ClassExports},
+};
+
+pub const MPMusicPlayerControllerNowPlayingItemDidChangeNotification: &str =
+    "MPMusicPlayerControllerNowPlayingItemDidChangeNotification";
+pub const MPMusicPlayerControllerPlaybackStateDidChangeNotification: &str =
+    "MPMusicPlayerControllerPlaybackStateDidChangeNotification";
+
+/// `NSNotificationName` values.
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_MPMusicPlayerControllerNowPlayingItemDidChangeNotification",
+        HostConstant::NSString(MPMusicPlayerControllerNowPlayingItemDidChangeNotification),
+    ),
+    (
+        "_MPMusicPlayerControllerPlaybackStateDidChangeNotification",
+        HostConstant::NSString(MPMusicPlayerControllerPlaybackStateDidChangeNotification),
+    ),
+];
 
 pub const CLASSES: ClassExports = objc_classes! {
 

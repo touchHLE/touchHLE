@@ -6,16 +6,38 @@
 //! `UIImage`.
 
 use crate::frameworks::core_graphics::cg_context::CGContextDrawImage;
-use crate::frameworks::core_graphics::cg_image::{self, CGImageRef, CGImageRelease, CGImageRetain};
-use crate::frameworks::core_graphics::{CGRect, CGSize};
+use crate::frameworks::core_graphics::cg_image::{
+    self, CGImageGetHeight, CGImageGetWidth, CGImageRef, CGImageRelease, CGImageRetain,
+};
+use crate::frameworks::core_graphics::{CGFloat, CGPoint, CGRect, CGSize};
+use crate::frameworks::foundation::ns_string::get_static_str;
 use crate::frameworks::foundation::{ns_data, ns_string, NSInteger};
 use crate::frameworks::uikit::ui_graphics::UIGraphicsGetCurrentContext;
 use crate::fs::GuestPath;
 use crate::image::Image;
 use crate::objc::{
-    autorelease, id, msg, msg_class, nil, objc_classes, release, ClassExports, HostObject,
+    autorelease, id, msg, msg_class, nil, objc_classes, release, retain, ClassExports, HostObject,
     NSZonePtr,
 };
+use crate::Environment;
+use std::collections::HashMap;
+
+const CACHE_SIZE: usize = 60;
+
+#[derive(Default)]
+pub struct State {
+    /// Cache of images for `[UIImage imageNamed:]` method.
+    /// Images are explicitly retained.
+    cached_images: HashMap<String, id>,
+}
+impl State {
+    fn get(env: &Environment) -> &Self {
+        &env.framework_state.uikit.ui_image
+    }
+    fn get_mut(env: &mut Environment) -> &mut Self {
+        &mut env.framework_state.uikit.ui_image
+    }
+}
 
 struct UIImageHostObject {
     cg_image: CGImageRef,
@@ -43,11 +65,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: figure out whether this is actually correct in all cases
     let bundle: id = msg_class![env; NSBundle mainBundle];
     let path: id = msg![env; bundle pathForResource:name ofType:nil];
+    let name_str = ns_string::to_rust_string(env, name).to_string();
     if path == nil {
-        log!("Warning: [UIImage imageNamed:{:?}] => nil", ns_string::to_rust_string(env, name));
+        log!("Warning: [UIImage imageNamed:{:?}] => nil", name_str);
         return nil;
     }
-    msg![env; this imageWithContentsOfFile:path]
+    // TODO: find a better eviction policy
+    if State::get(env).cached_images.len() > CACHE_SIZE {
+        let cache = std::mem::take(&mut State::get_mut(env).cached_images);
+        log_dbg!("Evicting {} images from UIImage cache.", cache.len());
+        for (_, img) in cache {
+            release(env, img);
+        }
+    }
+    if !State::get(env).cached_images.contains_key(&name_str) {
+        let img = msg![env; this imageWithContentsOfFile:path];
+        retain(env, img);
+        State::get_mut(env).cached_images.insert(name_str.clone(), img);
+    }
+    *State::get(env).cached_images.get(&name_str).unwrap()
 }
 
 + (id)imageWithContentsOfFile:(id)path { // NSString*
@@ -76,6 +112,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithContentsOfFile:(id)path { // NSString*
+    if path == nil {
+        return nil;
+    }
     let path = ns_string::to_rust_string(env, path); // TODO: avoid copy
     let Ok(bytes) = env.fs.read(GuestPath::new(&path)) else {
         log!("Warning: couldn't read image file at {:?}, returning nil", path);
@@ -100,6 +139,12 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (id)stretchableImageWithLeftCapWidth:(NSInteger)_leftCapWidth
+                          topCapHeight:(NSInteger)_topCapHeight {
+    log!("TODO: properly support stretchableImageWithLeftCapWidth:topCapHeight:");
+    retain(env, this)
+}
+
 // TODO: more init methods
 // TODO: more accessors
 
@@ -122,10 +167,51 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (CGFloat)scale {
+    // TODO: support other scales, such as @2x
+    1.0
+}
+
 - (())drawInRect:(CGRect)rect {
     let context = UIGraphicsGetCurrentContext(env);
     let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
     CGContextDrawImage(env, context, rect, image);
+}
+
+- (())drawAtPoint:(CGPoint)point {
+    let context = UIGraphicsGetCurrentContext(env);
+    if context == nil {
+        log!("Warning: [(UIImage*){:?} drawAtPoint:{:?}] is called with nil context, ignoring.", this, point);
+        return;
+    }
+    let image = env.objc.borrow::<UIImageHostObject>(this).cg_image;
+    let rect = CGRect {
+        origin: point,
+        size: CGSize {
+            width: CGImageGetWidth(env, image) as CGFloat,
+            height: CGImageGetHeight(env, image) as CGFloat,
+        }
+    };
+    CGContextDrawImage(env, context, rect, image);
+}
+
+@end
+
+// Undocumented class used in NIBs
+// TODO: It's not clear _why_ placeholder is needed?
+@implementation UIImageNibPlaceholder: UIImage
+
+// NSCoding implementation
+- (id)initWithCoder:(id)coder {
+    release(env, this);
+
+    // TODO: decode other attributes
+    let key_ns_string = get_static_str(env, "UIResourceName");
+    let resource_name: id = msg![env; coder decodeObjectForKey:key_ns_string];
+
+    let res = msg_class![env; UIImage imageNamed:resource_name];
+    // TODO: It is not clear if we need to additionally retain here?
+    retain(env, res)
 }
 
 @end

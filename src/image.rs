@@ -3,7 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-//! Image decoding. Currently only supports PNG files (treated as 8-bit sRGB).
+//! Image decoding.
+//!
+//! Currently, supports PNG (treated as 8-bit sRGB), JPEG, BMP and GIF files.
 //!
 //! Implemented as a wrapper around the C library stb_image, since it supports
 //! "CgBI" PNG files (an Apple proprietary extension used in iPhone OS apps).
@@ -11,6 +13,9 @@
 //! This module also exposes decompression for Imagination Technologies' PVRTC
 //! format, implementing as a wrapper around their decoder from the PowerVR
 //! SDK.
+//!
+//! References:
+//! - "Supported Image Formats" in [Loading Images](https://developer.apple.com/library/archive/documentation/2DDrawing/Conceptual/DrawingPrintingiOS/LoadingImages/LoadingImages.html)
 
 use std::ffi::{c_int, c_uchar, CStr};
 
@@ -26,6 +31,8 @@ enum PixelStore {
     StbImage(*mut c_uchar),
     Vec(Vec<u8>),
 }
+
+const PNG_MAGIC_NUMBER: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
 impl Image {
     pub fn from_bytes(bytes: &[u8]) -> Result<Image, String> {
@@ -65,7 +72,7 @@ impl Image {
         let height: u32 = y.try_into().unwrap();
 
         // (Un-un-)premultiply pixels to match iPhone OS's image loading.
-        {
+        if bytes.starts_with(&PNG_MAGIC_NUMBER) {
             let len = width as usize * height as usize * 4;
             let pixels = unsafe { std::slice::from_raw_parts_mut(pixels, len) };
             let mut i = 0;
@@ -148,31 +155,74 @@ impl Image {
     }
 
     // TODO: Eventually this should be in Core Animation instead?
-    /// Modify the image to mask it with anti-aliased rounded corners.
-    pub fn round_corners(&mut self, radius: f32) {
+    /// Modify the image to mask it with one to four anti-aliased rounded
+    /// corners, and add sheen if desired.
+    pub fn round_corners(&mut self, radius: f32, four_corners: bool, add_sheen: bool) {
         let (width, height) = self.dimensions();
-        let right_corners_begin = width as f32 - 1.0 - radius;
-        let bottom_corners_begin = height as f32 - 1.0 - radius;
-        for y in 0..height {
-            for x in 0..width {
-                let corner_x = (radius - x as f32).max(x as f32 - right_corners_begin);
-                let corner_y = (radius - y as f32).max(y as f32 - bottom_corners_begin);
-                let opacity = if corner_x > 0.0 && corner_y > 0.0 {
-                    let distance = (corner_x * corner_x + corner_y * corner_y).sqrt();
+        let (w_usize, h_usize) = (width as usize, height as usize);
+        let (w, h) = (width as f32, height as f32);
+
+        let (right_corners_begin, bottom_corners_begin) = if four_corners {
+            (w - radius - 1.0, h - radius - 1.0)
+        } else {
+            (f32::INFINITY, f32::INFINITY)
+        };
+        let (sheen_center_x, sheen_center_y, sheen_radius) = if add_sheen {
+            (w / 2.0, -(h / 2.0), h)
+        } else {
+            (f32::INFINITY, f32::INFINITY, 0.0)
+        };
+        for y_usize in 0..h_usize {
+            for x_usize in 0..w_usize {
+                let x = x_usize as f32;
+                let y = y_usize as f32;
+
+                let corner_x = (radius - x).max(x - right_corners_begin);
+                let corner_y = (radius - y).max(y - bottom_corners_begin);
+                let corner_circle_distance = corner_x.hypot(corner_y);
+                let x_edge_distance = (x).min(w - x - 1.0);
+                let y_edge_distance = (y).min(h - y - 1.0);
+                let actual_corner_distance = x_edge_distance.hypot(y_edge_distance);
+                let rounded_edge_distance = x_edge_distance
+                    .min(y_edge_distance)
+                    .min((radius.max(actual_corner_distance) - corner_circle_distance).max(0.0));
+                let icon_opacity = if corner_x > 0.0 && corner_y > 0.0 {
                     // Bad approximation of the pixel coverage of a filled arc.
-                    let distance = (distance - radius).max(0.0).min(1.0);
+                    let distance = (corner_circle_distance - radius).clamp(0.0, 1.0);
                     let area = distance * distance;
                     1.0 - area
                 } else {
                     1.0
                 };
-                let rgba =
-                    &mut self.pixels_mut()[y as usize * width as usize * 4 + x as usize * 4..][..4];
+                let sheen_opacity = {
+                    let distance = (x - sheen_center_x).hypot(y - sheen_center_y);
+                    // Bad approximation of the pixel coverage of a filled arc.
+                    let distance = (distance - sheen_radius).clamp(0.0, 1.0);
+                    let area = distance * distance;
+                    // The sheen is stronger at the top and close to edges.
+                    let taper = (1.0
+                        - ((y / h).sqrt() / 2.0)
+                        - (rounded_edge_distance / (h).hypot(w)).sqrt() / 2.0)
+                        * 0.75;
+                    // There is also extra shinyness around the rim.
+                    (1.0 - area) * taper
+                };
+                let rgba = &mut self.pixels_mut()[y_usize * w_usize * 4 + x_usize * 4..][..4];
                 for channel in rgba.iter_mut() {
-                    *channel = (*channel as f32 * opacity) as u8;
+                    *channel = (*channel as f32 * icon_opacity * (1.0 - sheen_opacity)
+                        + 255.0 * icon_opacity * sheen_opacity)
+                        as u8;
                 }
             }
         }
+    }
+}
+
+impl Clone for Image {
+    fn clone(&self) -> Image {
+        // Note: implicitly converts pixel storage from StbImage to Vec
+        // (if needed)
+        Image::from_pixel_vec(self.pixels().to_vec(), self.dimensions)
     }
 }
 
@@ -201,9 +251,9 @@ pub fn gamma_decode(intensity: f32) -> f32 {
 pub fn decode_pvrtc(pvrtc_data: &[u8], is_2bit: bool, width: u32, height: u32) -> Vec<u32> {
     // This formula is from the IMG_texture_compression_pvrtc extension spec.
     let expected_size = if is_2bit {
-        (width.max(16) as usize * height.max(8) as usize * 2 + 7) / 8
+        (width.max(16) as usize * height.max(8) as usize * 2).div_ceil(8)
     } else {
-        (width.max(8) as usize * height.max(8) as usize * 4 + 7) / 8
+        (width.max(8) as usize * height.max(8) as usize * 4).div_ceil(8)
     };
     assert!(pvrtc_data.len() == expected_size);
 

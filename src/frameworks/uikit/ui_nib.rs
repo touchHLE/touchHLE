@@ -11,33 +11,39 @@
 
 use crate::frameworks::foundation::ns_string::{get_static_str, to_rust_string};
 use crate::frameworks::foundation::{ns_string, NSUInteger};
+use crate::frameworks::uikit::ui_view::ui_control::UIControlEvents;
 use crate::fs::GuestPathBuf;
+use crate::mem::ConstVoidPtr;
 use crate::objc::{
-    id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes, release,
-    retain, ClassExports, HostObject,
+    autorelease, id, impl_HostObject_with_superclass, msg, msg_class, msg_super, nil, objc_classes,
+    release, retain, Class, ClassExports, HostObject,
 };
 use crate::Environment;
 
+#[derive(Default)]
+struct UINibHostObject {
+    /// `NSString*`
+    nib_name: id,
+    /// `NSBundle*`
+    bundle: id,
+    /// File's Owner
+    /// (weak, non-retaining)
+    file_owner: id,
+}
+impl HostObject for UINibHostObject {}
+
+#[derive(Default)]
 struct UIRuntimeConnectionHostObject {
     destination: id,
     label: id,
     source: id,
 }
 impl HostObject for UIRuntimeConnectionHostObject {}
-impl Default for UIRuntimeConnectionHostObject {
-    fn default() -> Self {
-        UIRuntimeConnectionHostObject {
-            destination: nil,
-            label: nil,
-            source: nil,
-        }
-    }
-}
 
 #[derive(Default)]
 struct UIRuntimeEventConnectionHostObject {
     superclass: UIRuntimeConnectionHostObject,
-    eventMask: i32,
+    event_mask: UIControlEvents,
 }
 impl_HostObject_with_superclass!(UIRuntimeEventConnectionHostObject);
 
@@ -45,8 +51,69 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
 
-// TODO actual UINib class. It's not needed for the main nib file which is
-// loaded implicitly.
+@implementation UINib: NSObject
+
++ (id)nibWithNibName:(id)nib_name // NSString *
+              bundle:(id)bundle { //NSBundle *
+    let main_bundle = msg_class![env; NSBundle mainBundle];
+    let bundle: id = if bundle == nil {
+        main_bundle
+    } else {
+        // TODO: non-main bundles
+        assert_eq!(bundle, main_bundle);
+        bundle
+    };
+
+    retain(env, nib_name);
+    retain(env, bundle);
+    let host_object = Box::new(UINibHostObject {
+        nib_name,
+        bundle,
+        file_owner: nil
+    });
+    let new = env.objc.alloc_object(this, host_object, &mut env.mem);
+
+    autorelease(env, new)
+}
+
+- (())dealloc {
+    let &UINibHostObject {
+        nib_name,
+        bundle,
+        ..
+    } = env.objc.borrow(this);
+    release(env, nib_name);
+    release(env, bundle);
+    env.objc.dealloc_object(this, &mut env.mem)
+}
+
+- (id)instantiateWithOwner:(id)owner
+                   options:(id)options { // NSDictionary *
+    assert!(owner != nil); // TODO
+    assert!(options == nil); // TODO
+
+    let bundle = env.objc.borrow::<UINibHostObject>(this).bundle;
+    let nib_name = env.objc.borrow::<UINibHostObject>(this).nib_name;
+    let type_: id = get_static_str(env, "nib");
+    let path: id  = msg![env; bundle pathForResource:nib_name ofType:type_];
+
+    assert!(path != nil);
+    assert!(msg![env; path isAbsolutePath]);
+    let nib_path = to_rust_string(env, path).to_string();
+
+    assert!(env.objc.borrow::<UINibHostObject>(this).file_owner == nil);
+    env.objc.borrow_mut::<UINibHostObject>(this).file_owner = owner;
+
+    let unarchiver = load_nib_file(env, this, GuestPathBuf::from(nib_path)).unwrap();
+    let top_level_objects_key = get_static_str(env, "UINibTopLevelObjectsKey");
+    let top_level_objects = msg![env; unarchiver decodeObjectForKey:top_level_objects_key];
+    release(env, unarchiver);
+    env.objc.borrow_mut::<UINibHostObject>(this).file_owner = nil;
+
+    top_level_objects
+}
+
+@end
 
 // An undocumented type that nib files reference by name. NSKeyedUnarchiver will
 // find and instantiate this class.
@@ -64,20 +131,27 @@ pub const CLASSES: ClassExports = objc_classes! {
         // "delegate" outlet can be connected between it and the
         // UIApplicationDelegate.
         //
-        // TODO: This is a bit of a hack. Eventually it would be good to fix:
+        // TODO: Below implementation could still be "wrong".
+        // Other options to consider:
         // - The name "UIProxyObject" implies that it might be intended to
         //   proxy messages to another object, rather than be replaced by it.
         //   Check what iPhone OS does?
-        // - If/when the UINib class is implemented and arbitrary nib files can
-        //   be deserialized, an app could pick some other object to be the nib
-        //   file owner, which this would need to handle.
-        // - If this object is meant to be replaced, it's probably not meant to
-        //   be done via `initWithCoder:`, but instead by providing a delegate
-        //   to the NSKeyedUnarchiver. That might be needed to implement
-        //   replacement for objects other than the UIApplication instance.
-
+        // - If this object is meant to be replaced, it's probably meant to
+        //   be done _after_ the call to `initWithCoder:`
+        let delegate: id = msg![env; coder delegate];
+        // TODO: can this happen?
+        assert!(delegate != nil);
+        let ui_nib_class: Class = msg_class![env; UINib class];
+        let delegate_class: Class = msg![env; delegate class];
+        assert!(msg![env; delegate_class isKindOfClass:ui_nib_class]);
+        let file_owner = env.objc.borrow::<UINibHostObject>(delegate).file_owner;
+        assert!(file_owner != nil);
         release(env, this);
-        msg_class![env; UIApplication sharedApplication]
+        // NSKeyedUnarchiver holds ownership of already instantiated objects
+        // and release them on dealloc. But here we replace a proxy object with
+        // a file owner! Thus, we must retain it on behalf of the coder.
+        retain(env, file_owner);
+        file_owner
     } else {
         log!("TODO: UIProxyObject replacement for {}, instance {:?} left unreplaced", id, this);
         this
@@ -189,7 +263,20 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())connect {
-    log!("TODO: [(UIRuntimeEventConnection*) {:?} connect]", this);
+    let &UIRuntimeConnectionHostObject {
+        destination,
+        label,
+        source
+    } = env.objc.borrow(this);
+    let &UIRuntimeEventConnectionHostObject {
+        superclass: _,
+        event_mask
+    } = env.objc.borrow(this);
+
+    let selector = to_rust_string(env, label);
+    let action = env.objc.lookup_selector(&selector).unwrap();
+
+    () = msg![env; source addTarget:destination action:action forControlEvents:event_mask];
 }
 
 // NSCoding implementation
@@ -200,7 +287,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let event_mask: i32 = msg![env; coder decodeIntForKey: event_mask_key];
 
     let host_obj = env.objc.borrow_mut::<UIRuntimeEventConnectionHostObject>(this);
-    host_obj.eventMask = event_mask;
+    host_obj.event_mask = event_mask as UIControlEvents;
 
     this
 }
@@ -241,35 +328,14 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 @end
 
-
 };
-
-/// Shortcut for use by [super::ui_application::UIApplicationMain].
-/// Calls [load_nib_file] underneath.
-///
-/// In terms of the proper API, it should behave something like:
-/// ```objc
-/// UINib *nib = [UINib nibWithName:main_nib_file bundle:nil];
-/// return [nib instantiateWithOwner:[UIApplication sharedApplication]
-///                     optionsOrNil:nil];
-/// ```
-pub fn load_main_nib_file(env: &mut Environment, _ui_application: id) {
-    let Some(path) = env.bundle.main_nib_file_path() else {
-        return;
-    };
-
-    let loaded_nib = load_nib_file(env, path);
-
-    if let Ok(unarchiver) = loaded_nib {
-        release(env, unarchiver);
-    }
-}
 
 /// Takes a [GuestPathBuf] where a nib file is located and deserializes it.
 /// Returns an empty [Err] if the file couldn't be loaded or an [Ok] wrapping
-/// an NSKeyedUnarchiver.
+/// an instance of NSCoder (NSKeyedUnarchiver or _touchHLE_NIBArchiveDecoder
+/// depending on the NIB file format).
 /// The unarchiver should later be manually [release]d
-pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()> {
+fn load_nib_file(env: &mut Environment, ui_nib: id, path: GuestPathBuf) -> Result<id, ()> {
     let path = ns_string::from_rust_string(env, path.as_str().to_string());
     assert!(msg![env; path isAbsolutePath]);
     let ns_data: id = msg_class![env; NSData dataWithContentsOfFile:path];
@@ -280,18 +346,30 @@ pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()
         return Err(());
     };
 
-    let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
-    let unarchiver = msg![env; unarchiver initForReadingWithData:ns_data];
+    let len: NSUInteger = msg![env; ns_data length];
+    assert!(len >= 10);
+    let bytes: ConstVoidPtr = msg![env; ns_data bytes];
+    let unarchiver = if env.mem.bytes_at(bytes.cast(), 10) == b"NIBArchive" {
+        let decoder: id = msg_class![env; _touchHLE_NIBArchiveDecoder alloc];
+        msg![env; decoder _touchHLE_initForReadingWithData:ns_data]
+    } else {
+        let unarchiver = msg_class![env; NSKeyedUnarchiver alloc];
+        msg![env; unarchiver initForReadingWithData:ns_data]
+    };
+
+    // ui_nib will hold a file's owner,
+    // which will replace corresponding UIProxyObject
+    () = msg![env; unarchiver setDelegate:ui_nib];
 
     // The top-level keys in a nib file's keyed archive appear to be
     // UINibAccessibilityConfigurationsKey, UINibConnectionsKey,
     // UINibObjectsKey, UINibTopLevelObjectsKey and UINibVisibleWindowsKey.
     // Each corresponds to an NSArray.
 
-    // We don't need to do anything with the list of objects, but deserializing
-    // it ensures everything else is deserialized.
+    // Deserializing the list of objects
+    // ensures everything else is deserialized.
     let objects_key = get_static_str(env, "UINibObjectsKey");
-    let _objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
+    let objects: id = msg![env; unarchiver decodeObjectForKey:objects_key];
 
     // Connect all the outlets with UIRuntimeOutletConnection
     let conns_key = get_static_str(env, "UINibConnectionsKey");
@@ -300,6 +378,16 @@ pub fn load_nib_file(env: &mut Environment, path: GuestPathBuf) -> Result<id, ()
     for i in 0..conns_count {
         let conn: id = msg![env; conns objectAtIndex:i];
         () = msg![env; conn connect];
+    }
+
+    // Sending awakeFromNib for all objects
+    let enumerator: id = msg![env; objects objectEnumerator];
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        () = msg![env; next awakeFromNib];
     }
 
     // Make visible windows visible

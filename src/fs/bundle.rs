@@ -6,10 +6,11 @@
 //! IPA file format support, allowing it to be used as part of the guest
 //! filesystem.
 use crate::fs::{FsNode, GuestPath};
+use crate::libc::time::{calendar_date_to_timestamp, time_t, tm};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::io::Read;
+use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use zip::result::ZipError;
@@ -146,6 +147,7 @@ impl BundleData {
             BundleData::Zip { zip, bundle_path } => {
                 let archive = Rc::new(RefCell::new(zip));
                 let archive_cache = Rc::new(RefCell::new(HashMap::new()));
+                let metadata_map = Rc::new(RefCell::new(HashMap::new()));
 
                 let mut archive_guard = (*archive).borrow_mut();
 
@@ -162,7 +164,8 @@ impl BundleData {
                                 path,
                                 FsNode::bundle_zip_file(IpaFileRef {
                                     archive: archive.clone(),
-                                    archive_cursor_cache: archive_cache.clone(),
+                                    archive_files_cache: archive_cache.clone(),
+                                    metadata_map: metadata_map.clone(),
                                     index: i,
                                 }),
                             );
@@ -194,11 +197,27 @@ impl BundleData {
     }
 }
 
+#[derive(Debug)]
+struct ArchivedFileMetadata {
+    /// Unix timestamp of file modification
+    last_modified: i64,
+    /// Uncompressed file size
+    size: u64,
+}
+
+/// Shared (refcounted) copy of the decompressed version of a file in an IPA.
+///
+/// Seeking in compressed files is hard, so the simple solution is to read the
+/// whole file into memory. This is shared so having multiple copies of the same
+/// file open won't waste memory.
+type DecompressedFile = Rc<[u8]>;
+
 /// Represents a file inside an IPA bundle that can be opened.
 #[derive(Debug)]
 pub struct IpaFileRef {
     archive: Rc<RefCell<ZipArchive<std::fs::File>>>,
-    archive_cursor_cache: Rc<RefCell<HashMap<usize, std::io::Cursor<Vec<u8>>>>>,
+    archive_files_cache: Rc<RefCell<HashMap<usize, DecompressedFile>>>,
+    metadata_map: Rc<RefCell<HashMap<usize, ArchivedFileMetadata>>>,
     index: usize,
 }
 
@@ -210,7 +229,7 @@ impl IpaFileRef {
         // done each time, which is extremely slow.
         // The solution here is to cache unzipped data in memory, which should
         // be OK as early iOS IPA files are relatively small in size.
-        let mut archive_cache = (*self.archive_cursor_cache).borrow_mut();
+        let mut archive_cache = (*self.archive_files_cache).borrow_mut();
         archive_cache.entry(self.index).or_insert_with(|| {
             let mut archive = (*self.archive).borrow_mut();
             let mut file = match archive.by_index(self.index) {
@@ -224,23 +243,65 @@ impl IpaFileRef {
                 // always have a valid index
                 Err(e) => panic!("BUG: could not open file from IPA bundle: {e}"),
             };
+            let mut metadata_map = (*self.metadata_map).borrow_mut();
+            assert!(!metadata_map.contains_key(&self.index));
+            let modified = file.last_modified();
+            // This is not the cleanest way!
+            // TODO: just use `time` or `chrono` crates for time conversions
+            // (this also entails a lot of refactoring in [crate::libc:time])
+            let tm = tm::from(
+                modified.year(),
+                modified.month(),
+                modified.day(),
+                modified.hour(),
+                modified.minute(),
+                modified.second(),
+            );
+            let timestamp = calendar_date_to_timestamp(tm);
+            metadata_map.insert(
+                self.index,
+                ArchivedFileMetadata {
+                    last_modified: timestamp.into(),
+                    size: file.size(),
+                },
+            );
             let mut buf = Vec::new();
             file.read_to_end(&mut buf).unwrap();
-            std::io::Cursor::new(buf)
+            Rc::from(buf)
         });
-        let mut cursor = archive_cache.get(&self.index).unwrap().clone();
-        cursor.set_position(0);
-        IpaFile { file: cursor }
+        let cached_file = Rc::clone(archive_cache.get(&self.index).unwrap());
+        IpaFile {
+            file: Cursor::new(cached_file),
+        }
+    }
+
+    pub fn get_last_modified(&self) -> time_t {
+        if !self.metadata_map.borrow().contains_key(&self.index) {
+            // This will force metadata loading
+            // TODO: get metadata without reading the file
+            _ = self.open();
+        }
+        self.metadata_map
+            .borrow()
+            .get(&self.index)
+            .unwrap()
+            .last_modified
+            .try_into()
+            .unwrap()
+    }
+    pub fn get_size(&self) -> u64 {
+        if !self.metadata_map.borrow().contains_key(&self.index) {
+            // This will force metadata loading
+            // TODO: get metadata without reading the file
+            _ = self.open();
+        }
+        self.metadata_map.borrow().get(&self.index).unwrap().size
     }
 }
 
 /// Represents an opened file in an IPA bundle.
 pub struct IpaFile {
-    // we need to use a cursor because zip::read::ZipFile doesn't implement Seek
-    // and, generally, seeking in compressed files is hard to achieve
-    // the simplest way to do it is to read the whole file into memory
-    // the target apps should be small enough to fit in memory, right?
-    file: std::io::Cursor<Vec<u8>>,
+    file: Cursor<DecompressedFile>,
 }
 
 impl Debug for IpaFile {

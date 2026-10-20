@@ -6,183 +6,409 @@
 //! `math.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::MutPtr;
+use crate::libc::errno::set_errno;
+use crate::mem::{ConstPtr, MutPtr};
 use crate::Environment;
+use std::num::FpCategory;
+
+// TODO: move to `fenv.h`
+type FERoundingDirection = i32;
+const FE_TONEAREST: FERoundingDirection = 0x000000;
+const FE_TOWARDZERO: FERoundingDirection = 0xc00000;
+
+#[derive(Default)]
+pub struct State {
+    rounding_direction: FERoundingDirection,
+}
 
 // The sections in this file are organized to match the C standard.
 
 // FIXME: Many functions in this file should theoretically set errno or affect
 //        the floating-point environment. We're hoping apps won't rely on that.
 
+fn abs(_env: &mut Environment, arg: i32) -> i32 {
+    arg.abs()
+}
+fn fabs(_env: &mut Environment, arg: f64) -> f64 {
+    arg.abs()
+}
+
 // Trigonometric functions
 
 // TODO: These should also have `long double` variants, which can probably just
 // alias the `double` ones.
 
-fn sin(_env: &mut Environment, arg: f64) -> f64 {
+fn sin(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.sin()
 }
-fn sinf(_env: &mut Environment, arg: f32) -> f32 {
+fn sinf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.sin()
 }
-fn cos(_env: &mut Environment, arg: f64) -> f64 {
+fn cos(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.cos()
 }
-fn cosf(_env: &mut Environment, arg: f32) -> f32 {
+fn cosf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.cos()
 }
-fn tan(_env: &mut Environment, arg: f64) -> f64 {
+fn tan(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.tan()
 }
-fn tanf(_env: &mut Environment, arg: f32) -> f32 {
+fn tanf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.tan()
 }
 
-fn asin(_env: &mut Environment, arg: f64) -> f64 {
+fn asin(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.asin()
 }
-fn asinf(_env: &mut Environment, arg: f32) -> f32 {
+fn asinf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.asin()
 }
-fn acos(_env: &mut Environment, arg: f64) -> f64 {
+fn acos(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.acos()
 }
-fn acosf(_env: &mut Environment, arg: f32) -> f32 {
+fn acosf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.acos()
 }
-fn atan(_env: &mut Environment, arg: f64) -> f64 {
+fn atan(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.atan()
 }
-fn atanf(_env: &mut Environment, arg: f32) -> f32 {
+fn atanf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.atan()
 }
 
-fn atan2f(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+fn atan2f(env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg1.atan2(arg2)
 }
-fn atan2(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+fn atan2(env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg1.atan2(arg2)
 }
 
 // Hyperbolic functions
 
-fn sinh(_env: &mut Environment, arg: f64) -> f64 {
+fn sinh(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.sinh()
 }
-fn sinhf(_env: &mut Environment, arg: f32) -> f32 {
+fn sinhf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.sinh()
 }
-fn cosh(_env: &mut Environment, arg: f64) -> f64 {
+fn cosh(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.cosh()
 }
-fn coshf(_env: &mut Environment, arg: f32) -> f32 {
+fn coshf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.cosh()
 }
-fn tanh(_env: &mut Environment, arg: f64) -> f64 {
+fn tanh(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.tanh()
 }
-fn tanhf(_env: &mut Environment, arg: f32) -> f32 {
+fn tanhf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.tanh()
 }
 
-fn asinh(_env: &mut Environment, arg: f64) -> f64 {
+fn asinh(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.asinh()
 }
-fn asinhf(_env: &mut Environment, arg: f32) -> f32 {
+fn asinhf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.asinh()
 }
-fn acosh(_env: &mut Environment, arg: f64) -> f64 {
+fn acosh(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.acosh()
 }
-fn acoshf(_env: &mut Environment, arg: f32) -> f32 {
+fn acoshf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.acosh()
 }
-fn atanh(_env: &mut Environment, arg: f64) -> f64 {
+fn atanh(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.atanh()
 }
-fn atanhf(_env: &mut Environment, arg: f32) -> f32 {
+fn atanhf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.atanh()
 }
 
 // Exponential and logarithmic functions
 // TODO: implement the rest
-fn log(_env: &mut Environment, arg: f64) -> f64 {
+fn log(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.ln()
 }
-fn logf(_env: &mut Environment, arg: f32) -> f32 {
+fn logf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.ln()
 }
-fn log1p(_env: &mut Environment, arg: f64) -> f64 {
+fn log1p(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.ln_1p()
 }
-fn log1pf(_env: &mut Environment, arg: f32) -> f32 {
+fn log1pf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.ln_1p()
 }
-fn log2(_env: &mut Environment, arg: f64) -> f64 {
+fn log2(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.log2()
 }
-fn log2f(_env: &mut Environment, arg: f32) -> f32 {
+fn log2f(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.log2()
 }
-fn log10(_env: &mut Environment, arg: f64) -> f64 {
+fn log10(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.log10()
 }
-fn log10f(_env: &mut Environment, arg: f32) -> f32 {
+fn log10f(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.log10()
 }
-fn exp(_env: &mut Environment, arg: f64) -> f64 {
+fn exp(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.exp()
 }
-fn expf(_env: &mut Environment, arg: f32) -> f32 {
+fn expf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.exp()
 }
-fn expm1(_env: &mut Environment, arg: f64) -> f64 {
+fn expm1(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.exp_m1()
 }
-fn expm1f(_env: &mut Environment, arg: f32) -> f32 {
+fn expm1f(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.exp_m1()
 }
-fn exp2(_env: &mut Environment, arg: f64) -> f64 {
+fn exp2(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.exp2()
 }
-fn exp2f(_env: &mut Environment, arg: f32) -> f32 {
+fn exp2f(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.exp2()
+}
+fn ldexp(env: &mut Environment, arg: f64, n: i32) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    assert!(!arg.is_infinite()); // TODO
+
+    arg * 2f64.powf(n as _)
+}
+fn ldexpf(env: &mut Environment, arg: f32, n: i32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    assert!(!arg.is_infinite()); // TODO
+
+    arg * 2f32.powf(n as _)
+}
+fn frexpf(env: &mut Environment, arg: f32, exp: MutPtr<i32>) -> f32 {
+    frexp(env, arg.into(), exp) as f32
+}
+fn frexp(env: &mut Environment, arg: f64, exp: MutPtr<i32>) -> f64 {
+    if arg == 0.0 {
+        env.mem.write(exp, 0);
+        return 0.0;
+    }
+    if arg < 0.0 {
+        return -frexp(env, -arg, exp);
+    }
+    let b = arg.log2().floor() as i32 + 1;
+    env.mem.write(exp, b);
+    let frac = arg / 2f64.powi(b);
+    assert!((0.5..1.0).contains(&frac), "arg {arg}, b {b}, frac {frac}");
+    frac
 }
 
 // Power functions
 // TODO: implement the rest
-fn pow(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+fn pow(env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg1.powf(arg2)
 }
-fn powf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+fn powf(env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg1.powf(arg2)
 }
-fn sqrt(_env: &mut Environment, arg: f64) -> f64 {
+fn sqrt(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.sqrt()
 }
-fn sqrtf(_env: &mut Environment, arg: f32) -> f32 {
+fn sqrtf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.sqrt()
 }
 
 // Nearest integer functions
 // TODO: implement the rest
-fn ceil(_env: &mut Environment, arg: f64) -> f64 {
+fn ceil(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.ceil()
 }
-fn ceilf(_env: &mut Environment, arg: f32) -> f32 {
+fn ceilf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.ceil()
 }
-fn floor(_env: &mut Environment, arg: f64) -> f64 {
+fn floor(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.floor()
 }
-fn floorf(_env: &mut Environment, arg: f32) -> f32 {
+fn floorf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.floor()
 }
-fn round(_env: &mut Environment, arg: f64) -> f64 {
+fn round(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.round()
 }
-fn roundf(_env: &mut Environment, arg: f32) -> f32 {
+fn roundf(env: &mut Environment, arg: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg.round()
+}
+fn lround(env: &mut Environment, arg: f64) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    arg.max(i32::MIN as f64).min(i32::MAX as f64).round() as i32
+}
+fn lroundf(env: &mut Environment, arg: f32) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    arg.max(i32::MIN as f32).min(i32::MAX as f32).round() as i32
+}
+fn llround(env: &mut Environment, arg: f64) -> i64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    arg.max(i64::MIN as f64).min(i64::MAX as f64).round() as i64
+}
+fn llroundf(env: &mut Environment, arg: f32) -> i64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    arg.max(i64::MIN as f32).min(i64::MAX as f32).round() as i64
 }
 fn trunc(_env: &mut Environment, arg: f64) -> f64 {
     arg.trunc()
@@ -190,18 +416,71 @@ fn trunc(_env: &mut Environment, arg: f64) -> f64 {
 fn truncf(_env: &mut Environment, arg: f32) -> f32 {
     arg.trunc()
 }
+fn modf(env: &mut Environment, val: f64, iptr: MutPtr<f64>) -> f64 {
+    let ivalue = trunc(env, val);
+    env.mem.write(iptr, ivalue);
+    val - ivalue
+}
 fn modff(env: &mut Environment, val: f32, iptr: MutPtr<f32>) -> f32 {
     let ivalue = truncf(env, val);
     env.mem.write(iptr, ivalue);
     val - ivalue
 }
+fn rint(env: &mut Environment, arg: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    match env.libc_state.math.rounding_direction {
+        FE_TONEAREST => {
+            // As tested on both macOS and iOS Simulator, by default it
+            // rounds to the nearest integer with ties on even
+            arg.round_ties_even()
+        }
+        FE_TOWARDZERO => arg.trunc(),
+        _ => unimplemented!(),
+    }
+}
+fn lrint(env: &mut Environment, arg: f64) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
+    let clamped = arg.clamp(i32::MIN as f64, i32::MAX as f64);
+    match env.libc_state.math.rounding_direction {
+        FE_TONEAREST => {
+            // As tested on both macOS and iOS Simulator, by default it
+            // rounds to the nearest integer with ties on even
+            clamped.round_ties_even() as i32
+        }
+        FE_TOWARDZERO => clamped.trunc() as i32,
+        _ => unimplemented!(),
+    }
+}
+fn lrintf(env: &mut Environment, arg: f32) -> i32 {
+    lrint(env, arg.into())
+}
+
+// Rounding direction
+fn fegetround(env: &mut Environment) -> i32 {
+    env.libc_state.math.rounding_direction
+}
+fn fesetround(env: &mut Environment, round: i32) -> i32 {
+    assert!(round == FE_TONEAREST || round == FE_TOWARDZERO); // TODO
+    env.libc_state.math.rounding_direction = round;
+    0 // Success
+}
 
 // Remainder functions
 // TODO: implement the rest
-fn fmod(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+fn fmod(env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg1 % arg2
 }
-fn fmodf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+fn fmodf(env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     arg1 % arg2
 }
 
@@ -220,7 +499,40 @@ fn fminf(_env: &mut Environment, arg1: f32, arg2: f32) -> f32 {
     arg1.min(arg2)
 }
 
+// Other
+fn nan(env: &mut Environment, arg: ConstPtr<u8>) -> f32 {
+    assert_eq!(env.mem.read(arg), b'\0'); // TODO
+    f32::NAN
+}
+
+fn hypot(env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    if arg1.is_infinite() {
+        return f64::INFINITY;
+    }
+    sqrt(env, arg1 * arg1 + arg2 * arg2)
+}
+
+/// This alias is for readability, POSIX just uses `int`.
+type GuestFPCategory = i32;
+const FP_NAN: GuestFPCategory = 1;
+const FP_INFINITE: GuestFPCategory = 2;
+const FP_ZERO: GuestFPCategory = 3;
+const FP_NORMAL: GuestFPCategory = 4;
+const FP_SUBNORMAL: GuestFPCategory = 5;
+
+fn __fpclassifyf(_env: &mut Environment, arg: f32) -> GuestFPCategory {
+    match arg.classify() {
+        FpCategory::Nan => FP_NAN,
+        FpCategory::Infinite => FP_INFINITE,
+        FpCategory::Zero => FP_ZERO,
+        FpCategory::Normal => FP_NORMAL,
+        FpCategory::Subnormal => FP_SUBNORMAL,
+    }
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(abs(_)),
+    export_c_func!(fabs(_)),
     // Trigonometric functions
     export_c_func!(sin(_)),
     export_c_func!(sinf(_)),
@@ -264,6 +576,10 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(expm1f(_)),
     export_c_func!(exp2(_)),
     export_c_func!(exp2f(_)),
+    export_c_func!(ldexp(_, _)),
+    export_c_func!(ldexpf(_, _)),
+    export_c_func!(frexpf(_, _)),
+    export_c_func!(frexp(_, _)),
     // Power functions
     export_c_func!(pow(_, _)),
     export_c_func!(powf(_, _)),
@@ -276,9 +592,20 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(floorf(_)),
     export_c_func!(round(_)),
     export_c_func!(roundf(_)),
+    export_c_func!(lround(_)),
+    export_c_func!(lroundf(_)),
+    export_c_func!(llround(_)),
+    export_c_func!(llroundf(_)),
     export_c_func!(trunc(_)),
     export_c_func!(truncf(_)),
+    export_c_func!(modf(_, _)),
     export_c_func!(modff(_, _)),
+    export_c_func!(rint(_)),
+    export_c_func!(lrint(_)),
+    export_c_func!(lrintf(_)),
+    // Rounding direction
+    export_c_func!(fegetround()),
+    export_c_func!(fesetround(_)),
     // Remainder functions
     export_c_func!(fmod(_, _)),
     export_c_func!(fmodf(_, _)),
@@ -287,4 +614,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fmaxf(_, _)),
     export_c_func!(fmin(_, _)),
     export_c_func!(fminf(_, _)),
+    // Other
+    export_c_func!(nan(_)),
+    export_c_func!(hypot(_, _)),
+    export_c_func!(__fpclassifyf(_)),
 ];

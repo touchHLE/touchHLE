@@ -18,26 +18,34 @@
 //! Documentation Archive relating to arrays, that might be linked.
 
 #![allow(non_upper_case_globals)] // Lots of Apple constants begin with "k"
+#![allow(clippy::enum_variant_names)] // Lots of Apple enums have the same prefix
 #![allow(clippy::too_many_arguments)] // It's not our fault!
 
 pub mod audio_toolbox;
-pub mod av_audio;
+pub mod avfoundation;
 pub mod carbon_core;
+pub mod cf_network;
 pub mod core_animation;
 pub mod core_audio_types;
 pub mod core_foundation;
 pub mod core_graphics;
-pub mod dnssd;
+pub mod core_location;
+pub mod core_motion;
+pub mod core_telephony;
 pub mod foundation;
+pub mod game_kit;
 pub mod media_player;
+pub mod message_ui;
 pub mod openal;
 pub mod opengles;
 pub mod store_kit;
+pub mod system_configuration;
 pub mod uikit;
 
 /// Container for state of various child modules
 #[derive(Default)]
 pub struct State {
+    avfoundation: avfoundation::State,
     audio_toolbox: audio_toolbox::State,
     core_animation: core_animation::State,
     foundation: foundation::State,
@@ -45,4 +53,11 @@ pub struct State {
     openal: openal::State,
     opengles: opengles::State,
     uikit: uikit::State,
+}
+
+/// Container for thread local state of various child modules
+#[derive(Default)]
+pub struct ThreadLocalState {
+    foundation: foundation::ThreadLocalState,
+    core_animation: core_animation::ThreadLocalState,
 }

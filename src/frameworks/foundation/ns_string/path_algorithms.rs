@@ -90,6 +90,20 @@ pub fn split_path_extension(path: &str) -> (&str, &str) {
     }
 }
 
+pub fn string_by_appending_path_component(base: &str, component: &str) -> String {
+    let a_components = base.split('/');
+    let b_components = component.split('/');
+    let components: Vec<&str> = a_components
+        .chain(b_components)
+        .filter(|c| !c.is_empty())
+        .collect();
+    if base.starts_with("/") || (base.is_empty() && component.starts_with("/")) {
+        format!("/{}", components.join("/"))
+    } else {
+        components.join("/")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -161,5 +175,32 @@ mod tests {
         assert_eq!(path_extension("/a/b"), "");
         assert_eq!(path_extension("/a/"), "");
         assert_eq!(path_extension("/a/a..png"), "png");
+    }
+
+    #[test]
+    fn test_string_by_appending_path_component() {
+        use super::string_by_appending_path_component;
+
+        assert_eq!(
+            string_by_appending_path_component("/tmp", "scratch.tiff"),
+            "/tmp/scratch.tiff"
+        );
+        assert_eq!(
+            string_by_appending_path_component("/tmp/", "scratch.tiff"),
+            "/tmp/scratch.tiff"
+        );
+        assert_eq!(
+            string_by_appending_path_component("/", "scratch.tiff"),
+            "/scratch.tiff"
+        );
+        assert_eq!(
+            string_by_appending_path_component("", "scratch.tiff"),
+            "scratch.tiff"
+        );
+        assert_eq!(string_by_appending_path_component("/tmp", "///"), "/tmp");
+        assert_eq!(string_by_appending_path_component("/tmp/", "///"), "/tmp");
+        assert_eq!(string_by_appending_path_component("/", "///"), "/");
+        assert_eq!(string_by_appending_path_component("", "///"), "/");
+        assert_eq!(string_by_appending_path_component("////", "///"), "/");
     }
 }

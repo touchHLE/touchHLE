@@ -7,6 +7,7 @@
 
 use crate::dyld::FunctionExports;
 use crate::export_c_func;
+use crate::libc::errno::set_errno;
 use crate::mem::MutPtr;
 use crate::Environment;
 
@@ -14,9 +15,19 @@ use crate::Environment;
 #[allow(non_camel_case_types)]
 struct ifaddrs {}
 
-fn getifaddrs(_env: &mut Environment, _ifap: MutPtr<MutPtr<ifaddrs>>) -> i32 {
+fn getifaddrs(env: &mut Environment, _ifap: MutPtr<MutPtr<ifaddrs>>) -> i32 {
+    // TODO: handle errno properly
+    set_errno(env, 0);
+
     // TODO: implement
     -1
 }
 
-pub const FUNCTIONS: FunctionExports = &[export_c_func!(getifaddrs(_))];
+fn freeifaddrs(_env: &mut Environment, _ifp: MutPtr<ifaddrs>) {
+    // TODO
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(getifaddrs(_)),
+    export_c_func!(freeifaddrs(_)),
+];

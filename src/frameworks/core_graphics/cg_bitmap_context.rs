@@ -10,7 +10,7 @@ use super::cg_color_space::{
     kCGColorSpaceGenericGray, kCGColorSpaceGenericRGB, CGColorSpaceHostObject, CGColorSpaceRef,
 };
 use super::cg_context::{
-    kCGBlendModeCopy, kCGBlendModeDarken, kCGBlendModeLighten, kCGBlendModeMultiply,
+    kCGBlendModeClear, kCGBlendModeCopy, kCGBlendModeDarken, kCGBlendModeLighten, kCGBlendModeMultiply,
     kCGBlendModeNormal, kCGBlendModeScreen, CGBlendMode, CGContextHostObject, CGContextRef,
     CGContextSubclass, CGPathSubpath,
 };
@@ -371,7 +371,11 @@ fn put_pixel(
 
     // Blending like this must be done in linear RGB, so this must come before
     // gamma encoding.
-    let (r, g, b, a) = if blend {
+    let (r, g, b, a) = if blend && blend_mode == kCGBlendModeClear {
+        (0.0, 0.0, 0.0, 0.0)
+    } else if blend && blend_mode == kCGBlendModeCopy {
+        pixel
+    } else if blend {
         match data.alpha_info {
             kCGImageAlphaLast | kCGImageAlphaFirst => blend_straight(bg_pixel, pixel, blend_mode),
             kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => {

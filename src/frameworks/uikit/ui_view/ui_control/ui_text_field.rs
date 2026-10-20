@@ -284,7 +284,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.framework_state.uikit.ui_responder.first_responder = this;
     env.on_parent_stack_in_coroutine(|window, _| window.start_text_input());
     if env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
-        log!("Sims3 UITextField SDL text input started for {:?}", this);
+        let delegate = env.objc.borrow::<UITextFieldHostObject>(this).delegate;
+        let frame: CGRect = msg![env; this frame];
+        log!("Sims3 UITextField SDL text input started: field={:?}, delegate={:?}, frame={:?}", this, delegate, frame);
     }
 
     let name = ns_string::get_static_str(env, UIKeyboardDidShowNotification);
@@ -462,8 +464,31 @@ pub fn handle_return(env: &mut Environment, text_field: id) {
     let sel: SEL = env
         .objc
         .register_host_selector("textFieldShouldReturn:".to_string(), &mut env.mem);
-    if msg![env; delegate respondsToSelector:sel] {
-        log_dbg!("handle_return");
-        () = msg![env; delegate textFieldShouldReturn:text_field];
+    let accepts_return = if delegate != nil && msg![env; delegate respondsToSelector:sel] {
+        let accepted: bool = msg![env; delegate textFieldShouldReturn:text_field];
+        accepted
+    } else {
+        true
+    };
+
+    if env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+        log!(
+            "Sims3 UITextField Return: field={:?}, delegate={:?}, accepted={}",
+            text_field,
+            delegate,
+            accepts_return
+        );
+        // Sims 3's iOS TextBoxDelegate has an endEditing method that saves the
+        // entered name and returns to the game. The original interface exposes
+        // a native keyboard's completion control, which touchHLE does not yet
+        // render. Map the host Return key to that completion action for this
+        // specific game instead of changing general UIKit behavior.
+        if accepts_return && delegate != nil {
+            let class = msg![env; delegate class];
+            if env.objc.get_class_name(class) == "TextBoxDelegate" {
+                log!("Sims3: finishing native name entry via TextBoxDelegate endEditing");
+                let _: () = msg![env; delegate endEditing];
+            }
+        }
     }
 }

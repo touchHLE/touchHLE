@@ -107,6 +107,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 // usually have region suffixes.
 + (id)preferredLanguages {
     if let Some(existing) = State::get(env).preferred_languages {
+        if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+            retain(env, existing);
+        }
         existing
     } else {
         let langs = get_preferred_languages(env);
@@ -121,6 +124,9 @@ pub const CLASSES: ClassExports = objc_classes! {
             );
         }
         State::get(env).preferred_languages = Some(new);
+        if env.bundle.bundle_identifier() == "com.ea.sims3ambition.bv" {
+            retain(env, new);
+        }
         new
     }
 }

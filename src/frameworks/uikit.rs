@@ -154,7 +154,11 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
                     // established a UITextField as the first responder.
                     // The same SDL2 event bridge works with Windows keyboards
                     // and future Android software keyboard / IME backends.
-                    log!("Sims3 keyboard event: {:?}, first_responder={:?}", text_event, responder);
+                    log!(
+                        "Sims3 keyboard event: {:?}, first_responder={:?}",
+                        text_event,
+                        responder
+                    );
                 }
                 let class = msg![env; responder class];
                 let ui_text_field_class = env.objc.get_known_class("UITextField", &mut env.mem);

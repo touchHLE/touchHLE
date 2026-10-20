@@ -42,6 +42,7 @@ struct UITextFieldHostObject {
     superclass: super::UIControlHostObject,
     delegate: id,
     editing: bool,
+    adjusts_font_size_to_fit_width: bool,
     text_label: id,
 }
 impl_HostObject_with_superclass!(UITextFieldHostObject);
@@ -51,6 +52,7 @@ impl Default for UITextFieldHostObject {
             superclass: Default::default(),
             delegate: nil,
             editing: false,
+            adjusts_font_size_to_fit_width: false,
             text_label: nil,
         }
     }
@@ -162,6 +164,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 - (())setMinimumFontSize:(CGFloat)size {
     let text_label = env.objc.borrow_mut::<UITextFieldHostObject>(this).text_label;
     () = msg![env; text_label setMinimumFontSize:size];
+}
+
+- (bool)adjustsFontSizeToFitWidth {
+    env.objc.borrow::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width
+}
+- (())setAdjustsFontSizeToFitWidth:(bool)adjusts {
+    // The text field uses a UILabel internally. Its current renderer does not
+    // implement text scaling yet, but retaining the UIKit flag avoids a missing
+    // selector and lets old apps create editable text fields.
+    env.objc.borrow_mut::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width = adjusts;
 }
 
 - (())setClearsOnBeginEditing:(bool)clear {

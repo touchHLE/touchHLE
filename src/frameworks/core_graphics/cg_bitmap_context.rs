@@ -724,7 +724,7 @@ pub(super) fn draw_path(
                         if a.y > py && b.y <= py && cross < 0.0 { winding -= 1; }
                     }
                 }
-                if (if even_odd { winding % 2 != 0 } else { winding != 0 }) {
+                if if even_odd { winding % 2 != 0 } else { winding != 0 } {
                     drawer.put_pixel((x, y), color, true);
                 }
             }

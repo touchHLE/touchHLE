@@ -670,12 +670,22 @@ pub const CLASSES: ClassExports = objc_classes! {
     if other == nil && env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
         let empty = env.objc.borrow::<StringHostObject>(this)
             .iter_code_units().next().is_none();
-        log!(
-            "Sims3 NSString compare:nil in UI text processing: string={:?}, mask={:#x}, LR={:#x}; treating nil as empty string",
-            to_rust_string(env, this),
-            mask,
-            env.cpu.regs()[crate::cpu::Cpu::LR]
-        );
+        // This comparison can run for every visible UI label on every frame.
+        // Keep a few diagnostics without flooding the log or formatting strings
+        // thousands of times during gameplay.
+        static NIL_COMPARE_LOGS: std::sync::atomic::AtomicUsize =
+            std::sync::atomic::AtomicUsize::new(0);
+        let previous = NIL_COMPARE_LOGS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        if previous < 8 {
+            log!(
+                "Sims3 NSString compare:nil in UI text processing: string={:?}, mask={:#x}, LR={:#x}; treating nil as empty string",
+                to_rust_string(env, this),
+                mask,
+                env.cpu.regs()[crate::cpu::Cpu::LR]
+            );
+        } else if previous == 8 {
+            log!("Sims3: suppressing further repeated NSString compare:nil diagnostics");
+        }
         return if empty { NSOrderedSame } else { NSOrderedDescending };
     }
     assert_ne!(other, nil);

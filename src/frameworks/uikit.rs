@@ -149,6 +149,13 @@ pub fn handle_events(env: &mut Environment) -> Option<Instant> {
             }
             Event::TextInput(text_event) => {
                 let responder = env.framework_state.uikit.ui_responder.first_responder;
+                if env.bundle.bundle_identifier() == "com.ea.sims3ambition.inc" {
+                    // Report committed keyboard input even if the app never
+                    // established a UITextField as the first responder.
+                    // The same SDL2 event bridge works with Windows keyboards
+                    // and future Android software keyboard / IME backends.
+                    log!("Sims3 keyboard event: {:?}, first_responder={:?}", text_event, responder);
+                }
                 let class = msg![env; responder class];
                 let ui_text_field_class = env.objc.get_known_class("UITextField", &mut env.mem);
                 if !responder.is_null() && env.objc.class_is_subclass_of(class, ui_text_field_class)

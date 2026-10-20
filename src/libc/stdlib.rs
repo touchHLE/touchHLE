@@ -262,6 +262,10 @@ fn __udivsi3(_env: &mut Environment, numerator: u32, denominator: u32) -> u32 {
     numerator / denominator
 }
 
+fn __umodsi3(_env: &mut Environment, numerator: u32, denominator: u32) -> u32 {
+    numerator % denominator
+}
+
 fn getenv(env: &mut Environment, name: ConstPtr<u8>) -> MutPtr<u8> {
     let name_cstr = env.mem.cstr_at(name);
     let Some(&value) = env.env_vars.get(name_cstr) else {
@@ -680,6 +684,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(arc4random()),
     export_c_func!(div(_, _)),
     export_c_func!(__udivsi3(_, _)),
+    export_c_func!(__umodsi3(_, _)),
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
     export_c_func!(unsetenv(_)),

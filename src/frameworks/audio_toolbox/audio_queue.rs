@@ -570,6 +570,8 @@ fn AudioQueueGetProperty(
         return kAudioQueueErr_InvalidPropertySize;
     }
 
+    let hardware_sample_rate = env.framework_state.audio_toolbox.audio_session.current_hardware_sample_rate;
+    let hardware_output_channels = env.framework_state.audio_toolbox.audio_session.current_hardware_output_number_channels;
     let host_object = State::get(&mut env.framework_state)
         .audio_queues
         .get_mut(&in_aq)
@@ -585,18 +587,10 @@ fn AudioQueueGetProperty(
             env.mem.write(out_property_data.cast(), is_running);
         }
         kAudioQueueDeviceProperty_SampleRate => {
-            let value = env.framework_state
-                .audio_toolbox
-                .audio_session
-                .current_hardware_sample_rate;
-            env.mem.write(out_property_data.cast(), value);
+            env.mem.write(out_property_data.cast(), hardware_sample_rate);
         }
         kAudioQueueDeviceProperty_NumberChannels => {
-            let value = env.framework_state
-                .audio_toolbox
-                .audio_session
-                .current_hardware_output_number_channels;
-            env.mem.write(out_property_data.cast(), value);
+            env.mem.write(out_property_data.cast(), hardware_output_channels);
         }
         kAudioQueueProperty_StreamDescription => {
             env.mem.write(out_property_data.cast(), host_object.format);

@@ -86,6 +86,8 @@ pub fn CGBitmapContextCreate(
         }),
         // TODO: is this the correct default?
         rgb_fill_color: (0.0, 0.0, 0.0, 0.0),
+        rgb_stroke_color: (0.0, 0.0, 0.0, 1.0),
+        line_width: 1.0,
         path: Default::default(),
         font: Ptr::null(),
         font_size: 14.0,
@@ -465,6 +467,15 @@ impl CGBitmapContextDrawer<'_> {
             self.rgb_fill_color.3, // alpha is always linear
         )
     }
+    pub fn convert_color(&self, color: (CGFloat, CGFloat, CGFloat, CGFloat)) -> (CGFloat, CGFloat, CGFloat, CGFloat) {
+        let mult = match self.bitmap_info.alpha_info {
+            kCGImageAlphaPremultipliedLast | kCGImageAlphaPremultipliedFirst => color.3,
+            _ => 1.0,
+        };
+        (gamma_decode(color.0 * mult), gamma_decode(color.1 * mult),
+         gamma_decode(color.2 * mult), color.3)
+    }
+
     /// Set the pixel at `coords` to `color`. `color` must be linear RGB, not
     /// sRGB! Note that `coords` are absolute: you must do transformation
     /// yourself.
@@ -646,12 +657,15 @@ pub(super) fn draw_path(
     stroke: bool,
     even_odd: bool,
 ) {
-    let transform = env.objc.borrow::<CGContextHostObject>(context).transform;
+    let context_data = env.objc.borrow::<CGContextHostObject>(context);
+    let transform = context_data.transform;
+    let stroke_color = context_data.rgb_stroke_color;
+    let line_radius = (context_data.line_width.max(0.0) * 0.5).max(0.5);
     let paths: Vec<(Vec<CGPoint>, bool)> = paths.iter().map(|p| {
         (p.points.iter().map(|&v| transform.apply_to_point(v)).collect(), p.closed)
     }).collect();
     let mut drawer = CGBitmapContextDrawer::new(&env.objc, &mut env.mem, context);
-    let color = drawer.rgb_fill_color();
+    let color = if stroke { drawer.convert_color(stroke_color) } else { drawer.rgb_fill_color() };
     let width = drawer.width() as i32;
     let height = drawer.height() as i32;
     if stroke {
@@ -664,10 +678,10 @@ pub(super) fn draw_path(
                 let dx = b.x - a.x;
                 let dy = b.y - a.y;
                 let d2 = dx * dx + dy * dy;
-                let x0 = ((a.x.min(b.x) - 1.0).floor() as i32).max(0);
-                let x1 = ((a.x.max(b.x) + 1.0).ceil() as i32).min(width - 1);
-                let y0 = ((a.y.min(b.y) - 1.0).floor() as i32).max(0);
-                let y1 = ((a.y.max(b.y) + 1.0).ceil() as i32).min(height - 1);
+                let x0 = ((a.x.min(b.x) - line_radius).floor() as i32).max(0);
+                let x1 = ((a.x.max(b.x) + line_radius).ceil() as i32).min(width - 1);
+                let y0 = ((a.y.min(b.y) - line_radius).floor() as i32).max(0);
+                let y1 = ((a.y.max(b.y) + line_radius).ceil() as i32).min(height - 1);
                 for y in y0..=y1 {
                     for x in x0..=x1 {
                         let px = x as f32 + 0.5;
@@ -677,7 +691,7 @@ pub(super) fn draw_path(
                         };
                         let ex = px - a.x - dx * t;
                         let ey = py - a.y - dy * t;
-                        if ex*ex + ey*ey <= 0.25 {
+                        if ex*ex + ey*ey <= line_radius * line_radius {
                             drawer.put_pixel((x, y), color, true);
                         }
                     }

@@ -38,6 +38,7 @@ pub const kCGBlendModeScreen: CGBlendMode = 2;
 pub const kCGBlendModeOverlay: CGBlendMode = 3;
 pub const kCGBlendModeDarken: CGBlendMode = 4;
 pub const kCGBlendModeLighten: CGBlendMode = 5;
+pub const kCGBlendModeClear: CGBlendMode = 16;
 pub const kCGBlendModeCopy: CGBlendMode = 17;
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -67,15 +68,30 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: keep more states saved once they are implemented
 type ContextState = (
     (CGFloat, CGFloat, CGFloat, CGFloat), // RGB fill color
+    (CGFloat, CGFloat, CGFloat, CGFloat),
+    CGFloat,
     CGAffineTransform,                    // transform
     CGFontRef,                            // font
     CGFloat,                              // font size
     CGBlendMode,                          // blend mode
 );
 
+#[derive(Default)]
+pub(super) struct CGContextPath {
+    pub(super) subpaths: Vec<CGPathSubpath>,
+}
+
+pub(super) struct CGPathSubpath {
+    pub(super) points: Vec<CGPoint>,
+    pub(super) closed: bool,
+}
+
 pub(super) struct CGContextHostObject {
     pub(super) subclass: CGContextSubclass,
     pub(super) rgb_fill_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pub(super) rgb_stroke_color: (CGFloat, CGFloat, CGFloat, CGFloat),
+    pub(super) line_width: CGFloat,
+    pub(super) path: CGContextPath,
     pub(super) font: CGFontRef,
     pub(super) font_size: CGFloat,
     /// Current transform.
@@ -154,34 +170,149 @@ fn CGContextSetGrayFillColor(
 }
 
 fn CGContextSetGrayStrokeColor(
-    _env: &mut Environment,
-    context: CGContextRef,
-    gray: CGFloat,
-    alpha: CGFloat,
+    env: &mut Environment, context: CGContextRef, gray: CGFloat, alpha: CGFloat,
 ) {
-    log!(
-        "TODO: CGContextSetGrayStrokeColor({:?}, {}, {})",
-        context,
-        gray,
-        alpha,
+    env.objc.borrow_mut::<CGContextHostObject>(context).rgb_stroke_color =
+        (gray, gray, gray, alpha);
+}
+
+fn CGContextSetRGBStrokeColor(
+    env: &mut Environment, context: CGContextRef,
+    r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat,
+) {
+    env.objc.borrow_mut::<CGContextHostObject>(context).rgb_stroke_color = (r, g, b, a);
+}
+
+fn CGContextSetStrokeColorWithColor(env: &mut Environment, context: CGContextRef, color: CGColorRef) {
+    let (r, g, b, a) = cg_color::to_rgba(&env.objc, color);
+    CGContextSetRGBStrokeColor(env, context, r, g, b, a);
+}
+
+fn CGContextSetLineWidth(env: &mut Environment, context: CGContextRef, width: CGFloat) {
+    env.objc.borrow_mut::<CGContextHostObject>(context).line_width = width;
+}
+
+fn CGContextBeginPath(env: &mut Environment, context: CGContextRef) {
+    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.clear();
+}
+
+fn CGContextMoveToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.push(
+        CGPathSubpath { points: vec![CGPoint { x, y }], closed: false }
     );
 }
-fn CGContextSetRGBStrokeColor(
-    _env: &mut Environment,
-    context: CGContextRef,
-    r: CGFloat,
-    g: CGFloat,
-    b: CGFloat,
-    a: CGFloat,
-) {
-    log!(
-        "TODO: CGContextSetRGBStrokeColor({:?}, {}, {}, {}, {})",
-        context,
-        r,
-        g,
-        b,
-        a
+
+fn CGContextAddLineToPoint(env: &mut Environment, context: CGContextRef, x: CGFloat, y: CGFloat) {
+    let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
+    if let Some(last) = path.subpaths.last_mut() {
+        if last.closed {
+            let start = last.points[0];
+            path.subpaths.push(CGPathSubpath {
+                points: vec![start, CGPoint { x, y }],
+                closed: false,
+            });
+        } else {
+            last.points.push(CGPoint { x, y });
+        }
+    } else {
+        path.subpaths.push(CGPathSubpath { points: vec![CGPoint { x, y }], closed: false });
+    }
+}
+
+fn CGContextClosePath(env: &mut Environment, context: CGContextRef) {
+    if let Some(last) = env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.last_mut() {
+        last.closed = true;
+    }
+}
+
+fn CGContextAddRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    let x = rect.origin.x;
+    let y = rect.origin.y;
+    let w = rect.size.width;
+    let h = rect.size.height;
+    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.push(
+        CGPathSubpath {
+            points: vec![
+                CGPoint { x, y },
+                CGPoint { x: x + w, y },
+                CGPoint { x: x + w, y: y + h },
+                CGPoint { x, y: y + h },
+            ],
+            closed: true,
+        }
     );
+}
+
+fn CGContextAddEllipseInRect(env: &mut Environment, context: CGContextRef, rect: CGRect) {
+    let cx = rect.origin.x + rect.size.width / 2.0;
+    let cy = rect.origin.y + rect.size.height / 2.0;
+    let rx = rect.size.width / 2.0;
+    let ry = rect.size.height / 2.0;
+    let points = (0..64).map(|i| {
+        let theta = i as CGFloat * std::f32::consts::TAU / 64.0;
+        CGPoint { x: cx + rx * theta.cos(), y: cy + ry * theta.sin() }
+    }).collect();
+    env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths.push(
+        CGPathSubpath { points, closed: true }
+    );
+}
+
+fn CGContextAddCurveToPoint(
+    env: &mut Environment, context: CGContextRef,
+    cp1x: CGFloat, cp1y: CGFloat, cp2x: CGFloat, cp2y: CGFloat, x: CGFloat, y: CGFloat,
+) {
+    let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
+    let Some(last) = path.subpaths.last_mut() else { return; };
+    let Some(start) = last.points.last().copied() else { return; };
+    for i in 1..=24 {
+        let t = i as CGFloat / 24.0;
+        let u = 1.0 - t;
+        last.points.push(CGPoint {
+            x: u*u*u*start.x + 3.0*u*u*t*cp1x + 3.0*u*t*t*cp2x + t*t*t*x,
+            y: u*u*u*start.y + 3.0*u*u*t*cp1y + 3.0*u*t*t*cp2y + t*t*t*y,
+        });
+    }
+}
+
+fn CGContextAddQuadCurveToPoint(
+    env: &mut Environment, context: CGContextRef,
+    cpx: CGFloat, cpy: CGFloat, x: CGFloat, y: CGFloat,
+) {
+    let path = &mut env.objc.borrow_mut::<CGContextHostObject>(context).path;
+    let Some(last) = path.subpaths.last_mut() else { return; };
+    let Some(start) = last.points.last().copied() else { return; };
+    for i in 1..=16 {
+        let t = i as CGFloat / 16.0;
+        let u = 1.0 - t;
+        last.points.push(CGPoint {
+            x: u*u*start.x + 2.0*u*t*cpx + t*t*x,
+            y: u*u*start.y + 2.0*u*t*cpy + t*t*y,
+        });
+    }
+}
+
+fn CGContextDrawPath(env: &mut Environment, context: CGContextRef, mode: i32) {
+    let paths = std::mem::take(&mut env.objc.borrow_mut::<CGContextHostObject>(context).path.subpaths);
+    match mode {
+        0 => cg_bitmap_context::draw_path(env, context, &paths, false, false),
+        1 => cg_bitmap_context::draw_path(env, context, &paths, false, true),
+        2 => cg_bitmap_context::draw_path(env, context, &paths, true, false),
+        3 | 4 => {
+            cg_bitmap_context::draw_path(env, context, &paths, false, mode == 4);
+            cg_bitmap_context::draw_path(env, context, &paths, true, false);
+        }
+        _ => unimplemented!("CGContextDrawPath mode {}", mode),
+    }
+}
+
+fn CGContextFillPath(env: &mut Environment, context: CGContextRef) {
+    CGContextDrawPath(env, context, 0);
+}
+fn CGContextEOFillPath(env: &mut Environment, context: CGContextRef) {
+    CGContextDrawPath(env, context, 1);
+}
+fn CGContextStrokePath(env: &mut Environment, context: CGContextRef) {
+    CGContextDrawPath(env, context, 2);
 }
 
 fn CGContextSetShadowWithColor(
@@ -272,6 +403,8 @@ fn CGContextSaveGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
     host_obj.state_stack.push((
         host_obj.rgb_fill_color,
+        host_obj.rgb_stroke_color,
+        host_obj.line_width,
         host_obj.transform,
         host_obj.font,
         host_obj.font_size,
@@ -290,10 +423,12 @@ fn CGContextRestoreGState(env: &mut Environment, context: CGContextRef) {
     let host_obj = env.objc.borrow_mut::<CGContextHostObject>(context);
     let state = host_obj.state_stack.pop().unwrap();
     host_obj.rgb_fill_color = state.0;
-    host_obj.transform = state.1;
-    host_obj.font = state.2;
-    host_obj.font_size = state.3;
-    host_obj.blend_mode = state.4;
+    host_obj.rgb_stroke_color = state.1;
+    host_obj.line_width = state.2;
+    host_obj.transform = state.3;
+    host_obj.font = state.4;
+    host_obj.font_size = state.5;
+    host_obj.blend_mode = state.6;
 }
 
 fn CGContextSetInterpolationQuality(
@@ -438,6 +573,20 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGContextSetGrayFillColor(_, _, _)),
     export_c_func!(CGContextSetGrayStrokeColor(_, _, _)),
     export_c_func!(CGContextSetRGBStrokeColor(_, _, _, _, _)),
+    export_c_func!(CGContextSetStrokeColorWithColor(_, _)),
+    export_c_func!(CGContextSetLineWidth(_, _)),
+    export_c_func!(CGContextBeginPath(_)),
+    export_c_func!(CGContextMoveToPoint(_, _, _)),
+    export_c_func!(CGContextAddLineToPoint(_, _, _)),
+    export_c_func!(CGContextClosePath(_)),
+    export_c_func!(CGContextAddRect(_, _)),
+    export_c_func!(CGContextAddEllipseInRect(_, _)),
+    export_c_func!(CGContextAddCurveToPoint(_, _, _, _, _, _, _)),
+    export_c_func!(CGContextAddQuadCurveToPoint(_, _, _, _, _)),
+    export_c_func!(CGContextDrawPath(_, _)),
+    export_c_func!(CGContextFillPath(_)),
+    export_c_func!(CGContextEOFillPath(_)),
+    export_c_func!(CGContextStrokePath(_)),
     export_c_func!(CGContextSetShadowWithColor(_, _, _, _)),
     export_c_func!(CGContextFillRect(_, _)),
     export_c_func!(CGContextClearRect(_, _)),

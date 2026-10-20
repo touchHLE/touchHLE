@@ -415,7 +415,11 @@ fn CFStringFind(
     }
 }
 
-fn find_utf16_range(haystack: &[u16], needle: &[u16], options: CFStringCompareFlags) -> Option<usize> {
+fn find_utf16_range(
+    haystack: &[u16],
+    needle: &[u16],
+    options: CFStringCompareFlags,
+) -> Option<usize> {
     if needle.is_empty() || needle.len() > haystack.len() {
         return None;
     }
@@ -437,7 +441,8 @@ fn find_utf16_range(haystack: &[u16], needle: &[u16], options: CFStringCompareFl
                 if !case_insensitive {
                     return false;
                 }
-                let (Some(a), Some(b)) = (char::from_u32(a.into()), char::from_u32(b.into())) else {
+                let (Some(a), Some(b)) = (char::from_u32(a.into()), char::from_u32(b.into()))
+                else {
                     return false;
                 };
                 a.to_lowercase().eq(b.to_lowercase())

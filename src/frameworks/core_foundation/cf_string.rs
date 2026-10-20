@@ -376,6 +376,90 @@ fn CFStringFind(
     }
 }
 
+fn find_utf16_range(haystack: &[u16], needle: &[u16], options: CFStringCompareFlags) -> Option<usize> {
+    if needle.is_empty() || needle.len() > haystack.len() {
+        return None;
+    }
+
+    let backwards = options & 4 != 0;
+    let anchored = options & 8 != 0;
+    let case_insensitive = options & 1 != 0;
+    let last = haystack.len() - needle.len();
+
+    for offset in 0..=last {
+        let position = if backwards { last - offset } else { offset };
+        let found = haystack[position..position + needle.len()]
+            .iter()
+            .zip(needle)
+            .all(|(&a, &b)| {
+                if a == b {
+                    return true;
+                }
+                if !case_insensitive {
+                    return false;
+                }
+                let (Some(a), Some(b)) = (char::from_u32(a.into()), char::from_u32(b.into())) else {
+                    return false;
+                };
+                a.to_lowercase().eq(b.to_lowercase())
+            });
+        if found {
+            return Some(position);
+        }
+        if anchored {
+            break;
+        }
+    }
+    None
+}
+
+fn CFStringFindWithOptions(
+    env: &mut Environment,
+    string: CFStringRef,
+    to_find: CFStringRef,
+    search_range: CFRange,
+    options: CFStringCompareFlags,
+    result: MutPtr<CFRange>,
+) -> bool {
+    assert_eq!(
+        options & !(1 | 4 | 8),
+        0,
+        "Unsupported CFStringFindWithOptions flags: {options:#x}"
+    );
+
+    let start: usize = search_range.location.try_into().unwrap();
+    let length: usize = search_range.length.try_into().unwrap();
+    let string_length: usize = CFStringGetLength(env, string).try_into().unwrap();
+    assert!(start <= string_length && length <= string_length - start);
+
+    let needle_length: usize = CFStringGetLength(env, to_find).try_into().unwrap();
+    if needle_length == 0 || needle_length > length {
+        return false;
+    }
+
+    let haystack: Vec<u16> = (start..start + length)
+        .map(|i| CFStringGetCharacterAtIndex(env, string, i.try_into().unwrap()))
+        .collect();
+    let needle: Vec<u16> = (0..needle_length)
+        .map(|i| CFStringGetCharacterAtIndex(env, to_find, i.try_into().unwrap()))
+        .collect();
+
+    let Some(position) = find_utf16_range(&haystack, &needle, options) else {
+        return false;
+    };
+
+    if !result.is_null() {
+        env.mem.write(
+            result,
+            CFRange {
+                location: (start + position).try_into().unwrap(),
+                length: needle_length.try_into().unwrap(),
+            },
+        );
+    }
+    true
+}
+
 fn CFStringHasSuffix(env: &mut Environment, the_string: CFStringRef, suffix: CFStringRef) -> bool {
     msg![env; the_string hasSuffix:suffix]
 }
@@ -472,9 +556,42 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CFStringGetIntValue(_)),
     export_c_func!(CFStringGetLength(_)),
     export_c_func!(CFStringFind(_, _, _)),
+    export_c_func!(CFStringFindWithOptions(_, _, _, _, _)),
     export_c_func!(CFStringHasSuffix(_, _)),
     export_c_func!(CFStringUppercase(_, _)),
     export_c_func!(CFStringCreateWithPascalString(_, _, _)),
     export_c_func!(CFStringGetPascalString(_, _, _, _)),
     export_c_func!(CFStringNormalize(_, _)),
 ];
+
+#[cfg(test)]
+mod find_with_options_tests {
+    use super::find_utf16_range;
+
+    #[test]
+    fn searches_forward_and_backward() {
+        let source: Vec<u16> = "hello hello".encode_utf16().collect();
+        let needle: Vec<u16> = "hello".encode_utf16().collect();
+        assert_eq!(find_utf16_range(&source, &needle, 0), Some(0));
+        assert_eq!(find_utf16_range(&source, &needle, 4), Some(6));
+        assert_eq!(find_utf16_range(&source, &needle, 8), Some(0));
+        assert_eq!(find_utf16_range(&source, &needle, 12), Some(6));
+    }
+
+    #[test]
+    fn respects_case_and_missing_matches() {
+        let source: Vec<u16> = "Game Data".encode_utf16().collect();
+        let needle: Vec<u16> = "game".encode_utf16().collect();
+        assert_eq!(find_utf16_range(&source, &needle, 0), None);
+        assert_eq!(find_utf16_range(&source, &needle, 1), Some(0));
+        assert_eq!(find_utf16_range(&source, &[], 0), None);
+    }
+
+    #[test]
+    fn searches_utf16_code_units() {
+        let source: Vec<u16> = "a😀b😀".encode_utf16().collect();
+        let needle: Vec<u16> = "😀".encode_utf16().collect();
+        assert_eq!(find_utf16_range(&source, &needle, 0), Some(1));
+        assert_eq!(find_utf16_range(&source, &needle, 4), Some(4));
+    }
+}

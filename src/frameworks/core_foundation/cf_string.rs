@@ -256,16 +256,22 @@ fn CFStringGetCharacterAtIndex(
         if idx < 0 || idx >= string_length {
             let sp = env.cpu.regs()[crate::cpu::Cpu::SP];
             let caller = env.mem.read(ConstPtr::<u32>::from_bits(sp.wrapping_add(4)));
-            log!(
-                "Sims3 CFStringGetCharacterAtIndex out of range: index={}, length={}, midp_caller={:#x}, LR={:#x}",
-                idx,
-                string_length,
-                caller,
-                env.cpu.regs()[crate::cpu::Cpu::LR]
-            );
+            static CHAR_INDEX_LOGS: std::sync::atomic::AtomicUsize =
+                std::sync::atomic::AtomicUsize::new(0);
+            let previous = CHAR_INDEX_LOGS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            if previous < 8 {
+                log!(
+                    "Sims3 CFStringGetCharacterAtIndex out of range: index={}, length={}, midp_caller={:#x}, LR={:#x}",
+                    idx,
+                    string_length,
+                    caller,
+                    env.cpu.regs()[crate::cpu::Cpu::LR]
+                );
+            } else if previous == 8 {
+                log!("Sims3: suppressing further repeated character-index diagnostics");
+            }
 
             if caller == 0xc3cc4 {
-                log!("Sims3: skipping invalid wrapped-line delimiter read");
                 return 0;
             }
         }

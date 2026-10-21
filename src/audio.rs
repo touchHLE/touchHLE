@@ -48,13 +48,44 @@ pub struct AudioDescription {
     pub bits_per_channel: u32,
 }
 
-pub struct AudioFile(AudioFileInner);
+fn detect_audio_file_type(bytes: &[u8]) -> Option<u32> {
+    if bytes.len() >= 12 && bytes.starts_with(b"RIFF") && &bytes[8..12] == b"WAVE" {
+        Some(u32::from_be_bytes(*b"WAVE"))
+    } else if bytes.len() >= 12 && &bytes[4..8] == b"ftyp" {
+        if &bytes[8..12] == b"M4A " {
+            Some(u32::from_be_bytes(*b"m4af"))
+        } else {
+            Some(u32::from_be_bytes(*b"mp4f"))
+        }
+    } else if bytes.starts_with(b"ID3")
+        || (bytes.len() >= 2
+            && bytes[0] == 0xff
+            && bytes[1] & 0xe0 == 0xe0
+            && bytes[1] & 0x06 == 0x02)
+    {
+        Some(u32::from_be_bytes(*b"MPG3"))
+    } else if bytes.len() >= 2 && bytes[0] == 0xff && bytes[1] & 0xf6 == 0xf0 {
+        Some(u32::from_be_bytes(*b"adts"))
+    } else if bytes.starts_with(b"caff") {
+        Some(u32::from_be_bytes(*b"caff"))
+    } else if bytes.len() >= 12 && bytes.starts_with(b"FORM") && &bytes[8..12] == b"AIFF" {
+        Some(u32::from_be_bytes(*b"AIFF"))
+    } else {
+        None
+    }
+}
+
+pub struct AudioFile(AudioFileInner, Option<u32>);
 enum AudioFileInner {
     Wave(hound::WavReader<Cursor<Vec<u8>>>),
     Symphonia(symphonia_formats::SymphoniaDecodedToPcm),
 }
 
 impl AudioFile {
+    pub fn file_type(&self) -> Option<u32> {
+        self.1
+    }
+
     pub fn open_for_reading<P: AsRef<GuestPath>>(
         path: P,
         fs: &Fs,
@@ -77,6 +108,7 @@ impl AudioFile {
     }
 
     pub fn read_from_vec(bytes: Vec<u8>) -> Result<Self, AudioFileOpenError> {
+        let source_file_type = detect_audio_file_type(&bytes);
         // WavReader::new() consume the reader (in this case, a Cursor)
         // passed to it. This is a bit annoying considering we don't know
         // which is appropriate for the file. This is worked around here by
@@ -84,13 +116,16 @@ impl AudioFile {
         // format, then recreating the reader if that works.
         if hound::WavReader::new(Cursor::new(&bytes)).is_ok() {
             let reader = hound::WavReader::new(Cursor::new(bytes)).unwrap();
-            Ok(AudioFile(AudioFileInner::Wave(reader)))
+            Ok(AudioFile(
+                AudioFileInner::Wave(reader),
+                Some(u32::from_be_bytes(*b"WAVE")),
+            ))
         // TODO: Real MP3/MP4/Non-linear PCM container handling. Currently we
         // are immediately decoding the entire file to PCM and acting as if
         // it's a PCM file, simply because because this is easier. Full MP3
         // support would require a lot of changes in Audio Toolbox.
         } else if let Ok(pcm) = symphonia_formats::decode_symphonia_to_pcm(Cursor::new(bytes)) {
-            Ok(AudioFile(AudioFileInner::Symphonia(pcm)))
+            Ok(AudioFile(AudioFileInner::Symphonia(pcm), source_file_type))
         } else {
             Err(AudioFileOpenError::FileDecodeError)
         }
@@ -258,5 +293,27 @@ impl AudioFile {
         assert!(bytes_per_packet != 0); // TODO
         self.byte_count() as f64 * frames_per_packet as f64
             / (bytes_per_packet as f64 * sample_rate)
+    }
+}
+
+#[cfg(test)]
+mod audio_file_type_tests {
+    use super::detect_audio_file_type;
+
+    #[test]
+    fn identifies_supported_containers() {
+        assert_eq!(
+            detect_audio_file_type(b"RIFF\0\0\0\0WAVEfmt "),
+            Some(u32::from_be_bytes(*b"WAVE"))
+        );
+        assert_eq!(
+            detect_audio_file_type(b"\0\0\0\x18ftypM4A "),
+            Some(u32::from_be_bytes(*b"m4af"))
+        );
+        assert_eq!(
+            detect_audio_file_type(b"ID3\0\0"),
+            Some(u32::from_be_bytes(*b"MPG3"))
+        );
+        assert_eq!(detect_audio_file_type(b"unknown"), None);
     }
 }

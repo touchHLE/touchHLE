@@ -961,7 +961,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 // CAAnimationDelegate protocol implementation
-- (())animationDidStart:(id)animation { // CAAnimation*
+- (())animationDidStart:(id)_animation { // CAAnimation*
     let UIViewAnimationDelegateHostObject {
         started_animation_count,
         delegate,
@@ -971,22 +971,21 @@ pub const CLASSES: ClassExports = objc_classes! {
         ..
     } = *env.objc.borrow::<UIViewAnimationDelegateHostObject>(this);
     let new_started_animation_count = started_animation_count + 1;
-    log_dbg!("[(_touchHLE_UIView_AnimationDelegate*){:?} animationDidStart:{:?}] started_animation_count {} -> {}", this, animation, started_animation_count, new_started_animation_count);
     if started_animation_count == 0 && delegate != nil && will_start_selector.is_some() {
         let will_start_selector = will_start_selector.unwrap();
-        log_dbg!("Notifying delegate {:?} {:?} {} with args {:?}, {:?}", delegate, will_start_selector, will_start_selector.as_str(&env.mem), animation_id, context);
-        () = msg_send(env, (delegate, will_start_selector, animation_id, context));
+        if env.objc.object_has_method(&env.mem, delegate, will_start_selector) {
+            () = msg_send(env, (delegate, will_start_selector, animation_id, context));
+        }
     }
     env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).started_animation_count = new_started_animation_count;
 }
 
-- (())animationDidStop:(id)animation // CAAnimation*
+- (())animationDidStop:(id)_animation // CAAnimation*
               finished:(bool)finished {
     assert!(finished);
     let host_object = env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this);
     let finished_animation_count = host_object.finished_animation_count;
     let new_finished_animation_count = finished_animation_count + finished as u32;
-    log_dbg!("[(_touchHLE_UIView_AnimationDelegate*){:?} animationDidStop:{:?} finished:{}] finished_animation_count {} -> {}", this, animation, finished, finished_animation_count, new_finished_animation_count);
     env.objc.borrow_mut::<UIViewAnimationDelegateHostObject>(this).finished_animation_count = new_finished_animation_count;
     let UIViewAnimationDelegateHostObject {
         total_animation_count,
@@ -999,9 +998,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     } = *env.objc.borrow::<UIViewAnimationDelegateHostObject>(this);
     if finished_animation_count == total_animation_count && delegate != nil && did_stop_selector.is_some() {
         let did_stop_selector = did_stop_selector.unwrap();
-        let finished: id = msg_class![env; NSNumber numberWithBool:finished];
-        log_dbg!("Notifying delegate {:?} {:?} {} with args {:?}, {:?}, {:?}", delegate, did_stop_selector, did_stop_selector.as_str(&env.mem), animation_id, finished, context);
-        () = msg_send(env, (delegate, did_stop_selector, animation_id, finished, context));
+        if env.objc.object_has_method(&env.mem, delegate, did_stop_selector) {
+            let finished: id = msg_class![env; NSNumber numberWithBool:finished];
+            () = msg_send(env, (delegate, did_stop_selector, animation_id, finished, context));
+        }
     }
 }
 

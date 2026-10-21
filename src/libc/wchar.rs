@@ -6,7 +6,10 @@
 //! `wchar.h`
 
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, GuestUSize, MutPtr};
+use crate::libc::clocale::{setlocale, LC_CTYPE};
+use crate::libc::stdlib::mbstowcs;
+use crate::libc::time::{strftime, tm};
+use crate::mem::{ConstPtr, GuestUSize, MutPtr, Ptr};
 use crate::Environment;
 
 use super::generic_char::GenericChar;
@@ -189,6 +192,34 @@ fn wcslcpy(
     GenericChar::<wchar_t>::strlcpy(env, dst, src, size)
 }
 
+// Other functions
+
+fn wcsftime(
+    env: &mut Environment,
+    wcs: MutPtr<wchar_t>,
+    max_size: GuestUSize,
+    format: ConstPtr<wchar_t>,
+    time_ptr: ConstPtr<tm>,
+) -> GuestUSize {
+    // TODO: support other locales
+    let ctype_locale = setlocale(env, LC_CTYPE, Ptr::null());
+    assert_eq!(env.mem.read(ctype_locale), b'C');
+
+    let format_string = env.mem.wcstr_at(format);
+    assert!(format_string.is_ascii()); // TODO
+
+    let c_string: MutPtr<u8> = env.mem.alloc(max_size).cast();
+    let c_format_string: ConstPtr<u8> = env
+        .mem
+        .alloc_and_write_cstr(format_string.as_bytes())
+        .cast_const();
+    let res = strftime(env, c_string, max_size, c_format_string, time_ptr);
+    env.mem.free(c_format_string.cast().cast_mut());
+    mbstowcs(env, wcs, c_string.cast_const(), max_size);
+    env.mem.free(c_string.cast());
+    res
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(btowc(_)),
     export_c_func!(wctob(_)),
@@ -216,4 +247,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(wcsrchr(_, _)),
     export_c_func!(wcspbrk(_, _)),
     export_c_func!(wcslcpy(_, _, _)),
+    // Other functions
+    export_c_func!(wcsftime(_, _, _, _)),
 ];

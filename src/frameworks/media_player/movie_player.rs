@@ -6,7 +6,7 @@
 //! `MPMoviePlayerController` etc.
 
 use crate::dyld::{ConstantExports, HostConstant};
-use crate::frameworks::foundation::{ns_string, ns_url, NSInteger};
+use crate::frameworks::foundation::{ns_string, ns_url, NSInteger, NSTimeInterval};
 use crate::frameworks::uikit::ui_device::UIDeviceOrientation;
 use crate::objc::{
     id, msg, msg_class, nil, objc_classes, release, retain, todo_objc_setter, ClassExports,
@@ -140,6 +140,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())setFullscreen:(bool)fullsreen {
     todo_objc_setter!(this, fullsreen);
+}
+- (())setInitialPlaybackTime:(NSTimeInterval)initial_time {
+    todo_objc_setter!(this, initial_time);
 }
 
 - (id)view {

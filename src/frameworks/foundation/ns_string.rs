@@ -613,6 +613,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; this compare:other]
 }
 
+- (NSComparisonResult)localizedCaseInsensitiveCompare:(id)other  { // NSString*
+    // TODO: same as localizedCompare
+    assert!(to_rust_string(env, this).is_ascii());
+    assert!(to_rust_string(env, other).is_ascii());
+    msg![env; this caseInsensitiveCompare:other]
+}
+
 - (NSComparisonResult)compare:(id)other { // NSString*
     msg![env; this compare:other options:NSLiteralSearch]
 }
@@ -1099,9 +1106,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     //       "/var/automount”, or "/private” from the path
     assert!(!path.starts_with("/private"));
     assert!(!path.starts_with("/var/automount"));
-    // TODO: Reducing empty components and references to the current directory
-    assert!(!path.contains("//"));
-    assert!(!path.contains("/./"));
+    // Reducing empty components and references to the current directory
+    let path = path.replace("//", "/").replace("/./", "/");
     // Removing a trailing slash from the last component.
     let path = path_algorithms::trim_trailing_slashes(&path);
     // For absolute paths only, resolve references to the parent directory

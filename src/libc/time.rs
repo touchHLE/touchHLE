@@ -638,7 +638,7 @@ fn strptime(
     }
 }
 
-fn strftime(
+pub fn strftime(
     env: &mut Environment,
     s: MutPtr<u8>,
     max_size: GuestUSize,
@@ -747,12 +747,20 @@ fn strftime(
                 // TODO: return the current timezone
                 res.extend_from_slice(b"GMT");
             }
+            b'#' => {
+                // macOS seems to skip that completly
+                res.extend_from_slice(b"#");
+            }
             _ => unimplemented!(
                 "Format character '{}'. Formatted up to index {}",
                 specifier as char,
                 format_char_idx
             ),
         }
+    }
+
+    if res.len() >= max_size as usize {
+        return 0;
     }
 
     let middle = if ((max_size - 1) as usize) < res.len() {

@@ -1033,6 +1033,10 @@ where
                                 let c_u32_ptr: ConstPtr<u32> = args.next(env);
                                 env.mem.write(c_u32_ptr.cast_mut(), val as u32);
                             }
+                            Some("ll") => {
+                                let c_u64_ptr: ConstPtr<u64> = args.next(env);
+                                env.mem.write(c_u64_ptr.cast_mut(), val);
+                            }
                             _ => unimplemented!("length_modifier {:?}", length_modifier),
                         }
                     }

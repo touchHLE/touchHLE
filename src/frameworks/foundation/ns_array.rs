@@ -13,7 +13,7 @@ use super::{
     _nib_archive_decoder, ns_keyed_unarchiver, ns_string, ns_url, NSComparisonResult, NSNotFound,
     NSRange, NSUInteger,
 };
-use crate::abi::{CallFromHost, GuestFunction};
+use crate::abi::{CallFromHost, DotDotDot, GuestFunction};
 use crate::frameworks::foundation::ns_keyed_archiver::{
     encode_object, get_value_to_encode_for_current_key,
 };
@@ -382,19 +382,8 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
-- (id)initWithObjects:(id)firstObj, ...args {
-    retain(env, firstObj);
-    let mut objects = vec![firstObj];
-    let mut varargs = args.start();
-    loop {
-        let next_arg: id = varargs.next(env);
-        if next_arg.is_null() {
-            break;
-        }
-        retain(env, next_arg);
-        objects.push(next_arg);
-    }
-    env.objc.borrow_mut::<ArrayHostObject>(this).array = objects;
+- (id)initWithObjects:(id)first_obj, ...args {
+    init_with_objects_inner(env, this, first_obj, args);
     this
 }
 
@@ -518,6 +507,11 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)initWithCapacity:(NSUInteger)capacity {
     env.objc.borrow_mut::<ArrayHostObject>(this).array.reserve(capacity as usize);
+    this
+}
+
+- (id)initWithObjects:(id)first_obj, ...args {
+    init_with_objects_inner(env, this, first_obj, args);
     this
 }
 
@@ -713,6 +707,34 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow_mut::<ArrayHostObject>(this).array = Vec::new()
 }
 
+- (())removeObjectsInArray:(id)other { // NSArray*
+    let other_count: NSUInteger = msg![env; other count];
+    if other_count == 0 {
+        return;
+    }
+
+    let host_object: &mut ArrayHostObject = env.objc.borrow_mut(this);
+    let array = std::mem::take(&mut host_object.array);
+
+    // Since removing objects individually has to iterate the whole array
+    // for each object (with [array removeObject:obj]), so this just saves some
+    // runtime costs.
+    let other_array_set: id = msg_class![env; NSSet alloc];
+    let other_array_set: id = msg![env; other_array_set initWithArray:other];
+    let mut new_array = Vec::with_capacity(array.len());
+    for object in array {
+        let contains: bool = msg![env; other_array_set containsObject:object];
+        if contains {
+            release(env, object);
+        } else {
+            new_array.push(object);
+        }
+    }
+
+    env.objc.borrow_mut::<ArrayHostObject>(this).array = new_array;
+    release(env, other_array_set);
+}
+
 @end
 
 // Special variant for use by CFArray with NULL callbacks: objects aren't
@@ -868,4 +890,20 @@ fn encode_with_coder_inner(env: &mut Environment, arr: id, coder: id) {
 
     let scope = get_value_to_encode_for_current_key(env, coder);
     scope.insert("NS.objects".to_string(), plist::Value::Array(encoded_vals));
+}
+
+/// Helper for initWithObjects.
+fn init_with_objects_inner(env: &mut Environment, arr: id, first_obj: id, args: DotDotDot) {
+    retain(env, first_obj);
+    let mut objects = vec![first_obj];
+    let mut varargs = args.start();
+    loop {
+        let next_arg: id = varargs.next(env);
+        if next_arg.is_null() {
+            break;
+        }
+        retain(env, next_arg);
+        objects.push(next_arg);
+    }
+    env.objc.borrow_mut::<ArrayHostObject>(arr).array = objects;
 }

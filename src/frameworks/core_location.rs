@@ -84,6 +84,10 @@ const CONSTANTS: ConstantExports = &[
         HostConstant::Custom(|env| env.mem.alloc_and_write(-1f64).cast().cast_const()),
     ),
     (
+        "_kCLLocationAccuracyBest",
+        HostConstant::Custom(|env| env.mem.alloc_and_write(-1f64).cast().cast_const()),
+    ),
+    (
         "_kCLLocationAccuracyKilometer",
         HostConstant::Custom(|env| env.mem.alloc_and_write(1000f64).cast().cast_const()),
     ),

@@ -5444,6 +5444,65 @@ int test_strftime() {
     return -4;
   }
 
+  // macOS treats the unsupported '#' conversion literally, dropping the '%'.
+  res = strftime(buf, sizeof(buf), "%#c", &tm);
+  if (res != 2) {
+    return -5;
+  }
+  if (strcmp(buf, "#c") != 0) {
+    return -6;
+  }
+
+  memset(&tm, 0, sizeof(struct tm));
+  tm.tm_year = 2026 - 1900;
+
+  // The formatted year and its terminator fit exactly.
+  res = strftime(buf, 5, "%Y", &tm);
+  if (res != 4) {
+    return -7;
+  }
+  if (strcmp(buf, "2026") != 0) {
+    return -8;
+  }
+
+  // Insufficient space must return zero, including when only the NUL won't fit.
+  res = strftime(buf, 4, "%Y", &tm);
+  if (res != 0) {
+    return -9;
+  }
+  res = strftime(buf, 1, "%Y", &tm);
+  if (res != 0) {
+    return -10;
+  }
+
+  return 0;
+}
+
+int test_wcsftime() {
+  struct tm tm;
+  wchar_t buf[5];
+  memset(&tm, 0, sizeof(struct tm));
+  tm.tm_year = 2026 - 1900;
+
+  // The formatted year and its terminator fit exactly.
+  size_t res = wcsftime(buf, sizeof(buf) / sizeof(buf[0]), L"%Y", &tm);
+  if (res != 4) {
+    return -1;
+  }
+  if (wcscmp(buf, L"2026") != 0) {
+    return -2;
+  }
+
+  // Insufficient space must return zero, including when only the NUL won't fit.
+  res = wcsftime(buf, 4, L"%Y", &tm);
+  if (res != 0) {
+    return -3;
+  }
+  res = wcsftime(buf, 1, L"%Y", &tm);
+  if (res != 0) {
+    return -4;
+  }
+
   return 0;
 }
 
@@ -6345,6 +6404,37 @@ int test_NSNotificationCenter_addObserver_nilName_removeObserver() {
   return 0;
 }
 
+int test_NSMutableArray_removeObjectsInArray_otherArray() {
+  NSAutoreleasePool *pool = [NSAutoreleasePool new];
+
+  // Duplicate objects are removed as well.
+  NSMutableArray *array =
+      [[NSMutableArray alloc] initWithObjects:@1, @2, @3, @4, @5, @2, nil];
+  NSArray *otherArray = [[NSArray alloc] initWithObjects:@2, @4, @99, nil];
+  [array removeObjectsInArray:otherArray];
+  [otherArray release];
+
+  if ([array count] != 3) {
+    [array release];
+    [pool drain];
+    return -1;
+  }
+
+  // Expected: [1, 3, 5]
+  NSArray *expectedArray = [[NSArray alloc] initWithObjects:@1, @3, @5, nil];
+  if (![array isEqualToArray:expectedArray]) {
+    [expectedArray release];
+    [array release];
+    [pool drain];
+    return -2;
+  }
+
+  [expectedArray release];
+  [array release];
+  [pool drain];
+  return 0;
+}
+
 int test_malloc_zone_basic() {
   malloc_zone_t *zone = malloc_create_zone(0, 0);
   unsigned char *p = malloc_zone_malloc(zone, 128);
@@ -6464,6 +6554,104 @@ int test_fcvt() {
   return 0;
 }
 
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+// touchHLE stores temporary files in the app's sandbox. On macOS, tmpfile()
+// uses a shared directory whose contents may change independently of this test.
+static int tempfile_directory_entry_count(void) {
+  const char *home = getenv("HOME");
+  if (home == NULL)
+    return -1;
+
+  char tmp_dir[1024];
+  int len = snprintf(tmp_dir, sizeof(tmp_dir), "%s/tmp", home);
+  if (len < 0 || (size_t)len >= sizeof(tmp_dir))
+    return -1;
+
+  DIR *dir = opendir(tmp_dir);
+  if (dir == NULL)
+    return -1;
+
+  int count = 0;
+  errno = 0;
+  while (readdir(dir) != NULL)
+    count++;
+  int read_error = errno;
+  if (closedir(dir) != 0 || read_error != 0)
+    return -1;
+  return count;
+}
+#endif
+
+int test_tempfile() {
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+  int entries_before = tempfile_directory_entry_count();
+  if (entries_before < 0)
+    return -1;
+#endif
+
+  FILE *files[2] = {NULL, NULL};
+  const unsigned char contents[2][5] = {{'a', '\0', '\n', 0xff, 'z'},
+                                        {'b', '\0', '\n', 0xfe, 'y'}};
+  unsigned char buffer[sizeof(contents[0])];
+  int result = 0;
+
+  for (int i = 0; i < 2; i++) {
+    files[i] = tmpfile();
+    if (files[i] == NULL) {
+      result = -2;
+      goto cleanup;
+    }
+    // Each stream starts empty and positioned at its beginning.
+    if (ftell(files[i]) != 0 || fgetc(files[i]) != EOF || !feof(files[i])) {
+      result = -3;
+      goto cleanup;
+    }
+    if (fseek(files[i], 0, SEEK_SET) != 0 || feof(files[i])) {
+      result = -4;
+      goto cleanup;
+    }
+    // Flush before creating the next stream so buffered I/O cannot hide an
+    // accidental reuse or truncation of the first file.
+    if (fwrite(contents[i], 1, sizeof(contents[i]), files[i]) !=
+            sizeof(contents[i]) ||
+        fflush(files[i]) != 0) {
+      result = -5;
+      goto cleanup;
+    }
+  }
+
+  for (int i = 0; i < 2; i++) {
+    if (fseek(files[i], 0, SEEK_SET) != 0 ||
+        fread(buffer, 1, sizeof(buffer), files[i]) != sizeof(buffer) ||
+        memcmp(buffer, contents[i], sizeof(buffer)) != 0) {
+      result = -6;
+      goto cleanup;
+    }
+    if (fgetc(files[i]) != EOF || !feof(files[i])) {
+      result = -7;
+      goto cleanup;
+    }
+    // Closing the first stream must leave the second stream usable.
+    int close_result = fclose(files[i]);
+    files[i] = NULL;
+    if (close_result != 0) {
+      result = -8;
+      goto cleanup;
+    }
+  }
+
+cleanup:
+  for (int i = 0; i < 2; i++) {
+    if (files[i] != NULL)
+      fclose(files[i]);
+  }
+#ifndef DEFINE_ME_WHEN_BUILDING_ON_MACOS
+  if (result == 0 && tempfile_directory_entry_count() != entries_before)
+    result = -9;
+#endif
+  return result;
+}
+
 // clang-format off
 #define FUNC_DEF(func)                                                         \
   { &func, #func }
@@ -6562,6 +6750,7 @@ struct {
     FUNC_DEF(test_NSString_pathWithComponents),
     FUNC_DEF(test_strptime),
     FUNC_DEF(test_strftime),
+    FUNC_DEF(test_wcsftime),
     FUNC_DEF(test_RespondsToSelector),
     FUNC_DEF(test_NSKeyedArchiver_encodeIntForKey),
     FUNC_DEF(test_NSKeyedArchiver_NSKeyedUnarchiver),
@@ -6577,9 +6766,11 @@ struct {
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName),
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_withObject),
     FUNC_DEF(test_NSNotificationCenter_addObserver_nilName_removeObserver),
+    FUNC_DEF(test_NSMutableArray_removeObjectsInArray_otherArray),
     FUNC_DEF(test_malloc_zone_basic),
     FUNC_DEF(test_malloc_zone_struct_dispatch),
     FUNC_DEF(test_fcvt),
+    FUNC_DEF(test_tempfile),
 };
 // clang-format on
 

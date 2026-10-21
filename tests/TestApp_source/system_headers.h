@@ -70,9 +70,16 @@ static inline NSRange NSMakeRange(NSUInteger loc, NSUInteger len) {
 @interface NSArray<ObjectType> : NSObject
 + (instancetype)array;
 + (instancetype)arrayWithObjects:(ObjectType)firstObj, ...;
+- (instancetype)initWithObjects:(ObjectType)firstObj, ...;
 - (NSUInteger)count;
 - (ObjectType)objectAtIndex:(NSUInteger)index;
 - (BOOL)isEqualToArray:(NSArray *)otherArray;
+@end
+
+@interface NSMutableArray<ObjectType> : NSArray
+- (void)addObject:(id)object;
+- (void)removeObject:(id)object;
+- (void)removeObjectsInArray:(NSArray *)otherArray;
 @end
 
 @interface NSDictionary<KeyType, ObjectType> : NSObject
@@ -112,6 +119,7 @@ typedef enum {
 @end
 
 @interface NSNumber : NSValue
++ (NSNumber *)numberWithInt:(int)value;
 + (NSNumber *)numberWithFloat:(float)value;
 + (NSNumber *)numberWithBool:(bool)value;
 @end

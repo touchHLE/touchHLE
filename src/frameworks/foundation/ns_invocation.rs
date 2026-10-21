@@ -62,6 +62,9 @@ pub const CLASSES: ClassExports = objc_classes! {
     autorelease(env, res)
 }
 
+- (id)target {
+    env.objc.borrow::<NSInvocationHostObject>(this).target
+}
 - (())setTarget:(id)target {
     let old_target = env.objc.borrow::<NSInvocationHostObject>(this).target;
     let arguments_retained = env.objc.borrow::<NSInvocationHostObject>(this).arguments_retained;

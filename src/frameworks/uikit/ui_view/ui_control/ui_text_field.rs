@@ -42,6 +42,7 @@ struct UITextFieldHostObject {
     superclass: super::UIControlHostObject,
     delegate: id,
     editing: bool,
+    adjusts_font_size_to_fit_width: bool,
     text_label: id,
 }
 impl_HostObject_with_superclass!(UITextFieldHostObject);
@@ -51,6 +52,7 @@ impl Default for UITextFieldHostObject {
             superclass: Default::default(),
             delegate: nil,
             editing: false,
+            adjusts_font_size_to_fit_width: false,
             text_label: nil,
         }
     }
@@ -222,6 +224,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     let _: bool = msg![env; this becomeFirstResponder];
 }
 
+- (bool)adjustsFontSizeToFitWidth {
+    env.objc.borrow::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width
+}
+
+- (())setAdjustsFontSizeToFitWidth:(bool)adjusts {
+    // The text field uses a UILabel internally. Its current renderer does not
+    // implement text scaling yet, but retaining the UIKit flag avoids a missing
+    // selector and lets old apps create editable text fields.
+    env.objc.borrow_mut::<UITextFieldHostObject>(this).adjusts_font_size_to_fit_width = adjusts;
+}
+
+- (bool)canBecomeFirstResponder {
+    true
+}
+
+- (bool)isFirstResponder {
+    env.framework_state.uikit.ui_responder.first_responder == this
+}
+
 - (bool)isEditing {
     env.objc.borrow::<UITextFieldHostObject>(this).editing
 }
@@ -321,7 +342,10 @@ pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
     log_dbg!("Calling handle_text for {:?} with '{}'", text_field, text);
     let txt = ns_string::from_rust_string(env, text);
     let txt_len: NSUInteger = msg![env; txt length];
-    assert_eq!(txt_len, 1);
+    if txt_len == 0 {
+        release(env, txt);
+        return;
+    }
 
     let text_label = env
         .objc
@@ -361,7 +385,7 @@ pub fn handle_text(env: &mut Environment, text_field: id, text: String) {
             ns_string::to_rust_string(env, new_text)
         );
         // TODO: refactor this to proper update() method
-        () = msg![env; text_label setText:new_text];
+        () = msg![env; text_field setText:new_text];
         () = msg![env; text_field setNeedsDisplay];
         release(env, new_text);
     }
@@ -380,9 +404,18 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
     if len == 0 {
         return;
     }
+    // Delete a Unicode scalar value, not just one UTF-16 code unit.
+    // This matters for emoji and Android IME input, which can use surrogate
+    // pairs in the NSString passed to the game.
+    let last_char_units: NSUInteger = ns_string::to_rust_string(env, curr_text)
+        .chars()
+        .last()
+        .map_or(1, |ch| ch.len_utf16() as NSUInteger);
+    let removed_units = last_char_units.min(len);
+    let end_index = len - removed_units;
     let range = NSRange {
-        location: len - 1,
-        length: 1,
+        location: end_index,
+        length: removed_units,
     };
     let empty = ns_string::get_static_str(env, "");
 
@@ -399,13 +432,13 @@ pub fn handle_backspace(env: &mut Environment, text_field: id) {
         || !responds
         || msg![env; delegate textField:text_field shouldChangeCharactersInRange:range replacementString:empty];
     if should {
-        let new_text: id = msg![env; curr_text substringToIndex:(len-1)];
+        let new_text: id = msg![env; curr_text substringToIndex:end_index];
         log_dbg!(
             "handle_backspace, new_text: {}",
             ns_string::to_rust_string(env, new_text)
         );
         // TODO: refactor this to proper update() method
-        () = msg![env; text_label setText:new_text];
+        () = msg![env; text_field setText:new_text];
         () = msg![env; text_field setNeedsDisplay];
         release(env, new_text);
     }
@@ -420,8 +453,27 @@ pub fn handle_return(env: &mut Environment, text_field: id) {
     let sel: SEL = env
         .objc
         .register_host_selector("textFieldShouldReturn:".to_string(), &mut env.mem);
-    if msg![env; delegate respondsToSelector:sel] {
-        log_dbg!("handle_return");
-        () = msg![env; delegate textFieldShouldReturn:text_field];
+    let accepts_return = if delegate != nil && msg![env; delegate respondsToSelector:sel] {
+        let accepted: bool = msg![env; delegate textFieldShouldReturn:text_field];
+        accepted
+    } else {
+        true
+    };
+
+    if matches!(
+        env.bundle.bundle_identifier(),
+        "com.ea.sims3ambition.inc" | "com.ea.sims3wa.bv"
+    ) {
+        // Sims 3's iOS TextBoxDelegate has an endEditing method that saves the
+        // entered name and returns to the game. The original interface exposes
+        // a native keyboard's completion control, which touchHLE does not yet
+        // render. Map the host Return key to that completion action for this
+        // specific game instead of changing general UIKit behavior.
+        if accepts_return && delegate != nil {
+            let class = msg![env; delegate class];
+            if env.objc.get_class_name(class) == "TextBoxDelegate" {
+                let _: () = msg![env; delegate endEditing];
+            }
+        }
     }
 }

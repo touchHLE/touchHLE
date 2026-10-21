@@ -1227,7 +1227,6 @@ fn AudioQueueCreateTimeline(
         .alloc_and_write(OpaqueAudioQueueTimeline { _filler: 0 });
     queue.timelines.push(timeline);
     env.mem.write(out_timeline, timeline);
-    log_dbg!("AudioQueueCreateTimeline({:?}) => {:?}", in_aq, timeline);
     0
 }
 

@@ -655,7 +655,17 @@ fn fcvt(
     fcvt_buf
 }
 
+fn __udivsi3(_env: &mut Environment, numerator: u32, denominator: u32) -> u32 {
+    numerator / denominator
+}
+
+fn __umodsi3(_env: &mut Environment, numerator: u32, denominator: u32) -> u32 {
+    numerator % denominator
+}
+
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(__umodsi3(_, _)),
+    export_c_func!(__udivsi3(_, _)),
     export_c_func!(malloc(_)),
     export_c_func!(malloc_size(_)),
     export_c_func!(calloc(_, _)),

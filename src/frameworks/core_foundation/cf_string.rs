@@ -251,6 +251,32 @@ fn CFStringGetCharacterAtIndex(
     the_string: CFStringRef,
     idx: CFIndex,
 ) -> unichar {
+    // Both Sims 3 Ambitions and World Adventures use the same native text
+    // renderer, but its return address differs between their iOS binaries.
+    let wrapped_line_caller = match env.bundle.bundle_identifier() {
+        "com.ea.sims3ambition.inc" => Some(0xc3cc4),
+        "com.ea.sims3wa.bv" => Some(0xae4d0),
+        _ => None,
+    };
+    if let Some(wrapped_line_caller) = wrapped_line_caller {
+        let string_length = CFStringGetLength(env, the_string);
+        if idx < 0 || idx >= string_length {
+            let sp = env.cpu.regs()[crate::cpu::Cpu::SP];
+            let caller = env.mem.read(ConstPtr::<u32>::from_bits(sp.wrapping_add(4)));
+            if caller == wrapped_line_caller {
+                // TextManager::drawWrappedStringLines sometimes requests a
+                // character beyond the end of its source string while handling
+                // wrapped line boundaries. It computed the segment length in
+                // r4 before calling charAt(). Clear that length so it skips
+                // the invalid segment instead of drawing out-of-range text.
+                // Scope this to verified call sites from these two games only.
+                env.cpu.regs_mut()[4] = 0;
+
+                return 0;
+            }
+        }
+    }
+
     let idx: NSUInteger = idx.try_into().unwrap();
     msg![env; the_string characterAtIndex:idx]
 }

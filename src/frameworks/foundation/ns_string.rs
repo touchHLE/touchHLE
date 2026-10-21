@@ -647,6 +647,21 @@ pub const CLASSES: ClassExports = objc_classes! {
         num
     }
 
+    // Sims 3 Ambitions and World Adventures can compare against a missing
+    // optional UI string in Goal Checklist / Create-a-Sim menus.
+    // Treat a missing comparator as the empty string for these games only.
+    // Keep the normal assertion for other apps rather than changing the
+    // Foundation behavior globally.
+    if other == nil
+        && matches!(
+            env.bundle.bundle_identifier(),
+            "com.ea.sims3ambition.inc" | "com.ea.sims3wa.bv"
+        )
+    {
+        let empty = env.objc.borrow::<StringHostObject>(this)
+            .iter_code_units().next().is_none();
+        return if empty { NSOrderedSame } else { NSOrderedDescending };
+    }
     assert_ne!(other, nil);
 
     // TODO: support foreign subclasses (perhaps via a helper function that

@@ -276,7 +276,14 @@ pub const CLASSES: ClassExports = objc_classes! {
     let selector = to_rust_string(env, label);
     let action = env.objc.lookup_selector(&selector).unwrap();
 
-    () = msg![env; source addTarget:destination action:action forControlEvents:event_mask];
+    let bar_button_class = env.objc.get_known_class("UIBarButtonItem", &mut env.mem);
+    let is_bar_button: bool = msg![env; source isKindOfClass:bar_button_class];
+    if is_bar_button {
+        () = msg![env; source setTarget:destination];
+        () = msg![env; source setAction:action];
+    } else {
+        () = msg![env; source addTarget:destination action:action forControlEvents:event_mask];
+    }
 }
 
 // NSCoding implementation

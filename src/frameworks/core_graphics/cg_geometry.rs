@@ -270,6 +270,42 @@ fn CGRectContainsPoint(_env: &mut Environment, rect: CGRect, point: CGPoint) -> 
         && rect.origin.y + rect.size.height > point.y
 }
 
+fn CGRectContainsRect(_env: &mut Environment, outer: CGRect, inner: CGRect) -> bool {
+    contains_rect(outer, inner)
+}
+
+fn contains_rect(outer: CGRect, inner: CGRect) -> bool {
+    if outer == CGRectNull || inner == CGRectNull {
+        return false;
+    }
+    // Floating-point min/max ignore NaNs, which could hide invalid bounds.
+    if [outer, inner].iter().any(|rect| {
+        [
+            rect.origin.x,
+            rect.origin.y,
+            rect.size.width,
+            rect.size.height,
+        ]
+        .iter()
+        .any(|value| value.is_nan())
+    }) {
+        return false;
+    }
+    let edges = |rect: CGRect| {
+        let x2 = rect.origin.x + rect.size.width;
+        let y2 = rect.origin.y + rect.size.height;
+        (
+            rect.origin.x.min(x2),
+            rect.origin.y.min(y2),
+            rect.origin.x.max(x2),
+            rect.origin.y.max(y2),
+        )
+    };
+    let (left, top, right, bottom) = edges(outer);
+    let (inner_left, inner_top, inner_right, inner_bottom) = edges(inner);
+    left <= inner_left && top <= inner_top && right >= inner_right && bottom >= inner_bottom
+}
+
 fn CGRectIntersectsRect(_env: &mut Environment, rect1: CGRect, rect2: CGRect) -> bool {
     rect1.origin.x.max(rect2.origin.x)
         <= (rect1.origin.x + rect1.size.width).min(rect2.origin.x + rect2.size.width)
@@ -412,6 +448,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGSizeEqualToSize(_, _)),
     export_c_func!(CGRectEqualToRect(_, _)),
     export_c_func!(CGRectContainsPoint(_, _)),
+    export_c_func!(CGRectContainsRect(_, _)),
     export_c_func!(CGRectIntersectsRect(_, _)),
     export_c_func!(CGRectIntersection(_, _)),
     export_c_func!(CGRectGetMinX(_)),
@@ -447,3 +484,31 @@ pub const CONSTANTS: ConstantExports = &[
         HostConstant::Custom(|env| env.mem.alloc_and_write(CGRectNull).cast().cast_const()),
     ),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::{contains_rect, CGPoint, CGRect, CGRectNull, CGSize};
+
+    fn rect(x: f32, y: f32, width: f32, height: f32) -> CGRect {
+        CGRect {
+            origin: CGPoint { x, y },
+            size: CGSize { width, height },
+        }
+    }
+
+    #[test]
+    fn rectangle_containment_boundaries() {
+        let outer = rect(0.0, 0.0, 10.0, 10.0);
+        assert!(contains_rect(outer, outer));
+        assert!(contains_rect(outer, rect(5.0, 5.0, 5.0, 5.0)));
+        assert!(!contains_rect(outer, rect(5.0, 5.0, 6.0, 5.0)));
+        assert!(!contains_rect(outer, rect(-1.0, 0.0, 5.0, 5.0)));
+        assert!(contains_rect(
+            rect(10.0, 10.0, -10.0, -10.0),
+            rect(8.0, 8.0, -4.0, -4.0)
+        ));
+        assert!(!contains_rect(outer, CGRectNull));
+        assert!(!contains_rect(CGRectNull, outer));
+        assert!(!contains_rect(outer, rect(f32::NAN, 0.0, 1.0, 1.0)));
+    }
+}

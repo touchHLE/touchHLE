@@ -87,6 +87,30 @@ struct NSLocaleHostObject {
 }
 impl HostObject for NSLocaleHostObject {}
 
+/// Parse the language and optional region forms currently supported here.
+fn parse_locale_identifier(identifier: &str) -> (String, Option<String>) {
+    let mut components = identifier.split(['_', '-']);
+    let language = components.next().unwrap_or_default();
+    assert!(
+        (2..=3).contains(&language.len()) && language.bytes().all(|c| c.is_ascii_alphabetic()),
+        "Unsupported locale language: {identifier}"
+    );
+    let country = components.next().map(|country| {
+        assert!(
+            (country.len() == 2 && country.bytes().all(|c| c.is_ascii_alphabetic()))
+                || (country.len() == 3 && country.bytes().all(|c| c.is_ascii_digit())),
+            "Unsupported locale region: {identifier}"
+        );
+        country.to_uppercase()
+    });
+    // TODO: script, variant and keyword components of locale identifiers.
+    assert!(
+        components.next().is_none(),
+        "Unsupported locale: {identifier}"
+    );
+    (language.to_lowercase(), country)
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -165,16 +189,16 @@ pub const CLASSES: ClassExports = objc_classes! {
 // TODO: constructors, more accessors
 
 - (id)initWithLocaleIdentifier:(id)string { // NSString *
-    let str = ns_string::to_rust_string(env, string);
+    let str = ns_string::to_rust_string(env, string).into_owned();
     log_dbg!("[(NSLocale *){:?} initWithLocaleIdentifier:'{}']", this, str);
-    retain(env, string);
-    // Loosely assume 2-char lang code here
-    // TODO: locale identifier parsing
-    assert_eq!(2, str.len());
-    assert!(str.to_lowercase().eq(&str));
-    assert!(!str.contains('_') && !str.contains('-'));
-    assert!(env.objc.borrow::<NSLocaleHostObject>(this).language_code == nil);
-    env.objc.borrow_mut::<NSLocaleHostObject>(this).language_code = string;
+    let (language, country) = parse_locale_identifier(&str);
+    let language_code = ns_string::from_rust_string(env, language);
+    let country_code = country.map_or(nil, |country| ns_string::from_rust_string(env, country));
+    let obj = env.objc.borrow_mut::<NSLocaleHostObject>(this);
+    let old_language = std::mem::replace(&mut obj.language_code, language_code);
+    let old_country = std::mem::replace(&mut obj.country_code, country_code);
+    release(env, old_language);
+    release(env, old_country);
     this
 }
 
@@ -208,13 +232,16 @@ pub const CLASSES: ClassExports = objc_classes! {
         // TODO: Define NSLocaleIdentifier _as_ kCFLocaleIdentifier
         NSLocaleIdentifier | kCFLocaleIdentifier => {
             let &NSLocaleHostObject { country_code, language_code } = env.objc.borrow(this);
-            assert!(country_code != nil); // TODO
             assert!(language_code != nil); // TODO
-            let locale_id_str = format!(
-                "{}_{}",
-                ns_string::to_rust_string(env, language_code),
-                ns_string::to_rust_string(env, country_code)
-            );
+            let locale_id_str = if country_code == nil {
+                ns_string::to_rust_string(env, language_code).into_owned()
+            } else {
+                format!(
+                    "{}_{}",
+                    ns_string::to_rust_string(env, language_code),
+                    ns_string::to_rust_string(env, country_code)
+                )
+            };
             let res = ns_string::from_rust_string(env, locale_id_str);
             autorelease(env, res)
         },
@@ -229,3 +256,31 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+#[cfg(test)]
+mod tests {
+    use super::parse_locale_identifier;
+
+    #[test]
+    fn language_and_region_identifiers() {
+        assert_eq!(parse_locale_identifier("en"), ("en".into(), None));
+        assert_eq!(
+            parse_locale_identifier("en_US"),
+            ("en".into(), Some("US".into()))
+        );
+        assert_eq!(
+            parse_locale_identifier("EN-us"),
+            ("en".into(), Some("US".into()))
+        );
+        assert_eq!(
+            parse_locale_identifier("es_419"),
+            ("es".into(), Some("419".into()))
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Unsupported locale region")]
+    fn script_is_not_mistaken_for_a_country() {
+        parse_locale_identifier("zh_Hant_TW");
+    }
+}

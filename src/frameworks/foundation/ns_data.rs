@@ -5,7 +5,7 @@
  */
 //! `NSData` and `NSMutableData`.
 
-use super::ns_string::to_rust_string;
+use super::ns_string::{from_rust_string, to_rust_string};
 use super::{NSRange, NSUInteger};
 use crate::frameworks::foundation::ns_keyed_unarchiver::decode_current_data;
 use crate::fs::GuestPath;
@@ -14,6 +14,7 @@ use crate::objc::{
     autorelease, id, msg, nil, objc_classes, release, retain, ClassExports, HostObject, NSZonePtr,
 };
 use crate::{msg_class, Environment};
+use std::fmt::Write;
 
 pub(super) struct NSDataHostObject {
     pub(super) bytes: MutVoidPtr,
@@ -192,6 +193,25 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.dealloc_object(this, &mut env.mem)
 }
 
+- (id)description {
+    let data = env.objc.borrow::<NSDataHostObject>(this);
+    let bytes = if data.length == 0 {
+        &[]
+    } else {
+        env.mem.bytes_at(data.bytes.cast(), data.length)
+    };
+    let mut text = String::from("<");
+    for (i, byte) in bytes.iter().enumerate() {
+        if i > 0 && i % 4 == 0 {
+            text.push(' ');
+        }
+        write!(&mut text, "{byte:02x}").unwrap();
+    }
+    text.push('>');
+    let result = from_rust_string(env, text);
+    autorelease(env, result)
+}
+
 // NSCopying implementation
 - (id)copyWithZone:(NSZonePtr)_zone {
     retain(env, this)
@@ -229,6 +249,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     let length = length.min(env.objc.borrow::<NSDataHostObject>(this).length);
     let range = NSRange { location: 0, length };
     msg![env; this getBytes:buffer range:range]
+}
+
+- (id)subdataWithRange:(NSRange)range {
+    let &NSDataHostObject { bytes, length, .. } = env.objc.borrow(this);
+    // TODO: throw NSRangeException for an out-of-range request.
+    assert!(range.location <= length && range.length <= length - range.location);
+    if range.length == 0 {
+        return msg_class![env; NSData data];
+    }
+    let start = bytes.cast_const() + range.location;
+    msg_class![env; NSData dataWithBytes:start length:(range.length)]
 }
 
 - (())getBytes:(MutPtr<u8>)buffer range:(NSRange)range {

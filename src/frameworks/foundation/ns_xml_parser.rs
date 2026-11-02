@@ -73,6 +73,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.objc.borrow::<NSXMLParserHostObject>(this).delegate
 }
 
+- (id)parserError {
+    // TODO: retain and return NSError once parse errors stop panicking.
+    nil
+}
+
 - (())setShouldResolveExternalEntities:(bool)should {
     todo_objc_setter!(this, should);
 }

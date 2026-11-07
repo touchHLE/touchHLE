@@ -511,11 +511,17 @@ typedef enum {
 - (CALayer *)layer;
 @end
 @interface UIWindow : UIView
+- (id)rootViewController;
+- (void)setRootViewController:(id)controller;
 - (void)makeKeyAndVisible;
 - (CGPoint)convertPoint:(CGPoint)point fromWindow:(UIWindow *)window;
 - (CGPoint)convertPoint:(CGPoint)point toWindow:(UIWindow *)window;
 - (CGRect)convertRect:(CGRect)point fromWindow:(UIWindow *)window;
 - (CGRect)convertRect:(CGRect)point toWindow:(UIWindow *)window;
+@end
+@interface UIViewController : UIResponder
+- (UIView *)view;
+- (void)setView:(UIView *)view;
 @end
 @interface UILabel : UIView
 - (void)setText:(NSString *)text;

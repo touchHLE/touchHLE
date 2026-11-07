@@ -22,7 +22,10 @@ use crate::frameworks::uikit::ui_device::{
     UIDeviceOrientationLandscapeLeft, UIDeviceOrientationLandscapeRight,
     UIDeviceOrientationPortraitUpsideDown,
 };
-use crate::objc::{id, msg, msg_class, msg_super, nil, objc_classes, ClassExports};
+use crate::objc::{
+    id, msg, msg_class, msg_super, nil, objc_classes, release, retain, ClassExports,
+};
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct State {
@@ -33,6 +36,8 @@ pub struct State {
     /// The most recent window which received `makeKeyAndVisible` message.
     /// Non-retaining!
     pub key_window: Option<id>,
+    /// Strongly held controllers, keyed by their non-retained windows.
+    root_view_controllers: HashMap<id, id>,
 }
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -86,6 +91,9 @@ pub const CLASSES: ClassExports = objc_classes! {
             env.framework_state.uikit.ui_view.ui_window.key_window = None;
         }
     }
+    if let Some(controller) = env.framework_state.uikit.ui_view.ui_window.root_view_controllers.remove(&this) {
+        release(env, controller);
+    }
     let list = &mut env.framework_state.uikit.ui_view.ui_window.windows;
     let idx = list.iter().position(|&w| w == this).unwrap();
     list.remove(idx);
@@ -95,6 +103,56 @@ pub const CLASSES: ClassExports = objc_classes! {
         list,
     );
     msg_super![env; this dealloc]
+}
+
+// https://developer.apple.com/documentation/uikit/uiwindow/rootviewcontroller
+// A new controller replaces the window's content hierarchy and is retained.
+- (id)rootViewController {
+    env.framework_state.uikit.ui_view.ui_window.root_view_controllers.get(&this).copied().unwrap_or(nil)
+}
+
+- (())setRootViewController:(id)controller {
+    let previous = env.framework_state.uikit.ui_view.ui_window.root_view_controllers.get(&this).copied().unwrap_or(nil);
+    if previous == controller {
+        return;
+    }
+    retain(env, controller);
+    if controller == nil {
+        env.framework_state.uikit.ui_view.ui_window.root_view_controllers.remove(&this);
+    } else {
+        env.framework_state.uikit.ui_view.ui_window.root_view_controllers.insert(this, controller);
+    }
+    // Remove the entire old hierarchy, not just the previous controller's view.
+    let subviews = env.objc.borrow::<UIViewHostObject>(this).subviews.clone();
+    for view in subviews {
+        () = msg![env; view removeFromSuperview];
+    }
+    release(env, previous);
+    if controller != nil {
+        let view: id = msg![env; controller view];
+        let bounds: CGRect = msg![env; this bounds];
+        () = msg![env; view setFrame:bounds];
+        () = msg![env; this addSubview:view];
+    }
+}
+
+- (())setFrame:(CGRect)frame {
+    () = msg_super![env; this setFrame:frame];
+    let controller: id = msg![env; this rootViewController];
+    if controller != nil {
+        let view: id = msg![env; controller view];
+        let bounds: CGRect = msg![env; this bounds];
+        () = msg![env; view setFrame:bounds];
+    }
+}
+
+- (())setBounds:(CGRect)bounds {
+    () = msg_super![env; this setBounds:bounds];
+    let controller: id = msg![env; this rootViewController];
+    if controller != nil {
+        let view: id = msg![env; controller view];
+        () = msg![env; view setFrame:bounds];
+    }
 }
 
 - (())setHidden:(bool)is_hidden {
@@ -183,13 +241,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     //        three places (user/default options, setStatusBarOrientation: etc,
     //        Info.plist UIInterfaceOrientation etc). It's not clear if these
     //        are really equivalent and should all trigger autorotation.
-    if let Some(orientation) = match env.window.as_ref().unwrap().current_rotation() {
+    if let Some(orientation) = env.window.as_ref().and_then(|window| match window.current_rotation() {
         crate::window::DeviceOrientation::PortraitUpsideDown => Some(UIDeviceOrientationPortraitUpsideDown),
         crate::window::DeviceOrientation::LandscapeLeft => Some(UIDeviceOrientationLandscapeLeft),
         crate::window::DeviceOrientation::LandscapeRight => Some(UIDeviceOrientationLandscapeRight),
         // Portrait is the default so we don't do anything here.
         crate::window::DeviceOrientation::Portrait => None,
-    } {
+    }) {
         // (UIInterfaceOrientation and UIDeviceOrientation are compatible enums,
         //  here we use whichever is clearer contextually.)
         let should = msg![env; vc shouldAutorotateToInterfaceOrientation:orientation];

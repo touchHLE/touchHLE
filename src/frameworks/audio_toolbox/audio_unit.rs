@@ -96,7 +96,12 @@ fn AudioUnitSetProperty(
     let result;
     match in_id {
         kAudioUnitProperty_SetRenderCallback => {
-            assert_eq!(in_scope, kAudioUnitScope_Global);
+            // Output units commonly have their render callback set on the
+            // input scope of element 0, but some apps use the global scope.
+            assert!(
+                in_scope == kAudioUnitScope_Global || in_scope == kAudioUnitScope_Input,
+                "unexpected render callback scope {in_scope}"
+            );
             assert_eq!(in_data_size, guest_size_of::<AURenderCallbackStruct>());
             let render_callback = env.mem.read(in_data.cast::<AURenderCallbackStruct>());
             host_object.render_callback = Some(render_callback);
@@ -116,6 +121,13 @@ fn AudioUnitSetProperty(
             result = 0;
             log_dbg!("AudioUnitSetProperty({:?}, kAudioUnitProperty_StreamFormat, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, stream_format, in_data_size, result);
         }
+        kAudioUnitProperty_MaximumFramesPerSlice => {
+            assert_eq!(in_data_size, guest_size_of::<u32>());
+            let max_frames: u32 = env.mem.read(in_data.cast());
+            host_object.maximum_frames_per_slice = max_frames;
+            result = 0;
+            log_dbg!("AudioUnitSetProperty({:?}, kAudioUnitProperty_MaximumFramesPerSlice, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, max_frames, in_data_size, result);
+        }
         kAudioOutputUnitProperty_EnableIO => {
             assert_eq!(in_scope, kAudioUnitScope_Output);
             assert_eq!(in_data_size, guest_size_of::<u32>());
@@ -125,7 +137,12 @@ fn AudioUnitSetProperty(
             result = 0;
             log_dbg!("AudioUnitSetProperty({:?}, kAudioOutputUnitProperty_EnableIO, {:?}, {:?}, {:?}, {:?}) -> {:?}", in_unit, in_scope, in_element, enabled, in_data_size, result);
         }
-        _ => unimplemented!(),
+        _ => {
+            // Most remaining AudioUnit properties are rendering hints that
+            // don't affect our simple mixer, so accept and ignore them.
+            log!("Ignoring unimplemented AudioUnitSetProperty(id: {}, scope: {}, element: {}, size: {})", in_id, in_scope, in_element, in_data_size);
+            result = 0;
+        }
     };
 
     result

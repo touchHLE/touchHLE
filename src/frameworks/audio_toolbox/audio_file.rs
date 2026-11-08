@@ -221,6 +221,14 @@ pub fn AudioFileOpenWithCallbacks(
     0 // success
 }
 
+pub(super) fn frame_count(env: &mut Environment, in_audio_file: AudioFileID) -> u64 {
+    let host_object = State::get(&mut env.framework_state)
+        .audio_files
+        .get(&in_audio_file)
+        .unwrap();
+    host_object.audio_file.frame_count()
+}
+
 pub(super) fn property_size(property_id: AudioFilePropertyID) -> GuestUSize {
     match property_id {
         kAudioFilePropertyFileFormat => guest_size_of::<u32>(),

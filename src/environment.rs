@@ -1551,6 +1551,27 @@ impl Environment {
             self.cpu.regs_mut()[cpu::Cpu::PC] -= instruction_len;
         }
 
+        if std::env::var_os("PEAR_DUMP_MEM").is_some() {
+            let pc = self.cpu.regs()[cpu::Cpu::PC];
+            log!("PEARDUMP pc={:#x} thumb={}", pc, (self.cpu.cpsr() & cpu::Cpu::CPSR_THUMB) != 0);
+            for (i, r) in self.cpu.regs().iter().enumerate().take(16) {
+                log!("PEARDUMP r{}={:#x}", i, r);
+            }
+            for base in [0xd0480_u32, 0xdff58, 0xcff80] {
+                let mut line = String::new();
+                for j in 0..8u32 {
+                    if let Ok(v) = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        let p = crate::mem::Ptr::<u32, false>::from_bits(base + j * 4);
+                        self.mem.read(p)
+                    })) {
+                        line.push_str(&format!("{:#x} ", v));
+                    } else {
+                        line.push_str("<x> ");
+                    }
+                }
+                log!("PEARDUMP mem[{:#x}] = {}", base, line);
+            }
+        }
         if self.gdb_server.is_none() {
             panic!("Error during CPU execution: {error:?}");
         }
@@ -1590,6 +1611,9 @@ impl Environment {
                 // instruction after the SVC, but we want the
                 // address of the SVC itself.
                 let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
+                if std::env::var_os("PEAR_SVC").is_some() {
+                    log!("PEARSVC svc={:#x} svc_pc={:#x}", svc, svc_pc);
+                }
                 match svc {
                     dyld::Dyld::SVC_RETURN_TO_HOST => {
                         assert!(

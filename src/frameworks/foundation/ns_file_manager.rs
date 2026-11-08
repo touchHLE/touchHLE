@@ -111,6 +111,15 @@ struct NSDirectoryEnumeratorHostObject {
 }
 impl HostObject for NSDirectoryEnumeratorHostObject {}
 
+
+/// Stores nil in an `NSError**` out-parameter, since all operations modelled
+/// here succeed.
+fn clear_error(env: &mut Environment, error: MutPtr<id>) {
+    if !error.is_null() {
+        env.mem.write(error, nil);
+    }
+}
+
 pub const CLASSES: ClassExports = objc_classes! {
 
 (env, this, _cmd);
@@ -395,7 +404,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)attributesOfItemAtPath:(id)path // NSString *
                        error:(MutPtr<id>)error { // NSError **
-    assert!(error.is_null()); // TODO
+    clear_error(env, error);
 
     // TODO: other attributes
     log_once!("Warning: NSFileManager attributesOfItemAtPath:error: returns only NSFileType, NSFileModificationDate and NSFileSize attributes!");
@@ -413,7 +422,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // TODO: other attributes
     log_once!("Warning: NSFileManager attributesOfFileSystemForPath:error: returns only NSFileSystemFreeSize attribute!");
 
-    assert!(error.is_null()); // TODO
+    clear_error(env, error);
 
     let dict = msg_class![env; NSMutableDictionary new];
 

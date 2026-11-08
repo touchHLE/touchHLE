@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+#include <cstdlib>
 #include <cstdint>
 #include <cstdio>
 
@@ -63,9 +64,21 @@ private:
     return value;
   }
   std::uint32_t MemoryRead32(VAddr vaddr) override {
+    static VAddr s_hist[32];
+    static unsigned s_hist_n = 0;
+    if (std::getenv("PEAR_WATCH")) {
+      s_hist[s_hist_n++ & 31] = vaddr;
+    }
     bool error;
     auto value = touchHLE_cpu_read_u32(mem, vaddr, &error);
     if (error) {
+      if (std::getenv("PEAR_WATCH")) {
+        std::fprintf(stderr, "PEARDYN error addr=%08x history:", vaddr);
+        for (unsigned i = 0; i < 32; i++) {
+          std::fprintf(stderr, " %08x", s_hist[(s_hist_n + i) & 31]);
+        }
+        std::fprintf(stderr, "\n");
+      }
       cpu->HaltExecution(Dynarmic::HaltReason::MemoryAbort);
     }
     return value;

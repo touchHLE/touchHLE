@@ -435,6 +435,7 @@ impl Dyld {
 
         assert!(stubs.size % entry_size == 0);
         let stub_count = stubs.size / entry_size;
+        eprintln!(": {} stubs at {:#x} entry_size={} ({})", stub_count, stubs.addr, entry_size, bin.name);
         for i in 0..stub_count {
             let ptr: MutPtr<u32> = Ptr::from_bits(stubs.addr + i * entry_size);
 
@@ -559,6 +560,9 @@ impl Dyld {
             };
 
             let ptr_ptr: MutPtr<ConstVoidPtr> = Ptr::from_bits(ptrs.addr + i * entry_size);
+            if std::env::var_os("PEAR_NL").is_some() {
+                eprintln!(" {} idx={} addr={:#x} symbol={}", bin.name, i, ptr_ptr.to_bits(), symbol);
+            }
 
             for other_bin in bins {
                 if let Some(&addr) = other_bin.exported_symbols.get(symbol) {
@@ -665,6 +669,7 @@ impl Dyld {
         cpu: &mut Cpu,
         svc_pc: u32,
     ) -> Option<HostFunction> {
+        eprintln!(": do_lazy_link svc_pc={:#x}", svc_pc);
         // Links by restoring the original stub function, then updating
         // __la_symbol_ptr to the appropriate function.
         fn link_by_restoring_stub(

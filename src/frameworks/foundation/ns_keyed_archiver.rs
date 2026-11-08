@@ -31,6 +31,9 @@ struct NSKeyedArchiverHostObject {
     current_key: Option<Uid>,
     /// map of id => Uid
     already_archived: HashMap<id, Uid>,
+    /// NSMutableData* the archive should be written to, if the guest supplied
+    /// one via -initForWritingWithMutableData:
+    target_data: Option<id>,
 }
 impl HostObject for NSKeyedArchiverHostObject {}
 
@@ -55,7 +58,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         plist,
         encoded_data: nil,
         current_key: None,
-        already_archived
+        already_archived,
+        target_data: None,
     }), &mut env.mem)
 }
 
@@ -76,6 +80,13 @@ pub const CLASSES: ClassExports = objc_classes! {
     msg![env; data writeToFile:file atomically:true]
 }
 
+- (id)initForWritingWithMutableData:(id)data { // NSMutableData *
+    assert_ne!(data, nil);
+    retain(env, data);
+    env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this).target_data = Some(data);
+    this
+}
+
 - (())encodeObject:(id)object // NSCoding *
             forKey:(id)key { // NSString *
     let key = normalize_key(env, key);
@@ -84,6 +95,38 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (())encodeInt:(i32)val
          forKey:(id)key {
+    let key = normalize_key(env, key);
+    let scope = get_value_to_encode_for_current_key(env, this);
+    assert!(!scope.contains_key(&key));
+    scope.insert(key, Value::Integer(val.into()));
+}
+
+- (())encodeBool:(bool)val
+              forKey:(id)key {
+    let key = normalize_key(env, key);
+    let scope = get_value_to_encode_for_current_key(env, this);
+    assert!(!scope.contains_key(&key));
+    scope.insert(key, Value::Boolean(val));
+}
+
+- (())encodeFloat:(f32)val
+           forKey:(id)key {
+    let key = normalize_key(env, key);
+    let scope = get_value_to_encode_for_current_key(env, this);
+    assert!(!scope.contains_key(&key));
+    scope.insert(key, Value::Real(val.into()));
+}
+
+- (())encodeDouble:(f64)val
+            forKey:(id)key {
+    let key = normalize_key(env, key);
+    let scope = get_value_to_encode_for_current_key(env, this);
+    assert!(!scope.contains_key(&key));
+    scope.insert(key, Value::Real(val));
+}
+
+- (())encodeInt64:(i64)val
+           forKey:(id)key {
     let key = normalize_key(env, key);
     let scope = get_value_to_encode_for_current_key(env, this);
     assert!(!scope.contains_key(&key));
@@ -108,7 +151,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     let len = buffer.len() as GuestUSize;
     let guest_buffer = env.mem.alloc(len);
     env.mem.bytes_at_mut(guest_buffer.cast(), len).copy_from_slice(&buffer[..]);
-    let encoded_data: id = msg_class![env; NSData dataWithBytesNoCopy:guest_buffer length:len];
+    let target_data = env.objc.borrow::<NSKeyedArchiverHostObject>(this).target_data;
+    let encoded_data: id = match target_data {
+        Some(target_data) => {
+            // -initForWritingWithMutableData: was used, so hand the archive to
+            // the guest's mutable data buffer.
+            let bytes: ConstPtr<u8> = guest_buffer.cast_const().cast();
+            () = msg![env; target_data appendBytes:bytes length:len];
+            target_data
+        }
+        None => msg_class![env; NSData dataWithBytesNoCopy:guest_buffer length:len],
+    };
     env.objc.borrow_mut::<NSKeyedArchiverHostObject>(this).encoded_data = encoded_data;
     retain(env, encoded_data);
 }
@@ -121,7 +174,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (())dealloc {
-    let NSKeyedArchiverHostObject { encoded_data, .. } = *env.objc.borrow::<NSKeyedArchiverHostObject>(this);
+    let NSKeyedArchiverHostObject { encoded_data, target_data, .. } = *env.objc.borrow::<NSKeyedArchiverHostObject>(this);
+    if let Some(target_data) = target_data {
+        release(env, target_data);
+    }
     release(env, encoded_data);
     env.objc.dealloc_object(this, &mut env.mem);
 }

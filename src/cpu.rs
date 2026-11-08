@@ -40,10 +40,37 @@ fn touchHLE_cpu_read_impl<T: SafeRead + Default>(
     let res = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mem = unsafe { &mut *mem.cast::<Mem>() };
         let ptr: ConstPtr<T> = Ptr::from_bits(addr);
-        mem.read(ptr)
+        if std::env::var_os("PEAR_WATCH").is_some()
+            && (addr < 0x20 || (0x9be80..=0x9bea0).contains(&addr))
+        {
+            eprintln!("PEARWATCH pre read addr={:#x} size={}", addr, std::mem::size_of::<T>());
+        }
+        let value = mem.read(ptr);
+        if std::env::var_os("PEAR_WATCH").is_some()
+            && (addr < 0x20 || (0x9be80..=0x9bea0).contains(&addr))
+        {
+            eprintln!(
+                "PEARWATCH read size={} addr={:#x} value={:x}",
+                std::mem::size_of::<T>(),
+                addr,
+                {
+                    let mut buf = [0u8; 8];
+                    let bytes = unsafe {
+                        std::slice::from_raw_parts(&value as *const T as *const u8, std::mem::size_of::<T>())
+                    };
+                    buf[..bytes.len()].copy_from_slice(bytes);
+                    u64::from_le_bytes(buf)
+                }
+            );
+        }
+        value
     }));
     unsafe {
         error.write(res.is_err());
+    }
+    if res.is_err() && std::env::var_os("PEAR_WATCH").is_some() {
+        eprintln!("PEARWATCH panic at addr={:#x} size={}", addr, std::mem::size_of::<T>());
+        eprintln!("{}", std::backtrace::Backtrace::force_capture());
     }
     res.unwrap_or_default()
 }

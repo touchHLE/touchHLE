@@ -434,6 +434,8 @@ impl Window {
         }
         self.last_polled = now;
 
+        self.inject_scripted_input();
+
         fn transform_input_coords(
             window: &Window,
             (in_x, in_y): (f32, f32),
@@ -874,6 +876,75 @@ impl Window {
         self.high_priority_event
             .take()
             .or_else(|| self.event_queue.pop_front())
+    }
+
+    /// Temporary testing aid: replays a scripted sequence of touches, so an app
+    /// can be driven without a human at the window. The script is read from the
+    /// file named by the `PEAR_TOUCH_SCRIPT` environment variable; each line is
+    /// `<time_ms> <x> <y> <down|up>` where x/y are in device points.
+    fn inject_scripted_input(&mut self) {
+        use std::sync::{Mutex, OnceLock};
+
+        struct ScriptState {
+            start: Instant,
+            events: Vec<(u64, f32, f32, bool)>,
+            next: usize,
+        }
+
+        static STATE: OnceLock<Mutex<Option<ScriptState>>> = OnceLock::new();
+        let state = STATE.get_or_init(|| {
+            let Ok(path) = std::env::var("PEAR_TOUCH_SCRIPT") else {
+                return Mutex::new(None);
+            };
+            let Ok(text) = std::fs::read_to_string(path) else {
+                return Mutex::new(None);
+            };
+            let mut events = Vec::new();
+            for line in text.lines() {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    continue;
+                }
+                let mut fields = line.split_whitespace();
+                let (Some(time), Some(x), Some(y), Some(kind)) = (
+                    fields.next(),
+                    fields.next(),
+                    fields.next(),
+                    fields.next(),
+                ) else {
+                    continue;
+                };
+                events.push((
+                    time.parse().unwrap_or(0),
+                    x.parse().unwrap_or(0.0),
+                    y.parse().unwrap_or(0.0),
+                    kind == "down",
+                ));
+            }
+            Mutex::new(Some(ScriptState {
+                start: Instant::now(),
+                events,
+                next: 0,
+            }))
+        });
+
+        let mut guard = state.lock().unwrap();
+        let Some(script) = guard.as_mut() else {
+            return;
+        };
+        while let Some(&(time_ms, x, y, down)) = script.events.get(script.next) {
+            if script.start.elapsed() < Duration::from_millis(time_ms) {
+                break;
+            }
+            script.next += 1;
+            let coords = (x, y);
+            log!("PEAR_TOUCH: {} at {:?}", if down { "down" } else { "up" }, coords);
+            self.event_queue.push_back(if down {
+                Event::TouchesDown(HashMap::from([(FingerId::Mouse, coords)]))
+            } else {
+                Event::TouchesUp(HashMap::from([(FingerId::Mouse, coords)]))
+            });
+        }
     }
 
     fn controller_added(&mut self, joystick_idx: u32) {

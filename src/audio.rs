@@ -248,6 +248,16 @@ impl AudioFile {
         }
     }
 
+    pub fn frame_count(&self) -> u64 {
+        let AudioDescription {
+            bytes_per_packet,
+            frames_per_packet,
+            ..
+        } = self.audio_description();
+        assert!(bytes_per_packet != 0); // TODO
+        self.byte_count() * u64::from(frames_per_packet) / u64::from(bytes_per_packet)
+    }
+
     pub fn estimated_duration(&self) -> f64 {
         let AudioDescription {
             sample_rate,

@@ -14,7 +14,16 @@ use crate::objc::{
     autorelease, id, msg, msg_class, nil, objc_classes, release, Class, ClassExports, HostObject,
     NSZonePtr,
 };
+use crate::dyld::{ConstantExports, HostConstant};
 use crate::Environment;
+
+/// Posted when the defaults for a non-standard persistent domain change.
+const NSUserDefaultsDidChangeNotification: &str = "NSUserDefaultsDidChangeNotification";
+
+pub const CONSTANTS: ConstantExports = &[(
+    "_NSUserDefaultsDidChangeNotification",
+    HostConstant::NSString(NSUserDefaultsDidChangeNotification),
+)];
 
 #[derive(Default)]
 pub struct State {

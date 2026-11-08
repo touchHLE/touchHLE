@@ -15,7 +15,7 @@ use crate::frameworks::foundation::NSUInteger;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::{create_gles1_ctx, gles1_on_gl2, GLESContext, GLES};
+use crate::gles::{create_gles1_ctx, create_gles2_ctx, gles1_on_gl2, GLESContext, GLES};
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
@@ -54,13 +54,16 @@ pub const CONSTANTS: ConstantExports = &[
 
 type EAGLRenderingAPI = u32;
 const kEAGLRenderingAPIOpenGLES1: EAGLRenderingAPI = 1;
-#[allow(dead_code)]
 const kEAGLRenderingAPIOpenGLES2: EAGLRenderingAPI = 2;
 #[allow(dead_code)]
 const kEAGLRenderingAPIOpenGLES3: EAGLRenderingAPI = 3;
 
 pub(super) struct EAGLContextHostObject {
     pub(super) gles_ctx: Option<Box<dyn GLESContext>>,
+    /// Which EAGL rendering API was requested. This influences how
+    /// [super::gles_guest] dispatches calls and how the present-renderbuffer
+    /// path saves and restores state.
+    pub(super) api: EAGLRenderingAPI,
     /// Mapping of OpenGL ES renderbuffer names to `EAGLDrawable` instances
     /// (always `CAEAGLLayer*`). Retains the instance so it won't dangle.
     renderbuffer_drawable_bindings: Rc<RefCell<HashMap<GLuint, id>>>,
@@ -79,6 +82,7 @@ pub const CLASSES: ClassExports = objc_classes! {
 + (id)alloc {
     let host_object = Box::new(EAGLContextHostObject {
         gles_ctx: None,
+        api: kEAGLRenderingAPIOpenGLES1,
         renderbuffer_drawable_bindings: Rc::new(RefCell::new(HashMap::new())),
         fps_counter: None,
         next_frame_due: None,
@@ -110,9 +114,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api sharegroup:(id)group {
-    if api != kEAGLRenderingAPIOpenGLES1 {
+    if api != kEAGLRenderingAPIOpenGLES1 && api != kEAGLRenderingAPIOpenGLES2 {
         log!(
-            "TODO: App requested EAGL initWithAPI:{} sharegroup:{:?}, returning nil as we only support API 1 for now",
+            "TODO: App requested EAGL initWithAPI:{} sharegroup:{:?}, returning nil as we only support API 1 and 2",
             api,
             group
         );
@@ -135,15 +139,20 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
     env.window.as_mut().unwrap().set_share_with_current_context(true);
 
-    let mut gles1_ins = create_gles1_ctx(env);
+    let mut gles_ins = if api == kEAGLRenderingAPIOpenGLES2 {
+        create_gles2_ctx(env)
+    } else {
+        create_gles1_ctx(env)
+    };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     {
-        let gles1_ctx = gles1_ins.make_current(window);
-        log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
+        let gles_ctx = gles_ins.make_current(window);
+        log!("Driver info: {}", unsafe { gles_ctx.driver_description() });
     }
 
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles_ins);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
 
     env.window.as_mut().unwrap().set_share_with_current_context(false);
 
@@ -152,30 +161,34 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 
 - (id)initWithAPI:(EAGLRenderingAPI)api {
-    if api != kEAGLRenderingAPIOpenGLES1 {
+    if api != kEAGLRenderingAPIOpenGLES1 && api != kEAGLRenderingAPIOpenGLES2 {
         log!(
-            "TODO: App requested EAGL initWithAPI:{}, returning nil as we only support API 1 for now",
+            "TODO: App requested EAGL initWithAPI:{}, returning nil as we only support API 1 and 2",
             api
         );
         return nil;
     }
 
-    let mut gles1_ins = create_gles1_ctx(env);
+    let mut gles_ins = if api == kEAGLRenderingAPIOpenGLES2 {
+        create_gles2_ctx(env)
+    } else {
+        create_gles1_ctx(env)
+    };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     {
-        let gles1_ctx = gles1_ins.make_current(window);
-        log!("Driver info: {}", unsafe { gles1_ctx.driver_description() });
+        let gles_ctx = gles_ins.make_current(window);
+        log!("Driver info: {}", unsafe { gles_ctx.driver_description() });
     }
 
-    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles1_ins);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles_ins);
+    env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
 
     this
 }
 
 - (EAGLRenderingAPI)API {
-    // TODO: support later API versions
-    kEAGLRenderingAPIOpenGLES1
+    env.objc.borrow::<EAGLContextHostObject>(this).api
 }
 
 - (id)sharegroup {
@@ -283,6 +296,18 @@ pub const CLASSES: ClassExports = objc_classes! {
     // current, but it would be weird if it didn't?
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
+
+    if let Ok(prefix) = std::env::var("PEAR_DUMP_FRAME") {
+        static FRAME_COUNTER: std::sync::atomic::AtomicUsize =
+            std::sync::atomic::AtomicUsize::new(0);
+        let n = FRAME_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        if n < 4000 && n % 20 == 0 {
+            let (pixels, width, height) = unsafe { read_renderbuffer(gles.as_mut(), Vec::new()) };
+            let mut out = format!("{width} {height}\n").into_bytes();
+            out.extend_from_slice(&pixels);
+            std::fs::write(format!("{prefix}{n:05}.raw"), out).unwrap();
+        }
+    }
 
     let renderbuffer: GLuint = unsafe {
         let mut renderbuffer = 0;
@@ -617,6 +642,17 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     // going to draw. Back up the old state while doing so, so it can be
     // restored later. The app's subsequent drawing will be messed up if we
     // don't restore it.
+
+    // GL_CURRENT_PROGRAM (0x8B8D) is an ES 2.0 / GL 2.0 piece of state. ES 1.x
+    // contexts won't have any program bound, in which case this is a harmless
+    // no-op. ES 2.0 apps do have one bound and we must clear it so our
+    // fixed-function quad-drawing code below works.
+    const CURRENT_PROGRAM: GLenum = 0x8B8D;
+    let old_program: GLuint = get_int(gles, CURRENT_PROGRAM) as _;
+    if old_program != 0 {
+        gles.UseProgram(0);
+    }
+
     let old_arrays = {
         let mut old_arrays = [gles11::FALSE; gles1_on_gl2::ARRAYS.len()];
         for (is_enabled, info) in old_arrays.iter_mut().zip(gles1_on_gl2::ARRAYS.iter()) {
@@ -757,6 +793,11 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
     // Restore the other bindings
     gles.BindTexture(gles11::TEXTURE_2D, old_texture_2d);
     gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
+
+    // Restore the previously bound shader program (ES 2.0).
+    if old_program != 0 {
+        gles.UseProgram(old_program);
+    }
 
     // { let err = gles.GetError(); if err != 0 { panic!("{:#x}", err); } }
 }

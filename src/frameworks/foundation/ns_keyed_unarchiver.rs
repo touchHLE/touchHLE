@@ -110,6 +110,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (())finishDecoding {
+    // Nothing to do: decoding is performed eagerly by -initForReadingWithData:.
+}
+
 - (())dealloc {
     let host_obj = borrow_host_obj(env, this);
     let already_unarchived = std::mem::take(&mut host_obj.already_unarchived);
@@ -307,6 +311,9 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
                     // while holding a reference to the class name, since it
                     // is ultimately owned by ObjC via the host object
                     let class_name = class_name.to_string();
+                    if std::env::var_os("PEAR_DEBUG_UNARCHIVE").is_some() {
+                        log!("unarchive uid={} class={}", key.get(), class_name);
+                    }
                     env.objc.get_known_class(&class_name, &mut env.mem)
                 };
                 let host_obj = borrow_host_obj(env, unarchiver); // reborrow

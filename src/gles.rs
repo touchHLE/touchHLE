@@ -65,6 +65,7 @@
 
 pub mod gles1_native;
 pub mod gles1_on_gl2;
+pub mod gles2_glsl;
 mod gles_generic;
 pub mod present;
 mod util;
@@ -72,12 +73,11 @@ mod util;
 use touchHLE_gl_bindings::gl21compat as gl21compat_raw;
 pub use touchHLE_gl_bindings::gles11 as gles11_raw;
 
+use crate::environment::Environment;
 use gles1_native::GLES1NativeContext;
 use gles1_on_gl2::GLES1OnGL2Context;
 pub use gles_generic::GLESContext;
 pub use gles_generic::GLES;
-
-use crate::environment::Environment;
 
 /// Labels for [GLES] implementations and an abstraction for constructing them.
 #[derive(Copy, Clone)]
@@ -126,6 +126,30 @@ impl GLESImplementation {
 pub fn create_gles1_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
     env.on_parent_stack_in_coroutine(|window, options| {
         create_gles1_ctx_no_parent_stack(window, options)
+    })
+}
+
+/// Try to create an OpenGL ES 2.0 context using the [GLES1OnGL2] backend,
+/// panicking on failure.
+///
+/// touchHLE does not have a dedicated native ES 2.0 backend on most desktop
+/// hosts. Instead, ES 2.0 entry points are provided by [GLES1OnGL2], which is
+/// based on a desktop OpenGL 2.1 compatibility profile context. Desktop GL 2.1
+/// has all the shader-related entry points (`glCreateShader`,
+/// `glCompileShader`, …) that ES 2.0 needs, plus EXT_framebuffer_object for
+/// the renderbuffer/framebuffer entry points.
+pub fn create_gles2_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
+    env.on_parent_stack_in_coroutine(|window, _options| {
+        assert!(window.on_main_stack());
+        log!("Creating an OpenGL ES 2.0 context (using GL 2.1 compatibility backend):");
+        match GLES1OnGL2Context::new(window) {
+            Ok(ctx) => {
+                log!("=> Success!");
+                let boxed: Box<dyn GLESContext> = Box::new(ctx);
+                boxed
+            }
+            Err(err) => panic!("Couldn't create OpenGL ES 2.0 context: {}", err),
+        }
     })
 }
 

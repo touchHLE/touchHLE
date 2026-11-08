@@ -209,7 +209,7 @@ unsafe fn draw_fps_hud(gles: &mut dyn GLES, viewport: (u32, u32, u32, u32)) {
     let origin_x = padding;
     let origin_y = padding;
 
-    let mut quads = |rects: &mut Vec<f32>, x: f32, y: f32, w: f32, h: f32| {
+    let quads = |rects: &mut Vec<f32>, x: f32, y: f32, w: f32, h: f32| {
         let x0 = x / (vw as f32 / 2.0) - 1.0;
         let x1 = (x + w) / (vw as f32 / 2.0) - 1.0;
         let y0 = 1.0 - y / (vh as f32 / 2.0);

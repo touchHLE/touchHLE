@@ -76,7 +76,7 @@ pub fn recomposite_if_necessary(env: &mut Environment, force: bool) -> Option<In
         return None;
     }
 
-    if env.options.print_fps {
+    if env.options.print_fps || crate::gles::present::hud_enabled() {
         env.framework_state
             .core_animation
             .composition

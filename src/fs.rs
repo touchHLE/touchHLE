@@ -706,6 +706,7 @@ impl Fs {
     }
 
     /// Create a fake filesystem (see [crate::Environment::new_without_app]).
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
     pub fn new_fake_fs() -> Fs {
         Fs {
             root: FsNode::dir(),

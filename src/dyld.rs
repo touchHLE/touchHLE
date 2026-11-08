@@ -395,6 +395,7 @@ impl Dyld {
 
     /// [Self::do_initial_linking] but for when this is the app picker's special
     /// environment with no binary (see [crate::Environment::new_without_app]).
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
     pub fn do_initial_linking_with_no_bins(&mut self, mem: &mut Mem, objc: &mut ObjC) {
         assert!(self.return_to_host_routine.is_none());
         assert!(self.thread_exit_routine.is_none());

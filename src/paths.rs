@@ -70,7 +70,11 @@ impl ResourceFile {
             // On other OSes, resources are accessed as ordinary files.
             #[cfg(not(target_os = "android"))]
             file: {
-                let base_path = get_macos_bundled_resources_path();
+                let env_res = std::env::var("PEAR_LEGACY_RESOURCES_DIR")
+                    .ok()
+                    .filter(|s| !s.is_empty())
+                    .map(PathBuf::from);
+                let base_path = env_res.or_else(get_macos_bundled_resources_path);
                 // When not in a bundle, look in the current directory.
                 let path = base_path.as_deref().unwrap_or(Path::new(".")).join(path);
                 std::fs::File::open(path).map_err(|e| e.to_string())?
@@ -93,6 +97,7 @@ pub const RESOURCES_ARE_EXTERNAL_FILES: bool = cfg!(not(target_os = "android"));
 
 /// Name of the directory where the user can put apps if they want them to
 /// appear in the app picker.
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub const APPS_DIR: &str = "touchHLE_apps";
 
 /// Name of the file intended for the user's own options.
@@ -108,10 +113,17 @@ pub const WALLPAPER_FILES: &[&str] = &[
 
 /// Name of the directory where touchHLE will store sandboxed app data, e.g.
 /// the `Documents` directory.
-pub const SANDBOX_DIR: &str = "touchHLE_sandbox";
+pub const SANDBOX_DIR: &str = "Saves";
 
-/// Get a platform-specific base path needed for accessing touchHLE's
-/// user-modifiable files. This is empty on platforms other than Android.
+/// Directory name used by earlier builds. Migrated to [`SANDBOX_DIR`] on first
+/// use so existing saves survive the rename and no engine-branded folder stays
+/// visible in the user's library.
+pub const LEGACY_SANDBOX_DIR: &str = "touchHLE_sandbox";
+
+/// Get a platform-specific base path needed for accessing user-modifiable
+/// sandbox files. On macOS/desktop, `PEAR_LEGACY_SANDBOX_ROOT` or
+/// `PEAR_SUPPORT_ROOT` overrides the default working directory so sandboxed
+/// 32-bit app saves live cleanly inside the PearSilicon library.
 pub fn user_data_base_path() -> Cow<'static, Path> {
     #[cfg(target_os = "android")]
     unsafe {
@@ -136,16 +148,48 @@ pub fn user_data_base_path() -> Cow<'static, Path> {
     }
     #[cfg(not(target_os = "android"))]
     {
-        // When touchHLE is run from a .app bundle on macOS, the user might not
-        // be able to control the current directory, so user data needs to go in
-        // a standard location.
+        if let Ok(custom_root) = std::env::var("PEAR_LEGACY_SANDBOX_ROOT") {
+            if !custom_root.is_empty() {
+                let p = PathBuf::from(custom_root);
+                let _ = std::fs::create_dir_all(&p);
+                migrate_legacy_sandbox_dir(&p);
+                return Cow::from(p);
+            }
+        }
+        if let Ok(support_root) = std::env::var("PEAR_SUPPORT_ROOT") {
+            if !support_root.is_empty() {
+                let p = PathBuf::from(support_root).join("Legacy32");
+                let _ = std::fs::create_dir_all(&p);
+                migrate_legacy_sandbox_dir(&p);
+                return Cow::from(p);
+            }
+        }
         if get_macos_bundled_resources_path().is_some() {
-            return Cow::from(PathBuf::from(
-                sdl2::filesystem::pref_path("touchhle.org", "touchHLE").unwrap(),
-            ));
+            if let Ok(pref) = sdl2::filesystem::pref_path("dev.pearsilicon", "PearLegacyEngine") {
+                let p = PathBuf::from(pref);
+                let _ = std::fs::create_dir_all(&p);
+                migrate_legacy_sandbox_dir(&p);
+                return Cow::from(p);
+            }
         }
         Cow::from(Path::new("."))
     }
+}
+
+/// Moves an engine-branded sandbox directory from older builds to
+/// [`SANDBOX_DIR`] so existing save data keeps working and no obsolete folder
+/// name remains visible in the user's library.
+fn migrate_legacy_sandbox_dir(base: &Path) {
+    let old = base.join(LEGACY_SANDBOX_DIR);
+    if !old.is_dir() {
+        return;
+    }
+    let new = base.join(SANDBOX_DIR);
+    if new.exists() {
+        // Both exist: leave the old one alone rather than risk merging data.
+        return;
+    }
+    let _ = std::fs::rename(&old, &new);
 }
 
 /// Get a URI that can be used to open a file manager or similar for the path
@@ -181,6 +225,7 @@ pub fn url_for_opening_user_data_dir() -> Result<String, String> {
 /// Only meaningful on certain OSes: create the user data directory if it
 /// doesn't exist, and populate it with templates or README files. (On other
 /// platforms these are simply bundled with touchHLE in a ZIP file.)
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub fn prepopulate_user_data_dir() {
     if std::env::consts::OS != "android" && std::env::consts::OS != "macos" {
         return;

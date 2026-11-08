@@ -8,6 +8,7 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub mod app_picker;
 mod mutex;
 mod nullable_box;
@@ -399,17 +400,7 @@ impl Environment {
             };
 
             Some(Box::new(window::Window::new(
-                &format!(
-                    "{} (touchHLE {}{}{})",
-                    bundle.display_name(),
-                    super::branding(),
-                    if super::branding().is_empty() {
-                        ""
-                    } else {
-                        " "
-                    },
-                    super::VERSION
-                ),
+                bundle.display_name(),
                 icon.ok(),
                 launch_image,
                 &options,
@@ -737,6 +728,7 @@ impl Environment {
     /// some of the fields with fake data is a hack, but it means the frameworks
     /// do not need to be aware of the app picker's peculiarities, so it is
     /// cleaner than the alternative!
+    #[cfg_attr(not(target_os = "android"), allow(dead_code))]
     pub fn new_without_app(
         options: options::Options,
         icon: image::Image,
@@ -1268,6 +1260,7 @@ impl Environment {
         self.yield_thread(ThreadBlock::Joining(joinee_thread, ptr));
     }
 
+    #[cfg_attr(not(target_os = "android"), allow(dead_code))]
     pub fn run_app_picker<F, R>(mut self, f: F) -> R
     where
         F: FnOnce(&mut Environment) -> R + 'static,

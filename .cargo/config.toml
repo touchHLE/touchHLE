@@ -2,3 +2,11 @@
 # the documentation for the touchHLE crate is intended to include private items
 # alas this isn't scoped to that crate!
 rustdocflags = ["--document-private-items"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "target-cpu=apple-m1"]
+
+[env]
+CMAKE_POLICY_VERSION_MINIMUM = "3.5"
+
+

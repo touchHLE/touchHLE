@@ -87,3 +87,10 @@ cargo-license = "0.5.1"
 cc = { workspace = true }
 cmake = { workspace = true }
 gl_generator = { workspace = true }
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "debuginfo"
+

@@ -129,6 +129,8 @@ pub enum FingerId {
     ButtonToTouch(crate::options::Button),
     StickToTouch,
     DpadToTouch,
+    /// Finger synthesized by the keymapper.
+    Keymap(u64),
 }
 pub type Coords = (f32, f32);
 
@@ -242,6 +244,11 @@ pub struct Window {
     virtual_cursor_last: Option<(f32, f32, bool, bool)>,
     virtual_cursor_last_unsticky: Option<(f32, f32, Instant)>,
     virtual_accelerometer_last: Option<(f32, f32, bool)>,
+    /// Host keyboard bindings replayed as synthetic touches, if the launcher
+    /// provided a keymap for this app.
+    keymap: Option<crate::keymap::KeymapState>,
+    /// Keymapper gestures waiting for their scheduled moment.
+    pending_touches: VecDeque<(Instant, crate::keymap::TouchCmd)>,
     /// Whether or not we are on the "main" environment stack (rather than
     /// a coroutine stack). Checked in various functions to make sure that
     /// certain SDL functions (that call JNI functions) are on the main
@@ -262,6 +269,13 @@ impl Window {
         launch_image: Option<Image>,
         options: &Options,
     ) -> Window {
+        // Set the application display name before initializing SDL2 so macOS
+        // menu bar, Window menu, and window server metadata show only the
+        // game's own title with no engine branding.
+        sdl2::hint::set("SDL_APP_NAME", title);
+        sdl2::hint::set("SDL_MAC_BACKGROUND_APP", "0");
+        sdl2::hint::set("SDL_VIDEO_HIGHDPI_DISABLED", "0");
+
         let sdl_ctx = sdl2::init().unwrap();
         let video_ctx = sdl_ctx.video().unwrap();
 
@@ -397,6 +411,8 @@ impl Window {
             virtual_cursor_last: None,
             virtual_cursor_last_unsticky: None,
             virtual_accelerometer_last: None,
+            keymap: crate::keymap::KeymapState::from_env(),
+            pending_touches: VecDeque::new(),
             on_main_stack: true,
         };
 
@@ -434,6 +450,17 @@ impl Window {
         }
         self.last_polled = now;
 
+        // Replay keymapper gestures whose scheduled moment has arrived. Taps
+        // and swipes are spread over time so the app can observe them.
+        while let Some((due, _)) = self.pending_touches.front() {
+            if *due > now {
+                break;
+            }
+            let (_, command) = self.pending_touches.pop_front().unwrap();
+            queue_keymap_touch(self, command);
+        }
+
+        self.inject_keymap_selftest();
         self.inject_scripted_input();
 
         fn transform_input_coords(
@@ -491,6 +518,49 @@ impl Window {
             let (screen_width, screen_height) = window.window.drawable_size();
             (screen_width as f32 * x, screen_height as f32 * y)
         }
+        /// Maps a keymap point (normalized to the game viewport) to the
+        /// emulated device's touch coordinates.
+        fn keymap_coords(window: &Window, (nx, ny): crate::keymap::NormalizedPoint) -> Coords {
+            let (vx, vy, vw, vh) = window.viewport();
+            let window_coords = (vx as f32 + nx * vw as f32, vy as f32 + ny * vh as f32);
+            transform_input_coords(window, window_coords, false)
+        }
+        fn debug_touch() -> bool {
+            static ENABLED: std::sync::LazyLock<bool> =
+                std::sync::LazyLock::new(|| std::env::var_os("PEAR_DEBUG_TOUCH").is_some());
+            *ENABLED
+        }
+        fn queue_keymap_touch(window: &mut Window, command: crate::keymap::TouchCmd) {
+            use crate::keymap::TouchCmd;
+            let (finger_id, at, down) = match command {
+                TouchCmd::Down { id, at } => (id, at, Some(true)),
+                TouchCmd::Move { id, at } => (id, at, None),
+                TouchCmd::Up { id, at } => (id, at, Some(false)),
+            };
+            let coords = keymap_coords(window, at);
+            if debug_touch() {
+                let kind = match down {
+                    Some(true) => "down",
+                    Some(false) => "up",
+                    None => "move",
+                };
+                log!(
+                    "Keymapper touch {} finger {} at ({:.3}, {:.3}) -> ({:.1}, {:.1})",
+                    kind,
+                    finger_id,
+                    at.0,
+                    at.1,
+                    coords.0,
+                    coords.1
+                );
+            }
+            let event = match down {
+                Some(true) => Event::TouchesDown(HashMap::from([(FingerId::Keymap(finger_id), coords)])),
+                Some(false) => Event::TouchesUp(HashMap::from([(FingerId::Keymap(finger_id), coords)])),
+                None => Event::TouchesMove(HashMap::from([(FingerId::Keymap(finger_id), coords)])),
+            };
+            window.event_queue.push_back(event);
+        }
 
         let mut controller_updated = false;
         // event_pump doesn't have a method to peek on events
@@ -542,6 +612,38 @@ impl Window {
                     self.virtual_accelerometer_last = Some((x, y, false));
                 }
                 _ => {}
+            }
+
+            // Keymapper: bound keys become synthetic touches instead of the
+            // engine's own keyboard handling.
+            let key_state = match &event {
+                E::KeyDown {
+                    keycode, repeat, ..
+                } => keycode.map(|keycode| (keycode, true, *repeat)),
+                E::KeyUp { keycode, .. } => keycode.map(|keycode| (keycode, false, false)),
+                _ => None,
+            };
+            if let Some((keycode, pressed, repeat)) = key_state {
+                let name = crate::keymap::key_name(keycode);
+                let commands = name.and_then(|name| {
+                    self.keymap
+                        .as_mut()
+                        .and_then(|keymap| keymap.key_event(&name, pressed))
+                });
+                if let Some(commands) = commands {
+                    // Auto-repeat must not fire a tap again: its down/up pair
+                    // was already delivered for this press.
+                    if commands.is_empty() || !(pressed && repeat) {
+                        for (delay, command) in commands {
+                            if delay.is_zero() {
+                                queue_keymap_touch(self, command);
+                            } else {
+                                self.pending_touches.push_back((now + delay, command));
+                            }
+                        }
+                    }
+                    continue;
+                }
             }
 
             self.event_queue.push_back(match event {
@@ -882,6 +984,47 @@ impl Window {
     /// can be driven without a human at the window. The script is read from the
     /// file named by the `PEAR_TOUCH_SCRIPT` environment variable; each line is
     /// `<time_ms> <x> <y> <down|up>` where x/y are in device points.
+    /// Debug aid for verifying keymapper plumbing without physical input:
+    /// `PEAR_KEYMAP_SELFTEST=1` replays one bound tap and one joystick sweep a
+    /// few seconds after launch, through the same queue real keys feed.
+    fn inject_keymap_selftest(&mut self) {
+        static ENABLED: std::sync::LazyLock<bool> =
+            std::sync::LazyLock::new(|| std::env::var_os("PEAR_KEYMAP_SELFTEST").is_some());
+        static START: std::sync::LazyLock<Instant> = std::sync::LazyLock::new(Instant::now);
+        static STEP: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        if !*ENABLED {
+            return;
+        }
+        let Some(keymap) = self.keymap.as_mut() else {
+            return;
+        };
+        let now = Instant::now();
+        let step = STEP.load(std::sync::atomic::Ordering::Relaxed);
+        // Wait for the app to finish booting before poking it.
+        if now.duration_since(*START) < Duration::from_secs(6) + Duration::from_secs(2 * step as u64) {
+            return;
+        }
+        let mut commands = Vec::new();
+        match step {
+            0 => {
+                commands.extend(keymap.key_event("space", true).unwrap_or_default());
+                commands.extend(keymap.key_event("space", false).unwrap_or_default());
+            }
+            1 => commands.extend(keymap.key_event("d", true).unwrap_or_default()),
+            2 => commands.extend(keymap.key_event("d", false).unwrap_or_default()),
+            _ => return,
+        }
+        STEP.store(step + 1, std::sync::atomic::Ordering::Relaxed);
+        if commands.is_empty() {
+            log!("Keymapper self-test: step {} produced no touches", step);
+            return;
+        }
+        log!("Keymapper self-test: step {} produced {} touches", step, commands.len());
+        for (delay, command) in commands {
+            self.pending_touches.push_back((now + delay, command));
+        }
+    }
+
     fn inject_scripted_input(&mut self) {
         use std::sync::{Mutex, OnceLock};
 
@@ -1522,48 +1665,24 @@ pub fn show_error_messagebox(window: Option<&Window>, error_message: &str) {
     let mbox = [
         messagebox::ButtonData {
             flags: messagebox::MessageBoxButtonFlag::NOTHING,
-            button_id: 0,
-            text: "Open touchHLE directory",
-        },
-        messagebox::ButtonData {
-            flags: messagebox::MessageBoxButtonFlag::NOTHING,
             button_id: 1,
             text: "Close",
         },
     ];
 
-    let Ok(clicked_button) = messagebox::show_message_box(
+    let title = window
+        .map(|win| win.window.title())
+        .filter(|t| !t.is_empty())
+        .unwrap_or("Application Error");
+
+    let _ = messagebox::show_message_box(
         messagebox::MessageBoxFlag::ERROR,
         &mbox,
-        "touchHLE crashed!",
-        &format!("touchHLE crashed with the following error: {error_message}"),
+        title,
+        error_message,
         window.map(|win| &win.window),
         None,
-    ) else {
-        panic!("Failed to show message box!");
-    };
-
-    match clicked_button {
-        messagebox::ClickedButton::CloseButton => {}
-        messagebox::ClickedButton::CustomButton(button) => {
-            match button.button_id {
-                // Open data directory (contains log file on android)
-                0 => match crate::paths::url_for_opening_user_data_dir() {
-                    Ok(url) => {
-                        if let Err(e) = sdl2::url::open_url(&url).map_err(|e| e.to_string()) {
-                            echo!("Couldn't open file manager at {:?}: {}", url, e);
-                        } else {
-                            echo!("Opened file manager at {:?}, exiting.", url);
-                        }
-                    }
-                    Err(e) => echo!("Couldn't open file manager: {}", e),
-                },
-                // Close
-                1 => {}
-                _ => unreachable!(),
-            }
-        }
-    }
+    );
 }
 
 /// Get current battery state from SDL2.

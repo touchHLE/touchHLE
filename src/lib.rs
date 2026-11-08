@@ -40,6 +40,7 @@ mod fs;
 mod gdb;
 mod gles;
 mod image;
+mod keymap;
 mod libc;
 mod licenses;
 mod mach_o;
@@ -97,11 +98,11 @@ pub extern "C" fn SDL_main(
 
 const USAGE: &str = "\
 Usage:
-    touchHLE [PATH] [OPTIONS]
+    PearLegacyEngine <PATH> [OPTIONS]
 
-PATH should be a path to a .app bundle or .ipa file.
-
-If no app path or special option is specified, a GUI app picker is displayed.
+PATH must be a path to a 32-bit iOS .app bundle or .ipa file.
+PearLegacyEngine operates as a headless-controlled Apple Silicon runtime engine
+managed by PearSilicon.
 
 Special options:
     --help
@@ -115,28 +116,12 @@ Special options:
 ";
 
 pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
-    echo!(
-        "touchHLE {}{}{} — https://touchhle.org/",
-        branding(),
-        if branding().is_empty() { "" } else { " " },
-        VERSION,
-    );
-    if GITHUB_RUN_ID.is_some() && !branding().is_empty() {
-        echo!(
-            "Built from branch {:?} of {:?} by GitHub Actions workflow run {}/{}/actions/runs/{}.",
-            GITHUB_REF_NAME.unwrap(),
-            GITHUB_REPOSITORY.unwrap(),
-            GITHUB_SERVER_URL.unwrap(),
-            GITHUB_REPOSITORY.unwrap(),
-            GITHUB_RUN_ID.unwrap()
-        );
-    }
+    echo!("PearLegacyEngine {} (Apple Silicon 32-bit iOS Runtime)", VERSION);
     echo!();
 
     {
         let base_path = paths::user_data_base_path();
-        log!("Base path for touchHLE files: {}", base_path.display());
-        paths::prepopulate_user_data_dir();
+        log!("Base path for runtime files: {}", base_path.display());
     }
 
     let _ = args.next().unwrap(); // skip argv[0]
@@ -184,23 +169,29 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let bundle_path = if let Some(bundle_path) = bundle_path {
         bundle_path
     } else {
-        let mut options = options::Options::default();
-        // Apply command-line options only (no app-specific options apply)
-        for option_arg in &option_args {
-            let parse_result = options.parse_argument(option_arg);
-            assert!(parse_result == Ok(true));
+        // Android has no command line, so it still needs the in-app picker GUI.
+        // Desktop builds are driven headlessly by PearSilicon and must stay
+        // windowless until an app bundle or IPA is supplied.
+        #[cfg(target_os = "android")]
+        {
+            let mut options = options::Options::default();
+            for option_arg in &option_args {
+                let parse_result = options.parse_argument(option_arg);
+                assert!(parse_result == Ok(true));
+            }
+            echo!(
+                "No app specified, opening app picker. Use the --help flag to see command-line usage."
+            );
+            let (bundle_path, mut extra_options) = environment::app_picker::app_picker(options)?;
+            option_args.append(&mut extra_options);
+            bundle_path
         }
-        if options.headless {
+        #[cfg(not(target_os = "android"))]
+        {
             return Err(
-                "No app specified. Use the --help flag to see command-line usage.".to_string(),
+                "No app bundle or IPA specified. Launch 32-bit iOS apps through PearSilicon or pass a .app/.ipa path (see --help).".to_string(),
             );
         }
-        echo!(
-            "No app specified, opening app picker. Use the --help flag to see command-line usage."
-        );
-        let (bundle_path, mut extra_options) = environment::app_picker::app_picker(options)?;
-        option_args.append(&mut extra_options);
-        bundle_path
     };
 
     // When PowerShell does tab-completion on a directory, for some reason it

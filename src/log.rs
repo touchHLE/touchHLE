@@ -10,15 +10,20 @@ use std::sync::LazyLock;
 
 /// Get a handle to the log file. This is only for use by logging macros!
 ///
-/// All the logging macros print to stderr or (on Android) logcat, but this
-/// is not convenient for users who aren't accustomed to command-line tools or
-/// who don't have access to ADB, so we also write to a log file.
-pub fn get_log_file() -> &'static File {
-    static LOG_FILE: LazyLock<File> = LazyLock::new(|| {
-        File::create(crate::paths::user_data_base_path().join("touchHLE_log.txt")).unwrap()
+/// In headless/CLI mode on macOS, logs are only written to a file if
+/// `PEAR_LEGACY_LOG_FILE` is explicitly set, avoiding unnecessary disk writes
+/// in the working directory when PearSilicon already captures stdout/stderr.
+pub fn get_log_file() -> Option<&'static File> {
+    static LOG_FILE: LazyLock<Option<File>> = LazyLock::new(|| {
+        if let Ok(path) = std::env::var("PEAR_LEGACY_LOG_FILE") {
+            if !path.is_empty() {
+                return File::create(path).ok();
+            }
+        }
+        None
     });
 
-    &LOG_FILE
+    LOG_FILE.as_ref()
 }
 
 /// Prints a log message unconditionally. Use this for errors or warnings.
@@ -27,7 +32,7 @@ pub fn get_log_file() -> &'static File {
 /// from.
 macro_rules! log {
     ($($arg:tt)+) => {
-        echo!("{}: {}", module_path!(), format_args!($($arg)+));
+        echo!("{}: {}", module_path!().replacen("touchHLE", "PearLegacyEngine", 1), format_args!($($arg)+));
     }
 }
 
@@ -35,7 +40,7 @@ macro_rules! log {
 /// panicking.
 macro_rules! log_no_panic {
     ($($arg:tt)+) => {
-        echo_no_panic!("{}: {}", module_path!(), format_args!($($arg)+));
+        echo_no_panic!("{}: {}", module_path!().replacen("touchHLE", "PearLegacyEngine", 1), format_args!($($arg)+));
     }
 }
 
@@ -44,7 +49,7 @@ macro_rules! log_no_panic {
 /// when debugging.
 macro_rules! log_dbg {
     ($($arg:tt)+) => {
-        if $crate::log::ENABLED_MODULES.contains(&module_path!()) {
+        if $crate::log::debug_module_enabled(module_path!()) {
             log!($($arg)*);
         }
     }
@@ -79,9 +84,10 @@ macro_rules! echo {
             eprintln!("{}", formatted_str);
 
             use std::io::Write;
-            let mut log_file = $crate::log::get_log_file();
-            let _ = log_file.write_all(formatted_str.as_bytes());
-            let _ = log_file.write_all(b"\n");
+            if let Some(mut log_file) = $crate::log::get_log_file() {
+                let _ = log_file.write_all(formatted_str.as_bytes());
+                let _ = log_file.write_all(b"\n");
+            }
         }
     };
     () => {
@@ -94,7 +100,9 @@ macro_rules! echo {
             eprintln!("");
 
             use std::io::Write;
-            let _ = $crate::log::get_log_file().write_all(b"\n");
+            if let Some(mut log_file) = $crate::log::get_log_file() {
+                let _ = log_file.write_all(b"\n");
+            }
         }
     }
 }
@@ -111,6 +119,24 @@ macro_rules! echo_no_panic {
     }
 }
 
-/// Put modules to enable [log_dbg] for here, e.g. "touchHLE::mem" to see when
-/// memory is allocated and freed.
-pub const ENABLED_MODULES: &[&str] = &["touchHLE::dyld"];
+/// Extra modules to enable [log_dbg] for, e.g.
+/// `PEAR_DEBUG_MODULES=PearLegacyEngine::mem,PearLegacyEngine::frameworks::uikit`.
+///
+/// Entries are matched against `module_path!()`, which still uses the crate's
+/// historical name internally, so both spellings are accepted.
+static ENABLED_MODULES: std::sync::LazyLock<Vec<String>> = std::sync::LazyLock::new(|| {
+    std::env::var("PEAR_DEBUG_MODULES")
+        .ok()
+        .map(|value| {
+            value
+                .split(',')
+                .map(|module| module.trim().replacen("PearLegacyEngine", "touchHLE", 1))
+                .filter(|module| !module.is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+});
+
+pub fn debug_module_enabled(module: &str) -> bool {
+    ENABLED_MODULES.iter().any(|enabled| enabled == module)
+}

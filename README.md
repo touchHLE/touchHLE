@@ -1,147 +1,167 @@
-# touchHLE: high-level emulator for early iOS apps
+<h1 align="center">PearLegacyEngine</h1>
 
-**touchHLE** is a high-level emulator for early iOS apps. It runs on modern desktop operating systems and Android, and is written in Rust.
+<p align="center">
+  <strong>Apple Silicon 32-bit iOS Compatibility Runtime for <a href="https://github.com/denizomer10/PearSilicon">PearSilicon</a></strong>
+</p>
 
-touchHLE's high-level emulation (HLE) approach differs from low-level emulation (LLE) in that it does not directly simulate the iPhone/iPod touch hardware. Instead of running iOS inside emulation, touchHLE _itself_ takes the place of iOS and provides its own implementations of the system frameworks (Foundation, UIKit, OpenGL ES, OpenAL, etc). The only code the [emulated CPU](https://github.com/merryhime/dynarmic) executes is the app binary and [a handful of libraries](touchHLE_dylibs/).
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-macOS%20arm64%20(Apple%20Silicon)-lightgrey?style=flat-square" alt="macOS arm64">
+  <img src="https://img.shields.io/badge/architecture-armv7%20%2F%20armv6%2032--bit%20iOS-blue?style=flat-square" alt="32-bit iOS">
+  <img src="https://img.shields.io/badge/host-PearSilicon-2ea44f?style=flat-square" alt="PearSilicon">
+  <img src="https://img.shields.io/badge/license-MPL--2.0%20%2F%20GPL--3.0-orange?style=flat-square" alt="License">
+</p>
 
-The goal of this project is to run games from the early days of iOS:
+---
 
-* Currently: iPhone, iPod touch and iPad apps for iPhone OS 2.x, iPhone OS 3.x, and iOS 4.0.x.
-* Longer term: high-DPI (“Retina Display”) support, newer iOS 4 versions, iOS 5.x, iOS 6.x.
-* [Never](https://github.com/touchHLE/touchHLE/issues/181#issuecomment-1777098259): 64-bit iOS.
+**PearLegacyEngine** is the dedicated 32-bit iOS high-level compatibility runtime engine built for **[PearSilicon](https://github.com/denizomer10/PearSilicon)** on Apple Silicon Macs (`aarch64-apple-darwin`, macOS Sequoia / macOS 26 Tahoe and newer).
 
-**This does not mean that all apps for these OS versions work.** The vast majority of iOS 2.x, 3.x and 4.x apps do not currently work in touchHLE, and the ones that do work are generally games (support for other apps is not prioritized as it is more complex and less fun). Compatibility will improve gradually over time with contributions from various developers. The [touchHLE app compatibility database](https://appdb.touchhle.org/) tracks which apps work in touchHLE; it is a crowdsourced effort to which anyone can contribute. **We don't take requests, so please do not ask us to support your favourite game.**
+Modern macOS and Apple Silicon hardware natively dropped 32-bit ARM (`armv7` / `armv6`) execution, meaning Apple’s Mac Catalyst and `/System/iOSSupport` stack can only run 64-bit (`arm64`) iOS binaries. **PearLegacyEngine** bridges this gap as a dependent runtime component of PearSilicon: while PearSilicon provides the native SwiftUI library manager, `.ipa` / `.app` installer, per-game settings UI, and macOS application host wrapper, PearLegacyEngine executes legacy 32-bit iOS games in the background with native-speed JIT translation (`dynarmic` ARM32 → Apple Silicon ARM64) and high-level framework implementations (UIKit, Foundation, CoreAnimation, OpenGL ES 1.1 & 2.0, AudioToolbox / OpenAL).
 
-If you're curious about the history and motivation behind the project, you might want to read [the original announcement](https://hikari.noyu.me/blog/2023-02-06-touchhle-anouncement-thread-tech-games-me-and-passion-projects.html). For an introduction to some of the technical details, check out [_touchHLE in depth_](https://hikari.noyu.me/blog/2023-04-13-touchhle-in-depth-1-function-calls.html).
+---
 
-**Check out the website for downloads, FAQ, social media, and more:**<br>👉 <https://touchhle.org/> 👈
+## Relationship with PearSilicon
 
-## Important disclaimer
+PearLegacyEngine is designed as a **headless-controlled companion runtime** rather than a standalone desktop launcher:
 
-This project is not affiliated with or endorsed by Apple Inc in any way. iPhone, iOS, iPod, iPod touch and iPad are trademarks of Apple Inc in the United States and other countries.
+- **No Legacy SDL Picker UI:** The standalone SDL app picker GUI is disabled. All library management, IPA installation, resolution scaling (`1x`–`4x`), fullscreen configuration, and save-data inspection are handled natively in SwiftUI by **[PearSilicon](https://github.com/denizomer10/PearSilicon)**.
+- **Zero Engine Branding in Game Windows:** When PearSilicon launches a 32-bit iOS title through PearLegacyEngine, it wraps the runtime inside a lightweight per-game macOS `.app` host bundle with the game’s own `CFBundleName`, `CFBundleDisplayName`, icon, and window title. Only the game’s own name appears in the macOS title bar, menu bar, and Dock.
+- **Unified Library & Sandbox Storage:** Game sandboxes (`Documents`, `Library`, `tmp`) and logs are routed directly into PearSilicon’s managed storage tree (`~/Library/Application Support/PearSilicon/Legacy32/`) via `PEAR_LEGACY_SANDBOX_ROOT` and `PEAR_LEGACY_RESOURCES_DIR`.
 
-Only use touchHLE to emulate software you have obtained legally.
+---
 
-## Platform support
+## Key Features & Apple Silicon Optimizations
 
-* Officially supported: x64 Windows, x64 macOS and AArch64 Android.
-  * These are the platforms with binary releases.
-  * If you're an Apple Silicon Mac user, the x64 build reportedly works in Rosetta.
-* Probably works, but you must build it yourself: AArch64 macOS, x64 Linux, AArch64 Linux.
-* Never?: other architectures.
+- **ARM32 → ARM64 JIT on Apple Silicon:** Compiled with `-C target-cpu=apple-m1`, ThinLTO (`lto = "thin"`), single codegen unit, and `opt-level = 3` for low-latency 32-bit ARM translation on M-series chips.
+- **OpenGL ES 1.1 & OpenGL ES 2.0 Pipeline:**
+  - Full OpenGL ES 2.0 shader/program translation (GLSL ES 1.00 → desktop GLSL 120 on macOS OpenGL 2.1 compatibility context), vertex attribute arrays, VBOs, FBOs, renderbuffers, and non-zero default framebuffer binding guarantees.
+  - Zero-syscall hot render loop (`presentRenderbuffer` environment flags cached once via `LazyLock`, zero unguarded dyld debug logging overhead, and silent stdout/stderr capture when managed by PearSilicon).
+- **Expanded iOS Framework Coverage (Miku Flick & iOS 4/5 Games):**
+  - **Foundation:** `NSKeyedArchiver` / `NSKeyedUnarchiver` (`initForReadingWithData:`, `initForWritingWithMutableData:`, `encodeObject:forKey:`, `decodeObjectForKey:`, `finishEncoding`), lossy-safe `NSString` UTF-8/Shift-JIS fallback, `NSFileManager` directory creation, `NSHTTPCookieStorage`, `NSBundle`, `NSUserDefaults`, and `NSRunLoop`.
+  - **CoreFoundation & libSystem:** `CFAbsoluteTimeGetCurrent`, stack smash protection symbols (`___stack_chk_guard`, `___stack_chk_fail`), and Grand Central Dispatch / pthread shims.
+  - **AudioToolbox & OpenAL:** `AudioUnitGetProperty` / `AudioUnitSetProperty` across Global/Input/Output scopes, `AVAudioPlayer`, and hardware-accelerated OpenAL Soft output.
+  - **UIKit & CoreAnimation:** Multi-touch input forwarding, `CAEAGLLayer` fullscreen fast-path presentation, Retina high-DPI window scaling, and `UIAccelerometer` simulation.
+- **Keyboard & Gamepad Keymapper:** Native desktop key bindings for touch-only games, read from the same JSON keymaps PearSilicon edits (`pear-keymap/v1`). Supports `tap`, `hold`, `swipe` and an analog `joystick` with dead-zone. Works for 32-bit titles too, since it is implemented inside the engine rather than injected as a dylib.
+- **Performance HUD:** `PEAR_FPS_HUD=1` draws an in-engine, zero-allocation 7-segment frame-rate overlay over the game viewport (the honest equivalent of Metal HUD for an OpenGL ES renderer), while `--print-fps` keeps logging the same numbers.
+- **Headless-first:** No engine picker window, no engine name in the window title or menu bar. The process only ever shows the currently running game.
 
-Input methods:
+---
 
-- For simulated touch input, there are four options:
-  - Mouse/trackpad input (tap/hold/drag by pressing the left mouse button)
-  - Virtual cursor using a game controller (move the cursor with the right analog stick, and tap/hold/drag by pressing the stick or the right shoulder button)
-  - Mapping of game controller buttons or the left analog stick to specific on-screen locations (see the descriptions of `--button-to-touch=`, `--dpad-to-touch=` and `--stick-to-touch=` in `OPTIONS_HELP.txt`)
-  - Real touch input, if you're on a device that has a touch screen
-- For simulated accelerometer input, there are three options:
-  - Tilt control simulation using the left analog stick of a game controller
-  - Tilt control simulation using a mouse (hold down the right mouse button)
-  - Real accelerometer input, if you are using a phone, tablet or some other device with a built-in accelerometer (TODO: support game controllers with accelerometers)
+## Architecture Overview
 
-## Development status
+```mermaid
+flowchart LR
+    subgraph PearSilicon ["PearSilicon (SwiftUI macOS App)"]
+        UI["SwiftUI Library & Detail View"]
+        Installer["PackageInstaller (.ipa / .app)"]
+        Launcher["AppLauncher (macOS .app Host Wrapper)"]
+    end
 
-This project has been in development since December 2022. This was originally [hikari\_no\_yume](https://hikari.noyu.me/)'s full-time passion project. Since its release in February 2023, a number of other volunteers have also [contributed in their free time](https://github.com/touchHLE/touchHLE/graphs/contributors), and this is no longer a single-person project. There's only been a handful of releases so far and no promises can be made about the future. Please be patient.
+    subgraph PearLegacyEngine ["PearLegacyEngine (Rust / C++ ARM64 Runtime)"]
+        CLI["Headless CLI Entrypoint"]
+        JIT["dynarmic JIT (armv7 -> arm64)"]
+        HLE["iOS HLE Frameworks (UIKit, Foundation, Audio)"]
+        GLES["OpenGL ES 1.1 & 2.0 Translator"]
+    end
 
-In general, the supported functionality is defined by the supported apps: most contributors are interested in getting a particular game working, and contribute support for whichever missing features are needed for that game. Consequently, the completeness varies a lot between APIs, e.g. UIKit is easily the most hacky and incomplete of the large frameworks that have been implemented, because most games don't use very much of its functionality, whereas the OpenGL ES and OpenAL implementations are probably complete enough to cover a large number of early apps, because games make heavy use of these.
+    UI --> Installer
+    UI --> Launcher
+    Launcher -->|Spawns with Game Name & Icon| CLI
+    CLI --> JIT
+    CLI --> HLE
+    HLE --> GLES
+```
 
-# Usage
+---
 
-First obtain touchHLE, either a [binary release](https://github.com/touchHLE/touchHLE/releases) or by building it yourself (see the next section).
+## Building from Source (macOS Apple Silicon)
 
-You'll then need an app that you can run. The [app compatibility database](https://appdb.touchhle.org/) is a good guide for which versions of which apps are known to work, but bear in mind that it may contain outdated or inaccurate information. Note that the app binary must be decrypted to be usable.
+### Prerequisites
 
-There's a few ways you can run an app in touchHLE.
+- Apple Silicon Mac (`arm64`) running macOS 14.0+ (optimized for macOS 26).
+- Xcode Command Line Tools (`xcode-select --install`).
+- Rust toolchain (`rustup`, stable `aarch64-apple-darwin`).
+- CMake (`brew install cmake`) for building bundled native dependencies (`dynarmic`, `SDL2`, `openal-soft`).
 
-## Special Android notes
+### Compile Release Binary
 
-Windows, Mac and Linux users can skip this section.
+```sh
+git clone --recursive https://github.com/denizomer10/PearLegacyEngine.git
+cd PearLegacyEngine
+cargo build --release
+```
 
-On Android, only the graphical user interface (app picker) is available. Therefore, you must put your “.ipa” files or “.app” bundles inside the “touchHLE\_apps” directory. Note that you can only do that once you have run touchHLE at least once.
+The optimized binary is emitted at `target/release/touchHLE` alongside the runtime asset directories:
 
-File management can be tricky on Android due to [restrictions introduced by Google in newer Android versions](https://developer.android.com/about/versions/11/privacy/storage#scoped-storage). One of these methods may work:
+- `touchHLE_dylibs/` — guest ARM32 dynamic libraries (`libgcc`, `libstdc++`, `libobjc`).
+- `touchHLE_fonts/` — fallback system fonts (Liberation & Noto CJK).
+- `touchHLE_default_options.txt` — per-title default compatibility flags.
 
-* If you tap the “File manager” button in touchHLE, this should open some sort of file manager. You might also be able to find touchHLE in your device's file manager app (often called “Files”, or sometimes “Downloads”), alongside cloud storage services. There are some limitations on what kinds of operations are possible. The files in this location are stored on your device. Warning: on some devices, the “File manager” button _will_ open a file manager, but it will crash when actually doing file operations (this is probably a bug in Android, we have not been able to debug it). If this happens to you, clear that file manager from your recent apps list and try to navigate to your device's file manager app directly instead, rather than via the touchHLE UI.
-* If you have an older version of Android, you may be able to directly access touchHLE's files by browsing to `/sdcard/Android/data/org.touchhle.android/files/touchHLE_apps`. Note that the `/sdcard` directory is usually not on the SD card.
-* You may be able to use ADB. If you're unfamiliar with ADB, try using <https://yume-chan.github.io/ya-webadb/> (in Google Chrome or another browser with WebUSB) with your device connected over USB. touchHLE's files can be found in “sdcard” > “Android” > “data” > “org.touchhle.android” > “files” > “touchHLE\_apps”.
+### Bundling into PearSilicon
 
-## Graphical user interface
+When building **[PearSilicon](https://github.com/denizomer10/PearSilicon)** via `./scripts/build-app.sh release`, PearSilicon automatically detects `/Users/mac/PearLegacyEngine` (or `PEARSILICON_LEGACY_ENGINE_SRC`), bundles the release binary and runtime resources into `PearSilicon.app/Contents/Resources/PearLegacyEngine/`, and signs the application bundle.
 
-touchHLE has a built-in app picker. If you put your `.ipa` files and `.app` bundles in the `touchHLE_apps` directory, they will show up in the app picker when you run touchHLE.
+---
 
-To configure the options, you can edit the `touchHLE_options.txt` file. To get a list of options, look in the `OPTIONS_HELP.txt` file.
+## Controls & Keymaps
 
-## Command-line user interface
+PearSilicon writes keymaps to
+`~/Library/Application Support/PearSilicon/Keymaps/<bundle-id>.json` and passes
+the file through `PEAR_KEYMAP`. Each binding maps a keyboard key to a gesture on
+the emulated touch screen:
 
-**This section does not apply on Android.**
+```json
+{
+  "version": "pear-keymap/v1",
+  "bindings": [
+    { "source": "keyboard", "key": "space", "action": "tap", "_0": { "x": 0.516, "y": 0.911 } },
+    { "source": "keyboard", "key": "w", "action": "swipe",
+      "_0": { "x": 0.5, "y": 0.8 }, "to": { "x": 0.5, "y": 0.3 }, "duration_ms": 150 },
+    { "source": "keyboard", "key": "d", "action": "joystick",
+      "center": { "x": 0.14, "y": 0.72 }, "radius": 0.10 }
+  ]
+}
+```
 
-You can see the command-line usage by passing the `--help` flag.
+- Coordinates are normalised `0..1` against the game viewport, top-left origin.
+- `hold` keeps one stable finger down for as long as the key is held; `swipe`
+  interpolates moves over `duration_ms`; `joystick` drags from `center` towards
+  the pressed direction with a `0.15` dead zone, so `wasd`/arrows work.
+- Bindings with `"source": "controller"` are ignored here — those are handled
+  by PearSilicon's GameController bridge.
 
-If you're a Windows user and unfamiliar with the command line, these instructions may help you get started:
+---
 
-1. Move the `.ipa` file or `.app` bundle to the same folder as `touchHLE.exe`.
-2. Hold the Shift key and right-click on the empty space in the folder window.
-3. Click “Open with PowerShell”.
-4. Type `.\touchHLE.exe "YourAppNameHere.ipa"` (or `.app` as appropriate) and press Enter. If you want to specify options, add a space after the app name (outside the quotes) and then type the options, separated by spaces.
+## Direct CLI Usage (Advanced / Debugging)
 
-## Local multiplayer support
+PearLegacyEngine is invoked automatically by PearSilicon when you click **Launch** on any 32-bit iOS app in your library. For automated testing or diagnostics, you can also invoke the engine binary directly with a path to a `.app` bundle or `.ipa` archive:
 
-touchHLE provides limited support for local multiplayer via Wi-Fi in some games. At the moment of writing it is supported in Asphalt 4 and N.O.V.A.
+```sh
+./target/release/touchHLE /path/to/Game.app --scale-hack=2
+```
 
-Real iOS devices could also join/host games!
+### Environment Variables Used by PearSilicon
 
-**Usage:**
-1. Install touchHLE on 2+ devices connected to the same Wi-Fi network.
-2. **Important:** Ensure touchHLE is whitelisted in your OS firewall/network settings.
-3. Enable "Network access" in Quick options or via `--allow-network-access`.
-4. Start/join multiplayer in the game.
+| Variable | Description |
+| --- | --- |
+| `PEAR_LEGACY_SANDBOX_ROOT` | Directory where `Saves/<bundle-id>/` save data (`Documents`, `Library`, `tmp`) is stored. |
+| `PEAR_LEGACY_RESOURCES_DIR` | Directory containing `touchHLE_dylibs/`, `touchHLE_fonts/`, and `touchHLE_default_options.txt`. |
+| `PEAR_LEGACY_LOG_FILE` | Optional file path for standalone log output (omitted by default when PearSilicon captures process logs). |
+| `PEAR_TOUCH_SCRIPT` | Optional automated touch sequence (`frame:x:y[:duration],...`) for headless E2E verification. |
+| `PEAR_KEYMAP` | Path to a `pear-keymap/v1` JSON file enabling keyboard bindings. |
+| `PEAR_FPS_HUD` | `1` draws the in-engine frame-rate overlay over the game. |
+| `PEAR_DUMP_FRAME` | Optional path prefix to dump raw RGB framebuffer captures during diagnostics. |
+| `PEAR_DEBUG_TOUCH` | Logs every synthesised keymapper touch with its device coordinates. |
+| `PEAR_DEBUG_MODULES` | Comma-separated modules to enable verbose `log_dbg!` output for, e.g. `PearLegacyEngine::frameworks::uikit`. |
+| `PEAR_KEYMAP_SELFTEST` | Replays one bound tap and one joystick sweep after boot, for headless keymapper verification. |
+| `PEAR_HUD_SELFTEST` | One-shot readback that counts overlay pixels, proving the HUD really rendered. |
 
-**FAQs:**
-* **Tunneling over Internet/VPN:** Not officially supported, but might work.
-* **Bluetooth:** Not supported.
+---
 
-**Known issues:**
-* On macOS you may need to launch touchHLE from terminal as otherwise OS will block network connections.
+## Credits & License
 
-## Other stuff
+PearLegacyEngine is built upon the open-source foundations of [touchHLE](https://github.com/touchHLE/touchHLE) and [HyperHLE-Reborn](https://github.com/HyperHLE/HyperHLE-Reborn), adapted and optimized as the 32-bit iOS compatibility layer for **[PearSilicon](https://github.com/denizomer10/PearSilicon)**.
 
-Any data saved by the app (e.g. **saved games**) are stored in the `touchHLE_sandbox` folder.
+- **Source Code License:** Mozilla Public License 2.0 (MPL-2.0).
+- **Binary Distribution License:** GNU General Public License v3.0 or later (GPL-3.0-or-later).
+- Bundled dynamic libraries (`touchHLE_dylibs/`) and fonts (`touchHLE_fonts/`) are covered by their respective licenses.
 
-If the emulator crashes almost immediately while running a **known-working** version of a game, please check whether you have any overlays turned on like the Steam overlay, Discord overlay, RivaTuner Statistics Server, etc. Sadly, as useful as these tools are, they work by injecting themselves into other apps or games and don't always clean up after themselves, so they can break touchHLE… it's not our fault. 😢 Currently only RivaTuner Statistics Server is known to be a problem. If you find another overlay that doesn't work, please tell us about it.
-
-# Building and contributing
-
-See the `CONTRIBUTING.md` file in the git repo if you want to contribute. If you just want build touchHLE, look at `dev-docs/building.md`.
-
-# License
-
-touchHLE © 2023–2026 touchHLE project contributors.
-
-The source code of touchHLE itself (not its dependencies) is licensed under the Mozilla Public License, version 2.0.
-
-Due to license compatibility concerns, binaries are under the GNU General Public License version 3 or later.
-
-For a best effort listing of all licenses of dependencies, build touchHLE and pass the `--copyright` flag when running it, or click the “Copyright info” button in the app picker.
-
-Please note that different licensing terms apply to the bundled dynamic libraries (in `touchHLE_dylibs/`) and fonts (in `touchHLE_fonts/`). Please consult the respective directories for more information.
-
-# Thanks
-
-We stand on the shoulders of giants. Thank you to:
-
-* Everyone who has contributed to the project or supported any of its contributors financially.
-* The authors of and contributors to the many libraries used by this project: [dynarmic](https://github.com/merryhime/dynarmic), [rust-macho](https://github.com/flier/rust-macho), [SDL](https://libsdl.org/), [rust-sdl2](https://github.com/Rust-SDL2/rust-sdl2), [stb\_image](https://github.com/nothings/stb), Imagination Technologies' [PVRTC decompressor](https://github.com/powervr-graphics/Native_SDK/blob/master/framework/PVRCore/texture/PVRTDecompress.cpp), [openal-soft](https://github.com/kcat/openal-soft), [hound](https://github.com/ruuda/hound), [Symphonia](https://github.com/pdeljanov/Symphonia), [RustType](https://gitlab.redox-os.org/redox-os/rusttype), [the Liberation fonts](https://github.com/liberationfonts/liberation-fonts), [the Noto CJK fonts](https://github.com/googlefonts/noto-cjk), [rust-plist](https://github.com/ebarnard/rust-plist), [nibarchive](https://github.com/michaelwright235/nibarchive), [quick-xml](https://github.com/tafia/quick-xml), [gl-rs](https://github.com/brendanzab/gl-rs), [cargo-license](https://github.com/onur/cargo-license), [cc-rs](https://github.com/rust-lang/cc-rs), [cmake-rs](https://github.com/rust-lang/cmake-rs), [cargo-ndk](https://github.com/bbqsrc/cargo-ndk), [cargo-ndk-android-gradle](https://github.com/willir/cargo-ndk-android-gradle), [md-5 and sha1](https://github.com/RustCrypto/hashes), [encoding_rs](https://github.com/hsivonen/encoding_rs), [corosensei](https://github.com/Amanieu/corosensei), [uuid](https://github.com/uuid-rs/uuid) and the Rust standard library.
-* The Skyline emulator project (RIP), for [writing the tedious boilerplate needed to replace file management on newer Android versions](https://github.com/skyline-emu/skyline/blob/dc20a615275f66bee20a4fd851ef0231daca4f14/app/src/main/java/emu/skyline/provider/DocumentsProvider.kt).
-* The [Rust project](https://www.rust-lang.org/) generally.
-* The various people out there who've documented the iOS platform, officially or otherwise. Much of this documentation is linked to within this codebase!
-* The iOS hacking/jailbreaking community.
-* The Free Software Foundation, for making libgcc and libstdc++ copyleft and therefore saving this project from ABI hell.
-* The National Security Agency of the United States of America, for [Ghidra](https://ghidra-sre.org/).
-* [GerritForge](http://www.gerritforge.com/) for providing free Gerrit hosting to the general public, including us.
-* The many contributors to [Gerrit](https://www.gerritcodereview.com/).
-* Many friends who took an interest in the project and gave suggestions and encouragement.
-* Developers of early iOS apps. What treasures you created!
-* Apple, and NeXT before them, for creating such fantastic platforms.

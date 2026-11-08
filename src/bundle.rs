@@ -60,6 +60,7 @@ impl Bundle {
     }
 
     /// Create a fake bundle (see [crate::Environment::new_without_app]).
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
     pub fn new_fake_bundle() -> Bundle {
         Bundle {
             path: GuestPathBuf::from(String::new()),

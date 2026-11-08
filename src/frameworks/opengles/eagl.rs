@@ -23,7 +23,11 @@ use crate::Environment;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::sync::LazyLock;
 use std::time::{Duration, Instant};
+
+static PEAR_DUMP_FRAME_PREFIX: LazyLock<Option<String>> =
+    LazyLock::new(|| std::env::var("PEAR_DUMP_FRAME").ok().filter(|s| !s.is_empty()));
 
 // These are used by the EAGLDrawable protocol implemented by CAEAGLayer.
 // Since these have the ABI of constant symbols rather than literal constants,
@@ -281,7 +285,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     // delayed, so this needs to be checked before returning.
     let sleep_for = limit_framerate(&mut env.objc.borrow_mut::<EAGLContextHostObject>(this).next_frame_due, &env.options);
 
-    if env.options.print_fps {
+    if env.options.print_fps || crate::gles::present::hud_enabled() {
         env
             .objc
             .borrow_mut::<EAGLContextHostObject>(this)
@@ -297,7 +301,7 @@ pub const CLASSES: ClassExports = objc_classes! {
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
     let mut gles = super::sync_context(&mut env.framework_state.opengles, &mut env.objc, window, env.current_thread);
 
-    if let Ok(prefix) = std::env::var("PEAR_DUMP_FRAME") {
+    if let Some(prefix) = PEAR_DUMP_FRAME_PREFIX.as_deref() {
         static FRAME_COUNTER: std::sync::atomic::AtomicUsize =
             std::sync::atomic::AtomicUsize::new(0);
         let n = FRAME_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);

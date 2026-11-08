@@ -92,6 +92,7 @@ pub fn borrow_image(objc: &ObjC, image: CGImageRef) -> &Image {
 
 /// Shortcut used by the app picker, counterpart to [borrow_image].
 /// FIXME: This should not exist!
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
 pub fn borrow_image_mut(objc: &mut ObjC, image: CGImageRef) -> &mut Image {
     &mut objc.borrow_mut::<CGImageHostObject>(image).image
 }

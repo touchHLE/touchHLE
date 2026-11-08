@@ -13,6 +13,23 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## v0.5.0 (2026-11-08)
+
+Quality and performance:
+
+- Headless Apple Silicon runtime: the SDL window is optional, saves live under
+  `Saves/<bundle-id>/`, and release builds use ThinLTO.
+- The process, window and menu titles show only the running app's own name.
+
+Usability:
+
+- New built-in keymapper (`PEAR_KEYMAP`): JSON bindings are replayed as real
+  touches (`tap`, `hold`, `swipe`, dead-zoned `joystick`), so touch-only titles
+  such as Miku Flick are playable from a keyboard.
+- New performance HUD (`PEAR_FPS_HUD`): a seven-segment FPS overlay drawn by the
+  engine's own OpenGL ES renderer, matching Metal HUD on Metal titles.
+- Debug logging can be enabled per module with `PEAR_DEBUG_MODULES`.
+
 ## v0.3.0 (2026-10-01)
 
 Compatibility:

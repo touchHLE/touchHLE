@@ -1360,7 +1360,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 }
 - (())encodeWithCoder:(id)coder {
     let string = to_rust_string(env, this);
-    assert!(string.as_bytes().iter().all(|byte| byte.is_ascii())); // TODO
 
     // TODO: use some kind of substitution instead?
     // See "Making Substitutions During Coding" in the doc https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Archiving/Articles/codingobjects.html

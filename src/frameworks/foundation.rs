@@ -19,6 +19,7 @@ pub mod _nib_archive_decoder;
 pub mod ns_array;
 pub mod ns_autorelease_pool;
 pub mod ns_bundle;
+pub mod ns_calendar;
 pub mod ns_character_set;
 pub mod ns_coder;
 pub mod ns_data;
@@ -112,9 +113,12 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         ns_error::CONSTANTS,
         ns_exception::CONSTANTS,
         ns_file_manager::CONSTANTS,
+        ns_http_cookie_storage::CONSTANTS,
         ns_keyed_unarchiver::CONSTANTS,
+        ns_calendar::CONSTANTS,
         ns_locale::CONSTANTS,
         ns_run_loop::CONSTANTS,
+        ns_url::CONSTANTS,
         ns_user_defaults::CONSTANTS,
     ],
     function_exports: &[

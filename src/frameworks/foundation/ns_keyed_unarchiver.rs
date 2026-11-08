@@ -205,6 +205,16 @@ pub const CLASSES: ClassExports = objc_classes! {
     };
     let next_uid = next_uid.as_uid().copied().unwrap();
     let object = unarchive_key(env, this, next_uid);
+    if std::env::var_os("PEAR_DEBUG_UNARCHIVE").is_some() && object != nil {
+        let class_name =
+            crate::objc::debug_class_name(env, crate::objc::ObjC::read_isa(object, &env.mem));
+        log!(
+            "decodeObjectForKey: uid={} -> obj {:#x} class {}",
+            next_uid.get(),
+            object.to_bits(),
+            class_name
+        );
+    }
 
     // on behalf of the caller
     retain(env, object);
@@ -284,6 +294,11 @@ fn get_value_to_decode_for_key(env: &mut Environment, unarchiver: id, key: id) -
 /// The object returned is retained only by the archiver. Remember to retain and
 /// possibly autorelease it as appropriate.
 fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
+    // UID 0 is the "$null" placeholder object in NSKeyedArchiver archives and
+    // always decodes to nil (it is how nil object references are encoded).
+    if key.get() == 0 {
+        return nil;
+    }
     let host_obj = borrow_host_obj(env, unarchiver);
     if let Some(existing) = host_obj.already_unarchived[key.get() as usize] {
         return existing;
@@ -334,6 +349,11 @@ fn unarchive_key(env: &mut Environment, unarchiver: id, key: Uid) -> id {
             new_object
         }
         Value::String(s) => {
+            // Some archives embed the "$null" placeholder as a plain string;
+            // it decodes to nil, like the UID-0 form above.
+            if s == "$null" {
+                return nil;
+            }
             let s = s.to_string();
             from_rust_string(env, s)
         }

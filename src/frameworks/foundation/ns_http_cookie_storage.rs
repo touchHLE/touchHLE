@@ -125,3 +125,24 @@ pub const CLASSES: crate::objc::ClassExports = objc_classes! {
 @end
 
 };
+
+/// `NSHTTPCookie` property-key constants (pointers-to-strings, like all
+/// Foundation key constants).
+pub const CONSTANTS: crate::dyld::ConstantExports = &[
+    (
+        "_NSHTTPCookieDomain",
+        crate::dyld::HostConstant::NSString("Domain"),
+    ),
+    (
+        "_NSHTTPCookieName",
+        crate::dyld::HostConstant::NSString("Name"),
+    ),
+    (
+        "_NSHTTPCookiePath",
+        crate::dyld::HostConstant::NSString("Path"),
+    ),
+    (
+        "_NSHTTPCookieValue",
+        crate::dyld::HostConstant::NSString("Value"),
+    ),
+];

@@ -17,6 +17,7 @@ pub const NSCocoaErrorDomain: &str = "NSCocoaErrorDomain";
 pub const NSOSStatusErrorDomain: &str = "NSOSStatusErrorDomain";
 
 const NSLocalizedDescriptionKey: &str = "NSLocalizedDescriptionKey";
+const NSErrorFailingURLStringKey: &str = "NSErrorFailingURLStringKey";
 const NSLocalizedFailureReasonErrorKey: &str = "NSLocalizedFailureReasonErrorKey";
 
 pub const NSFileReadNoSuchFileError: NSInteger = 260;
@@ -117,5 +118,9 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_NSOSStatusErrorDomain",
         HostConstant::NSString(NSOSStatusErrorDomain),
+    ),
+    (
+        "_NSErrorFailingURLStringKey",
+        HostConstant::NSString(NSErrorFailingURLStringKey),
     ),
 ];

@@ -31,3 +31,9 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// `UIImagePickerControllerInfoKey` values.
+pub const CONSTANTS: crate::dyld::ConstantExports = &[(
+    "_UIImagePickerControllerOriginalImage",
+    crate::dyld::HostConstant::NSString("UIImagePickerControllerOriginalImage"),
+)];

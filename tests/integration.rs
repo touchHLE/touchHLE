@@ -309,6 +309,18 @@ fn test_app() -> Result<(), Box<dyn Error>> {
         // current_file dropping out of scope here flushes it.
     }
 
+    // Every stub but libobjc's links against libobjc (for classes), so build
+    // libobjc first, then the other libs, then the frameworks. libSystem
+    // exports ObjC classes (e.g. the GCD helper class) and therefore also
+    // needs libobjc.
+    const LIBOBJC_PATH: &str = "/usr/lib/libobjc.A.dylib";
+    files_to_compile.sort_by_key(|(dylib_path, _)| {
+        (
+            dylib_path != LIBOBJC_PATH,
+            dylib_path.starts_with("/System/Library/Frameworks/"),
+        )
+    });
+
     // Build the stub libraries and ensure TestApp will link to them.
 
     for (dylib_path, stub_src_path) in files_to_compile {
@@ -346,8 +358,13 @@ fn test_app() -> Result<(), Box<dyn Error>> {
                         .unwrap()
                 ));
                 (
-                    // skip "-Ltests/stubs/lib/" and "-lobjc.A"
-                    &compile_args[..compile_args.len() - 2],
+                    // libobjc itself can't link against libobjc; everything
+                    // else can (and must, for ObjC classes).
+                    if dylib_path == LIBOBJC_PATH {
+                        &compile_args[..compile_args.len() - 2]
+                    } else {
+                        &compile_args[..]
+                    },
                     stubs_lib_dir.join(dylib_name),
                 )
             };

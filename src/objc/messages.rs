@@ -26,6 +26,15 @@ use crate::mem::{guest_size_of, ConstPtr, MutPtr, MutVoidPtr, SafeRead};
 use crate::objc::classes::InitializationStatus;
 use crate::Environment;
 use std::any::TypeId;
+use std::cell::RefCell;
+use std::collections::VecDeque;
+
+/// Ring buffer of the most recent ObjC message dispatches, used to diagnose
+/// panics caused by unexpected object types ("does not respond to selector").
+thread_local! {
+    static MSG_RING: RefCell<VecDeque<(Class, SEL)>> = RefCell::new(VecDeque::new());
+}
+const MSG_RING_CAP: usize = 256;
 
 pub(super) struct ThreadInitializer {
     mutex: MutPtr<pthread_mutex_t>,
@@ -193,6 +202,13 @@ fn objc_msgSend_inner(
 
     let orig_class = super2.unwrap_or_else(|| ObjC::read_isa(receiver, &env.mem));
     assert!(orig_class != nil);
+    MSG_RING.with(|ring| {
+        let mut ring = ring.borrow_mut();
+        if ring.len() == MSG_RING_CAP {
+            ring.pop_front();
+        }
+        ring.push_back((orig_class, selector));
+    });
     if !skip_initialize {
         maybe_initialize_class(env, receiver);
     }
@@ -203,6 +219,43 @@ fn objc_msgSend_inner(
     loop {
         if class == nil {
             assert!(class != orig_class);
+
+            MSG_RING.with(|ring| {
+                let entries: Vec<(Class, SEL)> = ring.borrow().iter().copied().collect();
+                log!(
+                    "Last {} ObjC messages before panic (oldest first):",
+                    entries.len()
+                );
+                for (cls, sel) in entries {
+                    let name: String = env
+                        .objc
+                        .get_host_object(cls)
+                        .and_then(|host_object| {
+                            host_object
+                                .as_any()
+                                .downcast_ref::<super::ClassHostObject>()
+                                .map(|class| class.name.clone())
+                        })
+                        .unwrap_or_default();
+                    log!("  [{}] {}", name, sel.as_str(&env.mem));
+                }
+            });
+
+            let receiver_class = ObjC::read_isa(receiver, &env.mem);
+            let receiver_name: String = env
+                .objc
+                .get_host_object(receiver_class)
+                .and_then(|host_object| {
+                    host_object
+                        .as_any()
+                        .downcast_ref::<super::ClassHostObject>()
+                        .map(|class| class.name.clone())
+                })
+                .unwrap_or_default();
+            if receiver_name.contains("String") {
+                let s = crate::frameworks::foundation::ns_string::to_rust_string(env, receiver);
+                log!("Receiver string content: {:?}", &s[..s.len().min(200)]);
+            }
 
             let class_host_object = env.objc.get_host_object(orig_class).unwrap();
             let &super::ClassHostObject {

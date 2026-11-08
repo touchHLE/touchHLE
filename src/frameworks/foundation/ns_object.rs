@@ -16,10 +16,11 @@
 
 use super::ns_string::{from_rust_string, to_rust_string};
 use super::{NSTimeInterval, NSUInteger};
+use crate::abi::{CallFromHost, GuestFunction};
 use crate::frameworks::foundation::ns_run_loop::{add_perform_request, cancel_perform_requests};
 use crate::frameworks::foundation::ns_thread::detach_new_thread_inner;
 use crate::libc::semaphore::{host_destroy_semaphore, sem_wait};
-use crate::mem::MutVoidPtr;
+use crate::mem::{ConstVoidPtr, MutVoidPtr, Ptr};
 use crate::objc::{
     autorelease, id, msg, msg_class, msg_send, msg_send_no_type_checking, nil, objc_classes,
     retain, Class, ClassExports, NSZonePtr, ObjC, TrivialHostObject, SEL,
@@ -346,6 +347,56 @@ forUndefinedKey:(id)key { // NSString*
 // UINibLoadingAdditions protocol
 - (())awakeFromNib {
     // no-op
+}
+
+@end
+
+// `_touchHLE_NSBlock` is the ObjC class used as the `isa` of guest block
+// objects (`__NSConcreteStackBlock` / `__NSConcreteGlobalBlock` /
+// `__NSConcreteMallocBlock`; see `dyld::do_non_lazy_linking`). Blocks are
+// allocated by guest code (block literals) and are NOT host objects, so they
+// must NOT use the host-object refcount table. Instead their memory
+// management routes to the Blocks runtime in `libc::blocks`. Without this,
+// `[someBlock copy]` / `[someBlock retain]` would hit a dummy class with no
+// methods and return nil, breaking schedulers that store callback blocks.
+@implementation _touchHLE_NSBlock: NSObject
+
+- (id)retain {
+    let blk = ConstVoidPtr::from_bits(this.to_bits());
+    let copied = crate::libc::blocks::_Block_copy(env, blk);
+    Ptr::from_bits(copied.to_bits())
+}
+
+- (id)copy {
+    msg![env; this copyWithZone:(MutVoidPtr::null())]
+}
+
+- (id)copyWithZone:(NSZonePtr)_zone {
+    let blk = ConstVoidPtr::from_bits(this.to_bits());
+    let copied = crate::libc::blocks::_Block_copy(env, blk);
+    Ptr::from_bits(copied.to_bits())
+}
+
+- (())release {
+    let blk = ConstVoidPtr::from_bits(this.to_bits());
+    crate::libc::blocks::_Block_release(env, blk);
+}
+
+- (id)autorelease {
+    // Blocks that outlive the current scope are retained via copy by their
+    // owner, so a no-op autorelease is safe here and avoids routing a
+    // non-host-object block through the autorelease pool's release path.
+    this
+}
+
+// `-[NSBlock invoke]` calls a block that takes no arguments, which lets code
+// run a block through `performSelector:@selector(invoke)` or NSInvocation.
+// The invoke pointer is the fourth word of the literal.
+// https://clang.llvm.org/docs/Block-ABI-Apple.html
+- (())invoke {
+    let invoke: u32 = env.mem.read(this.cast::<u32>() + 3u32);
+    let invoke = GuestFunction::from_addr_with_thumb_bit(invoke);
+    let (): () = invoke.call_from_host(env, (this,));
 }
 
 @end

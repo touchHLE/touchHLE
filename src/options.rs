@@ -10,7 +10,6 @@ use crate::window::{DeviceFamily, DeviceOrientation};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
 use std::net::{SocketAddr, ToSocketAddrs};
-use std::num::NonZeroU32;
 use std::path::PathBuf;
 
 pub const OPTIONS_HELP: &str =
@@ -37,7 +36,10 @@ pub struct Options {
     pub fullscreen: bool,
     pub device_family: Option<DeviceFamily>,
     pub initial_orientation: DeviceOrientation,
-    pub scale_hack: NonZeroU32,
+    /// Open the window enlarged (up to 2x the device size, fitted to the
+    /// display) instead of at the device's native pixel size. The window is
+    /// always resizable; this only affects its initial size.
+    pub large_window: bool,
     pub deadzone: f32,
     pub analog_stick_tilt_controls: bool,
     pub x_tilt_range: f32,
@@ -70,7 +72,7 @@ impl Default for Options {
             fullscreen: false,
             device_family: None,
             initial_orientation: DeviceOrientation::Portrait,
-            scale_hack: NonZeroU32::new(1).unwrap(),
+            large_window: false,
             analog_stick_tilt_controls: true,
             deadzone: 0.1,
             x_tilt_range: 60.0,
@@ -126,8 +128,13 @@ impl Options {
             let parsed =
                 DeviceFamily::try_from(value).map_err(|_| "Invalid device family".to_string())?;
             self.device_family = Some(parsed);
+        } else if arg == "--large-window" {
+            self.large_window = true;
         } else if let Some(value) = arg.strip_prefix("--scale-hack=") {
-            self.scale_hack = value
+            // Deprecated: the render scale is now fixed (see
+            // [crate::window::FRAMEBUFFER_SCALE]) and the window is freely
+            // resizable, so this is accepted for compatibility but ignored.
+            let _: u32 = value
                 .parse()
                 .map_err(|_| "Invalid scale hack factor".to_string())?;
         } else if arg == "--disable-analog-stick-tilt-controls" {

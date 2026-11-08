@@ -5,6 +5,7 @@
  */
 //! `UIPasteboard`.
 
+use crate::dyld::{ConstantExports, HostConstant};
 use crate::objc::{objc_classes, ClassExports};
 
 pub const CLASSES: ClassExports = objc_classes! {
@@ -16,3 +17,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// `UIPasteboard` notification names and userInfo keys (`UIPasteboard.h`).
+pub const CONSTANTS: ConstantExports = &[
+    (
+        "_UIPasteboardChangedNotification",
+        HostConstant::NSString("UIPasteboardChangedNotification"),
+    ),
+    (
+        "_UIPasteboardChangedTypesAddedKey",
+        HostConstant::NSString("UIPasteboardChangedTypesAddedKey"),
+    ),
+];

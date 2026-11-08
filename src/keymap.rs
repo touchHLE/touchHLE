@@ -315,6 +315,11 @@ pub struct KeymapState {
     joy_active: bool,
     joy_touch: NormalizedPoint,
     next_id: u64,
+    /// Where the keymap was loaded from, when loaded via [`Self::from_env`].
+    /// Enables hot-reload via [`Self::reload_if_changed`].
+    source_path: Option<std::path::PathBuf>,
+    last_modified: Option<std::time::SystemTime>,
+    reload_countdown: u8,
 }
 
 impl KeymapState {
@@ -325,11 +330,54 @@ impl KeymapState {
             return None;
         }
         let json = std::fs::read_to_string(&path).ok()?;
-        let state = Self::from_json(&json);
-        if state.is_some() {
-            log!("Keymapper: loaded {}", std::path::Path::new(&path).display());
+        let mut state = Self::from_json(&json);
+        if let Some(state) = &mut state {
+            let path = std::path::PathBuf::from(path);
+            log!("Keymapper: loaded {}", path.display());
+            state.last_modified = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
+            state.source_path = Some(path);
         }
         state
+    }
+
+    /// Re-reads the source keymap file if it changed on disk, applying edits
+    /// without an app restart. Called from the event loop; the check is
+    /// throttled to a couple of times per second.
+    pub fn reload_if_changed(&mut self) {
+        let Some(path) = self.source_path.clone() else {
+            return;
+        };
+        self.reload_countdown = self.reload_countdown.saturating_sub(1);
+        if self.reload_countdown > 0 {
+            return;
+        }
+        self.reload_countdown = 60;
+
+        let modified = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
+        if modified == self.last_modified {
+            return;
+        }
+        self.last_modified = modified;
+
+        match std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|json| Self::from_json(&json))
+        {
+            Some(new) => {
+                self.bindings = new.bindings;
+                self.joystick = new.joystick;
+                // Reset transient state so stale touches don't leak through.
+                self.joy_up = false;
+                self.joy_down = false;
+                self.joy_left = false;
+                self.joy_right = false;
+                self.joy_active = false;
+                log!("Keymapper: reloaded {}", path.display());
+            }
+            None => {
+                log!("Keymapper: reload failed, keeping previous bindings");
+            }
+        }
     }
 
     /// Loads a keymap from JSON. Returns `None` when the document has no
@@ -371,6 +419,9 @@ impl KeymapState {
             joy_active: false,
             joy_touch: (0.0, 0.0),
             next_id: 1,
+            source_path: None,
+            last_modified: None,
+            reload_countdown: 0,
         })
     }
 

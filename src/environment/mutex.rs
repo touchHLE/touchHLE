@@ -208,10 +208,13 @@ impl Environment {
         let Some((locking_thread, lock_count)) = mutex.locked else {
             match mutex.type_ {
                 MutexType::PTHREAD_MUTEX_NORMAL => {
-                    // This case is undefined, we may as well panic.
-                    panic!(
-                        "Attempted to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, already unlocked!",
+                    // This case is undefined, but on macOS/iOS unlocking an
+                    // already-unlocked normal mutex does not crash the process
+                    // (games rely on this during teardown), so just warn.
+                    log!(
+                        "Warning: Allowing to unlock non-error-checking mutex #{mutex_id} for thread {current_thread}, already unlocked!",
                     );
+                    return Ok(0);
                 }
                 MutexType::PTHREAD_MUTEX_ERRORCHECK | MutexType::PTHREAD_MUTEX_RECURSIVE => {
                     log_dbg!(

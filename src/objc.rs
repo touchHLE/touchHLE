@@ -23,13 +23,17 @@ use crate::objc::messages::ThreadInitializer;
 use crate::MutexId;
 use std::collections::HashMap;
 
-mod classes;
+pub(crate) mod arc;
+pub(crate) mod classes;
 mod messages;
 mod methods;
 mod objects;
 mod properties;
 mod selectors;
 mod synchronization;
+
+pub use objects::debug_class_name;
+mod weak;
 
 pub use classes::{objc_classes, Class, ClassExports, ClassTemplate};
 pub use messages::{
@@ -43,8 +47,6 @@ pub use objects::{
 pub use properties::todo_objc_setter;
 pub use selectors::{selector, SEL};
 
-use crate::mem::ConstVoidPtr;
-use crate::Environment;
 use classes::{
     class_getInstanceSize, class_getMethodImplementation, class_getProperty, class_getSuperclass,
     class_replaceMethod, objc_getClass, ClassHostObject, FakeClass, UnimplementedClass,
@@ -88,6 +90,15 @@ pub struct ObjC {
     /// Type information isn't part of the `objc_msgSend` ABI, so an alternative
     /// channel is needed.
     message_type_info: Option<(std::any::TypeId, &'static str)>,
+
+    /// Side table for ARC zeroing-weak references: maps an object to the
+    /// list of weak slots (`id *`) currently referring to it. Zeroed on
+    /// deallocation (see `weak::zero_weak_references_for`).
+    weak_refs: HashMap<id, Vec<crate::mem::MutPtr<id>>>,
+
+    /// Cached guest C-string pointers for `class_getName` results, so the
+    /// returned pointer is stable per class like real objc4.
+    class_name_cstrs: HashMap<Class, crate::mem::ConstPtr<u8>>,
 }
 
 impl ObjC {
@@ -99,6 +110,8 @@ impl ObjC {
             sync_mutexes: HashMap::new(),
             initializer_threads: HashMap::new(),
             message_type_info: None,
+            weak_refs: HashMap::new(),
+            class_name_cstrs: HashMap::new(),
         }
     }
 }
@@ -108,7 +121,12 @@ pub const DYLIB: HostDylib = HostDylib {
     aliases: &["/usr/lib/libobjc.dylib"],
     class_exports: &[],
     constant_exports: &[CONSTANTS],
-    function_exports: &[FUNCTIONS],
+    function_exports: &[
+        FUNCTIONS,
+        arc::FUNCTIONS,
+        weak::FUNCTIONS,
+        properties::FUNCTIONS,
+    ],
 };
 
 const CONSTANTS: ConstantExports = &[
@@ -117,22 +135,12 @@ const CONSTANTS: ConstantExports = &[
     // and avoids a linker error for the integration tests.
     ("__objc_empty_vtable", HostConstant::NullPtr),
     ("__objc_empty_cache", HostConstant::NullPtr),
+    // ObjC exception type-info descriptors used by @catch type matching.
+    // A dummy non-null value prevents NULL-page reads when any @try block
+    // is entered or any ObjC exception is thrown.
+    ("_OBJC_EHTYPE_$_NSException", HostConstant::NullPtr),
+    ("_OBJC_EHTYPE_id", HostConstant::NullPtr),
 ];
-
-/// Block support is iOS 4+, but it seems like Block Runtime Helpers
-/// could still be called on even if minimal iOS version is set to 3.x?
-///
-/// ref. <https://clang.llvm.org/docs/Block-ABI-Apple.html#runtime-helper-functions>
-fn _Block_object_dispose(_env: &mut Environment, object: ConstVoidPtr, flags: i32) {
-    // `BLOCK_FIELD_IS_BYREF` flag defines an on stack structure holding
-    // the __block variable. It is _probably_ safe to ignore.
-    // TODO: properly implement for block support
-    assert!(flags == 8); // BLOCK_FIELD_IS_BYREF
-    log!(
-        "Warning: Ignoring _Block_object_dispose({:?}, BLOCK_FIELD_IS_BYREF)",
-        object
-    );
-}
 
 const FUNCTIONS: FunctionExports = &[
     export_c_func!(class_getInstanceSize(_)),
@@ -151,5 +159,4 @@ const FUNCTIONS: FunctionExports = &[
     export_c_func!(objc_sync_exit(_)),
     export_c_func!(object_getClass(_)),
     export_c_func!(sel_registerName(_)),
-    export_c_func!(_Block_object_dispose(_, _)),
 ];

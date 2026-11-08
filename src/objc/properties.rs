@@ -15,7 +15,7 @@
 //! See also: [crate::frameworks::foundation::ns_object].
 
 use super::{id, msg, nil, release, retain, Class, ClassHostObject, ObjC, SEL};
-use crate::mem::{
+use crate::dyld::{export_c_func, FunctionExports};use crate::mem::{
     guest_size_of, ConstPtr, ConstVoidPtr, GuestISize, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr,
     SafeRead,
 };
@@ -206,6 +206,78 @@ pub(super) fn objc_copyStruct(
     // TODO: implement atomic support
     env.mem.memmove(dest, src, size);
 }
+
+/// Optimised `@property (nonatomic, retain/strong)` setter. We forward to
+/// the generic implementation so the ivar receives a real `retain` of the
+/// new value (with proper `release` of the previous value).
+///
+/// Note the argument order: `(self, _cmd, newValue, offset)` — the
+/// optimised variants put the value *before* the offset, the opposite of
+/// the generic [objc_setProperty]. See Apple's open-source
+/// `objc4/runtime/Accessors.subproj/objc-accessors.mm`.
+pub(super) fn objc_setProperty_nonatomic(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    value: id,
+    offset: GuestISize,
+) {
+    objc_setProperty(
+        env, this, _cmd, offset, value, /* atomic: */ false, /* should_copy: */ 0,
+    )
+}
+
+/// Optimised atomic, retain-property setter. Compilers emit
+/// `_objc_setProperty_atomic` instead of the generic
+/// `_objc_setProperty(…, atomic=true, should_copy=0)` for autosynthesised
+/// `@property (atomic, retain)` / `@property (atomic, strong)` setters.
+pub(super) fn objc_setProperty_atomic(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    value: id,
+    offset: GuestISize,
+) {
+    objc_setProperty(
+        env, this, _cmd, offset, value, /* atomic: */ true, /* should_copy: */ 0,
+    )
+}
+
+/// Optimised non-atomic, copy-property setter, emitted for
+/// `@property (nonatomic, copy)` setters. Same argument order as
+/// [objc_setProperty_nonatomic].
+pub(super) fn objc_setProperty_nonatomic_copy(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    value: id,
+    offset: GuestISize,
+) {
+    objc_setProperty(
+        env, this, _cmd, offset, value, /* atomic: */ false, /* should_copy: */ 1,
+    )
+}
+
+/// Optimised atomic, copy-property setter, emitted for
+/// `@property (copy)` / `@property (atomic, copy)` setters.
+pub(super) fn objc_setProperty_atomic_copy(
+    env: &mut Environment,
+    this: id,
+    _cmd: SEL,
+    value: id,
+    offset: GuestISize,
+) {
+    objc_setProperty(
+        env, this, _cmd, offset, value, /* atomic: */ true, /* should_copy: */ 1,
+    )
+}
+
+pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(objc_setProperty_nonatomic(_, _, _, _)),
+    export_c_func!(objc_setProperty_atomic(_, _, _, _)),
+    export_c_func!(objc_setProperty_nonatomic_copy(_, _, _, _)),
+    export_c_func!(objc_setProperty_atomic_copy(_, _, _, _)),
+];
 
 /// Logs a placeholder message for an unimplemented ObjC setter
 ///

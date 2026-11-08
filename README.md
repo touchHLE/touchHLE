@@ -23,7 +23,7 @@ Modern macOS and Apple Silicon hardware natively dropped 32-bit ARM (`armv7` / `
 
 PearLegacyEngine is designed as a **headless-controlled companion runtime** rather than a standalone desktop launcher:
 
-- **No Legacy SDL Picker UI:** The standalone SDL app picker GUI is disabled. All library management, IPA installation, resolution scaling (`1x`–`4x`), fullscreen configuration, and save-data inspection are handled natively in SwiftUI by **[PearSilicon](https://github.com/denizomer10/PearSilicon)**.
+- **No Legacy SDL Picker UI:** The standalone SDL app picker GUI is disabled. All library management, IPA installation, free window resizing, fullscreen configuration, and save-data inspection are handled natively in SwiftUI by **[PearSilicon](https://github.com/denizomer10/PearSilicon)**.
 - **Zero Engine Branding in Game Windows:** When PearSilicon launches a 32-bit iOS title through PearLegacyEngine, it wraps the runtime inside a lightweight per-game macOS `.app` host bundle with the game’s own `CFBundleName`, `CFBundleDisplayName`, icon, and window title. Only the game’s own name appears in the macOS title bar, menu bar, and Dock.
 - **Unified Library & Sandbox Storage:** Game sandboxes (`Documents`, `Library`, `tmp`) and logs are routed directly into PearSilicon’s managed storage tree (`~/Library/Application Support/PearSilicon/Legacy32/`) via `PEAR_LEGACY_SANDBOX_ROOT` and `PEAR_LEGACY_RESOURCES_DIR`.
 
@@ -40,6 +40,7 @@ PearLegacyEngine is designed as a **headless-controlled companion runtime** rath
   - **CoreFoundation & libSystem:** `CFAbsoluteTimeGetCurrent`, stack smash protection symbols (`___stack_chk_guard`, `___stack_chk_fail`), and Grand Central Dispatch / pthread shims.
   - **AudioToolbox & OpenAL:** `AudioUnitGetProperty` / `AudioUnitSetProperty` across Global/Input/Output scopes, `AVAudioPlayer`, and hardware-accelerated OpenAL Soft output.
   - **UIKit & CoreAnimation:** Multi-touch input forwarding, `CAEAGLLayer` fullscreen fast-path presentation, Retina high-DPI window scaling, and `UIAccelerometer` simulation.
+- **Free Window Resizing:** The game window can be resized freely at any time. The internal render resolution and touch coordinates stay locked to the game's own coordinate space — stretching is presentation-only, so gameplay and input never break. The legacy `1x`–`4x` scale-hack factors are gone (`--scale-hack=` is accepted but ignored for compatibility).
 - **Keyboard & Gamepad Keymapper:** Native desktop key bindings for touch-only games, read from the same JSON keymaps PearSilicon edits (`pear-keymap/v1`). Supports `tap`, `hold`, `swipe` and an analog `joystick` with dead-zone. Works for 32-bit titles too, since it is implemented inside the engine rather than injected as a dylib.
 - **Performance HUD:** `PEAR_FPS_HUD=1` draws an in-engine, zero-allocation 7-segment frame-rate overlay over the game viewport (the honest equivalent of Metal HUD for an OpenGL ES renderer), while `--print-fps` keeps logging the same numbers.
 - **Headless-first:** No engine picker window, no engine name in the window title or menu bar. The process only ever shows the currently running game.
@@ -96,6 +97,19 @@ The optimized binary is emitted at `target/release/touchHLE` alongside the runti
 - `touchHLE_fonts/` — fallback system fonts (Liberation & Noto CJK).
 - `touchHLE_default_options.txt` — per-title default compatibility flags.
 
+### SDL2 macOS Patch
+
+The bundled SDL2 (via `sdl2/bundled`) carries a local macOS fix in
+`patches/SDL-cocoaopengl-multiple-contexts.patch`: attaching a context to a
+window's view can recreate the shared backing surface, leaving sibling GL
+contexts flushing a stale drawable (crash in `SLSFlushSurfaceWithOptionsAndIndex`).
+Apply it when building from a fresh checkout:
+
+```sh
+git -C "$(dirname "$(find ~/.cargo/git/checkouts/rust-sdl2-* -name SDL -maxdepth 3 | head -1)")" \
+  apply "$PWD/patches/SDL-cocoaopengl-multiple-contexts.patch"
+```
+
 ### Bundling into PearSilicon
 
 When building **[PearSilicon](https://github.com/denizomer10/PearSilicon)** via `./scripts/build-app.sh release`, PearSilicon automatically detects `/Users/mac/PearLegacyEngine` (or `PEARSILICON_LEGACY_ENGINE_SRC`), bundles the release binary and runtime resources into `PearSilicon.app/Contents/Resources/PearLegacyEngine/`, and signs the application bundle.
@@ -136,8 +150,10 @@ the emulated touch screen:
 PearLegacyEngine is invoked automatically by PearSilicon when you click **Launch** on any 32-bit iOS app in your library. For automated testing or diagnostics, you can also invoke the engine binary directly with a path to a `.app` bundle or `.ipa` archive:
 
 ```sh
-./target/release/touchHLE /path/to/Game.app --scale-hack=2
+./target/release/touchHLE /path/to/Game.app --large-window
 ```
+
+The window is freely resizable while the game keeps its internal resolution and touch mapping; `--scale-hack=N` is deprecated and ignored.
 
 ### Environment Variables Used by PearSilicon
 

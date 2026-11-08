@@ -4,9 +4,9 @@ View options:
         instead, except on Android which always uses full screen.
 
         The app's output will be scaled to fit your screen. This is independent
-        of the internal resolution, so if the scale hack (see below) is not also
-        in use, the result may be a bit blurry. An internal resolution larger
-        than your screen's is possible, in which case the output is downscaled.
+        of the internal resolution, so the result may be a bit blurry. An
+        internal resolution larger than your screen's is possible, in which
+        case the output is downscaled.
 
     --upside-down
     --landscape-left
@@ -22,15 +22,14 @@ View options:
         and it will automatically rotate the window, but some apps neglect to
         do this. These options may be useful in that case.
 
-    --scale-hack=...
-        Set a scaling factor for the window. touchHLE will attempt to run the
-        app with an increased internal resolution. This is a hack and there's
-        no guarantee it will work correctly for all apps.
+    --large-window
+        Open the window enlarged (up to 2x the device's size, fitted to the
+        display) instead of at the device's native pixel size. The window is
+        always freely resizable and the app's output is letterboxed to fit it,
+        so the game's internal resolution and touch input are unaffected.
 
-        The default is no scale hack, which is equivalent to a value of 1 (i.e.
-        a scale of 1×).
-
-        This is a natural number that is at least 1.
+        The deprecated --scale-hack=... option is accepted for compatibility
+        but ignored: the render scale is fixed and no longer configurable.
 
 Device options:
     --device-family=...

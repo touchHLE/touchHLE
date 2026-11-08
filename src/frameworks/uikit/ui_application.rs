@@ -123,8 +123,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     match env.window().current_rotation() {
         DeviceOrientation::Portrait => UIDeviceOrientationPortrait,
         DeviceOrientation::PortraitUpsideDown => UIDeviceOrientationPortraitUpsideDown,
-        DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeLeft,
-        DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeRight
+        // UIInterfaceOrientation landscape values are flipped relative to
+        // device orientations (see the startup orientation fixup).
+        DeviceOrientation::LandscapeLeft => UIDeviceOrientationLandscapeRight,
+        DeviceOrientation::LandscapeRight => UIDeviceOrientationLandscapeLeft
     }
 }
 - (())setStatusBarOrientation:(UIInterfaceOrientation)orientation {
@@ -132,10 +134,15 @@ pub const CLASSES: ClassExports = objc_classes! {
     env.on_parent_stack_in_coroutine(|window, _| {window.rotate_device(match orientation {
         UIDeviceOrientationPortrait => DeviceOrientation::Portrait,
         UIDeviceOrientationPortraitUpsideDown => DeviceOrientation::PortraitUpsideDown,
-        UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeLeft,
-        UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
+        // UIInterfaceOrientation landscape values are flipped relative to
+        // device orientations: content rotates in the opposite direction to
+        // how the device rotates. Mapping them directly causes a spurious
+        // double rotation of the window (e.g. Asphalt 6).
+        UIDeviceOrientationLandscapeLeft => DeviceOrientation::LandscapeRight,
+        UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeLeft,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
     })});
+    log!("setStatusBarOrientation: {} -> {:?}", orientation, env.window().current_rotation());
     if prev_orientation != env.window().current_rotation() {
         generate_device_orientation_notification(env);
     }
@@ -434,6 +441,19 @@ pub(super) fn UIApplicationMain(
 
 /// Tell the app it's about to quit and then exit.
 pub(super) fn exit(env: &mut Environment) {
+    // Games often crash in their own teardown path (dangling callbacks,
+    // double-unlocks, null derefs). The user asked to quit, so swallow any
+    // such panic and exit cleanly instead of tearing down with an error.
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        terminate(env);
+    }));
+    if result.is_err() {
+        echo!("App crashed during termination (ignored), exiting.");
+    }
+    std::process::exit(0);
+}
+
+fn terminate(env: &mut Environment) {
     let ui_application: id = msg_class![env; UIApplication sharedApplication];
 
     let center: id = msg_class![env; NSNotificationCenter defaultCenter];
@@ -498,6 +518,8 @@ const UIApplicationWillTerminateNotification: &str = "UIApplicationWillTerminate
 /// Other app notifications
 const UIApplicationLaunchOptionsRemoteNotificationKey: &str =
     "UIApplicationLaunchOptionsRemoteNotificationKey";
+const UIApplicationLaunchOptionsLocalNotificationKey: &str =
+    "UIApplicationLaunchOptionsLocalNotificationKey";
 const UIApplicationDidReceiveMemoryWarningNotification: &str =
     "UIApplicationDidReceiveMemoryWarningNotification";
 
@@ -535,6 +557,10 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_UIApplicationLaunchOptionsRemoteNotificationKey",
         HostConstant::NSString(UIApplicationLaunchOptionsRemoteNotificationKey),
+    ),
+    (
+        "_UIApplicationLaunchOptionsLocalNotificationKey",
+        HostConstant::NSString(UIApplicationLaunchOptionsLocalNotificationKey),
     ),
 ];
 

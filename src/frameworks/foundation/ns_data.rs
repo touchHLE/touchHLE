@@ -7,6 +7,7 @@
 
 use super::ns_string::to_rust_string;
 use super::{NSRange, NSUInteger};
+use crate::frameworks::foundation::ns_keyed_archiver::get_value_to_encode_for_current_key;
 use crate::frameworks::foundation::ns_keyed_unarchiver::decode_current_data;
 use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, ConstVoidPtr, MutPtr, MutVoidPtr, Ptr};
@@ -202,6 +203,11 @@ pub const CLASSES: ClassExports = objc_classes! {
     release(env, this);
     // Note: Assuming NSKeyedUnarchiver as coder here
     decode_current_data(env, coder, /* is_mutable: */ true)
+}
+- (())encodeWithCoder:(id)coder {
+    let data = to_rust_slice(env, this).to_vec();
+    let scope = get_value_to_encode_for_current_key(env, coder);
+    scope.insert("NS.data".to_string(), plist::Value::Data(data));
 }
 
 - (id)mutableCopyWithZone:(NSZonePtr)_zone {

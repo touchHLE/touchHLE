@@ -246,8 +246,8 @@ pub const CLASSES: ClassExports = objc_classes! {
         let CGSize { width, height } = bounds.size;
         assert!((0.0..(u32::MAX as f32)).contains(&width));
         assert!((0.0..(u32::MAX as f32)).contains(&height));
-        let scale_hack = env.options.scale_hack.get();
-        (width.round() as u32 * scale_hack, height.round() as u32 * scale_hack)
+        let scale = crate::window::FRAMEBUFFER_SCALE;
+        (width.round() as u32 * scale, height.round() as u32 * scale)
     };
 
     let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");

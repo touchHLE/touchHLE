@@ -12,16 +12,21 @@
 mod generic_char;
 
 pub mod arpa;
+pub mod blocks;
 pub mod clocale;
 pub mod crypto;
 pub mod ctype;
 pub mod cxxabi;
 pub mod dirent;
+pub mod dispatch;
+pub mod dispatch_source;
 pub mod dlfcn;
 pub mod dns_sd;
 pub mod errno;
 pub mod fnmatch;
+pub mod gcc;
 pub mod glob;
+pub mod iconv;
 pub mod ifaddrs;
 pub mod keymgr;
 pub mod libkern;
@@ -50,15 +55,17 @@ pub mod wchar;
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     path: "/usr/lib/libSystem.B.dylib",
     aliases: &["/usr/lib/libSystem.dylib"],
-    class_exports: &[],
+    class_exports: &[dispatch::CLASSES],
     constant_exports: &[
         ctype::CONSTANTS,
+        dispatch::CONSTANTS,
         stdio::CONSTANTS,
         mach::init::CONSTANTS,
         ssp::CONSTANTS,
     ],
     function_exports: &[
         arpa::inet::FUNCTIONS,
+        blocks::FUNCTIONS,
         clocale::FUNCTIONS,
         ctype::FUNCTIONS,
         cxxabi::FUNCTIONS,
@@ -66,8 +73,10 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
         dirent::FUNCTIONS,
         dlfcn::FUNCTIONS,
         dns_sd::FUNCTIONS,
+        dispatch::FUNCTIONS,
         errno::FUNCTIONS,
         fnmatch::FUNCTIONS,
+        gcc::FUNCTIONS,
         glob::FUNCTIONS,
         ifaddrs::FUNCTIONS,
         keymgr::FUNCTIONS,
@@ -126,6 +135,7 @@ pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
 pub struct State {
     crypto: crypto::State,
     dirent: dirent::State,
+    dispatch: dispatch::State,
     keymgr: keymgr::State,
     math: math::State,
     posix_io: posix_io::State,

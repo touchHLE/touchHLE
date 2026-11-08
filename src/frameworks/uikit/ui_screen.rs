@@ -77,3 +77,15 @@ pub const CLASSES: ClassExports = objc_classes! {
 @end
 
 };
+
+/// `UIScreen` notifications.
+pub const CONSTANTS: crate::dyld::ConstantExports = &[
+    (
+        "_UIScreenDidConnectNotification",
+        crate::dyld::HostConstant::NSString("UIScreenDidConnectNotification"),
+    ),
+    (
+        "_UIScreenDidDisconnectNotification",
+        crate::dyld::HostConstant::NSString("UIScreenDidDisconnectNotification"),
+    ),
+];

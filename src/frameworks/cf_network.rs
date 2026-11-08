@@ -7,10 +7,18 @@
 
 pub mod cf_http_message;
 
+use crate::dyld::{ConstantExports, HostConstant};
+
+/// `NSURLAuthenticationMethod` constants (`NSURLProtectionSpace.h`).
+pub const CONSTANTS: ConstantExports = &[(
+    "_NSURLAuthenticationMethodServerTrust",
+    HostConstant::NSString("NSURLAuthenticationMethodServerTrust"),
+)];
+
 pub const DYLIB: crate::dyld::HostDylib = crate::dyld::HostDylib {
     path: "/System/Library/Frameworks/CFNetwork.framework/CFNetwork",
     aliases: &[],
     class_exports: &[],
-    constant_exports: &[cf_http_message::CONSTANTS],
+    constant_exports: &[cf_http_message::CONSTANTS, CONSTANTS],
     function_exports: &[cf_http_message::FUNCTIONS],
 };

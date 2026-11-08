@@ -139,6 +139,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         UIDeviceOrientationLandscapeRight => DeviceOrientation::LandscapeRight,
         _ => unimplemented!("Orientation {} not handled yet", orientation),
     })});
+    log!("setOrientation: {} -> {:?}", orientation, env.window().current_rotation());
     if prev_orientation != env.window().current_rotation() {
         generate_device_orientation_notification(env);
     }

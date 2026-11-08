@@ -13,15 +13,20 @@ use crate::objc;
 /// searches through.
 pub const DYLIB_LIST: &[&super::HostDylib] = &[
     &libc::DYLIB,
+    &libc::iconv::DYLIB,
     &objc::DYLIB,
     &crate::environment::app_picker::DYLIB, // Not a real library; special internal classes.
     &frameworks::audio_toolbox::DYLIB,
     &frameworks::avfoundation::DYLIB,
+    &frameworks::accounts::DYLIB,
+    &frameworks::address_book::DYLIB,
+    &frameworks::address_book_ui::DYLIB,
     &frameworks::cf_network::DYLIB,
     &frameworks::core_animation::DYLIB,
     &frameworks::core_foundation::DYLIB,
     &frameworks::core_graphics::DYLIB,
     &frameworks::core_location::DYLIB,
+    &frameworks::core_media::DYLIB,
     &frameworks::core_motion::DYLIB,
     &frameworks::core_telephony::DYLIB,
     &frameworks::foundation::DYLIB,
@@ -30,8 +35,10 @@ pub const DYLIB_LIST: &[&super::HostDylib] = &[
     &frameworks::message_ui::DYLIB,
     &frameworks::openal::DYLIB,
     &frameworks::opengles::DYLIB,
+    &frameworks::security::DYLIB,
     &frameworks::store_kit::DYLIB,
     &frameworks::system_configuration::DYLIB,
+    &frameworks::twitter::DYLIB,
     &frameworks::uikit::DYLIB,
 ];
 

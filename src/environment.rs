@@ -316,11 +316,20 @@ impl Environment {
         // window rotation after-the-fact is somewhat glitchy.
         // This also ensures the splash screen is correctly oriented.
         if options.initial_orientation == window::DeviceOrientation::Portrait {
-            if let Some(&non_portrait_orientation) = bundle
-                .supported_interface_orientations()
-                .iter()
-                .find(|&&o| o != "UIInterfaceOrientationPortrait")
+            let supported_orientations = bundle.supported_interface_orientations();
+            // Only rotate away from portrait if the app does not support plain
+            // portrait at all. If it does (even alongside other orientations,
+            // e.g. PortraitUpsideDown in MikuFlick2), portrait wins: iOS
+            // treats it as the default startup orientation and the extra
+            // entries merely enable rotation at runtime.
+            let startup_orientation = if supported_orientations
+                .contains(&"UIInterfaceOrientationPortrait")
             {
+                None
+            } else {
+                supported_orientations.first().copied()
+            };
+            if let Some(non_portrait_orientation) = startup_orientation {
                 // TODO: Overwriting the options might not be ideal; do we need
                 //       to distinguish this kind of orientation change from
                 //       others?

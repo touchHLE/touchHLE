@@ -25,7 +25,6 @@ use sdl2_sys::SDL_PowerState;
 use std::collections::{HashMap, VecDeque};
 use std::env;
 use std::f32::consts::{FRAC_PI_2, PI};
-use std::num::NonZeroU32;
 use std::ptr::null_mut;
 use std::time::{Duration, Instant};
 
@@ -76,20 +75,75 @@ pub enum DeviceOrientation {
     LandscapeLeft,
     LandscapeRight,
 }
-fn size_for_orientation(
-    family: DeviceFamily,
-    orientation: DeviceOrientation,
-    scale_hack: NonZeroU32,
-) -> (u32, u32) {
-    let (width, height) = family.portrait_size();
-    let scale_hack = scale_hack.get();
-    match orientation {
-        DeviceOrientation::Portrait => (width * scale_hack, height * scale_hack),
-        DeviceOrientation::PortraitUpsideDown => (width * scale_hack, height * scale_hack),
-        DeviceOrientation::LandscapeLeft => (height * scale_hack, width * scale_hack),
-        DeviceOrientation::LandscapeRight => (height * scale_hack, width * scale_hack),
+impl DeviceOrientation {
+    /// Whether this orientation is landscape. 180° rotations (Portrait <=>
+    /// PortraitUpsideDown, LandscapeLeft <=> LandscapeRight) do not change the
+    /// aspect ratio.
+    fn is_landscape(self) -> bool {
+        matches!(self, DeviceOrientation::LandscapeLeft | DeviceOrientation::LandscapeRight)
     }
 }
+/// Pixel density of host-side render targets (renderbuffers and composition
+/// framebuffers) relative to the guest app's point-based coordinate space.
+/// This is a fixed, guest-invisible rendering quality setting: the guest
+/// always sees the original device resolution (e.g. 320x480 points), while
+/// host-side rendering happens at this multiple for sharp output in large
+/// windows. Input coordinates are unaffected.
+pub const FRAMEBUFFER_SCALE: u32 = 2;
+
+fn size_for_orientation(family: DeviceFamily, orientation: DeviceOrientation) -> (u32, u32) {
+    let (width, height) = family.portrait_size();
+    match orientation {
+        DeviceOrientation::Portrait => (width, height),
+        DeviceOrientation::PortraitUpsideDown => (width, height),
+        DeviceOrientation::LandscapeLeft => (height, width),
+        DeviceOrientation::LandscapeRight => (height, width),
+    }
+}
+/// Reserve space for the window title bar and decorations so the whole
+/// window (not just its content) stays within the display's usable area.
+const WINDOW_CHROME_RESERVE: u32 = 32;
+
+/// Compute an initial window size for [Options::large_window] and the default
+/// path: preserve aspect ratio and always fit within the display's usable
+/// area. `max_scale` limits enlargement (2.0 for large windows, 1.0 to never
+/// upscale), but shrinking below 1.0 is allowed so large device resolutions
+/// (e.g. iPad 768x1024) are never cut off on small screens.
+fn fit_window_size(
+    video_ctx: &sdl2::VideoSubsystem,
+    display_index: i32,
+    (width, height): (u32, u32),
+    max_scale: f32,
+) -> (u32, u32) {
+    let usable = video_ctx
+        .display_usable_bounds(display_index)
+        .or_else(|_| video_ctx.display_bounds(display_index))
+        .map(|rect| rect.size())
+        .unwrap_or((width * 2, height * 2));
+    let budget_w = usable.0 as f32 * 0.98;
+    let budget_h = (usable.1.saturating_sub(WINDOW_CHROME_RESERVE)) as f32 * 0.98;
+    let scale = (budget_w / width as f32)
+        .min(budget_h / height as f32)
+        .min(max_scale)
+        .max(0.1);
+    let size = (
+        (width as f32 * scale).round().max(1.0) as u32,
+        (height as f32 * scale).round().max(1.0) as u32,
+    );
+    log!(
+        "fit_window_size: device {}x{} -> {}x{} (usable {}x{}, max_scale {}, scale {:.3})",
+        width,
+        height,
+        size.0,
+        size.1,
+        usable.0,
+        usable.1,
+        max_scale,
+        scale
+    );
+    size
+}
+
 fn rotate_fullscreen_size(orientation: DeviceOrientation, screen_size: (u32, u32)) -> (u32, u32) {
     let (short_side, long_side) = if screen_size.0 < screen_size.1 {
         (screen_size.0, screen_size.1)
@@ -230,7 +284,6 @@ pub struct Window {
     /// Copy of `fullscreen` on [Options]. Note that this is meaningless when
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
-    scale_hack: NonZeroU32,
     internal_gl_ins: Option<Box<dyn GLESContext>>,
     splash_image: Option<Image>,
     device_family: DeviceFamily,
@@ -305,7 +358,6 @@ impl Window {
         // here, and then the app can disable it if it wants to.
         video_ctx.enable_screen_saver();
 
-        let scale_hack = options.scale_hack;
         // TODO: some apps specify their orientation in Info.plist, we could use
         // that here.
         let device_family = options.device_family.unwrap_or(DeviceFamily::iPhone);
@@ -334,14 +386,20 @@ impl Window {
                 .unwrap();
             window
         } else {
-            let (width, height) =
-                size_for_orientation(device_family, device_orientation, scale_hack);
+            let (width, height) = size_for_orientation(device_family, device_orientation);
+            let (width, height) = if options.large_window {
+                fit_window_size(&video_ctx, 0, (width, height), 2.0)
+            } else {
+                fit_window_size(&video_ctx, 0, (width, height), 1.0)
+            };
             let window = video_ctx
                 .window(title, width, height)
                 .position_centered()
+                .resizable()
                 .opengl()
                 .build()
                 .unwrap();
+            log!("Created window with content size {}x{}.", width, height);
             window
         };
 
@@ -391,7 +449,6 @@ impl Window {
             #[cfg(target_os = "macos")]
             viewport_y_offset: 0,
             fullscreen,
-            scale_hack,
             internal_gl_ins: None,
             splash_image: launch_image,
             device_family,
@@ -450,6 +507,11 @@ impl Window {
         }
         self.last_polled = now;
 
+        // Apply keymap edits made on disk while the app is running.
+        if let Some(keymap) = &mut self.keymap {
+            keymap.reload_if_changed();
+        }
+
         // Replay keymapper gestures whose scheduled moment has arrived. Taps
         // and swipes are spread over time so the app can observe them.
         while let Some((due, _)) = self.pending_touches.front() {
@@ -469,14 +531,11 @@ impl Window {
             independent_of_viewport: bool,
         ) -> (f32, f32) {
             let (vx, vy, vw, vh) = if independent_of_viewport {
-                let (width, height) = size_for_orientation(
-                    window.device_family,
-                    window.device_orientation,
-                    NonZeroU32::new(1).unwrap(),
-                );
+                let (width, height) =
+                    size_for_orientation(window.device_family, window.device_orientation);
                 (0, 0, width, height)
             } else {
-                window.viewport()
+                window.viewport_logical()
             };
             // normalize to unit square centred on origin
             let x = (in_x - vx as f32) / vw as f32 - 0.5;
@@ -492,7 +551,7 @@ impl Window {
             (out_x.round(), out_y.round())
         }
         fn transform_virt_accel_coords(window: &Window, (in_x, in_y): (i32, i32)) -> (f32, f32) {
-            let (_, _, vw, vh) = window.viewport();
+            let (_, _, vw, vh) = window.viewport_logical();
             let out_x = ((in_x as f32 / vw as f32) * 2.0 - 1.0).clamp(-1.0, 1.0);
             let out_y = ((in_y as f32 / vh as f32) * 2.0 - 1.0).clamp(-1.0, 1.0);
             (out_x, out_y)
@@ -515,13 +574,16 @@ impl Window {
             }
         }
         fn finger_absolute_coords(window: &Window, (x, y): (f32, f32)) -> (f32, f32) {
-            let (screen_width, screen_height) = window.window.drawable_size();
+            // SDL finger co-ordinates are normalized over the window, so they
+            // must be scaled by the window's logical size (not the Retina
+            // drawable size) to land in the same space as mouse co-ordinates.
+            let (screen_width, screen_height) = window.window.size();
             (screen_width as f32 * x, screen_height as f32 * y)
         }
         /// Maps a keymap point (normalized to the game viewport) to the
         /// emulated device's touch coordinates.
         fn keymap_coords(window: &Window, (nx, ny): crate::keymap::NormalizedPoint) -> Coords {
-            let (vx, vy, vw, vh) = window.viewport();
+            let (vx, vy, vw, vh) = window.viewport_logical();
             let window_coords = (vx as f32 + nx * vw as f32, vy as f32 + ny * vh as f32);
             transform_input_coords(window, window_coords, false)
         }
@@ -1493,13 +1555,47 @@ impl Window {
         if new_orientation == self.device_orientation {
             return;
         }
+        // Only portrait<->landscape changes rotate the window and content.
+        // 180° requests (e.g. games conflating UIInterfaceOrientation and
+        // UIDeviceOrientation values in a re-assertion loop) are ignored: real
+        // interface rotation must not flip the content upside-down, and
+        // honoring them makes such loops oscillate forever.
+        if new_orientation.is_landscape() == self.device_orientation.is_landscape() {
+            log!(
+                "rotate_device: ignoring 180° rotation {:?} -> {:?}",
+                self.device_orientation,
+                new_orientation
+            );
+            return;
+        }
 
         if !self.fullscreen && !Self::rotatable_fullscreen() {
             let (width, height) = if Self::rotatable_fullscreen() {
                 set_sdl2_orientation(new_orientation);
                 rotate_fullscreen_size(new_orientation, self.window.size())
             } else {
-                size_for_orientation(self.device_family, new_orientation, self.scale_hack)
+                // Keep the current window size across rotation by swapping
+                // its dimensions: the window is freely resizable now, and the
+                // content is letterboxed to fit whatever size it has.
+                let (width, height) = self.window.size();
+                let (width, height) = (height, width);
+                // Keep the rotated window on-screen: fit it within the
+                // display's usable area if the swap made it too large.
+                let display_index = self.window.display_index().unwrap_or(0);
+                let size = fit_window_size(
+                    self.window.subsystem(),
+                    display_index,
+                    (width, height),
+                    1.0,
+                );
+                log!(
+                    "rotate_device: swapping window to {}x{} -> {}x{}",
+                    width,
+                    height,
+                    size.0,
+                    size.1
+                );
+                size
             };
 
             // macOS quirk: when resizing the window, the new framebuffer's size
@@ -1561,26 +1657,34 @@ impl Window {
     /// The aspect ratio, scale and orientation reflect the guest app's view of
     /// the world.
     pub fn size_unrotated_unscaled(&self) -> (u32, u32) {
-        size_for_orientation(
-            self.device_family,
-            DeviceOrientation::Portrait,
-            NonZeroU32::new(1).unwrap(),
-        )
+        size_for_orientation(self.device_family, DeviceOrientation::Portrait)
     }
 
     /// Get the region of the on-screen window (x, y, width, height) used to
-    /// display the app content.
+    /// display the app content, in drawable pixels (the space OpenGL ES
+    /// rendering operates in).
     ///
     /// The aspect ratio of this region always reflects the guest app's view of
     /// the world, but the scale and orientation might not.
     pub fn viewport(&self) -> (u32, u32, u32, u32) {
-        let (app_width, app_height) =
-            size_for_orientation(self.device_family, self.device_orientation, self.scale_hack);
-        if !self.fullscreen && !Self::rotatable_fullscreen() {
-            return (0, 0, app_width, app_height);
-        }
+        self.viewport_for_screen_size(self.window.drawable_size())
+    }
 
-        let (screen_width, screen_height) = self.window.drawable_size();
+    /// Like [Self::viewport], but in logical window co-ordinates (SDL window
+    /// points rather than drawable pixels). Use this when handling input,
+    /// since SDL reports mouse and touch positions in the logical space.
+    pub fn viewport_logical(&self) -> (u32, u32, u32, u32) {
+        self.viewport_for_screen_size(self.window.size())
+    }
+
+    /// Letterbox the app content within the given window size (in the same
+    /// units the size is given in).
+    fn viewport_for_screen_size(
+        &self,
+        (screen_width, screen_height): (u32, u32),
+    ) -> (u32, u32, u32, u32) {
+        let (app_width, app_height) =
+            size_for_orientation(self.device_family, self.device_orientation);
 
         let app_aspect = app_width as f32 / app_height as f32;
         let screen_aspect = screen_width as f32 / screen_height as f32;

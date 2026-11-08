@@ -644,6 +644,15 @@ impl ObjC {
             let class = mem.read(base + i);
             let metaclass = Self::read_isa(class, mem);
 
+            // Skip duplicate classlist entries (e.g. the same static library
+            // linked into multiple objects, as seen in Asphalt 6's Facebook
+            // SDK classes): registering the same class pointer twice would
+            // panic in register_static_object.
+            if self.get_host_object(class).is_some() {
+                log!("Ignoring duplicate classlist entry {:x}", class.to_bits());
+                continue;
+            }
+
             let name = if let Some(fakes) = substitute_classes(mem, class, metaclass) {
                 let (class_host_object, metaclass_host_object) = fakes;
 

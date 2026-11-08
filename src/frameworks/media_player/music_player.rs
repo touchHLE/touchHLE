@@ -14,6 +14,15 @@ pub const MPMusicPlayerControllerNowPlayingItemDidChangeNotification: &str =
     "MPMusicPlayerControllerNowPlayingItemDidChangeNotification";
 pub const MPMusicPlayerControllerPlaybackStateDidChangeNotification: &str =
     "MPMusicPlayerControllerPlaybackStateDidChangeNotification";
+pub const MPMediaLibraryDidChangeNotification: &str = "MPMediaLibraryDidChangeNotification";
+/// `MPMediaItemProperty` keys and `MPMediaPlaylistPropertyName`. These are
+/// dictionary keys, so use the same values as Apple's framework.
+pub const MPMediaItemPropertyAlbumTitle: &str = "albumTitle";
+pub const MPMediaItemPropertyArtist: &str = "artist";
+pub const MPMediaItemPropertyPersistentID: &str = "persistentID";
+pub const MPMediaItemPropertyPlaybackDuration: &str = "playbackDuration";
+pub const MPMediaItemPropertyTitle: &str = "title";
+pub const MPMediaPlaylistPropertyName: &str = "name";
 
 /// `NSNotificationName` values.
 pub const CONSTANTS: ConstantExports = &[
@@ -24,6 +33,34 @@ pub const CONSTANTS: ConstantExports = &[
     (
         "_MPMusicPlayerControllerPlaybackStateDidChangeNotification",
         HostConstant::NSString(MPMusicPlayerControllerPlaybackStateDidChangeNotification),
+    ),
+    (
+        "_MPMediaLibraryDidChangeNotification",
+        HostConstant::NSString(MPMediaLibraryDidChangeNotification),
+    ),
+    (
+        "_MPMediaItemPropertyAlbumTitle",
+        HostConstant::NSString(MPMediaItemPropertyAlbumTitle),
+    ),
+    (
+        "_MPMediaItemPropertyArtist",
+        HostConstant::NSString(MPMediaItemPropertyArtist),
+    ),
+    (
+        "_MPMediaItemPropertyPersistentID",
+        HostConstant::NSString(MPMediaItemPropertyPersistentID),
+    ),
+    (
+        "_MPMediaItemPropertyPlaybackDuration",
+        HostConstant::NSString(MPMediaItemPropertyPlaybackDuration),
+    ),
+    (
+        "_MPMediaItemPropertyTitle",
+        HostConstant::NSString(MPMediaItemPropertyTitle),
+    ),
+    (
+        "_MPMediaPlaylistPropertyName",
+        HostConstant::NSString(MPMediaPlaylistPropertyName),
     ),
 ];
 

@@ -22,7 +22,7 @@ pub const FRAME_POINTER: usize = 7;
 /// bit. This is also used as an (untyped) guest function pointer.
 ///
 /// It is wrapped in a struct to prevent mixing with other pointers.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct GuestFunction(ConstVoidPtr);
 unsafe impl SafeRead for GuestFunction {}
 impl GuestFunction {
@@ -474,6 +474,7 @@ impl_GuestArg_with!(u16, u32);
 impl_GuestArg_with!(i16, u32);
 impl_GuestArg_with!(u8, u32);
 impl_GuestArg_with!(i8, u32);
+impl_GuestArg_with!(usize, u32);
 
 impl GuestArg for bool {
     const REG_COUNT: usize = 1;
@@ -656,6 +657,7 @@ impl_GuestRet_with!(u16, u32);
 impl_GuestRet_with!(i16, u32);
 impl_GuestRet_with!(u8, u32);
 impl_GuestRet_with!(i8, u32);
+impl_GuestRet_with!(usize, u32);
 
 impl GuestRet for bool {
     fn from_regs(regs: &[u32]) -> Self {

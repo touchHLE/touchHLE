@@ -21,15 +21,19 @@
 #![allow(clippy::enum_variant_names)] // Lots of Apple enums have the same prefix
 #![allow(clippy::too_many_arguments)] // It's not our fault!
 
+pub mod accounts;
 pub mod audio_toolbox;
 pub mod avfoundation;
 pub mod carbon_core;
 pub mod cf_network;
 pub mod core_animation;
 pub mod core_audio_types;
+pub mod address_book;
+pub mod address_book_ui;
 pub mod core_foundation;
 pub mod core_graphics;
 pub mod core_location;
+pub mod core_media;
 pub mod core_motion;
 pub mod core_telephony;
 pub mod foundation;
@@ -38,8 +42,10 @@ pub mod media_player;
 pub mod message_ui;
 pub mod openal;
 pub mod opengles;
+pub mod security;
 pub mod store_kit;
 pub mod system_configuration;
+pub mod twitter;
 pub mod uikit;
 
 /// Container for state of various child modules

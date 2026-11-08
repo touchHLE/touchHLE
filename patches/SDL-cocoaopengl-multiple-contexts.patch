@@ -1,0 +1,80 @@
+diff --git a/src/video/cocoa/SDL_cocoaopengl.m b/src/video/cocoa/SDL_cocoaopengl.m
+index 266123a40..f661f2972 100644
+--- a/src/video/cocoa/SDL_cocoaopengl.m
++++ b/src/video/cocoa/SDL_cocoaopengl.m
+@@ -141,6 +141,7 @@ DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const
+ /* Updates the drawable for the contexts and manages related state. */
+ - (void)setWindow:(SDL_Window *)newWindow
+ {
++    SDL_Window *oldWindow = self->window;
+     if (self->window) {
+         SDL_WindowData *oldwindowdata = (__bridge SDL_WindowData *)self->window->driverdata;
+ 
+@@ -169,6 +170,16 @@ DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const
+             } else {
+                 dispatch_sync(dispatch_get_main_queue(), ^{ [self setView:contentview]; });
+             }
++            /* Attaching a context to the view can recreate the window's
++               backing surface, leaving sibling contexts flushing a stale
++               drawable (crash in SLSFlushSurfaceWithOptionsAndIndex). Mark
++               every context on this window dirty so it re-acquires before
++               its next flush. */
++            @synchronized (contexts) {
++                for (SDLOpenGLContext *ctx in contexts) {
++                    [ctx scheduleUpdate];
++                }
++            }
+             if (self == [NSOpenGLContext currentContext]) {
+                 [self explicitUpdate];
+             } else {
+@@ -177,6 +188,17 @@ DisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const
+         }
+     } else {
+         [self clearDrawable];
++        /* Detaching may free/recycle the window's shared surface; siblings
++           must re-acquire their drawables before the next flush. */
++        if (oldWindow) {
++            SDL_WindowData *oldwindowdata2 = (__bridge SDL_WindowData *)oldWindow->driverdata;
++            NSMutableArray *oldcontexts = oldwindowdata2.nscontexts;
++            @synchronized (oldcontexts) {
++                for (SDLOpenGLContext *ctx in oldcontexts) {
++                    [ctx scheduleUpdate];
++                }
++            }
++        }
+         if (self == [NSOpenGLContext currentContext]) {
+             [self explicitUpdate];
+         } else {
+@@ -437,8 +459,10 @@ Cocoa_GL_MakeCurrent(_THIS, SDL_Window * window, SDL_GLContext context)
+         SDLOpenGLContext *nscontext = (__bridge SDLOpenGLContext *)context;
+         if ([nscontext window] != window) {
+             [nscontext setWindow:window];
+-            [nscontext updateIfNeeded];
+         }
++        /* Always re-acquire the drawable if it was invalidated (resize, sibling
++           context attach/detach) before any subsequent flush. Cheap when clean. */
++        [nscontext updateIfNeeded];
+         [nscontext makeCurrentContext];
+     } else {
+         [NSOpenGLContext clearCurrentContext];
+@@ -481,6 +505,10 @@ Cocoa_GL_SwapWindow(_THIS, SDL_Window * window)
+ {
+     SDLOpenGLContext* nscontext = (__bridge SDLOpenGLContext*)SDL_GL_GetCurrentContext();
+     SDL_VideoData *videodata = (__bridge SDL_VideoData *) _this->driverdata;
++    if (nscontext == nil) {
++        SDL_SetError("Cocoa_GL_SwapWindow: no current OpenGL context");
++        return -1;
++    }
+     const int setting = SDL_AtomicGet(&nscontext->swapIntervalSetting);
+ 
+     if (setting == 0) {
+@@ -506,6 +534,9 @@ Cocoa_GL_SwapWindow(_THIS, SDL_Window * window)
+     /* on 10.14 ("Mojave") and later, this deadlocks if two contexts in two
+        threads try to swap at the same time, so put a mutex around it. */
+     SDL_LockMutex(videodata.swaplock);
++    /* Re-acquire the drawable *before* flushing: flushing a stale/recycled
++       surface crashes in SLSFlushSurfaceWithOptionsAndIndex. */
++    [nscontext updateIfNeeded];
+     [nscontext flushBuffer];
+     [nscontext updateIfNeeded];
+     SDL_UnlockMutex(videodata.swaplock);

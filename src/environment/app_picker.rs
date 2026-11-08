@@ -36,7 +36,6 @@ use crate::window::DeviceOrientation;
 use crate::Environment;
 use std::collections::HashMap;
 use std::ffi::OsStr;
-use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
 struct AppInfo {
@@ -137,11 +136,6 @@ struct AppPickerDelegateHostObject {
     copyright_next: bool,
     quick_options_show: bool,
     quick_options_hide: bool,
-    scale_hack_default: bool,
-    scale_hack1: bool,
-    scale_hack2: bool,
-    scale_hack3: bool,
-    scale_hack4: bool,
     orientation_default: bool,
     orientation_portrait_upside_down: bool,
     orientation_landscape_left: bool,
@@ -197,21 +191,6 @@ const CLASSES: ClassExports = objc_classes! {
 }
 - (())quickOptionsHide {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).quick_options_hide = true;
-}
-- (())scaleHackDefault {
-    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).scale_hack_default = true;
-}
-- (())scaleHack1 {
-    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).scale_hack1 = true;
-}
-- (())scaleHack2 {
-    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).scale_hack2 = true;
-}
-- (())scaleHack3 {
-    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).scale_hack3 = true;
-}
-- (())scaleHack4 {
-    env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).scale_hack4 = true;
 }
 - (())orientationDefault {
     env.objc.borrow_mut::<AppPickerDelegateHostObject>(this).orientation_default = true;
@@ -527,7 +506,6 @@ fn app_picker_inner(
     let mut copyright_info_page_idx = 0;
 
     let quick_options_stuff = setup_quick_options(env, delegate, main_view, app_frame);
-    let mut quick_options_scale_hack: Option<NonZeroU32> = None;
     let mut quick_options_fullscreen: Option<()> = None;
     let mut quick_options_orientation: Option<DeviceOrientation> = None;
     let mut quick_options_analog_stick_tilt_controls = true;
@@ -542,9 +520,6 @@ fn app_picker_inner(
             };
             () = msg![env; button setBackgroundColor:color];
         }
-    }
-    fn update_scale_hack_buttons(env: &mut Environment, buttons: &[id], value: Option<NonZeroU32>) {
-        update_quick_option_buttons(env, buttons, value.map_or(0, |v| v.get() as usize));
     }
     fn update_orientation_buttons(
         env: &mut Environment,
@@ -562,11 +537,6 @@ fn app_picker_inner(
             }),
         );
     }
-    update_scale_hack_buttons(
-        env,
-        &quick_options_stuff.scale_hack_buttons,
-        quick_options_scale_hack,
-    );
     update_orientation_buttons(
         env,
         &quick_options_stuff.orientation_buttons,
@@ -647,41 +617,6 @@ fn app_picker_inner(
             () = msg![env; (quick_options_stuff.main_view) setHidden:false];
         } else if std::mem::take(&mut host_obj.quick_options_hide) {
             () = msg![env; (quick_options_stuff.main_view) setHidden:true];
-        } else if std::mem::take(&mut host_obj.scale_hack_default) {
-            quick_options_scale_hack = None;
-            update_scale_hack_buttons(
-                env,
-                &quick_options_stuff.scale_hack_buttons,
-                quick_options_scale_hack,
-            );
-        } else if std::mem::take(&mut host_obj.scale_hack1) {
-            quick_options_scale_hack = Some(NonZeroU32::new(1).unwrap());
-            update_scale_hack_buttons(
-                env,
-                &quick_options_stuff.scale_hack_buttons,
-                quick_options_scale_hack,
-            );
-        } else if std::mem::take(&mut host_obj.scale_hack2) {
-            quick_options_scale_hack = Some(NonZeroU32::new(2).unwrap());
-            update_scale_hack_buttons(
-                env,
-                &quick_options_stuff.scale_hack_buttons,
-                quick_options_scale_hack,
-            );
-        } else if std::mem::take(&mut host_obj.scale_hack3) {
-            quick_options_scale_hack = Some(NonZeroU32::new(3).unwrap());
-            update_scale_hack_buttons(
-                env,
-                &quick_options_stuff.scale_hack_buttons,
-                quick_options_scale_hack,
-            );
-        } else if std::mem::take(&mut host_obj.scale_hack4) {
-            quick_options_scale_hack = Some(NonZeroU32::new(4).unwrap());
-            update_scale_hack_buttons(
-                env,
-                &quick_options_stuff.scale_hack_buttons,
-                quick_options_scale_hack,
-            );
         } else if std::mem::take(&mut host_obj.orientation_default) {
             quick_options_orientation = None;
             update_orientation_buttons(
@@ -723,9 +658,6 @@ fn app_picker_inner(
     };
 
     // Apply user-specified overrides
-    if let Some(scale_hack) = quick_options_scale_hack {
-        option_args.push(format!("--scale-hack={}", scale_hack.get()));
-    }
     if let Some(orientation) = quick_options_orientation {
         option_args.push(
             match orientation {
@@ -1262,7 +1194,6 @@ fn change_copyright_page(
 
 struct QuickOptionsStuff {
     main_view: id,
-    scale_hack_buttons: [id; 5],
     orientation_buttons: [id; 4],
 }
 
@@ -1328,14 +1259,6 @@ fn setup_quick_options(
         Switch(&'static str, bool),
     }
     let rows = [
-        RowKind::Label("Scale hack"),
-        RowKind::Buttons(&[
-            ("Default", "scaleHackDefault"),
-            ("Off", "scaleHack1"),
-            ("2×", "scaleHack2"),
-            ("3×", "scaleHack3"),
-            ("4×", "scaleHack4"),
-        ]),
         RowKind::Label("Orientation"),
         RowKind::Buttons(&[
             ("Default", "orientationDefault"),
@@ -1419,7 +1342,6 @@ fn setup_quick_options(
 
     QuickOptionsStuff {
         main_view,
-        scale_hack_buttons: button_rows[0][..].try_into().unwrap(),
-        orientation_buttons: button_rows[1][..].try_into().unwrap(),
+        orientation_buttons: button_rows[0][..].try_into().unwrap(),
     }
 }

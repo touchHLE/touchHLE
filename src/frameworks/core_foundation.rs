@@ -131,6 +131,20 @@ const CONSTANTS: ConstantExports = &[(
             .cast()
             .cast_const()
     }),
+),
+(
+    // struct CFArrayCallBacks { version, retain, release, copyDescription, equal }
+    // The callbacks point at a single ARM `bx lr` stub so a stray call is inert.
+    "_kCFTypeArrayCallBacks",
+    HostConstant::Custom(|env| {
+        let bx_lr = env.mem.alloc_and_write(0xE12FFF1E_u32); // ARM `bx lr`
+        let ptr: crate::mem::MutPtr<u32> = env.mem.alloc(20).cast();
+        env.mem.write(ptr, 0u32); // version
+        for i in 1..5 {
+            env.mem.write(ptr + i, bx_lr.to_bits());
+        }
+        ptr.cast().cast_const()
+    }),
 )];
 
 const FUNCTIONS: FunctionExports = &[export_c_func!(CFShow(_))];

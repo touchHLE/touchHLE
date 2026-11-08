@@ -7,6 +7,7 @@
 
 use super::ns_string::{from_rust_string, get_static_str, to_rust_string};
 use super::NSUInteger;
+use crate::dyld::{ConstantExports, HostConstant};
 use crate::fs::{GuestPath, GuestPathBuf};
 use crate::mem::MutPtr;
 use crate::objc::{
@@ -213,3 +214,9 @@ pub fn to_rust_path(env: &mut Environment, url: id) -> Cow<'static, GuestPath> {
         Cow::Owned(path_buf) => Cow::Owned(path_buf.into()),
     }
 }
+
+/// `NSURL` key constants (`NSURL.h`).
+pub const CONSTANTS: ConstantExports = &[(
+    "_NSURLIsExcludedFromBackupKey",
+    HostConstant::NSString("NSURLIsExcludedFromBackupKey"),
+)];

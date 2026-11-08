@@ -461,7 +461,129 @@ impl Dyld {
         }
     }
 
-    /// Link non-lazy symbols for a loaded binary.
+    /// Resolve a non-lazy symbol that is neither a host function nor a host
+/// constant to a special stub address.
+///
+/// iOS binaries link against various runtime bookkeeping symbols that are
+/// never actually called through (block class descriptors, `dyld_stub_binder`,
+/// exception personality slots, libdispatch identity markers, ...). They must
+/// resolve to a non-null guest address so that identity checks work and no
+/// NULL-page dereferences happen. Function/data stubs are freshly allocated
+/// per call; the block class descriptors always resolve to the same address
+/// because the Objective-C class is a singleton.
+fn link_special_non_lazy_stub(
+    mem: &mut Mem,
+    objc: &mut ObjC,
+    symbol: &str,
+) -> Option<ConstVoidPtr> {
+    let target: ConstVoidPtr = match symbol {
+        // touchHLE resolves lazy symbols via SVC traps, so the guest-side
+        // lazy binding entry point is never used. A bare `BX LR` stub makes
+        // any direct call return harmlessly. Exception personality stubs
+        // return 0 (_URC_NO_REASON: "no handler in this frame, keep
+        // unwinding") for the same reason.
+        "dyld_stub_binder" | "_dyld_stub_binder" | "___gxx_personality_sj0" => {
+            let fn_ptr: MutPtr<u32> = mem.alloc(8).cast();
+            mem.write(fn_ptr + 0, encode_a32_ret());
+            mem.write(fn_ptr + 1, encode_a32_trap());
+            fn_ptr.cast().cast_const()
+        }
+        // Blocks runtime class descriptors. Point the block `isa` at the
+        // real `_touchHLE_NSBlock` class so that `[block copy]`/retain/release
+        // route to the Blocks runtime. All block symbols share this one
+        // class; `_Block_copy` uses the block's flags (not its isa) to
+        // distinguish stack/global/malloc blocks.
+        "__NSConcreteGlobalBlock"
+        | "__NSConcreteStackBlock"
+        | "__NSConcreteMallocBlock"
+        | "__NSConcreteAutoBlock"
+        | "__NSConcreteFinalizingBlock" => objc
+            .get_known_class("_touchHLE_NSBlock", mem)
+            .cast()
+            .cast_const(),
+        // __mb_cur_max is a pointer to the C locale's max multibyte
+        // character byte count. Provide 1 (single-byte/ASCII locale) so
+        // locale/string code doesn't dereference NULL.
+        "___mb_cur_max" => {
+            let val_ptr: MutPtr<u32> = mem.alloc(4).cast();
+            mem.write(val_ptr, 1u32);
+            val_ptr.cast().cast_const()
+        }
+        // Global handler pointers (std::terminate_handler etc). Their
+        // default value is a NULL function pointer, but the variables
+        // themselves must be non-null.
+        "___cxa_terminate_handler" | "___cxa_unexpected_handler" | "___cxa_new_handler" => {
+            let p: MutPtr<u32> = mem.alloc(4).cast();
+            mem.write(p, 0u32);
+            p.cast().cast_const()
+        }
+        // The main queue is the sentinel value MAIN_QUEUE_PTR (see
+        // libc::dispatch), so binary-direct references to it must match the
+        // value `dispatch_get_main_queue()` returns.
+        "__dispatch_main_q" | "__dispatch_queue_main" => {
+            let p: MutVoidPtr = Ptr::from_bits(crate::libc::dispatch::MAIN_QUEUE_PTR);
+            p.cast_const()
+        }
+        // Dispatch source types carry small internal tags read back by
+        // dispatch_source_create(); the remaining libdispatch constants are
+        // opaque non-NULL markers.
+        "__dispatch_source_type_read"
+        | "__dispatch_source_type_write"
+        | "__dispatch_source_type_timer"
+        | "__dispatch_source_type_data_add"
+        | "__dispatch_source_type_data_or"
+        | "__dispatch_source_type_data_replace"
+        | "__dispatch_source_type_signal"
+        | "__dispatch_source_type_proc"
+        | "__dispatch_source_type_vnode"
+        | "__dispatch_source_type_mach_send"
+        | "__dispatch_source_type_mach_recv"
+        | "__dispatch_source_type_memorypressure"
+        | "__dispatch_queue_attr_concurrent"
+        | "__dispatch_queue_attr_serial"
+        | "__dispatch_data_empty"
+        | "__dispatch_data_destructor_default"
+        | "__dispatch_data_destructor_free"
+        | "__dispatch_data_destructor_munmap" => {
+            let p: MutPtr<u32> = mem.alloc(4).cast();
+            mem.write(p, crate::libc::dispatch_source::source_type_tag(symbol));
+            p.cast().cast_const()
+        }
+        // `struct in6_addr` is 16 bytes. `in6addr_any` is all zeros (`::`)
+        // and `in6addr_loopback` is `::1` (last byte = 1).
+        "_in6addr_any" | "_in6addr_loopback" => {
+            let p: MutPtr<u8> = mem.alloc(16).cast();
+            for i in 0..16u32 {
+                mem.write(p + i, 0u8);
+            }
+            if symbol == "_in6addr_loopback" {
+                mem.write(p + 15, 1u8);
+            }
+            p.cast().cast_const()
+        }
+        // MIG `NDR_record` is a 12-byte transfer-syntax descriptor from the
+        // (unused) Mach IPC stack. Zero-filled so no NULL pointer is left.
+        "_NDR_record" => {
+            let p: MutPtr<u8> = mem.alloc(12).cast();
+            for i in 0..12u32 {
+                mem.write(p + i, 0u8);
+            }
+            p.cast().cast_const()
+        }
+        // Shared Itanium-ABI C++ typeinfo vtable for `__objc_ehtype`
+        // structs. Never consulted by touchHLE's no-op unwinder; a zeroed
+        // slot just keeps the referenced pointer non-null.
+        "_objc_ehtype_vtable" => {
+            let p: MutPtr<u32> = mem.alloc(4).cast();
+            mem.write(p, 0u32);
+            p.cast().cast_const()
+        }
+        _ => return None,
+    };
+    Some(target)
+}
+
+/// Link non-lazy symbols for a loaded binary.
     ///
     /// These are usually constants, Objective-C classes, or vtable pointers.
     /// Since the linking must be done upfront, we can't in general delay errors
@@ -516,6 +638,10 @@ impl Dyld {
                 // Skip the constants from DYLD_INFO because we already
                 // handle the consts when reading the __nl_symbol_ptr section
                 continue;
+            } else if let Some(target) = Self::link_special_non_lazy_stub(mem, objc, name) {
+                // Runtime bookkeeping symbols (block class descriptors,
+                // dyld_stub_binder, exception slots, dispatch markers, ...)
+                target
             } else {
                 unhandled_relocations
                     .entry(name)
@@ -594,6 +720,13 @@ impl Dyld {
                 // Delay linking of constant until we have a `&mut Environment`,
                 // that makes it much easier to build NSString objects etc.
                 self.constants_to_link_later.push((ptr_ptr, template));
+                continue;
+            }
+
+            // Runtime bookkeeping symbols (block class descriptors,
+            // dyld_stub_binder, exception slots, dispatch markers, ...)
+            if let Some(target) = Self::link_special_non_lazy_stub(mem, objc, symbol) {
+                mem.write(ptr_ptr, target);
                 continue;
             }
 

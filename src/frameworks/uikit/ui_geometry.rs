@@ -50,3 +50,16 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(NSStringFromCGSize(_)),
     export_c_func!(NSStringFromCGRect(_)),
 ];
+
+/// The `UIEdgeInsetsZero` value: an all-zero `UIEdgeInsets` struct
+/// (top, left, bottom, right as 32-bit floats).
+pub const CONSTANTS: crate::dyld::ConstantExports = &[(
+    "_UIEdgeInsetsZero",
+    crate::dyld::HostConstant::Custom(|env| {
+        let ptr: crate::mem::MutPtr<u32> = env.mem.alloc(16).cast();
+        for i in 0..4 {
+            env.mem.write(ptr + i, 0u32);
+        }
+        ptr.cast().cast_const()
+    }),
+)];

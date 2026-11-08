@@ -346,6 +346,10 @@ impl super::ObjC {
             refcount,
         } = self.objects.remove(&object).unwrap();
 
+        // Zero any ARC zeroing-weak slots still referring to this object
+        // before it is torn down.
+        self.zero_weak_references_for(object, mem);
+
         if let Some(refcount) = refcount {
             // This is a serious bug if it ever happens in host code.
             // Well-behaved apps should also never do this, but Crash Bandicoot
@@ -369,4 +373,17 @@ pub(super) fn object_getClass(env: &mut Environment, obj: id) -> Class {
     } else {
         super::ObjC::read_isa(obj, &env.mem)
     }
+}
+
+/// Best-effort human-readable class name for diagnostics.
+pub fn debug_class_name(env: &Environment, cls: Class) -> String {
+    env.objc
+        .get_host_object(cls)
+        .and_then(|host_object| {
+            host_object
+                .as_any()
+                .downcast_ref::<super::ClassHostObject>()
+                .map(|class| class.name.clone())
+        })
+        .unwrap_or_default()
 }

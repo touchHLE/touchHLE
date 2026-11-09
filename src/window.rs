@@ -230,18 +230,78 @@ pub enum BatteryState {
     Full,
 }
 
+#[derive(Clone, Copy)]
 pub enum GLVersion {
     /// OpenGL ES 1.1
     GLES11,
-    /// OpenGL 2.1 compatibility profile
-    GL21Compat,
+    /// OpenGL ES 2.0
+    GLES20,
+}
+impl GLVersion {
+    /// The `EGL_CONTEXT_CLIENT_VERSION` for this version.
+    pub fn client_version(self) -> u32 {
+        match self {
+            GLVersion::GLES11 => 1,
+            GLVersion::GLES20 => 2,
+        }
+    }
 }
 
-pub struct GLContext(sdl2::video::GLContext);
+/// An OpenGL ES context backed by ANGLE (see [crate::egl]). All contexts share
+/// one EGL share group rooted at [Window::root_share_ctx], so GL objects can
+/// cross between ES 1.1 and 2.0 contexts.
+pub struct GLContext {
+    ctx: crate::egl::EGLContext,
+    display: crate::egl::EGLDisplay,
+    surface: crate::egl::EGLSurface,
+}
 
 impl GLContext {
     pub fn is_current(&self) -> bool {
-        self.0.is_current()
+        crate::egl::global().current_context() == self.ctx
+    }
+
+    /// Make this context current on the window's EGL surface without access
+    /// to the [Window]. Used by the GLES wrapper to switch between the ES 2.0
+    /// context of a guest `EAGLContext` and its ES 1.1 companion mid-call
+    /// (see [crate::gles::angle]).
+    pub unsafe fn make_current_raw(&self) {
+        crate::egl::global()
+            .make_current(self.display, self.surface, self.ctx)
+            .unwrap();
+    }
+}
+
+impl Drop for GLContext {
+    fn drop(&mut self) {
+        let egl = crate::egl::global();
+        unsafe {
+            if self.is_current() {
+                egl.make_current(
+                    self.display,
+                    crate::egl::EGL_NO_SURFACE,
+                    crate::egl::EGL_NO_CONTEXT,
+                )
+                .ok();
+            }
+            egl.destroy_context(self.display, self.ctx);
+        }
+    }
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        let egl = crate::egl::global();
+        unsafe {
+            // Unbind any current context before destroying the surface.
+            let _ = egl.make_current(
+                self.egl_display,
+                crate::egl::EGL_NO_SURFACE,
+                crate::egl::EGL_NO_CONTEXT,
+            );
+            egl.destroy_surface(self.egl_display, self.egl_surface);
+            sdl2_sys::SDL_Metal_DestroyView(self.metal_view);
+        }
     }
 }
 
@@ -285,6 +345,19 @@ pub struct Window {
     /// [Self::rotatable_fullscreen] returns [true].
     fullscreen: bool,
     internal_gl_ins: Option<Box<dyn GLESContext>>,
+    /// ANGLE/EGL display handle.
+    egl_display: crate::egl::EGLDisplay,
+    /// ANGLE/EGL framebuffer configuration shared by all contexts.
+    egl_config: crate::egl::EGLConfig,
+    /// ANGLE/EGL window surface, rendering into the CAMetalLayer of
+    /// `metal_view`.
+    egl_surface: crate::egl::EGLSurface,
+    /// SDL Metal view hosting the CAMetalLayer that `egl_surface` renders into.
+    metal_view: sdl2_sys::SDL_MetalView,
+    /// Root of the single EGL share group. The first GL context created
+    /// becomes the share root for all later contexts (see
+    /// [Self::create_gl_context]).
+    root_share_ctx: std::cell::Cell<crate::egl::EGLContext>,
     splash_image: Option<Image>,
     device_family: DeviceFamily,
     device_orientation: DeviceOrientation,
@@ -340,12 +413,6 @@ impl Window {
         sdl2::hint::set("SDL_JOYSTICK_HIDAPI", "0");
 
         if env::consts::OS == "android" {
-            // It's important to set context version BEFORE window creation
-            // ref. https://wiki.libsdl.org/SDL2/SDL_GLattr
-            let attr = video_ctx.gl_attr();
-            attr.set_context_version(1, 1);
-            attr.set_context_profile(sdl2::video::GLProfile::GLES);
-
             // Disable blocking of event loop when app is paused.
             sdl2::hint::set("SDL_ANDROID_BLOCK_ON_PAUSE", "0");
         }
@@ -372,7 +439,6 @@ impl Window {
             let window = video_ctx
                 .window(title, width, height)
                 .fullscreen()
-                .opengl()
                 .build()
                 .unwrap();
             window
@@ -381,7 +447,6 @@ impl Window {
             let window = video_ctx
                 .window(title, width, height)
                 .fullscreen_desktop()
-                .opengl()
                 .build()
                 .unwrap();
             window
@@ -396,19 +461,25 @@ impl Window {
                 .window(title, width, height)
                 .position_centered()
                 .resizable()
-                .opengl()
                 .build()
                 .unwrap();
             log!("Created window with content size {}x{}.", width, height);
             window
         };
 
-        if env::consts::OS == "android" {
-            // Sanity check
-            let gl_attr = video_ctx.gl_attr();
-            debug_assert_eq!(gl_attr.context_profile(), sdl2::video::GLProfile::GLES);
-            debug_assert_eq!(gl_attr.context_version(), (1, 1));
-        }
+        // Set up ANGLE (Metal): host the game's rendering in a CAMetalLayer and
+        // create the EGL window surface for it. All GL contexts (guest and
+        // internal) render through this surface via one share group.
+        let metal_view = unsafe { sdl2_sys::SDL_Metal_CreateView(window.raw()) };
+        assert!(!metal_view.is_null(), "SDL_Metal_CreateView() failed");
+        let egl = crate::egl::global();
+        let (egl_display, egl_config) = egl
+            .initialize()
+            .unwrap_or_else(|e| panic!("Couldn't initialize ANGLE (EGL): {}", e));
+        let egl_surface = unsafe {
+            egl.create_window_surface(egl_display, egl_config, sdl2_sys::SDL_Metal_GetLayer(metal_view))
+                .unwrap_or_else(|e| panic!("Couldn't create EGL window surface: {}", e))
+        };
 
         if let Some(icon) = icon {
             window.set_icon(surface_from_image(&icon));
@@ -450,6 +521,11 @@ impl Window {
             viewport_y_offset: 0,
             fullscreen,
             internal_gl_ins: None,
+            egl_display,
+            egl_config,
+            egl_surface,
+            metal_view,
+            root_share_ctx: std::cell::Cell::new(crate::egl::EGL_NO_CONTEXT),
             splash_image: launch_image,
             device_family,
             device_orientation,
@@ -474,10 +550,9 @@ impl Window {
         };
 
         // Set up OpenGL ES context used for splash screen and app UI rendering
-        // (see src/frameworks/core_animation/composition.rs). OpenGL ES is used
-        // because SDL2 won't let us use more than one graphics API in the same
-        // window, and we also need OpenGL ES for the app's own rendering.
-        let mut gl_ins = create_gles1_ctx_no_parent_stack(&mut window, options);
+        // (see src/frameworks/core_animation/composition.rs). This is an ES 1.1
+        // context in the same ANGLE share group as the guest's contexts.
+        let mut gl_ins = create_gles1_ctx_no_parent_stack(&mut window);
         {
             let gl_ctx = gl_ins.make_current(&mut window);
             log!("Driver info: {}", unsafe { gl_ctx.driver_description() });
@@ -1421,38 +1496,36 @@ impl Window {
         (x, y, pressed)
     }
 
+    /// Create a GL context of the given client version. The first context
+    /// created becomes the root of the single EGL share group; all later
+    /// contexts share with it (both ES 1.1 and ES 2.0).
     pub fn create_gl_context(&self, version: GLVersion) -> Result<GLContext, String> {
-        let attr = self.video_ctx.gl_attr();
-        match version {
-            GLVersion::GLES11 => {
-                attr.set_context_version(1, 1);
-                attr.set_context_profile(sdl2::video::GLProfile::GLES);
-            }
-            GLVersion::GL21Compat => {
-                attr.set_context_version(2, 1);
-                attr.set_context_profile(sdl2::video::GLProfile::Compatibility);
-            }
+        let egl = crate::egl::global();
+        let share = self.root_share_ctx.get();
+        let ctx = unsafe {
+            egl.create_context(
+                self.egl_display,
+                self.egl_config,
+                share,
+                version.client_version(),
+            )?
+        };
+        if share.is_null() {
+            self.root_share_ctx.set(ctx);
         }
-
-        let gl_ctx = self.window.gl_create_context()?;
-
-        Ok(GLContext(gl_ctx))
+        Ok(GLContext {
+            ctx,
+            display: self.egl_display,
+            surface: self.egl_surface,
+        })
     }
 
     pub fn gl_get_proc_address(&self, procname: &str) -> *const std::ffi::c_void {
-        // For some reason, rust-sdl2 uses *const (), but () is not meant to be
-        // used for void pointees (just void results), so let's fix that.
-        self.video_ctx.gl_get_proc_address(procname) as *const _
-    }
-
-    pub fn set_share_with_current_context(&self, value: bool) {
-        self.video_ctx
-            .gl_attr()
-            .set_share_with_current_context(value)
+        crate::egl::global().get_proc_address(procname) as *const _
     }
 
     pub unsafe fn make_gl_context_current(&self, gl_ctx: &GLContext) {
-        self.window.gl_make_current(&gl_ctx.0).unwrap();
+        gl_ctx.make_current_raw();
     }
 
     /// Make the internal OpenGL ES context (for splash screen and UI rendering)
@@ -1462,13 +1535,17 @@ impl Window {
         // The invariant is held up here - since the instance we return is
         // bound to the lifetime of window, it can't outlive the internal GL
         // context and can't outlive the window.
+        let egl = crate::egl::global();
+        let (display, surface) = (self.egl_display, self.egl_surface);
         let gl_ins = unsafe {
             self.internal_gl_ins
                 .as_mut()
                 .unwrap()
                 .make_current_unchecked_for_window(
-                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
-                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                    &mut |gl_ctx| {
+                        egl.make_current(display, surface, gl_ctx.ctx).unwrap();
+                    },
+                    &mut |s| crate::egl::global().get_proc_address(s) as *const _,
                 )
         };
         gl_ins
@@ -1486,13 +1563,17 @@ impl Window {
         let image = self.splash_image.as_ref().unwrap();
 
         unsafe {
+            let egl = crate::egl::global();
+            let (display, surface) = (self.egl_display, self.egl_surface);
             let mut gl_ctx = self
                 .internal_gl_ins
                 .as_mut()
                 .unwrap()
                 .make_current_unchecked_for_window(
-                    &mut |gl_ctx| self.window.gl_make_current(&gl_ctx.0).unwrap(),
-                    &mut |s| self.video_ctx.gl_get_proc_address(s) as *const _,
+                    &mut |gl_ctx| {
+                        egl.make_current(display, surface, gl_ctx.ctx).unwrap();
+                    },
+                    &mut |s| crate::egl::global().get_proc_address(s) as *const _,
                 );
 
             use crate::gles::gles11_raw as gles11; // constants only
@@ -1533,7 +1614,7 @@ impl Window {
             gl_ctx.DeleteTextures(1, &texture);
         };
 
-        self.window.gl_swap_window();
+        self.swap_window();
 
         // hold onto GL context so the image doesn't disappear, and hold
         // onto image so we can rotate later if necessary
@@ -1542,7 +1623,9 @@ impl Window {
     /// Swap front-buffer and back-buffer so the result of OpenGL rendering is
     /// presented.
     pub fn swap_window(&self) {
-        self.window.gl_swap_window();
+        unsafe {
+            crate::egl::global().swap_buffers(self.egl_display, self.egl_surface);
+        }
     }
 
     /// Consider the emulated device to be rotated to a particular orientation.

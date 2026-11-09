@@ -33,6 +33,7 @@ mod bundle;
 mod cpu;
 mod debug;
 mod dyld;
+mod egl;
 mod environment;
 mod font;
 mod frameworks;

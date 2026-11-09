@@ -32,8 +32,9 @@ PearLegacyEngine is designed as a **headless-controlled companion runtime** rath
 ## Key Features & Apple Silicon Optimizations
 
 - **ARM32 → ARM64 JIT on Apple Silicon:** Compiled with `-C target-cpu=apple-m1`, ThinLTO (`lto = "thin"`), single codegen unit, and `opt-level = 3` for low-latency 32-bit ARM translation on M-series chips.
-- **OpenGL ES 1.1 & OpenGL ES 2.0 Pipeline:**
-  - Full OpenGL ES 2.0 shader/program translation (GLSL ES 1.00 → desktop GLSL 120 on macOS OpenGL 2.1 compatibility context), vertex attribute arrays, VBOs, FBOs, renderbuffers, and non-zero default framebuffer binding guarantees.
+- **OpenGL ES 1.1 & OpenGL ES 2.0 on Metal via ANGLE:**
+  - The full graphics stack runs through a bundled **ANGLE** build (`libEGL.dylib` + `libGLESv2.dylib`, Metal backend): the engine creates EGL contexts and window surfaces over a `SDL_Metal` view, and GLES 1.1 / 2.0 commands execute on ANGLE's Metal renderer — no deprecated OpenGL framework usage anywhere. All contexts (guest and presentation) live in one EGL share group so renderbuffers and textures cross contexts freely.
+  - Guest `presentRenderbuffer` presentation is a unified internal-ES1 blit path (shared-renderbuffer FBO attach → `CopyTexImage2D` → fullscreen quad), independent of the guest's GL state.
   - Zero-syscall hot render loop (`presentRenderbuffer` environment flags cached once via `LazyLock`, zero unguarded dyld debug logging overhead, and silent stdout/stderr capture when managed by PearSilicon).
 - **Expanded iOS Framework Coverage (Miku Flick & iOS 4/5 Games):**
   - **Foundation:** `NSKeyedArchiver` / `NSKeyedUnarchiver` (`initForReadingWithData:`, `initForWritingWithMutableData:`, `encodeObject:forKey:`, `decodeObjectForKey:`, `finishEncoding`), lossy-safe `NSString` UTF-8/Shift-JIS fallback, `NSFileManager` directory creation, `NSHTTPCookieStorage`, `NSBundle`, `NSUserDefaults`, and `NSRunLoop`.
@@ -61,7 +62,7 @@ flowchart LR
         CLI["Headless CLI Entrypoint"]
         JIT["dynarmic JIT (armv7 -> arm64)"]
         HLE["iOS HLE Frameworks (UIKit, Foundation, Audio)"]
-        GLES["OpenGL ES 1.1 & 2.0 Translator"]
+        GLES["ANGLE: OpenGL ES 1.1 / 2.0 -> Metal"]
     end
 
     UI --> Installer
@@ -78,32 +79,37 @@ flowchart LR
 
 ### Prerequisites
 
-- Apple Silicon Mac (`arm64`) running macOS 14.0+ (optimized for macOS 26).
-- Xcode Command Line Tools (`xcode-select --install`).
+- Apple Silicon Mac (`arm64`) running **macOS 26 (Tahoe) or newer**. The engine is arm64-only and contains no x86_64 or Android code.
+- Xcode Command Line Tools (`xcode-select --install`) including the Metal Toolchain.
 - Rust toolchain (`rustup`, stable `aarch64-apple-darwin`).
 - CMake (`brew install cmake`) for building bundled native dependencies (`dynarmic`, `SDL2`, `openal-soft`).
+- GN + Ninja (`brew install gn ninja`) for building the bundled ANGLE graphics stack.
 
 ### Compile Release Binary
 
 ```sh
 git clone --recursive https://github.com/denizomer10/PearLegacyEngine.git
 cd PearLegacyEngine
-cargo build --release
+
+# Build the bundled ANGLE (Metal) graphics stack first:
+(cd vendor/angle && gn gen out/MacMetal --args='is_component_build=true' && ninja -C out/MacMetal libEGL libGLESv2)
+
+MACOSX_DEPLOYMENT_TARGET=26.0 cargo build --release
 ```
 
 The optimized binary is emitted at `target/release/touchHLE` alongside the runtime asset directories:
 
 - `touchHLE_dylibs/` — guest ARM32 dynamic libraries (`libgcc`, `libstdc++`, `libobjc`).
+- `touchHLE_dylibs/angle/` — the ANGLE Metal runtime (`libEGL.dylib`, `libGLESv2.dylib` and their support dylibs, from `vendor/angle/out/MacMetal/`).
 - `touchHLE_fonts/` — fallback system fonts (Liberation & Noto CJK).
 - `touchHLE_default_options.txt` — per-title default compatibility flags.
 
 ### SDL2 macOS Patch
 
 The bundled SDL2 (via `sdl2/bundled`) carries a local macOS fix in
-`patches/SDL-cocoaopengl-multiple-contexts.patch`: attaching a context to a
-window's view can recreate the shared backing surface, leaving sibling GL
-contexts flushing a stale drawable (crash in `SLSFlushSurfaceWithOptionsAndIndex`).
-Apply it when building from a fresh checkout:
+`patches/SDL-cocoaopengl-multiple-contexts.patch` (retained from the legacy
+OpenGL path; harmless with ANGLE). Apply it when building from a fresh
+checkout:
 
 ```sh
 git -C "$(dirname "$(find ~/.cargo/git/checkouts/rust-sdl2-* -name SDL -maxdepth 3 | head -1)")" \
@@ -161,6 +167,7 @@ The window is freely resizable while the game keeps its internal resolution and 
 | --- | --- |
 | `PEAR_LEGACY_SANDBOX_ROOT` | Directory where `Saves/<bundle-id>/` save data (`Documents`, `Library`, `tmp`) is stored. |
 | `PEAR_LEGACY_RESOURCES_DIR` | Directory containing `touchHLE_dylibs/`, `touchHLE_fonts/`, and `touchHLE_default_options.txt`. |
+| `PEAR_ANGLE_LIB_DIR` | Optional override for the ANGLE dylib directory (defaults to `touchHLE_dylibs/angle/`, then `vendor/angle/out/MacMetal/`). |
 | `PEAR_LEGACY_LOG_FILE` | Optional file path for standalone log output (omitted by default when PearSilicon captures process logs). |
 | `PEAR_TOUCH_SCRIPT` | Optional automated touch sequence (`frame:x:y[:duration],...`) for headless E2E verification. |
 | `PEAR_KEYMAP` | Path to a `pear-keymap/v1` JSON file enabling keyboard bindings. |

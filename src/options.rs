@@ -5,7 +5,6 @@
  */
 //! Parsing and management of user-configurable options, e.g. for input methods.
 
-use crate::gles::GLESImplementation;
 use crate::window::{DeviceFamily, DeviceOrientation};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Read};
@@ -50,7 +49,6 @@ pub struct Options {
     pub dpad_to_touch: Option<(f32, f32, f32, f32)>,
     pub stick_to_touch: Option<(f32, f32, f32, f32)>,
     pub stabilize_virtual_cursor: Option<(f32, f32)>,
-    pub gles1_implementation: Option<GLESImplementation>,
     pub direct_memory_access: bool,
     pub gdb_listen_addrs: Option<Vec<SocketAddr>>,
     pub preferred_languages: Option<Vec<String>>,
@@ -83,7 +81,6 @@ impl Default for Options {
             dpad_to_touch: None,
             stick_to_touch: None,
             stabilize_virtual_cursor: None,
-            gles1_implementation: None,
             direct_memory_access: true,
             gdb_listen_addrs: None,
             preferred_languages: None,
@@ -215,11 +212,6 @@ impl Options {
                     "Invalid sticky radius for --stabilize-virtual-cursor=".to_string()
                 })?;
             self.stabilize_virtual_cursor = Some((smoothing_strength, sticky_radius));
-        } else if let Some(value) = arg.strip_prefix("--gles1=") {
-            self.gles1_implementation = Some(
-                GLESImplementation::from_short_name(value)
-                    .map_err(|_| "Unrecognized --gles1= value".to_string())?,
-            );
         } else if arg == "--disable-direct-memory-access" {
             self.direct_memory_access = false;
         } else if let Some(address) = arg.strip_prefix("--gdb=") {

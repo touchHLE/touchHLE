@@ -10,7 +10,7 @@
 
 use crate::abi::GuestFunction;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::MutVoidPtr;
+use crate::mem::{ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr};
 use crate::Environment;
 
 fn __cxa_atexit(
@@ -75,6 +75,46 @@ fn __cxa_call_unexpected(_env: &mut Environment, exception: MutVoidPtr) {
     );
 }
 
+fn __cxa_allocate_exception(env: &mut Environment, size: GuestUSize) -> MutVoidPtr {
+    // Never returns null in practice; the guest writes the thrown object here.
+    env.mem.alloc(size)
+}
+
+fn __cxa_free_exception(_env: &mut Environment, _exception: MutVoidPtr) {}
+
+/// C++ exceptions are thrown by the guest's SjLj unwinder, which we do not
+/// implement. Rather than let the guest walk its cleanup tables with an
+/// unwinding state we never set up (which manifests as an unrelated null
+/// dereference deep inside the guest), fail loudly with the exception's
+/// mangled type name so the offending call site can be identified.
+fn __cxa_throw(
+    env: &mut Environment,
+    exception: MutVoidPtr,
+    tinfo: MutVoidPtr,
+    _destructor: GuestFunction,
+) -> MutVoidPtr {
+    let name = if tinfo.is_null() {
+        "<unknown>".to_string()
+    } else {
+        // Itanium ABI `std::type_info`: vtable pointer, then `const char*
+        // __type_name` pointing at a mangled name (libstdc++ prefixes it
+        // with '*', which demanglers ignore).
+        let name_ptr: MutVoidPtr = env.mem.read(tinfo.cast::<MutVoidPtr>() + 4u32);
+        if name_ptr.is_null() {
+            "<null>".to_string()
+        } else {
+            let bytes = env.mem.cstr_at(name_ptr.cast::<u8>());
+            // libstdc++ prefixes mangled names with '*'.
+            String::from_utf8_lossy(bytes.trim_ascii_start().strip_prefix(b"*").unwrap_or(bytes))
+                .into_owned()
+        }
+    };
+    panic!(
+        "__cxa_throw({:?}) of type \"{}\": C++ exception unwinding (SjLj) is not implemented",
+        exception, name
+    );
+}
+
 fn __cxa_pure_virtual(_env: &mut Environment) {
     panic!("Pure virtual function called");
 }
@@ -113,6 +153,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(__cxa_rethrow()),
     export_c_func!(__cxa_call_unexpected(_)),
     export_c_func!(__cxa_pure_virtual()),
+    export_c_func!(__cxa_allocate_exception(_)),
+    export_c_func!(__cxa_free_exception(_)),
+    export_c_func!(__cxa_throw(_, _, _)),
     export_c_func!(_Unwind_SjLj_Register(_)),
     export_c_func!(_Unwind_SjLj_Unregister(_)),
     export_c_func!(_Unwind_SjLj_Resume(_)),

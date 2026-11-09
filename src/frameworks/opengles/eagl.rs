@@ -15,7 +15,7 @@ use crate::frameworks::foundation::NSUInteger;
 use crate::gles::gles11_raw as gles11; // constants only
 use crate::gles::gles11_raw::types::*;
 use crate::gles::present::{present_frame, FpsCounter};
-use crate::gles::{create_gles1_ctx, create_gles2_ctx, gles1_on_gl2, GLESContext, GLES};
+use crate::gles::{create_gles1_ctx, create_gles2_ctx, GLESContext, GLES};
 use crate::mem::MutPtr;
 use crate::objc::{id, msg, nil, objc_classes, release, retain, ClassExports, HostObject};
 use crate::options::Options;
@@ -114,6 +114,15 @@ pub const CLASSES: ClassExports = objc_classes! {
         *current_ctx = Some(context);
     }
 
+    if std::env::var("PEAR_DEBUG_GL").is_ok_and(|v| !v.is_empty() && v != "0") {
+        let api = if context == nil {
+            0
+        } else {
+            env.objc.borrow::<EAGLContextHostObject>(context).api
+        };
+        log!("PEAR_DEBUG_GL: setCurrentContext -> api={} ctx={:?}", api, context);
+    }
+
     true
 }
 
@@ -131,18 +140,9 @@ pub const CLASSES: ClassExports = objc_classes! {
         return msg![env; this initWithAPI:api];
     }
 
-    let window = env.window.as_mut().expect("OpenGL ES is not supported in headless mode");
-    let prev_context = env.objc.borrow_mut::<EAGLContextHostObject>(group).gles_ctx.as_mut().unwrap();
-
-    // This is sort of a hack - we set the "current" context, then immediately
-    // drop it. Since we know all the code between here and creating the new
-    // context, we know that there won't be any context switches, so it's fine
-    // to do this.
-    {
-        let _prev_ctx = prev_context.make_current(window);
-    }
-    env.window.as_mut().unwrap().set_share_with_current_context(true);
-
+    // All GL contexts live in one EGL share group (see crate::window), so
+    // sharing works automatically; the group object is only used to share the
+    // renderbuffer-to-drawable bindings map.
     let mut gles_ins = if api == kEAGLRenderingAPIOpenGLES2 {
         create_gles2_ctx(env)
     } else {
@@ -157,8 +157,6 @@ pub const CLASSES: ClassExports = objc_classes! {
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).gles_ctx = Some(gles_ins);
     env.objc.borrow_mut::<EAGLContextHostObject>(this).api = api;
-
-    env.window.as_mut().unwrap().set_share_with_current_context(false);
 
     env.objc.borrow_mut::<EAGLContextHostObject>(this).renderbuffer_drawable_bindings = env.objc.borrow::<EAGLContextHostObject>(group).renderbuffer_drawable_bindings.clone();
     this
@@ -450,16 +448,10 @@ fn limit_framerate(next_frame_due: &mut Option<Instant>, options: &Options) -> O
     }
 }
 
-// These helper functions make the state backup code easier to read, but
-// more importantly, they make it free of mutable variables that wouldn't
-// get caught by Rust's unused variable warnings, which are useful to check
-// we actually restore the stuff we back up.
+// These helper functions make the remaining state queries easier to read and
+// free of mutable variables that wouldn't get caught by Rust's unused variable
+// warnings.
 
-unsafe fn get_ptr(gles: &mut dyn GLES, pname: GLenum) -> *const GLvoid {
-    let mut ptr = std::ptr::null();
-    gles.GetPointerv(pname, &mut ptr);
-    ptr
-}
 // Safety: caller's responsibility to use appropriate N.
 unsafe fn get_ints<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLint; N] {
     let mut res = [0; N];
@@ -469,26 +461,6 @@ unsafe fn get_ints<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLint
 // Safety: caller's responsibility to only use this for scalars.
 unsafe fn get_int(gles: &mut dyn GLES, pname: GLenum) -> GLint {
     get_ints::<1>(gles, pname)[0]
-}
-// Safety: caller's responsibility to use appropriate N.
-unsafe fn get_tex_env_ints<const N: usize>(
-    gles: &mut dyn GLES,
-    target: GLenum,
-    pname: GLenum,
-) -> [GLint; N] {
-    let mut res = [0; N];
-    gles.GetTexEnviv(target, pname, res.as_mut_ptr());
-    res
-}
-// Safety: caller's responsibility to only use this for scalars.
-unsafe fn get_tex_env_int(gles: &mut dyn GLES, target: GLenum, pname: GLenum) -> GLint {
-    get_tex_env_ints::<1>(gles, target, pname)[0]
-}
-// Safety: caller's responsibility to use appropriate N.
-unsafe fn get_floats<const N: usize>(gles: &mut dyn GLES, pname: GLenum) -> [GLfloat; N] {
-    let mut res = [0.0; N];
-    gles.GetFloatv(pname, res.as_mut_ptr());
-    res
 }
 unsafe fn get_renderbuffer_size(gles: &mut dyn GLES) -> (GLsizei, GLsizei) {
     let mut width: GLint = 0;
@@ -571,237 +543,117 @@ unsafe fn read_renderbuffer(gles: &mut dyn GLES, mut pixel_buffer: Vec<u8>) -> (
     (pixel_buffer, width_u32, height_u32)
 }
 
-/// Copies the pixels in a renderbuffer bound to `GL_RENDERBUFFER_BINDING_OES`
-/// (which should be provided by the app) to a texture and presents it with
-/// [present_frame], trying to avoid noticeably modifying OpenGL ES state while
-/// doing so. The front and back buffers are then swapped.
+/// Copies the pixels in the guest's color renderbuffer to a texture, then
+/// presents it with [present_frame] and swaps the window's buffers.
+///
+/// The guest's GL state is never touched: the copy and the presentation happen
+/// entirely on the window's internal ES 1.1 context (see
+/// [crate::window::Window::make_internal_gl_ctx_current]), which accesses the
+/// guest's renderbuffer through the shared EGL share group. That context is
+/// dedicated to our own drawing, so its state doesn't need to be backed up.
 unsafe fn present_renderbuffer(env: &mut Environment) {
     // Save these for when we need to draw the frame
     let viewport = env.window.as_mut().unwrap().viewport();
     let rotation_matrix = env.window.as_mut().unwrap().rotation_matrix();
     let virtual_cursor_visible_at = env.window.as_mut().unwrap().virtual_cursor_visible_at();
 
-    let gles_ctx = super::get_thread_context(
-        &mut env.framework_state.opengles,
-        &mut env.objc,
-        env.current_thread,
-    );
-
-    let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
-    let gles = gles_boxed.as_mut();
-
-    // We can't directly copy the content of the renderbuffer to the default
-    // framebuffer (the window), but if we attach it to a framebuffer object, we
-    // can use glCopyTexImage2D() to copy it to a texture, which we can then
-    // draw to the default framebuffer via a textured quad, which can be
-    // rotated, scaled or letterboxed as appropriate.
-
-    let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
-    let (width, height) = get_renderbuffer_size(gles);
-
-    // To avoid confusing the guest app, we need to be able to undo any
-    // state changes we make.
-    let old_framebuffer: GLuint = get_int(gles, gles11::FRAMEBUFFER_BINDING_OES) as _;
-    let old_texture_2d: GLuint = get_int(gles, gles11::TEXTURE_BINDING_2D) as _;
-
-    // Create a framebuffer we can use to read from the renderbuffer
-    let mut src_framebuffer = 0;
-    gles.GenFramebuffersOES(1, &mut src_framebuffer);
-    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
-    gles.FramebufferRenderbufferOES(
-        gles11::FRAMEBUFFER_OES,
-        gles11::COLOR_ATTACHMENT0_OES,
-        gles11::RENDERBUFFER_OES,
-        renderbuffer,
-    );
-
-    // Create a texture with a copy of the pixels in the framebuffer
-    let mut texture: GLuint = 0;
-    gles.GenTextures(1, &mut texture);
-    gles.BindTexture(gles11::TEXTURE_2D, texture);
-    gles.CopyTexImage2D(
-        gles11::TEXTURE_2D,
-        0,
-        gles11::RGB as _,
-        0,
-        0,
-        width,
-        height,
-        0,
-    );
-    // The texture will not have any mip levels so we must ensure the filter
-    // does not use them, else rendering will fail.
-    gles.TexParameteri(
-        gles11::TEXTURE_2D,
-        gles11::TEXTURE_MIN_FILTER,
-        gles11::LINEAR as _,
-    );
-
-    // Clean up the framebuffer object since we no longer need it.
-    // This also sets the framebuffer bindings back to zero, so rendering
-    // will go to the default framebuffer (the window).
-    gles.DeleteFramebuffersOES(1, &src_framebuffer);
-
-    // Reset various things that could affect the quad or virtual cursor we're
-    // going to draw. Back up the old state while doing so, so it can be
-    // restored later. The app's subsequent drawing will be messed up if we
-    // don't restore it.
-
-    // GL_CURRENT_PROGRAM (0x8B8D) is an ES 2.0 / GL 2.0 piece of state. ES 1.x
-    // contexts won't have any program bound, in which case this is a harmless
-    // no-op. ES 2.0 apps do have one bound and we must clear it so our
-    // fixed-function quad-drawing code below works.
-    const CURRENT_PROGRAM: GLenum = 0x8B8D;
-    let old_program: GLuint = get_int(gles, CURRENT_PROGRAM) as _;
-    if old_program != 0 {
-        gles.UseProgram(0);
-    }
-
-    let old_arrays = {
-        let mut old_arrays = [gles11::FALSE; gles1_on_gl2::ARRAYS.len()];
-        for (is_enabled, info) in old_arrays.iter_mut().zip(gles1_on_gl2::ARRAYS.iter()) {
-            gles.GetBooleanv(info.name, is_enabled);
-            gles.DisableClientState(info.name);
-        }
-        old_arrays
+    // On the guest's current context: find the current renderbuffer and its
+    // size. Renderbuffer objects are shared between all contexts, so the
+    // internal context can attach this one to its own framebuffer.
+    let (renderbuffer, width, height) = {
+        let gles_ctx = super::get_thread_context(
+            &mut env.framework_state.opengles,
+            &mut env.objc,
+            env.current_thread,
+        );
+        let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
+        let gles = gles_boxed.as_mut();
+        let renderbuffer: GLuint = get_int(gles, gles11::RENDERBUFFER_BINDING_OES) as _;
+        let (width, height) = get_renderbuffer_size(gles);
+        (renderbuffer, width, height)
     };
-    let old_capabilities = {
-        let mut old_capabilities = [gles11::FALSE; gles1_on_gl2::CAPABILITIES.len()];
-        for (is_enabled, &name) in old_capabilities
-            .iter_mut()
-            .zip(gles1_on_gl2::CAPABILITIES.iter())
-        {
-            gles.GetBooleanv(name, is_enabled);
-            gles.Disable(name);
-        }
-        old_capabilities
-    };
-    let old_matrix_mode: GLenum = get_int(gles, gles11::MATRIX_MODE) as _;
-    for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
-        gles.MatrixMode(mode);
-        gles.PushMatrix();
-        gles.LoadIdentity();
-    }
-    let old_color: [GLfloat; 4] = get_floats(gles, gles11::CURRENT_COLOR);
-    gles.Color4f(1.0, 1.0, 1.0, 1.0);
 
-    // Back up other things that will be modified while drawing.
-    let old_viewport: (GLint, GLint, GLsizei, GLsizei) = {
-        let [x, y, width, height] = get_ints(gles, gles11::VIEWPORT);
-        (x, y, width as _, height as _)
-    };
-    let old_clear_color: [GLfloat; 4] = get_floats(gles, gles11::COLOR_CLEAR_VALUE);
-    let old_array_buffer: GLuint = get_int(gles, gles11::ARRAY_BUFFER_BINDING) as _;
-    let old_vertex_array_binding: GLuint = get_int(gles, gles11::VERTEX_ARRAY_BUFFER_BINDING) as _;
-    let old_vertex_array_size: GLint = get_int(gles, gles11::VERTEX_ARRAY_SIZE);
-    let old_vertex_array_type: GLenum = get_int(gles, gles11::VERTEX_ARRAY_TYPE) as _;
-    let old_vertex_array_stride: GLsizei = get_int(gles, gles11::VERTEX_ARRAY_STRIDE) as _;
-    let old_vertex_array_pointer = get_ptr(gles, gles11::VERTEX_ARRAY_POINTER);
-    let old_tex_coord_array_binding: GLuint =
-        get_int(gles, gles11::TEXTURE_COORD_ARRAY_BUFFER_BINDING) as _;
-    let old_tex_coord_array_size: GLint = get_int(gles, gles11::TEXTURE_COORD_ARRAY_SIZE);
-    let old_tex_coord_array_type: GLenum = get_int(gles, gles11::TEXTURE_COORD_ARRAY_TYPE) as _;
-    let old_tex_coord_array_stride: GLsizei =
-        get_int(gles, gles11::TEXTURE_COORD_ARRAY_STRIDE) as _;
-    let old_tex_coord_array_pointer = get_ptr(gles, gles11::TEXTURE_COORD_ARRAY_POINTER);
-    let old_blend_sfactor: GLenum = get_int(gles, gles11::BLEND_SRC) as _;
-    let old_blend_dfactor: GLenum = get_int(gles, gles11::BLEND_DST) as _;
-
-    let old_tex_env_mode = get_tex_env_int(gles, gles11::TEXTURE_ENV, gles11::TEXTURE_ENV_MODE);
-    // if the mode is REPLACE, we don't have to reset the other texture
-    // environment values
-    let tex_env_mode_arr = [gles11::REPLACE; 1];
-    gles.TexEnviv(
-        gles11::TEXTURE_ENV,
-        gles11::TEXTURE_ENV_MODE,
-        tex_env_mode_arr.as_ptr().cast(),
-    );
-
-    // Draw the quad
-    present_frame(gles, viewport, rotation_matrix, virtual_cursor_visible_at);
-
-    // Clean up the texture
-    gles.DeleteTextures(1, &texture);
-
-    // Restore all the state saved before rendering
-    for (&is_enabled, info) in old_arrays.iter().zip(gles1_on_gl2::ARRAYS.iter()) {
-        match is_enabled {
-            gles11::TRUE => gles.EnableClientState(info.name),
-            gles11::FALSE => gles.DisableClientState(info.name),
-            _ => unreachable!(),
-        }
-    }
-    for (&is_enabled, &name) in old_capabilities
-        .iter()
-        .zip(gles1_on_gl2::CAPABILITIES.iter())
+    // On the internal context: copy the renderbuffer's pixels to a texture and
+    // draw it to the window.
     {
-        match is_enabled {
-            gles11::TRUE => gles.Enable(name),
-            gles11::FALSE => gles.Disable(name),
-            _ => unreachable!(),
+        let mut gles_boxed = env.window.as_mut().unwrap().make_internal_gl_ctx_current();
+        let gles = gles_boxed.as_mut();
+
+        // We can't directly copy the content of the renderbuffer to the default
+        // framebuffer (the window), but if we attach it to a framebuffer
+        // object, we can use glCopyTexImage2D() to copy it to a texture, which
+        // we can then draw to the default framebuffer via a textured quad,
+        // which can be rotated, scaled or letterboxed as appropriate.
+        let mut src_framebuffer = 0;
+        gles.GenFramebuffersOES(1, &mut src_framebuffer);
+        gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
+        gles.FramebufferRenderbufferOES(
+            gles11::FRAMEBUFFER_OES,
+            gles11::COLOR_ATTACHMENT0_OES,
+            gles11::RENDERBUFFER_OES,
+            renderbuffer,
+        );
+
+        // Create a texture with a copy of the pixels in the framebuffer
+        let mut texture: GLuint = 0;
+        gles.GenTextures(1, &mut texture);
+        gles.BindTexture(gles11::TEXTURE_2D, texture);
+        gles.CopyTexImage2D(
+            gles11::TEXTURE_2D,
+            0,
+            gles11::RGB as _,
+            0,
+            0,
+            width,
+            height,
+            0,
+        );
+        // The texture will not have any mip levels so we must ensure the filter
+        // does not use them, else rendering will fail.
+        gles.TexParameteri(
+            gles11::TEXTURE_2D,
+            gles11::TEXTURE_MIN_FILTER,
+            gles11::LINEAR as _,
+        );
+
+        // Clean up the framebuffer object since we no longer need it.
+        // This also sets the framebuffer bindings back to zero, so rendering
+        // will go to the default framebuffer (the window).
+        gles.DeleteFramebuffersOES(1, &src_framebuffer);
+
+        // Reset the state that could affect the quad or virtual cursor we're
+        // going to draw. Unlike the old single-context present path, there is
+        // no need to back any of this up: this context is used exclusively by
+        // touchHLE's own drawing (see also composition.rs, which sets up the
+        // same state).
+        gles.Color4f(1.0, 1.0, 1.0, 1.0);
+        gles.Disable(gles11::BLEND);
+        for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
+            gles.MatrixMode(mode);
+            gles.LoadIdentity();
         }
-    }
-    for mode in [gles11::MODELVIEW, gles11::PROJECTION, gles11::TEXTURE] {
-        gles.MatrixMode(mode);
-        gles.PopMatrix();
-    }
-    gles.MatrixMode(old_matrix_mode);
-    gles.Color4f(old_color[0], old_color[1], old_color[2], old_color[3]);
-    gles.Viewport(
-        old_viewport.0,
-        old_viewport.1,
-        old_viewport.2,
-        old_viewport.3,
-    );
-    gles.ClearColor(
-        old_clear_color[0],
-        old_clear_color[1],
-        old_clear_color[2],
-        old_clear_color[3],
-    );
-    // GL_ARRAY_BUFFER is implicitly used by the Pointer functions but is also
-    // an independent binding.
-    gles.BindBuffer(gles11::ARRAY_BUFFER, old_vertex_array_binding);
-    gles.VertexPointer(
-        old_vertex_array_size,
-        old_vertex_array_type,
-        old_vertex_array_stride,
-        old_vertex_array_pointer,
-    );
-    gles.BindBuffer(gles11::ARRAY_BUFFER, old_tex_coord_array_binding);
-    gles.TexCoordPointer(
-        old_tex_coord_array_size,
-        old_tex_coord_array_type,
-        old_tex_coord_array_stride,
-        old_tex_coord_array_pointer,
-    );
-    gles.BindBuffer(gles11::ARRAY_BUFFER, old_array_buffer);
-    gles.BlendFunc(old_blend_sfactor, old_blend_dfactor);
+        // GL_ARRAY_BUFFER is implicitly used by the Pointer functions but is
+        // also an independent binding.
+        gles.BindBuffer(gles11::ARRAY_BUFFER, 0);
+        gles.BindBuffer(gles11::ELEMENT_ARRAY_BUFFER, 0);
+        let tex_env_mode_arr = [gles11::REPLACE; 1];
+        gles.TexEnviv(
+            gles11::TEXTURE_ENV,
+            gles11::TEXTURE_ENV_MODE,
+            tex_env_mode_arr.as_ptr().cast(),
+        );
 
-    let old_tex_env_mode_arr = [old_tex_env_mode; 1];
-    gles.TexEnviv(
-        gles11::TEXTURE_ENV,
-        gles11::TEXTURE_ENV_MODE,
-        old_tex_env_mode_arr.as_ptr().cast(),
-    );
+        // Draw the quad
+        present_frame(gles, viewport, rotation_matrix, virtual_cursor_visible_at);
 
-    std::mem::drop(gles_boxed);
+        // Clean up the texture
+        gles.DeleteTextures(1, &texture);
+    }
 
     // SDL2's documentation warns 0 should be bound to the draw framebuffer
-    // when swapping the window, so this is the perfect moment.
+    // when swapping the window, so this is the perfect moment. The guest's
+    // context is re-bound automatically on its next GL call (see
+    // super::sync_context).
     env.window.as_ref().unwrap().swap_window();
-
-    let mut gles_boxed = gles_ctx.make_current(env.window.as_mut().unwrap());
-    let gles = gles_boxed.as_mut();
-
-    // Restore the other bindings
-    gles.BindTexture(gles11::TEXTURE_2D, old_texture_2d);
-    gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, old_framebuffer);
-
-    // Restore the previously bound shader program (ES 2.0).
-    if old_program != 0 {
-        gles.UseProgram(old_program);
-    }
-
-    // { let err = gles.GetError(); if err != 0 { panic!("{:#x}", err); } }
 }
+

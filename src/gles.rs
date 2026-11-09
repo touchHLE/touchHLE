@@ -20,16 +20,13 @@
 //! module contains the layers that aren't specific to a particular use:
 //!
 //! - [gles_generic] provides an abstraction over OpenGL ES implementations.
-//! - Various modules provide implementations:
-//!   - [gles1_native] passes through native OpenGL ES 1.1.
-//!   - [gles1_on_gl2] provides an implementation of OpenGL ES 1.1 using OpenGL
-//!     2.1 compatibility profile.
-//!   - There might be more in future.
-//! - [gles11_raw] provides raw bindings for OpenGL ES 1.1 generated from the
-//!   Khronos API headers. **The function bindings are only for use within this
-//!   module.** The constants and types can be used outside it, however.
-//!   - [gl21compat_raw] is the same thing, but for OpenGL 2.1 compatibility
-//!     profile, which can't be used outside this module at all.
+//! - [angle] provides OpenGL ES 1.1 and 2.0 contexts on top of ANGLE's Metal
+//!   backend. All contexts share one share group (see [crate::window]), so GL
+//!   objects can cross between ES 1.1 and 2.0 contexts.
+//! - [gles11_raw] and [gles2_raw] provide raw bindings for OpenGL ES 1.1 and
+//!   2.0 generated from the Khronos API headers. **The function bindings are
+//!   only for use within this module.** The constants and types can be used
+//!   outside it, however.
 //! - [present] provides utilities for presenting frames to the window using an
 //!   abstract OpenGL ES implementation.
 //!
@@ -63,86 +60,30 @@
 //!   - [EXT_texture_filter_anisotropic](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt)
 //!   - [EXT_texture_lod_bias](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_texture_lod_bias.txt)
 
-pub mod gles1_native;
-pub mod gles1_on_gl2;
-pub mod gles2_glsl;
+pub mod angle;
 mod gles_generic;
 pub mod present;
 mod util;
 
-use touchHLE_gl_bindings::gl21compat as gl21compat_raw;
+pub use touchHLE_gl_bindings::gles2 as gles2_raw;
 pub use touchHLE_gl_bindings::gles11 as gles11_raw;
 
 use crate::environment::Environment;
-use gles1_native::GLES1NativeContext;
-use gles1_on_gl2::GLES1OnGL2Context;
-pub use gles_generic::GLESContext;
-pub use gles_generic::GLES;
+use crate::window::GLVersion;
+use angle::ANGLEContext;
+pub use gles_generic::{ArrayInfo, GLESContext, GLES, ARRAYS};
 
-/// Labels for [GLES] implementations and an abstraction for constructing them.
-#[derive(Copy, Clone)]
-pub enum GLESImplementation {
-    /// [gles1_native::GLES1Native].
-    GLES1Native,
-    /// [gles1_on_gl2::GLES1OnGL2].
-    GLES1OnGL2,
-}
-impl GLESImplementation {
-    /// List of OpenGL ES 1.1 implementations in order of preference.
-    pub const GLES1_IMPLEMENTATIONS: &'static [Self] = &[Self::GLES1Native, Self::GLES1OnGL2];
-    /// Convert from short name used for command-line arguments. Returns [Err]
-    /// if name is not recognized..
-    pub fn from_short_name(name: &str) -> Result<Self, ()> {
-        match name {
-            "gles1_on_gl2" => Ok(Self::GLES1OnGL2),
-            "gles1_native" => Ok(Self::GLES1Native),
-            _ => Err(()),
-        }
-    }
-    /// See [GLESContext::description].
-    pub fn description(self) -> &'static str {
-        match self {
-            Self::GLES1Native => GLES1NativeContext::description(),
-            Self::GLES1OnGL2 => GLES1OnGL2Context::description(),
-        }
-    }
-    /// See [GLESContext::new].
-    pub fn construct(
-        self,
-        window: &mut crate::window::Window,
-    ) -> Result<Box<dyn GLESContext>, String> {
-        fn boxer<T: GLESContext + 'static>(ctx: T) -> Box<dyn GLESContext> {
-            Box::new(ctx)
-        }
-        match self {
-            Self::GLES1Native => GLES1NativeContext::new(window).map(boxer),
-            Self::GLES1OnGL2 => GLES1OnGL2Context::new(window).map(boxer),
-        }
-    }
-}
-
-/// Try to create an OpenGL ES 1.1 context using the configured strategies,
-/// panicking on failure.
+/// Create an OpenGL ES 1.1 context via ANGLE, panicking on failure.
 pub fn create_gles1_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
-    env.on_parent_stack_in_coroutine(|window, options| {
-        create_gles1_ctx_no_parent_stack(window, options)
-    })
+    env.on_parent_stack_in_coroutine(|window, _options| create_gles1_ctx_no_parent_stack(window))
 }
 
-/// Try to create an OpenGL ES 2.0 context using the [GLES1OnGL2] backend,
-/// panicking on failure.
-///
-/// touchHLE does not have a dedicated native ES 2.0 backend on most desktop
-/// hosts. Instead, ES 2.0 entry points are provided by [GLES1OnGL2], which is
-/// based on a desktop OpenGL 2.1 compatibility profile context. Desktop GL 2.1
-/// has all the shader-related entry points (`glCreateShader`,
-/// `glCompileShader`, …) that ES 2.0 needs, plus EXT_framebuffer_object for
-/// the renderbuffer/framebuffer entry points.
+/// Create an OpenGL ES 2.0 context via ANGLE, panicking on failure.
 pub fn create_gles2_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
     env.on_parent_stack_in_coroutine(|window, _options| {
         assert!(window.on_main_stack());
-        log!("Creating an OpenGL ES 2.0 context (using GL 2.1 compatibility backend):");
-        match GLES1OnGL2Context::new(window) {
+        log!("Creating an OpenGL ES 2.0 context ({}):", ANGLEContext::description());
+        match ANGLEContext::new_with_version(window, GLVersion::GLES20) {
             Ok(ctx) => {
                 log!("=> Success!");
                 let boxed: Box<dyn GLESContext> = Box::new(ctx);
@@ -156,30 +97,14 @@ pub fn create_gles2_ctx(env: &mut Environment) -> Box<dyn GLESContext> {
 /// Same as [create_gles1_ctx], but without calling
 /// [Environment::on_parent_stack_in_coroutine]. Only should be called by
 /// functions not inside a coroutine that can't use [Environment].
-pub fn create_gles1_ctx_no_parent_stack(
-    window: &mut crate::window::Window,
-    options: &crate::options::Options,
-) -> Box<dyn GLESContext> {
+pub fn create_gles1_ctx_no_parent_stack(window: &mut crate::window::Window) -> Box<dyn GLESContext> {
     assert!(window.on_main_stack());
-    log!("Creating an OpenGL ES 1.1 context:");
-    let list = if let Some(ref preference) = options.gles1_implementation {
-        std::slice::from_ref(preference)
-    } else {
-        GLESImplementation::GLES1_IMPLEMENTATIONS
-    };
-    let mut gles1_ctx = None;
-    for implementation in list {
-        log!("Trying: {}", implementation.description());
-        match implementation.construct(window) {
-            Ok(ctx) => {
-                log!("=> Success!");
-                gles1_ctx = Some(ctx);
-                break;
-            }
-            Err(err) => {
-                log!("=> Failed: {}.", err);
-            }
+    log!("Creating an OpenGL ES 1.1 context ({}):", ANGLEContext::description());
+    match ANGLEContext::new_with_version(window, GLVersion::GLES11) {
+        Ok(ctx) => {
+            log!("=> Success!");
+            Box::new(ctx)
         }
+        Err(err) => panic!("Couldn't create OpenGL ES 1.1 context: {}", err),
     }
-    gles1_ctx.expect("Couldn't create OpenGL ES 1.1 context!")
 }

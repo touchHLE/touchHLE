@@ -228,7 +228,7 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
     });
 }
 fn glGetPointerv(env: &mut Environment, pname: GLenum, params: MutPtr<ConstVoidPtr>) {
-    use crate::gles::gles1_on_gl2::{ArrayInfo, ARRAYS};
+    use crate::gles::{ArrayInfo, ARRAYS};
     let &ArrayInfo { buffer_binding, .. } =
         ARRAYS.iter().find(|info| info.pointer == pname).unwrap();
     with_ctx_and_mem(env, |gles, mem| {
@@ -1556,9 +1556,9 @@ unsafe fn restore_fog_state_values(gles: &mut dyn GLES, from_backup: Option<(f32
 // OpenGL ES 2.0 entry points.
 //
 // These wrap the [crate::gles::GLES] trait's ES 2.0 methods, which are
-// implemented by [crate::gles::gles1_on_gl2::GLES1OnGL2] using OpenGL 2.1
-// compatibility profile. EAGL routes ES 2.0 contexts to that backend, so by
-// the time these are called the trait methods are real implementations.
+// implemented by [crate::gles::angle] on top of ANGLE. EAGL routes ES 2.0
+// contexts to that backend, so by the time these are called the trait methods
+// are real implementations.
 //
 // Strings (shader sources, attribute/uniform names) need to be copied out of
 // the guest's address space before being passed to host GL.

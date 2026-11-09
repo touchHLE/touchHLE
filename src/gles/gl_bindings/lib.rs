@@ -11,8 +11,8 @@
 #![allow(non_snake_case)]
 
 #[allow(warnings)]
-pub mod gl21compat {
-    include!(concat!(env!("OUT_DIR"), "/gl21compat.rs"));
+pub mod gles2 {
+    include!(concat!(env!("OUT_DIR"), "/gles2.rs"));
 }
 #[allow(warnings)]
 pub mod gles11 {

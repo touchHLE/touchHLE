@@ -18,6 +18,39 @@ use super::gles11_raw::types::*;
 /// points.
 pub type GLchar = std::os::raw::c_char;
 
+/// Metadata for a vertex array, used by the guest-facing dispatch layer to map
+/// `glGetPointer*` enums to their buffer-binding enums.
+pub struct ArrayInfo {
+    /// Buffer binding enum for `glGetInteger`.
+    pub buffer_binding: GLenum,
+    /// Pointer enum for `glGetPointer`.
+    pub pointer: GLenum,
+}
+
+/// List of vertex arrays tracked by OpenGL ES 1.1. Used by the guest-facing
+/// dispatch layer (see [crate::frameworks::opengles::gles_guest]) to map
+/// pointer enums to their buffer bindings.
+///
+/// TODO: GL_POINT_SIZE_ARRAY_OES?
+pub const ARRAYS: &[ArrayInfo] = &[
+    ArrayInfo {
+        buffer_binding: super::gles11_raw::COLOR_ARRAY_BUFFER_BINDING,
+        pointer: super::gles11_raw::COLOR_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        buffer_binding: super::gles11_raw::NORMAL_ARRAY_BUFFER_BINDING,
+        pointer: super::gles11_raw::NORMAL_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        buffer_binding: super::gles11_raw::TEXTURE_COORD_ARRAY_BUFFER_BINDING,
+        pointer: super::gles11_raw::TEXTURE_COORD_ARRAY_POINTER,
+    },
+    ArrayInfo {
+        buffer_binding: super::gles11_raw::VERTEX_ARRAY_BUFFER_BINDING,
+        pointer: super::gles11_raw::VERTEX_ARRAY_POINTER,
+    },
+];
+
 /// Trait representing an OpenGL ES implementation and context.
 ///
 /// The GL context is not necessarily active, so GL functions can't be called
@@ -26,13 +59,6 @@ pub type GLchar = std::os::raw::c_char;
 pub trait GLESContext {
     /// Get a human-friendly description of this implementation.
     fn description() -> &'static str
-    where
-        Self: Sized;
-
-    /// Construct a new context. This might fail if the host OS doesn't have a
-    /// compatible driver, for example.
-    #[allow(clippy::new_ret_no_self)]
-    fn new(window: &mut crate::window::Window) -> Result<Self, String>
     where
         Self: Sized;
 
@@ -73,6 +99,10 @@ pub trait GLESContext {
 /// These functions (should) act as documented by the OpenGL ES spec. Callers
 /// should ensure that all uses of raw pointers are verfied to be valid and
 /// of the correct size as documented in the OpenGL ES spec.
+/// This trait mirrors the full OpenGL ES API surface. Some entry points (e.g.
+/// shader introspection queries) are not yet dispatched by the guest layer,
+/// so their methods may appear unused.
+#[allow(dead_code)]
 #[allow(clippy::upper_case_acronyms)]
 #[allow(clippy::too_many_arguments)] // not our fault :(
 pub trait GLES {
@@ -443,61 +473,14 @@ pub trait GLES {
     unsafe fn DeleteRenderbuffersOES(&mut self, n: GLsizei, renderbuffers: *const GLuint);
     unsafe fn GenerateMipmapOES(&mut self, target: GLenum);
 
-    // Non-OES aliases for OES_framebuffer_object functions. OpenGL ES 2.0
-    // (and some ES 1.1 apps) call the suffix-free names directly.
-    unsafe fn GenFramebuffers(&mut self, n: GLsizei, framebuffers: *mut GLuint);
-    unsafe fn GenRenderbuffers(&mut self, n: GLsizei, renderbuffers: *mut GLuint);
-    unsafe fn IsFramebuffer(&mut self, framebuffer: GLuint) -> GLboolean;
-    unsafe fn IsRenderbuffer(&mut self, renderbuffer: GLuint) -> GLboolean;
-    unsafe fn BindFramebuffer(&mut self, target: GLenum, framebuffer: GLuint);
-    unsafe fn BindRenderbuffer(&mut self, target: GLenum, renderbuffer: GLuint);
-    unsafe fn RenderbufferStorage(
-        &mut self,
-        target: GLenum,
-        internalformat: GLenum,
-        width: GLsizei,
-        height: GLsizei,
-    );
-    unsafe fn FramebufferRenderbuffer(
-        &mut self,
-        target: GLenum,
-        attachment: GLenum,
-        renderbuffertarget: GLenum,
-        renderbuffer: GLuint,
-    );
-    unsafe fn FramebufferTexture2D(
-        &mut self,
-        target: GLenum,
-        attachment: GLenum,
-        textarget: GLenum,
-        texture: GLuint,
-        level: i32,
-    );
-    unsafe fn CheckFramebufferStatus(&mut self, target: GLenum) -> GLenum;
-    unsafe fn DeleteFramebuffers(&mut self, n: GLsizei, framebuffers: *const GLuint);
-    unsafe fn DeleteRenderbuffers(&mut self, n: GLsizei, renderbuffers: *const GLuint);
-    unsafe fn GenerateMipmap(&mut self, target: GLenum);
-    unsafe fn GetFramebufferAttachmentParameteriv(
-        &mut self,
-        target: GLenum,
-        attachment: GLenum,
-        pname: GLenum,
-        params: *mut GLint,
-    );
-    unsafe fn GetRenderbufferParameteriv(
-        &mut self,
-        target: GLenum,
-        pname: GLenum,
-        params: *mut GLint,
-    );
-
     unsafe fn GetBufferParameteriv(&mut self, target: GLenum, pname: GLenum, params: *mut GLint);
     unsafe fn MapBufferOES(&mut self, target: GLenum, access: GLenum) -> *mut GLvoid;
     unsafe fn UnmapBufferOES(&mut self, target: GLenum) -> GLboolean;
 
     // OpenGL ES 2.0 entry points. Default implementations panic — only
-    // backends that actually support shaders (currently [super::gles1_on_gl2])
-    // implement these. EAGL routes ES 2.0 contexts to such a backend.
+    // backends that actually support shaders (currently [super::angle]) and
+    // contexts of the appropriate client version implement these. EAGL routes
+    // ES 2.0 contexts to such a backend.
     unsafe fn CreateShader(&mut self, _type_: GLenum) -> GLuint {
         unimplemented!("CreateShader (OpenGL ES 2.0) not supported by this backend")
     }

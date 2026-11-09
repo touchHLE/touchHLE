@@ -10,23 +10,12 @@ use std::path::PathBuf;
 fn main() {
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
 
-    let mut file = File::create(out_dir.join("gl21compat.rs")).unwrap();
-    Registry::new(
-        Api::Gl,
-        (2, 1),
-        Profile::Compatibility,
-        Fallbacks::None,
-        [
-            "GL_EXT_framebuffer_object",
-            "GL_EXT_texture_filter_anisotropic",
-            "GL_EXT_texture_lod_bias",
-            "GL_ARB_matrix_palette",
-            "GL_ARB_vertex_blend",
-            "GL_EXT_blend_subtract",
-        ],
-    )
-    .write_bindings(GlobalGenerator, &mut file)
-    .unwrap();
+    // Plain OpenGL ES 2.0 core entry points (used for guest ES 2.0 contexts
+    // on ANGLE).
+    let mut file = File::create(out_dir.join("gles2.rs")).unwrap();
+    Registry::new(Api::Gles2, (2, 0), Profile::Core, Fallbacks::None, [])
+        .write_bindings(GlobalGenerator, &mut file)
+        .unwrap();
 
     let mut file = File::create(out_dir.join("gles11.rs")).unwrap();
     Registry::new(
@@ -47,6 +36,8 @@ fn main() {
             "GL_OES_compressed_paletted_texture",
             "GL_OES_matrix_palette",
             "GL_OES_blend_subtract",
+            "GL_OES_blend_func_separate",
+            "GL_OES_blend_equation_separate",
         ],
     )
     .write_bindings(GlobalGenerator, &mut file)

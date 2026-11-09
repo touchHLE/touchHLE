@@ -35,6 +35,15 @@ Quality and performance:
   the presented frame and reports how much of it is non-black, so presentation
   can be verified without watching the screen; `PEAR_LAYER_TREE=1` dumps the
   `CAEAGLLayer` tree when full-screen detection fails.
+- The CPU backend can now be built against the dedicated Dynarmic fork
+  (PearLegacyJIT) instead of the bundled submodule: set `PEAR_DYNARMIC_ROOT` to
+  a local checkout, otherwise `vendor/dynarmic` is used as before. The wrapper
+  also pins `CMAKE_OSX_ARCHITECTURES=arm64` and `CMAKE_OSX_DEPLOYMENT_TARGET` for
+  macOS builds, so the JIT is never silently built for the wrong architecture.
+- Release builds of the JIT no longer run Dynarmic's IR verification pass,
+  which walks every instruction of every translated block as a debugging aid.
+  Measured cost was 5.5% of block translation (28.26 to 26.70 microseconds per
+  33-instruction block); it remains enabled in debug builds.
 
 ## v0.7.1 (2026-11-09)
 

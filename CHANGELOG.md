@@ -20,6 +20,8 @@ Usability:
 - `open()` failures now name the guest path that could not be opened, not just
   the pointer. Diagnosing a game that is missing a resource no longer requires
   cross-referencing addresses against memory dumps.
+- A missing per-app `touchHLE_options.txt` no longer prints a warning on every
+  launch. Most people never create that file, and PearSilicon does not.
 
 ## v0.7.0 (2026-11-09)
 

@@ -316,6 +316,8 @@ pub fn main<T: Iterator<Item = String>>(mut args: T) -> Result<(), String> {
     let user_options_path = paths::user_data_base_path().join(paths::USER_OPTIONS_FILE);
     match std::fs::File::open(&user_options_path) {
         Ok(file) => apply_options(file, user_options_path.display(), &mut options, app_id)?,
+        // Most people never create this file, so its absence is not a warning.
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {}
         Err(err) => echo!(
             "Warning: Could not open {}: {}",
             user_options_path.display(),

@@ -629,6 +629,55 @@ fn content_self_test_enabled() -> bool {
     *ENABLED
 }
 
+/// Reports what the guest's own renderbuffer contains, separately from what was
+/// presented. Enabled by `PEAR_PRESENT_TRACE`: if the source has content but the
+/// presented frame does not, the fault is in the copy; if neither has content,
+/// the guest really is drawing black.
+fn present_trace_enabled() -> bool {
+    static ENABLED: std::sync::LazyLock<bool> =
+        std::sync::LazyLock::new(|| std::env::var_os("PEAR_PRESENT_TRACE").is_some());
+    *ENABLED
+}
+
+/// # Safety
+/// Must be called with the source framebuffer still bound, on the internal
+/// context, before the copy destination is unbound.
+unsafe fn trace_source_content(gles: &mut dyn GLES, width: i32, height: i32, renderbuffer: GLuint) {
+    static COUNT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let count = COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    if !count.is_multiple_of(150) {
+        return;
+    }
+    let status = gles.CheckFramebufferStatusOES(gles11::FRAMEBUFFER_OES);
+    let read_w = width.clamp(1, 64);
+    let read_h = height.clamp(1, 64);
+    let mut buffer = vec![0u8; (read_w * read_h * 4) as usize];
+    gles.ReadPixels(
+        (width - read_w) / 2,
+        (height - read_h) / 2,
+        read_w,
+        read_h,
+        gles11::RGBA,
+        gles11::UNSIGNED_BYTE,
+        buffer.as_mut_ptr().cast(),
+    );
+    let non_black = buffer
+        .chunks_exact(4)
+        .filter(|pixel| pixel[0] > 8 || pixel[1] > 8 || pixel[2] > 8)
+        .count();
+    log!(
+        "Source self-test: {}/{} non-black in {}x{} of renderbuffer {:?} ({}x{}), framebuffer status {:#x}",
+        non_black,
+        read_w as u64 * read_h as u64,
+        read_w,
+        read_h,
+        renderbuffer,
+        width,
+        height,
+        status
+    );
+}
+
 static CONTENT_SELF_TEST_COUNT: std::sync::atomic::AtomicU32 =
     std::sync::atomic::AtomicU32::new(0);
 
@@ -784,6 +833,9 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
                 gles.BindTexture(gles11::TEXTURE_2D, target.texture);
                 gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, target.src_framebuffer);
                 gles.CopyTexSubImage2D(gles11::TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+            }
+            if present_trace_enabled() {
+                trace_source_content(gles, width, height, renderbuffer);
             }
             // Rendering must go to the default framebuffer (the window) once
             // the copy is done. The texture stays bound because

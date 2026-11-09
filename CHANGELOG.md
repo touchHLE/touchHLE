@@ -34,7 +34,13 @@ Quality and performance:
   case and how many frames exceeded 33 ms; `PEAR_CONTENT_SELFTEST=1` reads back
   the presented frame and reports how much of it is non-black, so presentation
   can be verified without watching the screen; `PEAR_LAYER_TREE=1` dumps the
-  `CAEAGLLayer` tree when full-screen detection fails.
+  `CAEAGLLayer` tree when full-screen detection fails;
+  `PEAR_PRESENT_TRACE=1` reads back the guest's renderbuffer, the copy source,
+  and reports its non-black pixel count and framebuffer completeness. Together
+  the last two separate "the game drew black" from "presentation lost the
+  pixels": on Miku Flick/02 the source reads 4096/4096 non-black with a complete
+  framebuffer whenever the presented frame is black, so any remaining
+  blank-frame report is a present-path problem, not a rendering one.
 - The CPU backend can now be built against the dedicated Dynarmic fork
   (PearLegacyJIT) instead of the bundled submodule: set `PEAR_DYNARMIC_ROOT` to
   a local checkout, otherwise `vendor/dynarmic` is used as before. The wrapper

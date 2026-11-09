@@ -13,7 +13,7 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
-## Unreleased
+## v0.7.1 (2026-11-09)
 
 Usability:
 

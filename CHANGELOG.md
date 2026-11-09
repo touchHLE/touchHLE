@@ -13,6 +13,29 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## v0.7.2 (unreleased)
+
+Quality and performance:
+
+- Fixed the periodic black frames and mid-song slowdown in Miku Flick/02. The
+  full-screen `CAEAGLLayer` detection rejected the game's layer (it is 320x460,
+  not the screen's 320x480, because of the status bar) and followed its
+  topmost sublayer, which is an invisible 20x20 overlay. Every frame therefore
+  fell back to presenting via `glReadPixels`, a full GPU sync plus a
+  system-RAM round trip. The detection now requires a layer covering the full
+  screen width with a centred anchor, and follows only visible sublayers.
+  Measured over two minutes of gameplay: present time dropped to an average of
+  0.8 ms with a 1.3 ms worst case and no frame over the 33 ms budget, where the
+  slow path had been used for every one of 5905 frames, with presents as slow
+  as 332 ms.
+- The present path now reuses one framebuffer and texture for the whole
+  lifetime of a drawable, instead of allocating and deleting a pair per frame.
+- New diagnostics: `PEAR_PRESENT_STATS=1` reports present-time averages, worst
+  case and how many frames exceeded 33 ms; `PEAR_CONTENT_SELFTEST=1` reads back
+  the presented frame and reports how much of it is non-black, so presentation
+  can be verified without watching the screen; `PEAR_LAYER_TREE=1` dumps the
+  `CAEAGLLayer` tree when full-screen detection fails.
+
 ## v0.7.1 (2026-11-09)
 
 Usability:

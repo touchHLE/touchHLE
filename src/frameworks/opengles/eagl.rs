@@ -543,6 +543,134 @@ unsafe fn read_renderbuffer(gles: &mut dyn GLES, mut pixel_buffer: Vec<u8>) -> (
     (pixel_buffer, width_u32, height_u32)
 }
 
+/// GL objects used to copy the guest's renderbuffer into the internal context
+/// before drawing it to the window.
+///
+/// Creating a framebuffer and a texture for every presented frame made ANGLE
+/// allocate and destroy a Metal texture on each frame, which costs a
+/// reallocation and forces a GPU sync point. In practice that showed up as
+/// periodic hitches, sometimes with a black frame while the drawable was being
+/// recycled. These objects are now created once and reused for as long as the
+/// source renderbuffer keeps the same identity and size; only the pixel copy
+/// happens per frame.
+struct PresentTarget {
+    src_framebuffer: GLuint,
+    texture: GLuint,
+    renderbuffer: GLuint,
+    width: i32,
+    height: i32,
+}
+
+thread_local! {
+    /// Only ever touched by the internal context, which is unique per window.
+    static PRESENT_TARGET: RefCell<Option<PresentTarget>> = const { RefCell::new(None) };
+}
+
+thread_local! {
+    /// Present-time accumulator used to report frame pacing. Only touched from
+    /// the window's presenting thread.
+    static PRESENT_STATS: RefCell<PresentStats> = const { RefCell::new(PresentStats::new()) };
+}
+
+struct PresentStats {
+    frames: u32,
+    total_secs: f64,
+    max_secs: f64,
+    slow_frames: u32,
+}
+
+impl PresentStats {
+    const fn new() -> Self {
+        Self {
+            frames: 0,
+            total_secs: 0.0,
+            max_secs: 0.0,
+            slow_frames: 0,
+        }
+    }
+}
+
+/// Accumulates present timings and logs a summary every 300 presents (about
+/// 10 s at 30 Hz) when `PEAR_PRESENT_STATS` is set. A slice is "slow" when it
+/// exceeds a 33 ms (30 Hz) budget.
+fn record_present_time(secs: f64) {
+    static ENABLED: std::sync::LazyLock<bool> =
+        std::sync::LazyLock::new(|| std::env::var_os("PEAR_PRESENT_STATS").is_some());
+    if !*ENABLED {
+        return;
+    }
+
+    PRESENT_STATS.with_borrow_mut(|stats| {
+        stats.frames += 1;
+        stats.total_secs += secs;
+        stats.max_secs = stats.max_secs.max(secs);
+        if secs > 0.033 {
+            stats.slow_frames += 1;
+        }
+        if stats.frames >= 300 {
+            log!(
+                "Present stats: {} frames, avg {:.2}ms, max {:.2}ms, {} over 33ms",
+                stats.frames,
+                stats.total_secs * 1000.0 / stats.frames as f64,
+                stats.max_secs * 1000.0,
+                stats.slow_frames
+            );
+            *stats = PresentStats::new();
+        }
+    });
+}
+
+/// Reads back a centre crop of the just-drawn back buffer and reports how much
+/// of it is non-black, so that presentation can be verified without a human
+/// looking at the screen. Enabled by `PEAR_CONTENT_SELFTEST`.
+fn content_self_test_enabled() -> bool {
+    static ENABLED: std::sync::LazyLock<bool> =
+        std::sync::LazyLock::new(|| std::env::var_os("PEAR_CONTENT_SELFTEST").is_some());
+    *ENABLED
+}
+
+static CONTENT_SELF_TEST_COUNT: std::sync::atomic::AtomicU32 =
+    std::sync::atomic::AtomicU32::new(0);
+
+/// # Safety
+/// Must be called with the window's internal GL context current and before the
+/// window's buffers are swapped.
+unsafe fn self_test_content(gles: &mut dyn GLES, width: i32, height: i32) {
+    use std::sync::atomic::Ordering;
+    let count = CONTENT_SELF_TEST_COUNT.fetch_add(1, Ordering::Relaxed);
+    // A report every 150 presents is dense enough for diagnosis and cheap.
+    if !count.is_multiple_of(150) {
+        return;
+    }
+
+    let read_w = width.clamp(1, 64);
+    let read_h = height.clamp(1, 64);
+    let mut buffer = vec![0u8; (read_w * read_h * 4) as usize];
+    gles.ReadPixels(
+        (width - read_w) / 2,
+        (height - read_h) / 2,
+        read_w,
+        read_h,
+        gles11::RGBA,
+        gles11::UNSIGNED_BYTE,
+        buffer.as_mut_ptr().cast(),
+    );
+
+    let non_black = buffer
+        .chunks_exact(4)
+        .filter(|pixel| pixel[0] > 8 || pixel[1] > 8 || pixel[2] > 8)
+        .count();
+    log!(
+        "Content self-test: {}/{} non-black pixels in a {}x{} centre crop of {}x{}",
+        non_black,
+        read_w as u64 * read_h as u64,
+        read_w,
+        read_h,
+        width,
+        height
+    );
+}
+
 /// Copies the pixels in the guest's color renderbuffer to a texture, then
 /// presents it with [present_frame] and swaps the window's buffers.
 ///
@@ -552,6 +680,7 @@ unsafe fn read_renderbuffer(gles: &mut dyn GLES, mut pixel_buffer: Vec<u8>) -> (
 /// guest's renderbuffer through the shared EGL share group. That context is
 /// dedicated to our own drawing, so its state doesn't need to be backed up.
 unsafe fn present_renderbuffer(env: &mut Environment) {
+    let present_start = Instant::now();
     // Save these for when we need to draw the frame
     let viewport = env.window.as_mut().unwrap().viewport();
     let rotation_matrix = env.window.as_mut().unwrap().rotation_matrix();
@@ -584,42 +713,83 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         // object, we can use glCopyTexImage2D() to copy it to a texture, which
         // we can then draw to the default framebuffer via a textured quad,
         // which can be rotated, scaled or letterboxed as appropriate.
-        let mut src_framebuffer = 0;
-        gles.GenFramebuffersOES(1, &mut src_framebuffer);
-        gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
-        gles.FramebufferRenderbufferOES(
-            gles11::FRAMEBUFFER_OES,
-            gles11::COLOR_ATTACHMENT0_OES,
-            gles11::RENDERBUFFER_OES,
-            renderbuffer,
-        );
+        // The renderbuffer is the read source for the copy, so it has to stay
+        // attached to a framebuffer while the copy happens. The framebuffer
+        // and texture are cached and reused: only the copy is per-frame work.
+        PRESENT_TARGET.with_borrow_mut(|slot| {
+            let changed = match slot.as_ref() {
+                Some(target) => {
+                    target.renderbuffer != renderbuffer
+                        || target.width != width
+                        || target.height != height
+                }
+                None => true,
+            };
+            if changed {
+                if let Some(old) = slot.take() {
+                    let mut framebuffers = [old.src_framebuffer];
+                    gles.DeleteFramebuffersOES(1, framebuffers.as_mut_ptr());
+                    let mut textures = [old.texture];
+                    gles.DeleteTextures(1, textures.as_mut_ptr());
+                }
 
-        // Create a texture with a copy of the pixels in the framebuffer
-        let mut texture: GLuint = 0;
-        gles.GenTextures(1, &mut texture);
-        gles.BindTexture(gles11::TEXTURE_2D, texture);
-        gles.CopyTexImage2D(
-            gles11::TEXTURE_2D,
-            0,
-            gles11::RGB as _,
-            0,
-            0,
-            width,
-            height,
-            0,
-        );
-        // The texture will not have any mip levels so we must ensure the filter
-        // does not use them, else rendering will fail.
-        gles.TexParameteri(
-            gles11::TEXTURE_2D,
-            gles11::TEXTURE_MIN_FILTER,
-            gles11::LINEAR as _,
-        );
+                let mut src_framebuffer: GLuint = 0;
+                gles.GenFramebuffersOES(1, &mut src_framebuffer);
+                // The attachment applies to the currently bound framebuffer,
+                // so bind before attaching.
+                gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, src_framebuffer);
+                gles.FramebufferRenderbufferOES(
+                    gles11::FRAMEBUFFER_OES,
+                    gles11::COLOR_ATTACHMENT0_OES,
+                    gles11::RENDERBUFFER_OES,
+                    renderbuffer,
+                );
 
-        // Clean up the framebuffer object since we no longer need it.
-        // This also sets the framebuffer bindings back to zero, so rendering
-        // will go to the default framebuffer (the window).
-        gles.DeleteFramebuffersOES(1, &src_framebuffer);
+                let mut texture: GLuint = 0;
+                gles.GenTextures(1, &mut texture);
+                gles.BindTexture(gles11::TEXTURE_2D, texture);
+                gles.CopyTexImage2D(
+                    gles11::TEXTURE_2D,
+                    0,
+                    gles11::RGB as _,
+                    0,
+                    0,
+                    width,
+                    height,
+                    0,
+                );
+                // The texture will not have any mip levels so we must ensure the
+                // filter does not use them, else rendering will fail.
+                gles.TexParameteri(
+                    gles11::TEXTURE_2D,
+                    gles11::TEXTURE_MIN_FILTER,
+                    gles11::LINEAR as _,
+                );
+
+                *slot = Some(PresentTarget {
+                    src_framebuffer,
+                    texture,
+                    renderbuffer,
+                    width,
+                    height,
+                });
+                log_dbg!(
+                    "present target allocated for renderbuffer {:?} ({}x{})",
+                    renderbuffer,
+                    width,
+                    height
+                );
+            } else {
+                let target = slot.as_ref().unwrap();
+                gles.BindTexture(gles11::TEXTURE_2D, target.texture);
+                gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, target.src_framebuffer);
+                gles.CopyTexSubImage2D(gles11::TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+            }
+            // Rendering must go to the default framebuffer (the window) once
+            // the copy is done. The texture stays bound because
+            // [present_frame] draws it.
+            gles.BindFramebufferOES(gles11::FRAMEBUFFER_OES, 0);
+        });
 
         // Reset the state that could affect the quad or virtual cursor we're
         // going to draw. Unlike the old single-context present path, there is
@@ -646,8 +816,22 @@ unsafe fn present_renderbuffer(env: &mut Environment) {
         // Draw the quad
         present_frame(gles, viewport, rotation_matrix, virtual_cursor_visible_at);
 
-        // Clean up the texture
-        gles.DeleteTextures(1, &texture);
+        if content_self_test_enabled() {
+            self_test_content(gles, viewport.2 as i32, viewport.3 as i32);
+        }
+    }
+
+    let present_secs = present_start.elapsed().as_secs_f64();
+    record_present_time(present_secs);
+    if present_secs > 0.033 {
+        log_dbg!(
+            "slow present: {:.1}ms for renderbuffer {:?} ({}x{}) viewport {:?}",
+            present_secs * 1000.0,
+            renderbuffer,
+            width,
+            height,
+            viewport
+        );
     }
 
     // SDL2's documentation warns 0 should be bound to the draw framebuffer

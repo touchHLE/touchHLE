@@ -45,6 +45,16 @@ pub struct AudioComponentInstanceHostObject {
     pub output_stream_format: Option<AudioStreamBasicDescription>,
     pub render_callback: Option<AURenderCallbackStruct>,
     pub last_render_time: Option<Instant>,
+    /// Fractional frames carried over between renders, so the audio timeline
+    /// advances at exactly the hardware sample rate instead of drifting
+    /// behind it whenever a render slice is rounded down or clamped.
+    pub pending_frames: f64,
+    /// Rolling statistics for diagnosing how much of the frame budget guest
+    /// audio mixing consumes (module-gated diagnostic, see `render_audio_unit`).
+    pub pump_samples: u32,
+    pub pump_total_secs: f64,
+    pub pump_max_secs: f64,
+    pub pump_total_frames: u64,
     pub al_source: Option<ALuint>,
     pub is_running_handler: bool,
 }
@@ -74,6 +84,11 @@ impl Default for AudioComponentInstanceHostObject {
             output_stream_format: None,
             render_callback: None,
             last_render_time: None,
+            pending_frames: 0.0,
+            pump_samples: 0,
+            pump_total_secs: 0.0,
+            pump_max_secs: 0.0,
+            pump_total_frames: 0,
             al_source: None,
             is_running_handler: false,
         }

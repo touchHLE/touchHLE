@@ -234,6 +234,7 @@ fn AudioOutputUnitStart(env: &mut Environment, ci: AudioUnit) -> OSStatus {
         .unwrap();
     audio_unit_state.al_source = Some(source);
     audio_unit_state.last_render_time = Some(Instant::now());
+    audio_unit_state.pending_frames = 0.0;
     audio_unit_state.started = true;
 
     let result = 0; // Success
@@ -255,6 +256,7 @@ fn AudioOutputUnitStop(env: &mut Environment, ci: AudioUnit) -> OSStatus {
     {
         audio_unit_state.started = false;
         audio_unit_state.last_render_time = None;
+        audio_unit_state.pending_frames = 0.0;
 
         if let Some(al_source) = audio_unit_state.al_source {
             unsafe {
@@ -354,7 +356,26 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     // every frame over 2048 until it reaches the provided frame number.
     // TODO: Verify if this behavior is right
     let elapsed_time = now.duration_since(audio_unit_host_object.last_render_time.unwrap());
-    let number_frames = ((elapsed_time.as_secs_f64() * sample_rate) as u32).min(2048);
+
+    // Carry the fractional remainder between renders: rounding down every
+    // slice used to make the audio timeline run slower than real time, which
+    // games syncing note charts to the music position react to by briefly
+    // slowing down and then racing to catch up.
+    audio_unit_host_object.pending_frames += elapsed_time.as_secs_f64() * sample_rate;
+    // Bound the backlog so a long stall can't produce an unbounded burst.
+    let max_backlog = sample_rate * 0.5;
+    if audio_unit_host_object.pending_frames > max_backlog {
+        audio_unit_host_object.pending_frames = max_backlog;
+    }
+    let number_frames = (audio_unit_host_object.pending_frames as u32).min(2048);
+    audio_unit_host_object.pending_frames -= number_frames as f64;
+    audio_unit_host_object.last_render_time = Some(now);
+
+    if number_frames == 0 {
+        // Nothing is due yet; rendering an empty slice would only cost time.
+        audio_unit_host_object.is_running_handler = false;
+        return;
+    }
 
     let bytes_per_channel = stream_format.bits_per_channel / 8;
     let actual_bytes_per_frame = stream_format.channels_per_frame * bytes_per_channel;
@@ -411,6 +432,7 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
     };
 
     // Run render callback
+    let render_start = Instant::now();
     let AURenderCallbackStruct {
         input_proc: inputProc,
         input_proc_ref_con: inputProcRefCon,
@@ -426,6 +448,8 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
             audio_buffer_list,
         ),
     );
+
+    let render_secs = render_start.elapsed().as_secs_f64();
 
     let at_state = &mut env.framework_state.audio_toolbox;
     let context = at_state
@@ -486,6 +510,28 @@ pub fn render_audio_unit(env: &mut Environment, audio_unit: AudioUnit) {
 
     audio_unit_host_object.last_render_time = Some(now);
     audio_unit_host_object.is_running_handler = false;
+
+    audio_unit_host_object.pump_samples += 1;
+    audio_unit_host_object.pump_total_secs += render_secs;
+    audio_unit_host_object.pump_total_frames += number_frames as u64;
+    if render_secs > audio_unit_host_object.pump_max_secs {
+        audio_unit_host_object.pump_max_secs = render_secs;
+    }
+    if audio_unit_host_object.pump_samples >= 120 {
+        log_dbg!(
+            "audio render: {} slices, avg {:.2}ms, max {:.2}ms, avg {:.0} frames",
+            audio_unit_host_object.pump_samples,
+            audio_unit_host_object.pump_total_secs * 1000.0
+                / audio_unit_host_object.pump_samples as f64,
+            audio_unit_host_object.pump_max_secs * 1000.0,
+            audio_unit_host_object.pump_total_frames as f64
+                / audio_unit_host_object.pump_samples as f64,
+        );
+        audio_unit_host_object.pump_samples = 0;
+        audio_unit_host_object.pump_total_secs = 0.0;
+        audio_unit_host_object.pump_max_secs = 0.0;
+        audio_unit_host_object.pump_total_frames = 0;
+    }
 }
 
 pub const FUNCTIONS: FunctionExports = &[

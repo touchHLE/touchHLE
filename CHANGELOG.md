@@ -13,6 +13,45 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## v0.7.0 (2026-11-09)
+
+Compatibility:
+
+- The graphics backend is now ANGLE (Metal), loading `libEGL.dylib` and
+  `libGLESv2.dylib` from `touchHLE_dylibs/angle/`. The old GLES1 native, GLES1
+  on GLES2 and GLSL translation backends have been removed, along with the
+  x86_64 and Android build support. macOS 26 or later on Apple Silicon is
+  required.
+- The dual ES 2.0 / ES 1.1 context bridge now mirrors state only as far as the
+  destination context supports it, and no longer leaks its own GL errors into
+  the current context. Asphalt 6's per-run GL error count dropped from 263 to
+  46; the remainder are the app's own invalid `glGetIntegerv` queries.
+- `GL_TEXTURE_MAX_LEVEL[_APPLE]` and anisotropic filtering parameters are routed
+  to the context that accepts them, and ES 2.0-only cap names are filtered out
+  of `glEnable`/`glDisable`/`glIsEnabled` while the ES 1.1 bridge is active.
+- `__cxa_throw`, `__cxa_allocate_exception` and `__cxa_free_exception` are
+  implemented, so an app that throws a C++ exception reports its type name
+  instead of walking cleanup tables into an unrelated crash.
+
+Quality and performance:
+
+- Miku Flick 02 runs at its full 30 FPS.
+
+## v0.6.0 (2026-11-08)
+
+Compatibility:
+
+- Asphalt 6 boots and presents frames.
+
+Usability:
+
+- The window can be resized freely and fitted to the screen (⌘0) without
+  disturbing the game's internal render resolution or its touch mapping. The
+  fixed x1–x4 resolution scaling control has been removed.
+- Orientation stays stable across resizes.
+- Metal HUD and the keymapper are integrated, and the virtual gamepad layout is
+  bundled with the app.
+
 ## v0.5.0 (2026-11-08)
 
 Quality and performance:

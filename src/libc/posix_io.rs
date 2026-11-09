@@ -216,7 +216,9 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
             find_or_create_fd(env, host_object)
         }
         Err(error) => {
-            log!("Warning: open({path:?}, {flags:#x}) failed with: {error:?}, returning -1");
+            log!(
+                "Warning: open({path:?}) of {path_string:?} with {flags:#x} failed with: {error:?}, returning -1"
+            );
             let errno = match error {
                 FsError::AccessDenied => EACCES,
                 FsError::AlreadyExist => EEXIST,

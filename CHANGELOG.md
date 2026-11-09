@@ -13,6 +13,14 @@ Changes are categorised as follows:
 * Usability: changes to features of the emulator unrelated to the above, e.g. new input methods.
 * Other: when none of the above seem to fit.
 
+## Unreleased
+
+Usability:
+
+- `open()` failures now name the guest path that could not be opened, not just
+  the pointer. Diagnosing a game that is missing a resource no longer requires
+  cross-referencing addresses against memory dumps.
+
 ## v0.7.0 (2026-11-09)
 
 Compatibility:

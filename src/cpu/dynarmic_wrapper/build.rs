@@ -32,7 +32,23 @@ fn build_type_windows() -> &'static str {
 fn main() {
     let package_root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = package_root.join("../../..");
-    let dynarmic_root = workspace_root.join("vendor/dynarmic");
+    // Point this at a PearLegacyJIT checkout to build against a modified JIT
+    // instead of the vendored copy, e.g.
+    // PEAR_DYNARMIC_ROOT=$HOME/PearLegacyJIT cargo build --release.
+    let os_is_macos = env::var("CARGO_CFG_TARGET_OS")
+        .is_ok_and(|os| os.eq_ignore_ascii_case("macos"));
+    let dynarmic_root = match env::var_os("PEAR_DYNARMIC_ROOT") {
+        Some(root) => std::path::PathBuf::from(root),
+        None => workspace_root.join("vendor/dynarmic"),
+    };
+    if !dynarmic_root.join("CMakeLists.txt").is_file() {
+        panic!(
+            "Could not find Dynarmic at {}. Clone PearLegacyJIT there \
+             (https://github.com/denizomer10/PearLegacyJIT) or unset \
+             PEAR_DYNARMIC_ROOT.",
+            dynarmic_root.display()
+        );
+    }
 
     let mut build = cmake::Config::new(&dynarmic_root);
     build.define("DYNARMIC_FRONTENDS", "A32"); // We don't need 64-bit
@@ -40,6 +56,13 @@ fn main() {
     build.define("DYNARMIC_TESTS", "OFF");
     build.define("DYNARMIC_USE_BUNDLED_EXTERNALS", "ON");
     build.define("CMAKE_POLICY_VERSION_MINIMUM", "3.5");
+    // PearLegacyEngine only targets Apple Silicon Macs running macOS 26 or
+    // later, so the JIT is built for exactly that instead of inheriting a
+    // generic deployment target.
+    if os_is_macos {
+        build.define("CMAKE_OSX_ARCHITECTURES", "arm64");
+        build.define("CMAKE_OSX_DEPLOYMENT_TARGET", "26.0");
+    }
 
     // This is Windows- and Android-specific because on macOS or Linux, you can
     // easily get Boost with a package manager.
@@ -121,9 +144,9 @@ fn main() {
         link_lib("Zydis");
     }
 
-    // rerun-if-changed seems to not work if pointed to a directory :(
-    //rerun_if_changed(&dynarmic_root);
-    rerun_if_changed(&workspace_root.join(".git/modules/dynarmic/HEAD"));
+    // Cargo can't watch a whole directory, so watch the CMake entry point of
+    // whichever Dynarmic tree is being built.
+    rerun_if_changed(&dynarmic_root.join("CMakeLists.txt"));
 
     cc::Build::new()
         .file(package_root.join("lib.cpp"))

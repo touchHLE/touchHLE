@@ -323,6 +323,17 @@ pub const CLASSES: ClassExports = objc_classes! {
     }
 }
 
+- (())minusSet:(id)other { // NSSet *
+    let enumerator: id = msg![env; other objectEnumerator];
+    loop {
+        let next: id = msg![env; enumerator nextObject];
+        if next == nil {
+            break;
+        }
+        () = msg![env; this removeObject:next];
+    }
+}
+
 @end
 
 };

@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "561e14e4_3071331f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039550
+      },
+      "writtenOn": "2026-11-15T02:33:22Z",
+      "side": 1,
+      "message": "Tested with StickWars version 1.1 (com.johnehartzog.stickwars-siege). Note: you\u0027ll need to stub UIApplication\u0027s statusBarFrame to get past the boot.",
+      "revId": "233334c05f924883068ebcfa16979c0893c4b3a0",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
